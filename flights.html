@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Journeys Map</title>
+  
+    <!-- Mapbox -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+    <!-- Chart JS -->  
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  
+    <!-- App styles -->
+    <link rel="stylesheet" href="css/flights.css" />
+  
+    
+  </head>
+  
+  <body>
+    
+    <!-- ===================================================== -->
+    <!-- TOP BAR -->
+    <!-- ===================================================== -->
+    <div id="top-bar">
+      <div class="filters">
+  
+        <div class="filter" id="filter-year">
+          <button class="filter-toggle">Year ▾</button>
+          <div class="filter-menu">
+            <div class="filter-actions">
+              <button class="select-all">Select all</button>
+              <button class="clear">Clear</button>
+            </div>
+            <div class="filter-options"></div>
+          </div>
+        </div>
+  
+        <div class="filter" id="filter-airline">
+          <button class="filter-toggle">Airline ▾</button>
+          <div class="filter-menu">
+            <div class="filter-actions">
+              <button class="select-all">Select all</button>
+              <button class="clear">Clear</button>
+            </div>
+            <div class="filter-options"></div>
+          </div>
+        </div>
+  
+        <div class="filter" id="filter-type">
+          <button class="filter-toggle">Type ▾</button>
+          <div class="filter-menu">
+            <div class="filter-actions">
+              <button class="select-all">Select all</button>
+              <button class="clear">Clear</button>
+            </div>
+            <div class="filter-options"></div>
+          </div>
+        </div>
+  
+        <!-- RIGHT SIDE -->
+        <div class="top-actions">
+          <a href="stats.html" class="top-btn">Stats</a>
+        </div>  
+      </div>
+    </div>
+  
+    <!-- ===================================================== -->
+    <!-- MAIN LAYOUT -->
+    <!-- ===================================================== -->
+    <div id="layout">
+  
+      <!-- ================= SIDEBAR ================= -->
+      <aside id="sidebar">
+        <div id="sidebar-header">
+          <button id="sidebarToggle">☰</button>
+          <span>Journeys</span>
+        </div>
+  
+        <ul id="flightList"></ul>
+      </aside>
+
+      <div id="map-wrapper">
+
+        <!-- ===== GLASS BAR (ABOVE MAP) ===== -->
+        <div id="glassBar">
+      
+          <div id="journeyCounter" class="glass-box">
+            <div class="glass-number">0</div>
+            <div class="glass-label">Journeys</div>
+          </div>
+      
+          <div id="milesCounter" class="glass-box">
+            <div class="glass-number">0</div>
+            <div class="glass-label">Miles</div>
+          </div>
+      
+          <div id="countriesCounter" class="glass-box">
+            <div class="glass-number">0</div>
+            <div class="glass-label">Countries</div>
+          </div>
+      
+          <div class="glass-box" id="airlinesCounter">
+            <div class="glass-number">0</div>
+            <div class="glass-label">Airlines</div>
+          </div>
+      
+          <div id="durationCounter" class="glass-box">
+            <div class="glass-number">0h 00min</div>
+            <div class="glass-label">Duration</div>
+          </div>
+      
+          <!-- Airlines slide-out stays logically here -->
+          <div id="airlinesPanel" class="glass-box airlines-panel hidden">
+            <div class="airlines-panel-header">Airlines</div>
+            <ul id="airlinesList"></ul>
+          </div>
+        
+        </div> <!-- end of glass bar -->
+
+        <!-- ===== MAP ===== -->
+        <div id="map"></div>
+
+      </div>  <!-- end of map wrapper -->
+    </div>  <!-- end of main layout -->
+ 
+    <!-- App logic -->
+    <script src="js/config.js"></script>
+    <script src="js//logos.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/counters.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/sidebar2.js"></script>
+    <script src="js/routes2.js"></script>
+    <script src="js/airports4.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/flights-stats.js"></script>
+    
+  </body>
+</html>
