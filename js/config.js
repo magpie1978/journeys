@@ -10,7 +10,7 @@ mapboxgl.accessToken ="pk.eyJ1IjoiY2hyaXMtZHVuaWdhbiIsImEiOiJjbWo4dDRtbGowM25lM2
 
 const MAX_ROUTES = 1000;
 
-const AIRLINE_LOGO_BASE = "/flights/tailfins/";
+const AIRLINE_LOGO_BASE = "tailfins/";
 /*const AIRLINE_LOGO_BASE = "https://raw.githubusercontent.com/magpie1978/douzepoints/main/tailfins/"; */
 
 const airlineLogoMap = {
