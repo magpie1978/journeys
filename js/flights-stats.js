@@ -110,13 +110,14 @@ function flightsPerAirlinePerYear(data) {
   const years = Array.from(yearsSet).sort();
   const airlines = Array.from(airlinesSet).sort();
 
-  const datasets = years.map(year => ({
-    label: year,
-    data: airlines.map(a => map[a]?.[year] || 0),
-    stack: "years",
+  // ✅ DATASETS = AIRLINES (this is the key fix)
+  const datasets = airlines.map(airline => ({
+    label: airline,
+    data: years.map(y => map[airline]?.[y] || 0),
+    stack: "airlines",
   }));
 
-  return { airlines, years, datasets };
+  return { years, datasets };
 }
 
 
