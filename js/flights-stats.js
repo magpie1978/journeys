@@ -1,119 +1,90 @@
-let flightsChart = null;
-let flightsByAirlineChart = null;
+/* global Chart, sb */
+
+let baseStatsData = [];
+let flightsChart = null;            // top-left
+let flightsByAirlineChart = null;   // bottom-left
 
 // =====================================================
-// LOAD BASE DATA
+// LOAD BASE DATA (one query total)
 // =====================================================
-async function loadStatsBaseData() {
+async function loadStatsBaseDataOnce() {
+  if (baseStatsData.length) return baseStatsData;
+
   const { data, error } = await sb
     .from("journeys_routes_cache")
     .select("year, journey_type, journey_distance, airline, destination_country");
 
   if (error) {
     console.error("[stats] load failed", error);
-    return [];
+    baseStatsData = [];
+    return baseStatsData;
   }
 
-  return data || [];
+  baseStatsData = data || [];
+  return baseStatsData;
 }
 
 // =====================================================
-// NORMALISATION
+// NORMALISATION HELPERS
 // =====================================================
+function normYear(v) {
+  if (v == null) return null;
+  const s = String(v);
+  const y = s.slice(0, 4);
+  return /^\d{4}$/.test(y) ? y : null;
+}
+
 function normaliseAirline(a) {
   if (!a) return "Unknown";
-
-  return a
+  return String(a)
     .toLowerCase()
-    .replace(/\(.*?\)/g, "")           // remove brackets
-    .replace(/plc|ltd|limited/gi, "")  // remove legal suffixes
-    .replace(/\s+/g, " ")              // collapse spaces
+    .replace(/\(.*?\)/g, "")           // remove bracketed bits
+    .replace(/\b(plc|ltd|limited)\b/g, "")
+    .replace(/\s+/g, " ")
     .trim()
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 // =====================================================
-// METRIC BUILDERS
+// METRICS
 // =====================================================
 function flightsPerYear(data) {
   const out = {};
-  data
-    .filter(r => r.journey_type === "Flight")
-    .forEach(r => {
-      const y = String(r.year).slice(0, 4);
-      out[y] = (out[y] || 0) + 1;
-    });
+  data.forEach(r => {
+    if (r.journey_type !== "Flight") return;
+    const y = normYear(r.year);
+    if (!y) return;
+    out[y] = (out[y] || 0) + 1;
+  });
   return out;
 }
 
-function milesPerYear(data) {
-  const out = {};
-  data
-    .filter(r => r.journey_type === "Flight")
-    .forEach(r => {
-      const y = String(r.year).slice(0, 4);
-      out[y] = (out[y] || 0) + (Number(r.journey_distance) || 0);
-    });
-  return out;
-}
-
-function airlinesPerYear(data) {
-  const map = {};
-  data
-    .filter(r => r.journey_type === "Flight")
-    .forEach(r => {
-      const y = String(r.year).slice(0, 4);
-      if (!map[y]) map[y] = new Set();
-      map[y].add(normaliseAirline(r.airline));
-    });
-
-  const out = {};
-  Object.keys(map).forEach(y => (out[y] = map[y].size));
-  return out;
-}
-
-function countriesPerYear(data) {
-  const map = {};
-  data
-    .filter(r => r.journey_type === "Flight" && r.destination_country)
-    .forEach(r => {
-      const y = String(r.year).slice(0, 4);
-      if (!map[y]) map[y] = new Set();
-      map[y].add(r.destination_country);
-    });
-
-  const out = {};
-  Object.keys(map).forEach(y => (out[y] = map[y].size));
-  return out;
-}
-
-// =====================================================
-// FLIGHTS PER YEAR PER AIRLINE (CORRECT & SAFE)
-// =====================================================
-function flightsPerAirlinePerYear(data) {
+function flightsPerYearPerAirline(data) {
+  // map[year][airline] = count
   const map = {};
   const yearsSet = new Set();
   const airlinesSet = new Set();
 
-  data
-    .filter(r => r.journey_type === "Flight")
-    .forEach(r => {
-      const year = String(r.year).slice(0, 4);
-      const airline = normaliseAirline(r.airline);
+  data.forEach(r => {
+    if (r.journey_type !== "Flight") return;
+    const y = normYear(r.year);
+    if (!y) return;
 
-      yearsSet.add(year);
-      airlinesSet.add(airline);
+    const airline = normaliseAirline(r.airline);
+    yearsSet.add(y);
+    airlinesSet.add(airline);
 
-      if (!map[airline]) map[airline] = {};
-      map[airline][year] = (map[airline][year] || 0) + 1;
-    });
+    if (!map[y]) map[y] = {};
+    map[y][airline] = (map[y][airline] || 0) + 1;
+  });
 
   const years = Array.from(yearsSet).sort();
   const airlines = Array.from(airlinesSet).sort();
 
+  // ✅ datasets = airlines, labels = years (stacked)
   const datasets = airlines.map(airline => ({
     label: airline,
-    data: years.map(y => map[airline]?.[y] || 0),
+    data: years.map(y => map[y]?.[airline] || 0),
     stack: "airlines",
   }));
 
@@ -121,10 +92,11 @@ function flightsPerAirlinePerYear(data) {
 }
 
 // =====================================================
-// CHART RENDERERS
+// RENDERERS
 // =====================================================
-function renderStatsChart({ title, label, values, color }) {
-  const ctx = document.getElementById("flightsByYearChart").getContext("2d");
+function renderFlightsByYear(values) {
+  const ctx = document.getElementById("flightsByYearChart")?.getContext("2d");
+  if (!ctx) return;
 
   if (flightsChart) flightsChart.destroy();
 
@@ -135,7 +107,12 @@ function renderStatsChart({ title, label, values, color }) {
     type: "bar",
     data: {
       labels: years,
-      datasets: [{ label, data, backgroundColor: color, borderRadius: 6 }],
+      datasets: [{
+        label: "Flights",
+        data,
+        backgroundColor: "rgba(201,162,77,0.7)",
+        borderRadius: 6,
+      }],
     },
     options: {
       responsive: true,
@@ -149,17 +126,16 @@ function renderStatsChart({ title, label, values, color }) {
   });
 }
 
-function renderFlightsPerYearByAirline({ labels, datasets }) {
-  const ctx = document
-    .getElementById("flightsPerYearAirlineChart")
-    .getContext("2d");
+function renderFlightsPerYearPerAirline(years, datasets) {
+  const ctx = document.getElementById("flightsPerYearAirlineChart")?.getContext("2d");
+  if (!ctx) return;
 
   if (flightsByAirlineChart) flightsByAirlineChart.destroy();
 
   flightsByAirlineChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels,
+      labels: years,
       datasets: datasets.map(ds => ({
         ...ds,
         backgroundColor: "rgba(201,162,77,0.7)",
@@ -169,80 +145,73 @@ function renderFlightsPerYearByAirline({ labels, datasets }) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
       scales: {
         x: { stacked: true, ticks: { color: "#ccc" } },
         y: { stacked: true, ticks: { color: "#ccc" } },
       },
-      plugins: { legend: { display: false } },
     },
   });
 }
 
 // =====================================================
-// MAIN UPDATE HANDLER (WITH PROOF)
+// HARD CHECK (this will tell us EXACTLY what’s missing)
 // =====================================================
-const statsMetricSelect = document.getElementById("statsMetricSelect");
+function debugYearMismatch(data, year = "2017") {
+  const top = flightsPerYear(data)[year] || 0;
 
-async function updateStatsChart() {
-  const baseData = await loadStatsBaseData();
-  const metric = statsMetricSelect?.value || "flights";
+  const { years, datasets } = flightsPerYearPerAirline(data);
+  const idx = years.indexOf(year);
+  const bottom = idx === -1 ? 0 : datasets.reduce((sum, ds) => sum + (ds.data[idx] || 0), 0);
 
-  // 🔍 PROOF (safe to remove later)
-  const debug2017 = baseData.filter(
-    r => r.journey_type === "Flight" && String(r.year).startsWith("2017")
-  );
-
-  console.log("2017 total flights:", debug2017.length);
-  console.table(
-    debug2017.reduce((a, r) => {
-      const k = normaliseAirline(r.airline);
-      a[k] = (a[k] || 0) + 1;
-      return a;
-    }, {})
-  );
-
-  if (metric === "flights") {
-    renderStatsChart({
-      title: "Flights by Year",
-      label: "Flights",
-      values: flightsPerYear(baseData),
-      color: "rgba(201,162,77,0.7)",
-    });
-
-    const { years, datasets } = flightsPerAirlinePerYear(baseData);
-    renderFlightsPerYearByAirline({ labels: years, datasets });
+  if (top === bottom) {
+    console.log(`[stats] OK: ${year} top=${top} bottom=${bottom}`);
+    return;
   }
 
-  if (metric === "miles") {
-    renderStatsChart({
-      title: "Miles Flown by Year",
-      label: "Miles",
-      values: milesPerYear(baseData),
-      color: "rgba(80,170,255,0.7)",
-    });
-  }
+  console.warn(`[stats] MISMATCH in ${year}: top=${top} bottom=${bottom} (diff=${top - bottom})`);
 
-  if (metric === "countries") {
-    renderStatsChart({
-      title: "Countries Visited by Year",
-      label: "Countries",
-      values: countriesPerYear(baseData),
-      color: "rgba(255,215,0,0.7)",
-    });
-  }
+  // Show all 2017 flight rows + the airline key they map to
+  const rows2017 = data
+    .filter(r => r.journey_type === "Flight" && normYear(r.year) === year)
+    .map(r => ({
+      year: normYear(r.year),
+      airline_raw: r.airline,
+      airline_norm: normaliseAirline(r.airline),
+    }));
 
-  if (metric === "airlines") {
-    renderStatsChart({
-      title: "Airlines Flown by Year",
-      label: "Airlines",
-      values: airlinesPerYear(baseData),
-      color: "rgba(160,220,160,0.7)",
-    });
-  }
+  console.table(rows2017);
+
+  // Count by normalised airline
+  const counts = rows2017.reduce((acc, r) => {
+    acc[r.airline_norm] = (acc[r.airline_norm] || 0) + 1;
+    return acc;
+  }, {});
+  console.table(counts);
 }
 
 // =====================================================
-// INIT
+// MAIN UPDATE (one source of truth)
 // =====================================================
-document.addEventListener("DOMContentLoaded", updateStatsChart);
-statsMetricSelect?.addEventListener("change", updateStatsChart);
+const metricSelect = document.getElementById("metricSelector"); // ✅ matches stats.html
+
+async function update() {
+  const data = await loadStatsBaseDataOnce();
+  const metric = metricSelect?.value || "flights";
+
+  // Always run the consistency check for 2017 while debugging
+  debugYearMismatch(data, "2017");
+
+  if (metric === "flights") {
+    const byYear = flightsPerYear(data);
+    renderFlightsByYear(byYear);
+
+    const { years, datasets } = flightsPerYearPerAirline(data);
+    renderFlightsPerYearPerAirline(years, datasets);
+  }
+
+  // (If you later want miles/countries/airlines metrics back, we can add them here)
+}
+
+document.addEventListener("DOMContentLoaded", update);
+metricSelect?.addEventListener("change", update);
