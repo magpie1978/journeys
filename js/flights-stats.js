@@ -1,4 +1,5 @@
 let flightsChart = null;
+let flightsByAirlineChart = null;
 
 // =====================================================
 // LOAD BASE DATA (one query for all charts)
@@ -252,6 +253,50 @@ function renderHorizontalStackedStatsChart({ title, labels, datasets }) {
   });
 }
 
+
+// =====================================================
+// RENDER FLIGHTS PER YEAR BY AIRLINE
+// =====================================================
+function renderFlightsPerYearByAirline({ title, labels, datasets }) {
+  const canvas = document.getElementById("flightsPerYearAirlineChart");
+  const ctx = canvas.getContext("2d");
+
+  if (flightsByAirlineChart) flightsByAirlineChart.destroy();
+
+  flightsByAirlineChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: datasets.map(ds => ({
+        ...ds,
+        backgroundColor: "rgba(201,162,77,0.7)",
+        borderRadius: 4,
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: "#ccc" },
+        },
+        y: {
+          stacked: true,
+          ticks: { color: "#ccc" },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: "#111" },
+      },
+    },
+  });
+}
+
+
+
+
 // =====================================================
 // DROPDOWN HANDLER
 // =====================================================
@@ -261,14 +306,24 @@ async function updateStatsChart() {
   const baseData = await loadStatsBaseData();
   const metric = statsMetricSelect?.value || "flights";
 
-  if (metric === "flights") {
-    renderStatsChart({
-      title: "Flights by Year",
-      label: "Flights",
-      values: flightsPerYear(baseData),
-      color: "rgba(201,162,77,0.7)",
-    });
-  }
+if (metric === "flights") {
+  // top-left (already correct)
+  renderStatsChart({
+    title: "Flights by Year",
+    label: "Flights",
+    values: flightsPerYear(baseData),
+    color: "rgba(201,162,77,0.7)",
+  });
+
+  // bottom-left (FIXED)
+  const { years, datasets } = flightsPerAirlinePerYear(baseData);
+
+  renderFlightsPerYearByAirline({
+    title: "Flights per Year per Airline",
+    labels: years,
+    datasets,
+  });
+}
 
   if (metric === "miles") {
     renderStatsChart({
