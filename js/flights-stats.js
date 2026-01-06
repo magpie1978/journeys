@@ -18,6 +18,38 @@ async function loadStatsBaseData() {
   return data || [];
 }
 
+
+
+// =====================================================
+// TEST - PROOF
+// =====================================================
+const debug2017 = baseData
+  .filter(r =>
+    r.journey_type === "Flight" &&
+    String(r.year).startsWith("2017")
+  )
+  .map(r => r.airline);
+
+console.table(
+  debug2017.reduce((a, c) => {
+    const k = c ?? "(null)";
+    a[k] = (a[k] || 0) + 1;
+    return a;
+  }, {})
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
 // =====================================================
 // METRIC BUILDERS
 // =====================================================
