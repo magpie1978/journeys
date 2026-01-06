@@ -96,10 +96,8 @@ function flightsPerAirlinePerYear(data) {
   data
     .filter(r => r.journey_type === "Flight")
     .forEach(r => {
-      if (!r.airline) return;
-
       const year = String(r.year).slice(0, 4);
-      const airline = r.airline;
+      const airline = r.airline?.trim() || "Unknown";
 
       yearsSet.add(year);
       airlinesSet.add(airline);
@@ -108,10 +106,10 @@ function flightsPerAirlinePerYear(data) {
       map[airline][year] = (map[airline][year] || 0) + 1;
     });
 
-  const years = Array.from(yearsSet).sort();       // ascending
-  const airlines = Array.from(airlinesSet).sort(); // alphabetical
+  const years = Array.from(yearsSet).sort();
+  const airlines = Array.from(airlinesSet).sort();
 
-  const datasets = years.map((year, i) => ({
+  const datasets = years.map(year => ({
     label: year,
     data: airlines.map(a => map[a]?.[year] || 0),
     stack: "years",
@@ -119,6 +117,7 @@ function flightsPerAirlinePerYear(data) {
 
   return { airlines, years, datasets };
 }
+
 
 
 
