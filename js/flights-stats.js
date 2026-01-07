@@ -157,11 +157,13 @@ function renderFlightsPerYearPerAirline(years, datasets) {
 
 
 function renderFlightsPerAirlineByYear(airlines, datasets) {
-  const ctx = document
-    .getElementById("flightsPerAirlineYearChart")
-    ?.getContext("2d");
+  const canvas = document.getElementById("flightsPerAirlineYearChart");
+  if (!canvas) return;
 
-  if (!ctx) return;
+  // 🔴 CRITICAL FIX: give the canvas height
+  canvas.height = Math.max(airlines.length * 36, 300);
+
+  const ctx = canvas.getContext("2d");
 
   if (window.flightsPerAirlineYearChart) {
     window.flightsPerAirlineYearChart.destroy();
@@ -179,7 +181,7 @@ function renderFlightsPerAirlineByYear(airlines, datasets) {
     },
     options: {
       indexAxis: "y",
-      responsive: true,
+      responsive: false,          // 🔴 important with manual sizing
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
@@ -246,27 +248,22 @@ async function update() {
   const data = await loadStatsBaseDataOnce();
   const metric = metricSelect?.value || "flights";
 
-  // Always run the consistency check for 2017 while debugging
   debugYearMismatch(data, "2017");
 
-  if (metric === "flights") {
-    const byYear = flightsPerYear(data);
-    renderFlightsByYear(byYear);
+  if (metric !== "flights") return;
 
-    const { years, datasets } = flightsPerYearPerAirline(data);
-    renderFlightsPerYearPerAirline(years, datasets);
-  }
+  // top-left
+  renderFlightsByYear(flightsPerYear(data));
 
-  // (If you later want miles/countries/airlines metrics back, we can add them here)
-
+  // shared breakdown
   const { years, datasets } = flightsPerYearPerAirline(data);
 
   // bottom-left
   renderFlightsPerYearPerAirline(years, datasets);
-  
-  // right-hand
+
+  // right-hand (pivoted)
   renderFlightsPerAirlineByYear(
-    datasets.map(d => d.label), // airlines
+    datasets.map(d => d.label),          // airlines
     years.map((year, i) => ({
       label: year,
       data: datasets.map(d => d.data[i]),
@@ -274,6 +271,7 @@ async function update() {
     }))
   );
 }
+
 
 document.addEventListener("DOMContentLoaded", update);
 metricSelect?.addEventListener("change", update);
