@@ -154,7 +154,41 @@ function renderFlightsPerYearPerAirline(years, datasets) {
   });
 }
 
+// =====================================================
+// HARD CHECK (this will tell us EXACTLY what’s missing)
+// =====================================================
+function debugYearMismatch(data, year = "2017") {
+  const top = flightsPerYear(data)[year] || 0;
 
+  const { years, datasets } = flightsPerYearPerAirline(data);
+  const idx = years.indexOf(year);
+  const bottom = idx === -1 ? 0 : datasets.reduce((sum, ds) => sum + (ds.data[idx] || 0), 0);
+
+  if (top === bottom) {
+    console.log(`[stats] OK: ${year} top=${top} bottom=${bottom}`);
+    return;
+  }
+
+  console.warn(`[stats] MISMATCH in ${year}: top=${top} bottom=${bottom} (diff=${top - bottom})`);
+
+  // Show all 2017 flight rows + the airline key they map to
+  const rows2017 = data
+    .filter(r => r.journey_type === "Flight" && normYear(r.year) === year)
+    .map(r => ({
+      year: normYear(r.year),
+      airline_raw: r.airline,
+      airline_norm: normaliseAirline(r.airline),
+    }));
+
+  console.table(rows2017);
+
+  // Count by normalised airline
+  const counts = rows2017.reduce((acc, r) => {
+    acc[r.airline_norm] = (acc[r.airline_norm] || 0) + 1;
+    return acc;
+  }, {});
+  console.table(counts);
+}
 
 // =====================================================
 // MAIN UPDATE (one source of truth)
