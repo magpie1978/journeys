@@ -160,8 +160,11 @@ function renderFlightsPerAirlineByYear(airlines, datasets) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   if (!canvas) return;
 
-  // 🔴 CRITICAL FIX: give the canvas height
+  // 🔴 CRITICAL FIXES
+  const container = canvas.parentElement;
+
   canvas.height = Math.max(airlines.length * 36, 300);
+  canvas.width  = container.clientWidth || 800; // 👈 THIS WAS MISSING
 
   const ctx = canvas.getContext("2d");
 
@@ -181,7 +184,7 @@ function renderFlightsPerAirlineByYear(airlines, datasets) {
     },
     options: {
       indexAxis: "y",
-      responsive: false,          // 🔴 important with manual sizing
+      responsive: false,          // manual sizing
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
@@ -201,6 +204,7 @@ function renderFlightsPerAirlineByYear(airlines, datasets) {
     },
   });
 }
+
 
 
 // =====================================================
