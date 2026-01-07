@@ -258,6 +258,21 @@ async function update() {
   }
 
   // (If you later want miles/countries/airlines metrics back, we can add them here)
+
+  const { years, datasets } = flightsPerYearPerAirline(data);
+
+  // bottom-left
+  renderFlightsPerYearPerAirline(years, datasets);
+  
+  // right-hand
+  renderFlightsPerAirlineByYear(
+    datasets.map(d => d.label), // airlines
+    years.map((year, i) => ({
+      label: year,
+      data: datasets.map(d => d.data[i]),
+      stack: "years",
+    }))
+  );
 }
 
 document.addEventListener("DOMContentLoaded", update);
