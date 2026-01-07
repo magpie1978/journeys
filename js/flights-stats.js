@@ -126,6 +126,7 @@ function renderFlightsByYear(values) {
   });
 }
 
+
 function renderFlightsPerYearPerAirline(years, datasets) {
   const ctx = document.getElementById("flightsPerYearAirlineChart")?.getContext("2d");
   if (!ctx) return;
@@ -153,6 +154,52 @@ function renderFlightsPerYearPerAirline(years, datasets) {
     },
   });
 }
+
+
+function renderFlightsPerAirlineByYear(airlines, datasets) {
+  const ctx = document
+    .getElementById("flightsPerAirlineYearChart")
+    ?.getContext("2d");
+
+  if (!ctx) return;
+
+  if (window.flightsPerAirlineYearChart) {
+    window.flightsPerAirlineYearChart.destroy();
+  }
+
+  window.flightsPerAirlineYearChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: airlines,
+      datasets: datasets.map(ds => ({
+        ...ds,
+        backgroundColor: "rgba(201,162,77,0.7)",
+        borderRadius: 4,
+      })),
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: "#ccc", precision: 0 },
+          grid: { color: "rgba(255,255,255,0.05)" },
+        },
+        y: {
+          stacked: true,
+          ticks: { color: "#ccc" },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
 
 // =====================================================
 // HARD CHECK (this will tell us EXACTLY what’s missing)
