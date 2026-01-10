@@ -815,8 +815,10 @@ body {
 .flight-metric {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 🔑 label + value aligned */
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 110px;
 }
 
 /* Metric label (FLIGHT / AIRLINE / etc.) */
