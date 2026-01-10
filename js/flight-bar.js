@@ -4,55 +4,54 @@
 
 function showFlightSummary(r) {
   // Hide other bars
-  document.getElementById("glassBar")?.classList.add("hidden");
-  document.getElementById("airportSummaryBar")?.classList.add("hidden");
+  const glassBar = document.getElementById("glassBar");
+  const airportBar = document.getElementById("airportSummaryBar");
+  const flightBar = document.getElementById("flightSummaryBar");
 
-  // Show flight bar
-  const bar = document.getElementById("flightSummaryBar");
-  if (!bar) return;
-  bar.classList.remove("hidden");
+  if (glassBar) glassBar.classList.add("hidden");
+  if (airportBar) airportBar.classList.add("hidden");
+
+  if (!flightBar) return;
+  flightBar.classList.remove("hidden");
 
   populateFlightSummary(r);
 }
 
 function hideFlightSummary() {
-  document.getElementById("flightSummaryBar")?.classList.add("hidden");
-  document.getElementById("glassBar")?.classList.remove("hidden");
+  const glassBar = document.getElementById("glassBar");
+  const flightBar = document.getElementById("flightSummaryBar");
+
+  if (flightBar) flightBar.classList.add("hidden");
+  if (glassBar) glassBar.classList.remove("hidden");
 }
 
 // =====================================================
-// POPULATION HELPERS
+// POPULATION
 // =====================================================
 
 function populateFlightSummary(r) {
-  document.getElementById("flightDate").textContent =
-    formatJourneyDate(r.journey_date);
+  setText("flightDate", formatJourneyDate(r.journey_date));
+  setText("flightOrigin", r.origin || "—");
+  setText("flightDestination", r.destination || "—");
 
-  document.getElementById("flightOrigin").textContent =
-    r.origin || "—";
+  setText("originCountry", r.origin_country || "");
+  setText("destinationCountry", r.destination_country || "");
 
-  document.getElementById("flightDestination").textContent =
-    r.destination || "—";
+  setText("flightNumber", getFlightNumber(r));
+  setText("flightAirline", r.airline || "—");
 
-  document.getElementById("originCountry").textContent =
-    r.origin_country || "";
+  // Prefer journey_duration_seconds (matches your airport bar)
+  setText("flightDuration", formatDurationFromSeconds(r.journey_duration_seconds));
 
-  document.getElementById("destinationCountry").textContent =
-    r.destination_country || "";
+  setText(
+    "flightDistance",
+    r.journey_distance != null ? `${Math.round(Number(r.journey_distance))} mi` : "—"
+  );
+}
 
-  document.getElementById("flightNumber").textContent =
-    getFlightNumber(r);
-
-  document.getElementById("flightAirline").textContent =
-    r.airline || "—";
-
-  document.getElementById("flightDuration").textContent =
-    formatDuration(r.journey_duration_seconds);
-
-  document.getElementById("flightDistance").textContent =
-    r.journey_distance
-      ? `${Math.round(r.journey_distance)} mi`
-      : "—";
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
 }
 
 // =====================================================
@@ -62,4 +61,27 @@ function populateFlightSummary(r) {
 function formatJourneyDate(dateStr) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
-  if
+  if (Number.isNaN(d.getTime())) return String(dateStr).slice(0, 10);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatDurationFromSeconds(seconds) {
+  const s = Number(seconds);
+  if (!Number.isFinite(s) || s <= 0) return "—";
+  const mins = Math.round(s / 60);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m}min`;
+}
+
+function getFlightNumber(r) {
+  // Choose the best available identifier
+  return r.flight_number || r.flightNumber || r.callsign || "—";
+}
+
+// =====================================================
+// EXPOSE GLOBAL API (so sidebar.js can always call it)
+// =====================================================
+
+window.showFlightSummary = showFlightSummary;
+window.hideFlightSummary = hideFlightSummary;
