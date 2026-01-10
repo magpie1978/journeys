@@ -36,6 +36,7 @@ body {
 }
 .back-link:hover { color: #fff; }
 
+/*
 .stats-header-title {
   position: absolute;
   left: 50%;
@@ -45,7 +46,7 @@ body {
   text-transform: uppercase;
   color: #aaa;
   pointer-events: none;
-}
+}*/
 
 /* ==============================
    GRID LAYOUT
