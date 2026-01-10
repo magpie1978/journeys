@@ -60,10 +60,19 @@ function renderSidebar(routes) {
       </div>
     `;
 
-    li.addEventListener("click", () => toggleIsolation(r.uid));
-    flightListEl.appendChild(li);
-  });
-}
+    li.addEventListener("click", () => {
+    toggleIsolation(r.uid);
+  
+      // Only show flight summary when a single flight is isolated
+      if (isolatedUid === r.uid) {
+        showFlightSummary(r);
+      } else {
+        hideFlightSummary();
+      }
+    });
+      flightListEl.appendChild(li);
+    });
+  }
 
 
 // =====================================================
