@@ -216,25 +216,35 @@ if (window.activeAirportFilter) {
   ]);
 }
 
-  if (isolatedUid) {
-    const r = currentRoutes.find(x => x.uid === isolatedUid);
-    if (r) {
-      fitToBoundsFromLineGeoms([r.geom]);
-      updateAllCounters([r]);
-    }
-  } else {
-    updateAllCounters(currentRoutes);
+if (isolatedUid) {
+  const r = currentRoutes.find(x => x.uid === isolatedUid);
+  if (r) {
+    fitToBoundsFromLineGeoms([r.geom]);
+    updateAllCounters([r]);
 
-    if (lastNonIsolatedView) {
-      map.easeTo({
-        center: lastNonIsolatedView.center,
-        zoom: lastNonIsolatedView.zoom,
-        bearing: lastNonIsolatedView.bearing,
-        pitch: lastNonIsolatedView.pitch,
-        duration: 600,
-      });
+    // 🔥 NEW: show flight summary for isolated route
+    if (typeof showFlightSummary === "function") {
+      showFlightSummary(r);
     }
   }
+} else {
+  updateAllCounters(currentRoutes);
+
+  // 🔥 NEW: hide flight summary when isolation cleared
+  if (typeof hideFlightSummary === "function") {
+    hideFlightSummary();
+  }
+
+  if (lastNonIsolatedView) {
+    map.easeTo({
+      center: lastNonIsolatedView.center,
+      zoom: lastNonIsolatedView.zoom,
+      bearing: lastNonIsolatedView.bearing,
+      pitch: lastNonIsolatedView.pitch,
+      duration: 600,
+    });
+  }
+}
 
   [...flightListEl.children].forEach(li => {
     li.classList.toggle("active", li.dataset.uid === isolatedUid);
