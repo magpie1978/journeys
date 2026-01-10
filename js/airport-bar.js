@@ -16,8 +16,13 @@ function getRouteDurationMinutes(r) {
 // SHOW AIRPORT SUMMARY BAR
 // =====================================================
 function showAirportSummary(airport) {
-  const airportCode = airport.code;
 
+  // 🔒 Ensure route header is hidden when airport is selected
+  if (typeof hideFlightSummary === "function") {
+    hideFlightSummary();
+  }
+
+  const airportCode = airport.code;
   const routes =
     Array.isArray(window.allRoutes) && window.allRoutes.length
       ? window.allRoutes
