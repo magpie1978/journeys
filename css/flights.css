@@ -770,3 +770,23 @@ body {
   opacity: 0.7;
   text-transform: uppercase;
 }
+
+
+/* FLIGHTS HEADER BAR*/
+/* Route row: date + route inline */
+.flight-route-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.flight-route-row .flight-date {
+  font-size: 13px;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.flight-route-row .flight-route {
+  font-size: 22px;
+  font-weight: 700;
+}
