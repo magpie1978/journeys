@@ -159,42 +159,48 @@
 
         <!-- ===== FLIGHT SUMMARY BAR (hidden by default) ===== -->
         <div id="flightSummaryBar" class="flight-summary hidden">
-                  
-          <div class="flight-date" id="flightDate">12 Jan 2025</div>
-          <div class="flight-route">
-            <span class="flight-code" id="flightOrigin">LHR</span>
-            →
-            <span class="flight-code" id="flightDestination">ZRH</span>
+        
+          <!-- LEFT -->
+          <div class="flight-left">
+            <div class="flight-route-row">
+              <span class="flight-date" id="flightDate">12 Jan 2025</span>
+              <span class="flight-route">
+                <span class="flight-code" id="flightOrigin">LHR</span>
+                →
+                <span class="flight-code" id="flightDestination">ZRH</span>
+              </span>
+            </div>
+        
+            <div class="flight-countries">
+              <span id="originCountry">United Kingdom</span> ·
+              <span id="destinationCountry">Switzerland</span>
+            </div>
           </div>
-          <div class="flight-countries">
-            <span id="originCountry">United Kingdom</span> ·
-            <span id="destinationCountry">Switzerland</span>
+        
+          <!-- METRICS -->
+          <div class="flight-metrics">
+            <div class="flight-metric">
+              <span class="metric-label">Flight</span>
+              <span id="flightNumber">BA720</span>
+            </div>
+        
+            <div class="flight-metric">
+              <span class="metric-label">Airline</span>
+              <span id="flightAirline">British Airways</span>
+            </div>
+        
+            <div class="flight-metric">
+              <span class="metric-label">Duration</span>
+              <span id="flightDuration">1h 55m</span>
+            </div>
+        
+            <div class="flight-metric">
+              <span class="metric-label">Distance</span>
+              <span id="flightDistance">480 mi</span>
+            </div>
           </div>
+        
         </div>
-      
-        <div class="flight-metrics">
-          <div class="flight-metric">
-            <span class="metric-label">Flight</span>
-            <span id="flightNumber">BA720</span>
-          </div>
-      
-          <div class="flight-metric">
-            <span class="metric-label">Airline</span>
-            <span id="flightAirline">British Airways</span>
-          </div>
-      
-          <div class="flight-metric">
-            <span class="metric-label">Duration</span>
-            <span id="flightDuration">1h 55m</span>
-          </div>
-      
-          <div class="flight-metric">
-            <span class="metric-label">Distance</span>
-            <span id="flightDistance">480 mi</span>
-          </div>
-        </div>
-      
-      </div>
 
 
 
