@@ -790,3 +790,37 @@ body {
   font-size: 22px;
   font-weight: 700;
 }
+
+/* =====================================================
+   FLIGHT SUMMARY – METRICS CLEANUP
+===================================================== */
+
+.flight-metrics {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* Each metric block */
+.flight-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 🔑 label + value aligned */
+  gap: 4px;
+}
+
+/* Metric label (FLIGHT / AIRLINE / etc.) */
+.flight-metric .metric-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* Metric value (make it match route text) */
+.flight-metric span:not(.metric-label) {
+  font-size: 22px;        /* same as .flight-route */
+  font-weight: 700;       /* same as .flight-route */
+  line-height: 1.1;
+}
