@@ -223,7 +223,8 @@ if (isolatedUid) {
     updateAllCounters([r]);
 
     // 🔥 NEW: show flight summary for isolated route
-    if (typeof showFlightSummary === "function") {
+    // 🔒 IMPORTANT: do NOT show route header if airport is active
+    if (!window.activeAirportFilter && typeof showFlightSummary === "function") {
       showFlightSummary(r);
     }
   }
