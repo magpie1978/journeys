@@ -1,5 +1,5 @@
 // =====================================================
-// ROUTES.JS (FULLY PATCHED)
+// ROUTES.JS (FULLY PATCHED) 
 // - Safe Supabase queries (no 400s)
 // - Robust error handling (no JS crashes)
 // - Single render pipeline
