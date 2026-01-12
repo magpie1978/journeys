@@ -73,7 +73,17 @@ csvFileInput.addEventListener("change", async (e) => {
 
   try {
     const text = await file.text();
-    const rows = parseCSV(text);
+    const rawRows = parseCSV(text);
+
+    const rows = rawRows.map(r => ({
+      timestamp: r.Timestamp,
+      utc: r.UTC,
+      callsign: r.Callsign,
+      altitude: r.Altitude ? Number(r.Altitude) : null,
+      direction: r.Direction ? Number(r.Direction) : null,
+      position: r.Position
+    }));
+
 
     if (!rows.length) {
       alert("CSV file contains no data.");
