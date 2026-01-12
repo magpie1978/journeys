@@ -80,6 +80,7 @@ csvFileInput.addEventListener("change", async (e) => {
       utc: r.UTC,
       callsign: r.Callsign,
       altitude: r.Altitude ? Number(r.Altitude) : null,
+      speed: r.Speed ? Number(r.Speed) : null,
       direction: r.Direction ? Number(r.Direction) : null,
       position: r.Position
     }));
