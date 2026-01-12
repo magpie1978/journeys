@@ -1,23 +1,26 @@
 // =====================================================
-// ROUTES.JS (FULLY PATCHED) 
-// - Safe Supabase queries (no 400s)
-// - Robust error handling (no JS crashes)
-// - Single render pipeline
-// - Isolation logic hardened
-// - Compatible with MATERIALISED VIEW
+// ROUTES.JS (WORKING PATCH)
+// - Year filter always applied (journey_date ranges)
+// - Map always reflects current filter (hard reset source/layers)
+// - No duplicate layer IDs / no repeated handler binding
 // =====================================================
 
-// Stable base set for airport filtering
+// Optional stable base set for airport filtering (filtered set only)
 window.allRoutes = window.allRoutes || [];
+
+// Internal flag so we only bind map handlers once
+window._routesHandlersBound = window._routesHandlersBound || false;
 
 // =====================================================
 // RENDER ROUTES (single pipeline)
 // =====================================================
 function renderRoutes(routes, { resetIsolation = true } = {}) {
-  routes = (routes || []).filter(r => r && r.geom);
+  const safeRoutes = (routes || []).filter(r => r && r.geom);
 
-  if (!routes.length) {
+  if (!safeRoutes.length) {
     currentRoutes = [];
+    window.allRoutes = [];
+
     updateAllCounters([]);
     renderSidebar([]);
 
@@ -33,15 +36,19 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
     lastRoutesBounds = null;
   }
 
-  currentRoutes = routes.slice();
+  currentRoutes = safeRoutes.slice();
+  window.allRoutes = currentRoutes.slice(); // ✅ filtered set only
+
+  // ---------------- UI ----------------
   updateAllCounters(currentRoutes);
 
-  if (airlinesPanel?.classList.contains("visible")) {
+  if (airlinesPanel?.classList.contains("visible") && typeof renderAirlinesPanel === "function") {
     renderAirlinesPanel(currentRoutes);
   }
 
   renderSidebar(currentRoutes);
 
+  // ---------------- GEOJSON ----------------
   const fc = {
     type: "FeatureCollection",
     features: currentRoutes.map(r => ({
@@ -51,37 +58,43 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
     })),
   };
 
-  // ---------------- MAP ----------------
-  if (map.getSource("routes")) {
-    map.getSource("routes").setData(fc);
-  } else {
-    map.addSource("routes", { type: "geojson", data: fc });
+  // ---------------- MAP (hard reset) ----------------
+  // Remove existing layers/sources so the map cannot "stick" to old data
+  if (map.getLayer("routes-hit")) map.removeLayer("routes-hit");
+  if (map.getLayer("routes-line")) map.removeLayer("routes-line");
+  if (map.getSource("routes")) map.removeSource("routes");
 
-    map.addLayer({
-      id: "routes-line",
-      type: "line",
-      source: "routes",
-      paint: {
-        "line-width": 1.4,
-        "line-opacity": 0.85,
-        "line-color": [
-          "case",
-          ["==", ["get", "journey_type"], "Flight"], "#FFD700",
-          ["==", ["get", "journey_type"], "Drive"], "#1E90FF",
-          "#E53935",
-        ],
-      },
-    });
+  map.addSource("routes", { type: "geojson", data: fc });
 
-    map.addLayer({
-      id: "routes-hit",
-      type: "line",
-      source: "routes",
-      paint: {
-        "line-width": 18,
-        "line-opacity": 0,
-      },
-    });
+  map.addLayer({
+    id: "routes-line",
+    type: "line",
+    source: "routes",
+    paint: {
+      "line-width": 1.4,
+      "line-opacity": 0.85,
+      "line-color": [
+        "case",
+        ["==", ["get", "journey_type"], "Flight"], "#FFD700",
+        ["==", ["get", "journey_type"], "Drive"], "#1E90FF",
+        "#E53935",
+      ],
+    },
+  });
+
+  map.addLayer({
+    id: "routes-hit",
+    type: "line",
+    source: "routes",
+    paint: {
+      "line-width": 18,
+      "line-opacity": 0,
+    },
+  });
+
+  // Bind handlers once (they continue to work after layer re-adds)
+  if (!window._routesHandlersBound) {
+    window._routesHandlersBound = true;
 
     map.on("click", "routes-hit", e => {
       const uid = e.features?.[0]?.properties?.uid;
@@ -103,10 +116,12 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
     });
   }
 
+  // Airports for current routes
   if (typeof loadAirports === "function") {
     loadAirports(currentRoutes);
   }
 
+  // Fit / mode handling
   if (mapMode === "routes") {
     fitToBoundsFromLineGeoms(currentRoutes.map(r => r.geom));
   } else {
@@ -121,8 +136,7 @@ window.renderRoutes = renderRoutes;
 // LOAD ROUTES
 // =====================================================
 async function loadRoutes() {
-
-  // 🚨 HARD GUARD: never load routes without a year filter
+  // 🚨 Hard guard: never load unfiltered
   if (!selected?.years || selected.years.size === 0) {
     console.warn("[routes] loadRoutes aborted – no year selected yet");
     return;
@@ -145,15 +159,13 @@ async function loadRoutes() {
       geom
     `);
 
-  // ✅ Year filter: use journey_date ranges (works regardless of year datatype)
-  if (selected.years.size) {
-    const years = [...selected.years].map(String);
-    q = q.or(
-      years
-        .map(y => `journey_date.gte.${y}-01-01,journey_date.lt.${Number(y) + 1}-01-01`)
-        .join(",")
-    );
-  }
+  // ✅ Year filter via journey_date ranges (works no matter what "year" type is)
+  const years = [...selected.years].map(String);
+  q = q.or(
+    years
+      .map(y => `journey_date.gte.${y}-01-01,journey_date.lt.${Number(y) + 1}-01-01`)
+      .join(",")
+  );
 
   if (selected.airlines.size) {
     q = q.in("airline", [...selected.airlines]);
@@ -167,9 +179,13 @@ async function loadRoutes() {
 
   if (error) {
     console.error("[routes] load failed:", error);
+
     currentRoutes = [];
+    window.allRoutes = [];
+
     updateAllCounters([]);
     renderSidebar([]);
+
     if (typeof clearSource === "function") {
       clearSource("routes");
       clearSource("airports");
@@ -181,10 +197,8 @@ async function loadRoutes() {
     .filter(r => r && r.geom)
     .sort((a, b) => new Date(b.journey_date) - new Date(a.journey_date));
 
-  window.allRoutes = routes.slice();
   renderRoutes(routes, { resetIsolation: true });
 }
-
 
 // =====================================================
 // ISOLATION LOGIC
