@@ -133,7 +133,24 @@ async function loadRoutes() {
   isolatedUid = null;
   lastRoutesBounds = null;
 
-  let q = sb.from("journeys_routes_cache").select("*");
+  let q = sb
+  .from("journeys_routes_cache")
+  .select(`
+    uid,
+    callsign,
+    airline,
+    journey_type,
+    origin,
+    destination,
+    destination_country,
+    journey_distance,
+    journey_date,
+    year,
+    journey_duration_seconds,
+    geom
+  `);
+
+
 
   if (selected.years.size) {
     q = q.in("year", [...selected.years].map(y => `${y}-01-01`));
