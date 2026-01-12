@@ -3,6 +3,5 @@
 map.on("load", async () => {
   hideSubCountryBorders();
   hideCityLabels();
-  await loadFilters();
-  //await loadRoutes();
+  await loadFilters(); // loadRoutes() is triggered INSIDE this
 });
