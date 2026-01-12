@@ -79,7 +79,7 @@ async function loadFilters() {
   selected.types.clear();
 
   // required defaults
-  if (years.includes("2026")) selected.years.add("2026");
+  if (years.includes("2025")) selected.years.add("2025");
   if (types.includes("Flight")) selected.types.add("Flight");
 
   buildFilterMenu("filter-year", years, selected.years);
