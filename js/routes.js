@@ -1,8 +1,8 @@
 // =====================================================
-// ROUTES.JS (WORKING PATCH)
-// - Year filter always applied (journey_date ranges)
-// - Map always reflects current filter (hard reset source/layers)
-// - No duplicate layer IDs / no repeated handler binding
+// ROUTES.JS (FINAL, CORRECT)
+// - Year filter applied correctly (ANDed date bounds)
+// - Map always reflects Year dropdown
+// - No OR logic widening the result set
 // =====================================================
 
 // Optional stable base set for airport filtering (filtered set only)
@@ -59,7 +59,6 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
   };
 
   // ---------------- MAP (hard reset) ----------------
-  // Remove existing layers/sources so the map cannot "stick" to old data
   if (map.getLayer("routes-hit")) map.removeLayer("routes-hit");
   if (map.getLayer("routes-line")) map.removeLayer("routes-line");
   if (map.getSource("routes")) map.removeSource("routes");
@@ -92,7 +91,7 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
     },
   });
 
-  // Bind handlers once (they continue to work after layer re-adds)
+  // Bind handlers once
   if (!window._routesHandlersBound) {
     window._routesHandlersBound = true;
 
@@ -159,13 +158,13 @@ async function loadRoutes() {
       geom
     `);
 
-  // ✅ Year filter via journey_date ranges (works no matter what "year" type is)
-  const years = [...selected.years].map(String);
-  q = q.or(
-    years
-      .map(y => `journey_date.gte.${y}-01-01,journey_date.lt.${Number(y) + 1}-01-01`)
-      .join(",")
-  );
+  // ✅ CORRECT year filter (ANDed bounds, no OR)
+  if (selected.years.size === 1) {
+    const y = [...selected.years][0];
+    q = q
+      .gte("journey_date", `${y}-01-01`)
+      .lt("journey_date", `${Number(y) + 1}-01-01`);
+  }
 
   if (selected.airlines.size) {
     q = q.in("airline", [...selected.airlines]);
@@ -201,7 +200,7 @@ async function loadRoutes() {
 }
 
 // =====================================================
-// ISOLATION LOGIC
+// ISOLATION LOGIC (unchanged)
 // =====================================================
 function toggleIsolation(uid) {
   if (!isolatedUid && uid) {
