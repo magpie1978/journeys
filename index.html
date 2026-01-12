@@ -229,127 +229,124 @@
       </div>
     </div>
     
-    <!-- ===================================================== -->
-    <!-- ADD JOURNEY – DETAILS MODAL (EMPTY FOR NOW) -->
-    <!-- ===================================================== -->
+<!-- ===================================================== -->
+<!-- ADD JOURNEY – DETAILS MODAL -->
+<!-- ===================================================== -->
     <div id="journeyDetailsModal" class="modal hidden">
-      <div class="modal-content">
+      <div class="modal-content modal-wide">
+    
         <h2>Journey Details</h2>
-        <<div id="journeyDetailsModal" class="modal hidden">
-  <div class="modal-content modal-wide">
-    <h2>Journey Details</h2>
-
-      <form id="journeyDetailsForm">
-  
-        <div class="form-grid">
-  
-          <label>
-            Type
-            <input name="type" required />
-          </label>
-  
-          <label>
-            UID
-            <input name="uid" />
-          </label>
-  
-          <label>
-            Scheduled
-            <input type="datetime-local" name="scheduled" />
-          </label>
-  
-          <label>
-            Airline
-            <input name="airline" />
-          </label>
-  
-          <label>
-            Flight Number
-            <input name="flight_number" />
-          </label>
-  
-          <label>
-            Equipment
-            <input name="equipment" />
-          </label>
-  
-          <label>
-            From
-            <input name="from" />
-          </label>
-  
-          <label>
-            To
-            <input name="to" />
-          </label>
-  
-          <label>
-            Distance
-            <input type="number" name="distance" step="0.01" />
-          </label>
-  
-          <label>
-            Tracking Status
-            <input name="tracking_status" />
-          </label>
-  
-          <label>
-            Cabin
-            <input name="cabin" />
-          </label>
-  
-          <label>
-            Payment Type
-            <input name="payment_type" />
-          </label>
-  
-          <label>
-            Payment Amount (Cash)
-            <input type="number" name="payment_amount_cash" step="0.01" />
-          </label>
-  
-          <label>
-            Payment Amount (Points)
-            <input type="number" name="payment_amount_points" />
-          </label>
-  
-          <label>
-            Leg Details
-            <textarea name="leg_details"></textarea>
-          </label>
-  
-          <label>
-            Journey Details
-            <textarea name="journey_details"></textarea>
-          </label>
-  
-          <label>
-            Country Entry
-            <input name="country_entry" />
-          </label>
-  
-          <label>
-            Destination Coordinates
-            <input name="destination_coordinates" placeholder="lat,lon" />
-          </label>
-  
-        </div>
-
-      <div class="modal-actions">
-        <button type="button" id="journeyDetailsCancel" class="btn-secondary">
-          Cancel
-        </button>
-        <button type="submit" class="btn-primary">
-          Save Journey
-        </button>
-      </div>
-
-    </form>
-  </div>
-</div>
-
+    
+        <form id="journeyDetailsForm">
+    
+          <div class="form-grid">
+    
+            <label>
+              Type
+              <input name="type" required />
+            </label>
+    
+            <label>
+              UID
+              <input name="uid" />
+            </label>
+    
+            <label>
+              Scheduled
+              <input type="datetime-local" name="scheduled" />
+            </label>
+    
+            <label>
+              Airline
+              <input name="airline" />
+            </label>
+    
+            <label>
+              Flight Number
+              <input name="flight_number" />
+            </label>
+    
+            <label>
+              Equipment
+              <input name="equipment" />
+            </label>
+    
+            <label>
+              From
+              <input name="from" />
+            </label>
+    
+            <label>
+              To
+              <input name="to" />
+            </label>
+    
+            <label>
+              Distance
+              <input type="number" name="distance" step="0.01" />
+            </label>
+    
+            <label>
+              Tracking Status
+              <input name="tracking_status" />
+            </label>
+    
+            <label>
+              Cabin
+              <input name="cabin" />
+            </label>
+    
+            <label>
+              Payment Type
+              <input name="payment_type" />
+            </label>
+    
+            <label>
+              Payment Amount (Cash)
+              <input type="number" name="payment_amount_cash" step="0.01" />
+            </label>
+    
+            <label>
+              Payment Amount (Points)
+              <input type="number" name="payment_amount_points" />
+            </label>
+    
+            <label>
+              Leg Details
+              <textarea name="leg_details"></textarea>
+            </label>
+    
+            <label>
+              Journey Details
+              <textarea name="journey_details"></textarea>
+            </label>
+    
+            <label>
+              Country Entry
+              <input name="country_entry" />
+            </label>
+    
+            <label>
+              Destination Coordinates
+              <input name="destination_coordinates" placeholder="lat,lon" />
+            </label>
+    
+          </div>
+    
+          <div class="modal-actions">
+            <button type="button" id="journeyDetailsCancel" class="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              Save Journey
+            </button>
+          </div>
+    
+        </form>
+    
       </div>
     </div>
+
 
     <!-- App logic -->
     <script src="js/config.js"></script>
