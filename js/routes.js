@@ -17,8 +17,10 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
 
   if (!routes.length) {
     currentRoutes = [];
-    clearSource("routes");
-    clearSource("airports");
+    if (typeof clearSource === "function") {
+      clearSource("routes");
+      clearSource("airports");
+    }
     updateAllCounters([]);
     renderSidebar([]);
     return;
@@ -172,9 +174,10 @@ async function loadRoutes() {
     currentRoutes = [];
     updateAllCounters([]);
     renderSidebar([]);
-    clearSource("routes");
-    clearSource("airports");
-    return;
+    if (typeof clearSource === "function") {
+      clearSource("routes");
+      clearSource("airports");
+    }    return;
   }
 
   const routes = (data || [])
@@ -185,9 +188,10 @@ async function loadRoutes() {
   if (routes.length > MAX_ROUTES) {
     console.warn("[routes] too many routes:", routes.length);
     currentRoutes = [];
-    clearSource("routes");
-    clearSource("airports");
-    updateAllCounters([]);
+    if (typeof clearSource === "function") {
+      clearSource("routes");
+      clearSource("airports");
+    }    updateAllCounters([]);
     renderSidebar([]);
     return;
   }
