@@ -140,7 +140,12 @@ async function loadRoutes() {
 
   // ✅ Correct filters (PostgREST-safe)
   if (selected.years.size) {
-    q = q.in("year", [...selected.years]);
+    const years = [...selected.years];
+    q = q.or(
+      years
+        .map(y => `journey_date.gte.${y}-01-01,journey_date.lt.${Number(y) + 1}-01-01`)
+        .join(",")
+    );
   }
 
   if (selected.airlines.size) {
