@@ -1,5 +1,7 @@
 /* global supabase */
 
+let uploadedJourneyUID = null;
+
 
 const addJourneyBtn = document.getElementById("addJourneyBtn");
 const csvUploadModal = document.getElementById("csvUploadModal");
@@ -86,6 +88,29 @@ csvFileInput.addEventListener("change", async (e) => {
     }));
 
 
+    // -----------------------------------------------------
+    // CALCULATE UID (same logic as journeys view)
+    // -----------------------------------------------------
+    const validUTCs = rows
+      .map(r => r.utc)
+      .filter(Boolean)
+      .map(u => new Date(u))
+      .filter(d => !isNaN(d));
+    
+    if (!validUTCs.length) {
+      alert("Could not determine journey start time (UTC missing).");
+      return;
+    }
+    
+    const earliestUTC = new Date(Math.min(...validUTCs));
+    const flightDate = earliestUTC.toISOString().slice(0, 10);
+    const callsign = rows[0].callsign;
+    
+    uploadedJourneyUID = `${callsign}-${flightDate}`;
+
+
+    
+
     if (!rows.length) {
       alert("CSV file contains no data.");
       return;
@@ -103,6 +128,14 @@ csvFileInput.addEventListener("change", async (e) => {
 
     // Success
     closeModal(csvUploadModal);
+    
+    // Inject UID into Journey Details form
+    const uidInput = journeyDetailsForm.querySelector('input[name="uid"]');
+    if (uidInput && uploadedJourneyUID) {
+      uidInput.value = uploadedJourneyUID;
+      uidInput.readOnly = true; // prevent accidental edits
+    }
+    
     openModal(journeyDetailsModal);
 
   } catch (err) {
