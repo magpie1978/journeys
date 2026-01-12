@@ -121,6 +121,13 @@ window.renderRoutes = renderRoutes;
 // LOAD ROUTES
 // =====================================================
 async function loadRoutes() {
+
+  // 🚨 HARD GUARD: never load routes without a year filter
+  if (!selected?.years || selected.years.size === 0) {
+    console.warn("[routes] loadRoutes aborted – no year selected yet");
+    return;
+  }
+
   let q = sb
     .from("journeys_routes_cache")
     .select(`
