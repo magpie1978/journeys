@@ -147,12 +147,13 @@ async function loadRoutes() {
     q = q.in("airline", [...selected.airlines]);
   }
 
-  if (selected.types.size) {
+   if (selected.types.size) {
     q = q.in(
       "journey_type",
-      [...selected.types].map(t => String(t))
+      [...selected.types].map(t => t.value ?? t)
     );
   }
+
 
   const { data, error } = await q;
 
