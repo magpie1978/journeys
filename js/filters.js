@@ -23,7 +23,7 @@ function buildFilterMenu(containerId, values, targetSet) {
 
     cb.addEventListener("change", () => {
       cb.checked ? targetSet.add(v) : targetSet.delete(v);
-      loadRoutes();
+      loadRoutes(); // ✅ always reload routes after change
     });
 
     list.appendChild(label);
@@ -68,49 +68,39 @@ async function loadFilters() {
     return;
   }
 
-  // Years come back as dates or numbers – normalise to YYYY strings
+  // Normalise years to YYYY strings
   const years = [...new Set(
     (data || [])
       .map(d => d.year && String(d.year).slice(0, 4))
       .filter(Boolean)
   )].sort((a, b) => b.localeCompare(a));
 
-  const airlines = [...new Set(
-    (data || []).map(d => d.airline).filter(Boolean)
-  )].sort();
-
-  const types = [...new Set(
-    (data || []).map(d => d.journey_type).filter(Boolean)
-  )].sort();
+  const airlines = [...new Set((data || []).map(d => d.airline).filter(Boolean))].sort();
+  const types = [...new Set((data || []).map(d => d.journey_type).filter(Boolean))].sort();
 
   // Reset selections
   selected.years.clear();
   selected.types.clear();
+  // NOTE: do not clear airlines unless you want to reset that too
+  // selected.airlines.clear();
 
-  // -----------------------------
-  // DEFAULTS
-  // -----------------------------
+  // ✅ Default year = current year if present, else latest in data
   const currentYear = String(new Date().getFullYear());
-
   if (years.includes(currentYear)) {
     selected.years.add(currentYear);
   } else if (years.length) {
-    // fallback: latest available year
     selected.years.add(years[0]);
   }
 
+  // ✅ Default type = Flight
   if (types.includes("Flight")) {
     selected.types.add("Flight");
   }
 
-  // -----------------------------
-  // BUILD MENUS
-  // -----------------------------
   buildFilterMenu("filter-year", years, selected.years);
   buildFilterMenu("filter-airline", airlines, selected.airlines);
   buildFilterMenu("filter-type", types, selected.types);
 
-  // 🔥 Ensure initial route load respects default filters
+  // ✅ CRITICAL: initial route load happens AFTER defaults are set
   loadRoutes();
-  
 }
