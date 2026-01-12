@@ -109,4 +109,8 @@ async function loadFilters() {
   buildFilterMenu("filter-year", years, selected.years);
   buildFilterMenu("filter-airline", airlines, selected.airlines);
   buildFilterMenu("filter-type", types, selected.types);
+
+  // 🔥 Ensure initial route load respects default filters
+  loadRoutes();
+  
 }
