@@ -110,3 +110,50 @@ csvFileInput.addEventListener("change", async (e) => {
     alert("Error reading CSV file.");
   }
 });
+
+
+
+
+
+/*===================================================================================
+/* FORM FOR JOURNEY DETAILS
+/*===================================================================================*/
+
+const journeyDetailsForm = document.getElementById("journeyDetailsForm");
+const journeyDetailsCancel = document.getElementById("journeyDetailsCancel");
+
+journeyDetailsCancel.addEventListener("click", () => {
+  closeModal(journeyDetailsModal);
+});
+
+journeyDetailsForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(journeyDetailsForm);
+
+  const payload = Object.fromEntries(
+    [...formData.entries()].map(([k, v]) => [
+      k,
+      v === "" ? null : v
+    ])
+  );
+
+  try {
+    const { error } = await sb
+      .from("journey_details")
+      .insert([payload]);
+
+    if (error) {
+      console.error("[journey details]", error);
+      alert("Failed to save journey details.");
+      return;
+    }
+
+    closeModal(journeyDetailsModal);
+    alert("Journey details saved successfully.");
+
+  } catch (err) {
+    console.error("[journey details]", err);
+    alert("Unexpected error saving journey details.");
+  }
+});
