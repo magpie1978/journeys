@@ -22,18 +22,35 @@ function closeModal(el) {
 // CSV PARSER (simple, robust enough for clean exports)
 // -----------------------------------------------------
 function parseCSV(text) {
-  const [headerLine, ...lines] = text.trim().split("\n");
-  const headers = headerLine.split(",").map(h => h.trim());
+  const rows = text.trim().split(/\r?\n/);
 
-  return lines.map(line => {
-    const values = line.split(",").map(v => v.trim());
+  const headers = rows.shift().split(",");
+
+  return rows.map(row => {
+    const values = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let char of row) {
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === "," && !inQuotes) {
+        values.push(current);
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    values.push(current);
+
     const obj = {};
     headers.forEach((h, i) => {
-      obj[h] = values[i] ?? null;
+      obj[h.trim()] = values[i]?.replace(/^"|"$/g, "") ?? null;
     });
+
     return obj;
   });
 }
+
 
 // -----------------------------------------------------
 // EVENTS
