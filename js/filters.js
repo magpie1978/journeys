@@ -68,7 +68,6 @@ async function loadFilters() {
     return;
   }
 
-  // Normalise years to YYYY strings
   const years = [...new Set(
     (data || [])
       .map(d => d.year && String(d.year).slice(0, 4))
@@ -81,10 +80,8 @@ async function loadFilters() {
   // Reset selections
   selected.years.clear();
   selected.types.clear();
-  // NOTE: do not clear airlines unless you want to reset that too
-  // selected.airlines.clear();
 
-  // ✅ Default year = current year if present, else latest in data
+  // Defaults
   const currentYear = String(new Date().getFullYear());
   if (years.includes(currentYear)) {
     selected.years.add(currentYear);
@@ -92,7 +89,6 @@ async function loadFilters() {
     selected.years.add(years[0]);
   }
 
-  // ✅ Default type = Flight
   if (types.includes("Flight")) {
     selected.types.add("Flight");
   }
@@ -101,6 +97,6 @@ async function loadFilters() {
   buildFilterMenu("filter-airline", airlines, selected.airlines);
   buildFilterMenu("filter-type", types, selected.types);
 
-  // ✅ CRITICAL: initial route load happens AFTER defaults are set
+  // 🔥 CRITICAL: trigger initial filtered load
   loadRoutes();
 }
