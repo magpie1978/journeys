@@ -1,5 +1,6 @@
 /* global supabase */
 
+
 const addJourneyBtn = document.getElementById("addJourneyBtn");
 const csvUploadModal = document.getElementById("csvUploadModal");
 const journeyDetailsModal = document.getElementById("journeyDetailsModal");
