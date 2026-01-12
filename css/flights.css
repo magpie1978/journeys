@@ -867,3 +867,25 @@ body {
   margin-top: 20px;
   text-align: right;
 }
+
+.modal-wide {
+  max-width: 900px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.form-grid input,
+.form-grid textarea {
+  padding: 6px;
+  border-radius: 6px;
+}
