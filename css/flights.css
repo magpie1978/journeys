@@ -836,3 +836,34 @@ body {
   font-weight: 700;       /* same as .flight-route */
   line-height: 1.1;
 }
+
+
+
+/* ================= MODALS FOR TEXT FILE UPLOAD================= */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: rgba(20, 20, 25, 0.95);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 320px;
+  color: #fff;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  text-align: right;
+}
