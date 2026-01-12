@@ -153,7 +153,7 @@ async function loadRoutes() {
 
 
   if (selected.years.size) {
-    q = q.in("year", [...selected.years].map(y => `${y}-01-01`));
+    q = q.in("year", [...selected.years]);
   }
   if (selected.airlines.size) q = q.in("airline", [...selected.airlines]);
   if (selected.types.size) q = q.in("journey_type", [...selected.types]);
