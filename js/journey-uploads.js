@@ -80,7 +80,7 @@ csvFileInput.addEventListener("change", async (e) => {
       return;
     }
 
-    const { error } = await supabase
+    const { error } = await sb
       .from("journey_tracks")
       .insert(rows);
 
