@@ -138,9 +138,9 @@ async function loadRoutes() {
       geom
     `);
 
-  // ✅ Correct filters (PostgREST-safe)
+  // ✅ Year filter: use journey_date ranges (works regardless of year datatype)
   if (selected.years.size) {
-    const years = [...selected.years];
+    const years = [...selected.years].map(String);
     q = q.or(
       years
         .map(y => `journey_date.gte.${y}-01-01,journey_date.lt.${Number(y) + 1}-01-01`)
@@ -152,23 +152,17 @@ async function loadRoutes() {
     q = q.in("airline", [...selected.airlines]);
   }
 
-   if (selected.types.size) {
-    q = q.in(
-      "journey_type",
-      [...selected.types].map(t => t.value ?? t)
-    );
+  if (selected.types.size) {
+    q = q.in("journey_type", [...selected.types].map(t => t?.value ?? t));
   }
-
 
   const { data, error } = await q;
 
   if (error) {
     console.error("[routes] load failed:", error);
-
     currentRoutes = [];
     updateAllCounters([]);
     renderSidebar([]);
-
     if (typeof clearSource === "function") {
       clearSource("routes");
       clearSource("airports");
@@ -177,26 +171,13 @@ async function loadRoutes() {
   }
 
   const routes = (data || [])
-    .filter(r => r.geom)
+    .filter(r => r && r.geom)
     .sort((a, b) => new Date(b.journey_date) - new Date(a.journey_date));
-
-  if (routes.length > MAX_ROUTES) {
-    console.warn("[routes] too many routes:", routes.length);
-
-    currentRoutes = [];
-    updateAllCounters([]);
-    renderSidebar([]);
-
-    if (typeof clearSource === "function") {
-      clearSource("routes");
-      clearSource("airports");
-    }
-    return;
-  }
 
   window.allRoutes = routes.slice();
   renderRoutes(routes, { resetIsolation: true });
 }
+
 
 // =====================================================
 // ISOLATION LOGIC
