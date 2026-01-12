@@ -159,13 +159,28 @@ async function loadRoutes() {
     `);
 
   // ✅ CORRECT year filter (ANDed bounds, no OR)
-  if (selected.years.size === 1) {
-    const y = [...selected.years][0];
-    q = q
-      .gte("journey_date", `${y}-01-01`)
-      .lt("journey_date", `${Number(y) + 1}-01-01`);
-  }
+  //if (selected.years.size === 1) {
+  //  const y = [...selected.years][0];
+  //  q = q
+  //    .gte("journey_date", `${y}-01-01`)
+  //    .lt("journey_date", `${Number(y) + 1}-01-01`);
+  //}
 
+
+  // ✅ Year filter: supports multiple selected years
+  const years = [...selected.years].map(Number);
+  
+  // Build OR ranges like:
+  // (2024-01-01 → 2025-01-01) OR (2025-01-01 → 2026-01-01)
+  const yearClauses = years.map(y =>
+    `and(journey_date.gte.${y}-01-01,journey_date.lt.${y + 1}-01-01)`
+  );
+  
+  // Apply as OR filter
+  q = q.or(yearClauses.join(","));
+
+
+  
   if (selected.airlines.size) {
     q = q.in("airline", [...selected.airlines]);
   }
