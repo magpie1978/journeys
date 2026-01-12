@@ -65,7 +65,8 @@
         <!-- RIGHT SIDE -->
         <div class="top-actions">
           <a href="stats.html" class="top-btn">Stats</a>
-        </div>  
+          <button id="addJourneyBtn" class="top-btn primary">Add Journey</button>
+        </div>          
       </div>
     </div>
   
@@ -206,7 +207,38 @@
 
       </div>  <!-- end of map wrapper -->
     </div>  <!-- end of main layout -->
- 
+
+
+
+    <!-- ===================================================== -->
+    <!-- ADD JOURNEY – CSV UPLOAD MODAL -->
+    <!-- ===================================================== -->
+    <div id="csvUploadModal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Add Journey – Upload CSV</h2>
+    
+        <input
+          type="file"
+          id="csvFileInput"
+          accept=".csv"
+        />
+    
+        <div class="modal-actions">
+          <button id="csvUploadCancel" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ===================================================== -->
+    <!-- ADD JOURNEY – DETAILS MODAL (EMPTY FOR NOW) -->
+    <!-- ===================================================== -->
+    <div id="journeyDetailsModal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Journey Details</h2>
+        <!-- Placeholder for next phase -->
+      </div>
+    </div>
+
     <!-- App logic -->
     <script src="js/config.js"></script>
     <script src="js/logos.js"></script>
