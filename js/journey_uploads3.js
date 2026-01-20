@@ -20,7 +20,7 @@ function closeModal(el) {
 }
 
 // -----------------------------------------------------
-// CSV PARSER (simple, robust enough for clean exports)
+// CSV PARSER
 // -----------------------------------------------------
 function parseCSV(text) {
   const rows = text.trim().split(/\r?\n/);
@@ -84,9 +84,6 @@ csvFileInput.addEventListener("change", async (e) => {
       position: r.Position
     }));
 
-    // -----------------------------------------------------
-    // CALCULATE UID (same logic as journeys view)
-    // -----------------------------------------------------
     const validUTCs = rows
       .map(r => r.utc)
       .filter(Boolean)
@@ -94,7 +91,7 @@ csvFileInput.addEventListener("change", async (e) => {
       .filter(d => !isNaN(d));
 
     if (!validUTCs.length) {
-      alert("Could not determine journey start time (UTC missing).");
+      alert("Could not determine journey start time.");
       return;
     }
 
@@ -104,27 +101,20 @@ csvFileInput.addEventListener("change", async (e) => {
 
     uploadedJourneyUID = `${callsign}-${flightDate}`;
 
-    if (!rows.length) {
-      alert("CSV file contains no data.");
-      return;
-    }
-
     const { error } = await sb
       .from("journey_tracks")
       .insert(rows);
 
     if (error) {
       console.error("[journey upload]", error);
-      alert("Upload failed – see console.");
+      alert("Upload failed.");
       return;
     }
 
-    // Success
     closeModal(csvUploadModal);
 
-    // Inject UID into Journey Details form
     const uidInput = journeyDetailsForm.querySelector('input[name="uid"]');
-    if (uidInput && uploadedJourneyUID) {
+    if (uidInput) {
       uidInput.value = uploadedJourneyUID;
       uidInput.readOnly = true;
     }
@@ -137,10 +127,9 @@ csvFileInput.addEventListener("change", async (e) => {
   }
 });
 
-/*===================================================================================
-/* FORM FOR JOURNEY DETAILS
-/*===================================================================================*/
-
+// -----------------------------------------------------
+// JOURNEY DETAILS FORM
+// -----------------------------------------------------
 const journeyDetailsForm = document.getElementById("journeyDetailsForm");
 const journeyDetailsCancel = document.getElementById("journeyDetailsCancel");
 
@@ -151,13 +140,9 @@ journeyDetailsCancel.addEventListener("click", () => {
 journeyDetailsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const formData = new FormData(journeyDetailsForm);
-
   const payload = Object.fromEntries(
-    [...formData.entries()].map(([k, v]) => [
-      k,
-      v === "" ? null : v
-    ])
+    [...new FormData(journeyDetailsForm).entries()]
+      .map(([k, v]) => [k, v === "" ? null : v])
   );
 
   try {
@@ -171,42 +156,11 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    // -----------------------------------------------------
-    // REFRESH MATERIALISED VIEW (EDGE FUNCTION)
-    // -----------------------------------------------------
-
-
-    
-    //new code
-    //const res = await fetch(
-    //  "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/efresh_journeys_routes",
-    //  { method: "POST" }
-    //);
-
-    const { error: refreshError } = await sb.functions.invoke(
-      "refresh_materialised_view"
-    );
-    
-    if (refreshError) {
-      console.error("[refresh]", refreshError);
-    }
-
-
-    //console.log("[refresh] status:", res.status);
-    //console.log("[refresh] body:", await res.text());
-    //end new code
-
-    
-    //await fetch(
-    //  "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/refresh_journeys_routes",
-    //  { method: "POST" }
-    //);
-
     closeModal(journeyDetailsModal);
-    alert("Journey details saved and stats refreshed.");
+    alert("Journey details saved.");
 
   } catch (err) {
     console.error("[journey details]", err);
-    alert("Unexpected error saving journey details.");
+    alert("Unexpected error.");
   }
 });
