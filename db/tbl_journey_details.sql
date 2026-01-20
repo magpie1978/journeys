@@ -1,4 +1,4 @@
-create table public.journey_details (
+create or replace table public.journey_details (
   type text null,
   uid text not null,
   scheduled text null,
