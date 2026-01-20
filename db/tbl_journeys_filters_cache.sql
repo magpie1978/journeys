@@ -5,4 +5,4 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-create table public.journeys_filters_cache (year date null, airline text null) TABLESPACE pg_default;
+create or replace table public.journeys_filters_cache (year date null, airline text null) TABLESPACE pg_default;
