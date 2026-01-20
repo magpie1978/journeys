@@ -60,7 +60,7 @@ document.addEventListener("click", e => {
 // =====================================================
 async function loadFilters() {
   const { data, error } = await sb
-    .from("journeys_routes_cache_copy3")
+    .from("journeys_routes_core_mv")
     .select("year, airline, journey_type");
 
   if (error) {
