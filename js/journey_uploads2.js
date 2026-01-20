@@ -184,7 +184,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
     //);
 
     const { error: refreshError } = await sb.functions.invoke(
-      "refresh_journeys_routes"
+      "refresh_materialised_view"
     );
     
     if (refreshError) {
