@@ -1,4 +1,4 @@
-create table public.journey_tracks (
+create or replace table public.journey_tracks (
   timestamp bigint null,
   utc timestamp with time zone null,
   callsign text null,
