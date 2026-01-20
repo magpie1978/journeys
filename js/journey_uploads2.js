@@ -177,7 +177,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
    
     //new code
     const res = await fetch(
-      "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/refresh_journeys_routes",
+      "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/efresh_journeys_routes",
       { method: "POST" }
     );
 
