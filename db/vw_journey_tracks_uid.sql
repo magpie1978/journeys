@@ -1,4 +1,4 @@
-create view public.journey_tracks_uid as
+create or replace view public.journey_tracks_uid as
 with
   base as (
     select
