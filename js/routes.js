@@ -142,7 +142,7 @@ async function loadRoutes() {
   }
 
   let q = sb
-    .from("journeys_routes_cache_copy3")
+    .from("journeys_routes_geom_mv")
     .select(`
       uid,
       callsign,
