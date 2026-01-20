@@ -1,3 +1,10 @@
+-- ============================================
+-- View: journeys_routes_cache
+-- Depends on: journeys_routes
+-- Used by: stats.html, flights.html
+-- Last updated: 2026-01-15
+-- ============================================
+
 create or replace table public.journey_details (
   type text null,
   uid text not null,
