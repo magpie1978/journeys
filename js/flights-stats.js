@@ -12,7 +12,8 @@ async function loadStatsBaseDataOnce() {
 
   const { data, error } = await sb
     //.from("journeys_routes_cache")
-    .from("journeys_routes_cache_copy3")    
+    //.from("journeys_routes_cache_copy3")  
+    .from("journeys_routes_core_mv")
     .select("year, journey_type, journey_distance, airline, destination_country");
 
   if (error) {
