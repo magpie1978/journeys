@@ -1,4 +1,4 @@
-/* global supabase */
+/* global sb */
 
 let uploadedJourneyUID = null;
 
@@ -109,7 +109,7 @@ csvFileInput.addEventListener("change", async (e) => {
       return;
     }
 
-    const { error } = await supabase
+    const { error } = await sb
       .from("journey_tracks")
       .insert(rows);
 
@@ -161,7 +161,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
   );
 
   try {
-    const { error } = await supabase
+    const { error } = await sb
       .from("journey_details_copy")
       .insert([payload]);
 
