@@ -6,7 +6,7 @@
 -- Refresh: manual / scheduled
 -- ============================================
 
-create materialized view public.journeys_routes_cache as
+create materialized view public.journeys_routes_cache_copy3 as
 select
   uid,
   callsign,
@@ -15,7 +15,7 @@ select
   origin,
   destination,
   destination_country,
-  journey_distance,
+  sum(segment_distance) as journey_distance,
   date (min("timestamp")) as journey_date,
   date_trunc('year'::text, min("timestamp"))::date as year,
   EXTRACT(
@@ -40,7 +40,7 @@ select
     )
   )::json as geom
 from
-  journeys
+  journeys_copy2
 group by
   uid,
   callsign,
@@ -48,8 +48,7 @@ group by
   type,
   origin,
   destination,
-  destination_country,
-  journey_distance;
+  destination_country;
 
 CREATE INDEX journeys_routes_cache_uid_idx
   ON public.journeys_routes_cache (uid);
