@@ -1,3 +1,11 @@
+-- ============================================
+-- Materialized view: journeys_routes_cache
+-- Source: journeys
+-- Replaces: journeys_routes (runtime view)
+-- Used by: stats.html, flights.html
+-- Refresh: manual / scheduled
+-- ============================================
+
 create materialized view public.journeys_routes_cache as
 select
   uid,
