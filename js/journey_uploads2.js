@@ -174,15 +174,26 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
     // -----------------------------------------------------
     // REFRESH MATERIALISED VIEW (EDGE FUNCTION)
     // -----------------------------------------------------
-   
-    //new code
-    const res = await fetch(
-      "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/efresh_journeys_routes",
-      { method: "POST" }
-    );
 
-    console.log("[refresh] status:", res.status);
-    console.log("[refresh] body:", await res.text());
+
+    
+    //new code
+    //const res = await fetch(
+    //  "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/efresh_journeys_routes",
+    //  { method: "POST" }
+    //);
+
+    const { error: refreshError } = await sb.functions.invoke(
+      "refresh_journeys_routes"
+    );
+    
+    if (refreshError) {
+      console.error("[refresh]", refreshError);
+    }
+
+
+    //console.log("[refresh] status:", res.status);
+    //console.log("[refresh] body:", await res.text());
     //end new code
 
     
