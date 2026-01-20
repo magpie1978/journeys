@@ -142,7 +142,7 @@ async function loadRoutes() {
   }
 
   let q = sb
-    .from("journeys_routes_cache")
+    .from("journeys_routes_cache_copy2")
     .select(`
       uid,
       callsign,
