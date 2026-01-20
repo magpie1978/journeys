@@ -1,4 +1,4 @@
-create table public.journey_locations (
+create or replace table public.journey_locations (
   category text null,
   airport_code text not null,
   airport text null,
