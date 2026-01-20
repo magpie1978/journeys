@@ -173,11 +173,11 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
 
   try {
     const { error } = await sb
-      .from("journey_details")
+      .from("journey_details_copy")
       .insert([payload]);
 
     if (error) {
-      console.error("[journey details_copy]", error);
+      console.error("[journey details]", error);
       alert("Failed to save journey details.");
       return;
     }
