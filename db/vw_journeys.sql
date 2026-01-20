@@ -5,7 +5,7 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-create or replace view public.journeys as
+create view public.journeys_copy2 as
 with
   base as (
     select
@@ -115,6 +115,7 @@ select
   tr."position",
   tr.altitude,
   tr.direction,
+  tr.speed,
   case
     when tr.uid <> tr.uid_prev then null::double precision
     when tr.lat_prev is null then null::double precision
@@ -127,9 +128,9 @@ select
   det.airline,
   det.flight_number,
   det.equipment,
+  a.model,
   det."from" as origin,
   det."to" as destination,
-  det.distance as journey_distance,
   det.tracking_status,
   det.cabin,
   det.payment_type,
@@ -137,8 +138,6 @@ select
   det.payment_amount_points,
   det.leg_details,
   det.journey_details,
-  det.country_entry,
-  det.destination_coordinates,
   o.airport_code as origin_code,
   o.airport as origin_name,
   o.city as origin_city,
@@ -146,9 +145,11 @@ select
   d.airport_code as destination_code,
   d.airport as destination_name,
   d.city as destination_city,
-  d.country as destination_country
+  d.country as destination_country,
+  d.country as country_entry
 from
   lagged tr
-  left join journey_details det on tr.uid = det.uid
+  left join journey_details_copy det on tr.uid = det.uid
   left join journey_locations o on o.airport_code = det."from"
-  left join journey_destinations d on d.airport_code = det."to";
+  left join journey_destinations d on d.airport_code = det."to"
+  left join journey_aircraft a on a.icao = "left" (det.equipment, 4);
