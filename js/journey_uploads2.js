@@ -174,10 +174,22 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
     // -----------------------------------------------------
     // REFRESH MATERIALISED VIEW (EDGE FUNCTION)
     // -----------------------------------------------------
-    await fetch(
+   
+    //new code
+    const res = await fetch(
       "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/refresh_journeys_routes",
       { method: "POST" }
     );
+
+    console.log("[refresh] status:", res.status);
+    console.log("[refresh] body:", await res.text());
+    //end new code
+
+    
+    //await fetch(
+    //  "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/refresh_journeys_routes",
+    //  { method: "POST" }
+    //);
 
     closeModal(journeyDetailsModal);
     alert("Journey details saved and stats refreshed.");
