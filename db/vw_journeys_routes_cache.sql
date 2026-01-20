@@ -42,3 +42,15 @@ group by
   destination,
   destination_country,
   journey_distance;
+
+CREATE INDEX journeys_routes_cache_uid_idx
+  ON public.journeys_routes_cache (uid);
+
+CREATE INDEX journeys_routes_cache_year_idx
+  ON public.journeys_routes_cache (year);
+
+CREATE INDEX journeys_routes_cache_airline_idx
+  ON public.journeys_routes_cache (airline);
+
+CREATE INDEX journeys_routes_cache_journey_type_idx
+  ON public.journeys_routes_cache (journey_type);
