@@ -177,7 +177,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
       .insert([payload]);
 
     if (error) {
-      console.error("[journey details]", error);
+      console.error("[journey details_copy]", error);
       alert("Failed to save journey details.");
       return;
     }
