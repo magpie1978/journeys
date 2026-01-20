@@ -142,7 +142,7 @@ async function loadRoutes() {
   }
 
   let q = sb
-    .from("journeys_routes_geom_mv")
+    .from("journeys_routes")
     .select(`
       uid,
       callsign,
@@ -157,14 +157,6 @@ async function loadRoutes() {
       journey_duration_seconds,
       geom
     `);
-
-  // ✅ CORRECT year filter (ANDed bounds, no OR)
-  //if (selected.years.size === 1) {
-  //  const y = [...selected.years][0];
-  //  q = q
-  //    .gte("journey_date", `${y}-01-01`)
-  //    .lt("journey_date", `${Number(y) + 1}-01-01`);
-  //}
 
 
   // ✅ Year filter: supports multiple selected years
