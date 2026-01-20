@@ -1,25 +1,16 @@
-/* global sb */
+/* global supabase */
 
-// ============================================================================
-// STATE
-// ============================================================================
 let uploadedJourneyUID = null;
 
-// ============================================================================
-// DOM ELEMENTS
-// ============================================================================
 const addJourneyBtn = document.getElementById("addJourneyBtn");
 const csvUploadModal = document.getElementById("csvUploadModal");
 const journeyDetailsModal = document.getElementById("journeyDetailsModal");
 const csvFileInput = document.getElementById("csvFileInput");
 const csvUploadCancel = document.getElementById("csvUploadCancel");
 
-const journeyDetailsForm = document.getElementById("journeyDetailsForm");
-const journeyDetailsCancel = document.getElementById("journeyDetailsCancel");
-
-// ============================================================================
+// -----------------------------------------------------
 // MODAL HELPERS
-// ============================================================================
+// -----------------------------------------------------
 function openModal(el) {
   el.classList.remove("hidden");
 }
@@ -28,9 +19,9 @@ function closeModal(el) {
   el.classList.add("hidden");
 }
 
-// ============================================================================
-// CSV PARSER (simple + robust for clean exports)
-// ============================================================================
+// -----------------------------------------------------
+// CSV PARSER (simple, robust enough for clean exports)
+// -----------------------------------------------------
 function parseCSV(text) {
   const rows = text.trim().split(/\r?\n/);
   const headers = rows.shift().split(",");
@@ -60,9 +51,9 @@ function parseCSV(text) {
   });
 }
 
-// ============================================================================
+// -----------------------------------------------------
 // EVENTS
-// ============================================================================
+// -----------------------------------------------------
 addJourneyBtn.addEventListener("click", () => {
   csvFileInput.value = "";
   openModal(csvUploadModal);
@@ -72,13 +63,9 @@ csvUploadCancel.addEventListener("click", () => {
   closeModal(csvUploadModal);
 });
 
-journeyDetailsCancel.addEventListener("click", () => {
-  closeModal(journeyDetailsModal);
-});
-
-// ============================================================================
-// HANDLE CSV FILE SELECTION + UPLOAD
-// ============================================================================
+// -----------------------------------------------------
+// HANDLE FILE SELECTION
+// -----------------------------------------------------
 csvFileInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -87,14 +74,6 @@ csvFileInput.addEventListener("change", async (e) => {
     const text = await file.text();
     const rawRows = parseCSV(text);
 
-    if (!rawRows.length) {
-      alert("CSV file contains no data.");
-      return;
-    }
-
-    // -----------------------------------------
-    // MAP CSV → journey_tracks rows
-    // -----------------------------------------
     const rows = rawRows.map(r => ({
       timestamp: r.Timestamp,
       utc: r.UTC,
@@ -105,9 +84,9 @@ csvFileInput.addEventListener("change", async (e) => {
       position: r.Position
     }));
 
-    // -----------------------------------------
+    // -----------------------------------------------------
     // CALCULATE UID (same logic as journeys view)
-    // -----------------------------------------
+    // -----------------------------------------------------
     const validUTCs = rows
       .map(r => r.utc)
       .filter(Boolean)
@@ -125,10 +104,12 @@ csvFileInput.addEventListener("change", async (e) => {
 
     uploadedJourneyUID = `${callsign}-${flightDate}`;
 
-    // -----------------------------------------
-    // INSERT TRACK DATA
-    // -----------------------------------------
-    const { error } = await sb
+    if (!rows.length) {
+      alert("CSV file contains no data.");
+      return;
+    }
+
+    const { error } = await supabase
       .from("journey_tracks")
       .insert(rows);
 
@@ -138,11 +119,10 @@ csvFileInput.addEventListener("change", async (e) => {
       return;
     }
 
-    // -----------------------------------------
-    // SUCCESS → OPEN DETAILS FORM
-    // -----------------------------------------
+    // Success
     closeModal(csvUploadModal);
 
+    // Inject UID into Journey Details form
     const uidInput = journeyDetailsForm.querySelector('input[name="uid"]');
     if (uidInput && uploadedJourneyUID) {
       uidInput.value = uploadedJourneyUID;
@@ -157,9 +137,17 @@ csvFileInput.addEventListener("change", async (e) => {
   }
 });
 
-// ============================================================================
-// JOURNEY DETAILS FORM SUBMIT
-// ============================================================================
+/*===================================================================================
+/* FORM FOR JOURNEY DETAILS
+/*===================================================================================*/
+
+const journeyDetailsForm = document.getElementById("journeyDetailsForm");
+const journeyDetailsCancel = document.getElementById("journeyDetailsCancel");
+
+journeyDetailsCancel.addEventListener("click", () => {
+  closeModal(journeyDetailsModal);
+});
+
 journeyDetailsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -173,10 +161,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
   );
 
   try {
-    // -----------------------------------------
-    // SAVE JOURNEY DETAILS
-    // -----------------------------------------
-    const { error } = await sb
+    const { error } = await supabase
       .from("journey_details_copy")
       .insert([payload]);
 
@@ -186,17 +171,14 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    // -----------------------------------------
-    // REFRESH MATERIALISED VIEW (SERVER-SIDE)
-    // -----------------------------------------
+    // -----------------------------------------------------
+    // REFRESH MATERIALISED VIEW (EDGE FUNCTION)
+    // -----------------------------------------------------
     await fetch(
       "https://jxmyetsjqkrluxqtevxy.supabase.co/functions/v1/refresh_journeys_routes",
       { method: "POST" }
     );
 
-    // -----------------------------------------
-    // SUCCESS
-    // -----------------------------------------
     closeModal(journeyDetailsModal);
     alert("Journey details saved and stats refreshed.");
 
