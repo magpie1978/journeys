@@ -5,7 +5,7 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-create view public.journeys_copy2 as
+create or replace view public.journeys_copy2 as
 with
   base as (
     select
