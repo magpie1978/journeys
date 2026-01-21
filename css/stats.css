@@ -163,10 +163,6 @@ body {
   height: 100%;
 }
 
-/* IMPORTANT: prevent canvas being stretched (causes fuzzy/distorted text) */
-.airline-chart-scroll canvas {
-  height: auto !important;
-}
 
 /* Chart must be allowed to be tall */
 #flightsPerAirlineYearChart {
