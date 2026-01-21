@@ -318,43 +318,41 @@ function renderRight({ airlines, datasets }) {
 
   airlineByYearChart = new Chart(canvas.getContext("2d"), {
     type: "bar",
+  
     data: {
       labels: airlines,
-      datasets, // already styled in flightsPerAirlineByYear()
+      datasets // already styled in flightsPerAirlineByYear()
     },
+  
     options: {
       indexAxis: "y",
-      responsive: false, // critical for scroll + manual sizing
+      responsive: false,
       maintainAspectRatio: false,
-      animation: false,
-      layout: { padding: { top: 6, right: 12, bottom: 24, left: 12 } },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items => items[0]?.label || "",
-            label: ctx => `${ctx.dataset.label}: ${ctx.raw} flights`,
-          },
-        },
-      },
+  
       scales: {
-        x: {
-          stacked: true,
-          grid: { color: GRID },
-          ticks: { precision: 0, font: { size: 11 } },
-        },
+        x: { stacked: true },
         y: {
           stacked: true,
-          grid: { display: false },
-          ticks: { autoSkip: false, font: { size: 11 }, padding: 10 },
-        },
+          ticks: { autoSkip: false }
+        }
       },
-    },
+  
+      datasets: {
+        bar: {
+          categoryPercentage: 1.0, // fill vertical space
+          barPercentage: 0.9
+        }
+      },
+  
+      plugins: {
+        legend: { display: false }
+      }
+    }
   });
-
-  // Reset scroll to top so user sees “top 20” initially
-  container.scrollTop = 0;
-}
+  
+    // Reset scroll to top so user sees “top 20” initially
+    container.scrollTop = 0;
+  }
 
 //
 // -----------------------------------------------------
