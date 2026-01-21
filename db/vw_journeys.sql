@@ -151,5 +151,5 @@ from
   lagged tr
   left join journey_details det on tr.uid = det.uid
   left join journey_locations o on o.airport_code = det."from"
-  left join journey_destinations d on d.airport_code = det."to"
+  left join journey_locations d on d.airport_code = det."to"
   left join journey_aircraft a on a.icao = "left" (det.equipment, 4);
