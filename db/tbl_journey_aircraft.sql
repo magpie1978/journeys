@@ -5,8 +5,8 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-CREATE OR REPLACE TABLE public.journey_aircraft 
-  (icao text null,
+CREATE public.journey_aircraft (
+  icao text null, 
   iata text null, 
   model text null) 
 TABLESPACE pg_default;
