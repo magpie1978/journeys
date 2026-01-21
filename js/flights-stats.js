@@ -11,8 +11,6 @@ async function loadStatsBaseDataOnce() {
   if (baseStatsData.length) return baseStatsData;
 
   const { data, error } = await sb
-    //.from("journeys_routes_cache")
-    //.from("journeys_routes_cache_copy3")  
     .from("journeys_routes_core_mv")
     .select("year, journey_type, journey_distance, airline, destination_country");
 
@@ -209,9 +207,8 @@ function renderFlightsPerAirlineByYear(airlines, datasets) {
 
 
 
-// =====================================================
-// HARD CHECK (this will tell us EXACTLY what’s missing)
-// =====================================================
+
+/*
 function debugYearMismatch(data, year = "2017") {
   const top = flightsPerYear(data)[year] || 0;
 
@@ -244,6 +241,8 @@ function debugYearMismatch(data, year = "2017") {
   }, {});
   console.table(counts);
 }
+*/
+
 
 // =====================================================
 // MAIN UPDATE (one source of truth)
