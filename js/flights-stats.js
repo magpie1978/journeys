@@ -208,7 +208,7 @@ function renderFlightsPerAirlineByYear(airlines, datasets) {
 
 
 
-/*
+
 function debugYearMismatch(data, year = "2017") {
   const top = flightsPerYear(data)[year] || 0;
 
@@ -241,7 +241,7 @@ function debugYearMismatch(data, year = "2017") {
   }, {});
   console.table(counts);
 }
-*/
+
 
 
 // =====================================================
