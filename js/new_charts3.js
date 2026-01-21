@@ -52,6 +52,50 @@ const GRID = "rgba(255,255,255,0.08)";
 const RIGHT_ROW_HEIGHT = 28;
 const RIGHT_VISIBLE_ROWS = 28;
 
+
+
+//
+// -----------------------------------------------------
+// ADD END LABEL PLUGIN
+// -----------------------------------------------------
+
+const barEndLabelPlugin = {
+  id: "barEndLabels",
+  afterDatasetsDraw(chart) {
+    const { ctx, scales } = chart;
+    const xScale = scales.x;
+    const yScale = scales.y;
+
+    ctx.save();
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.fillStyle = "#ccc";
+    ctx.textBaseline = "middle";
+
+    // Loop over each airline (y-axis label)
+    chart.data.labels.forEach((label, index) => {
+      let total = 0;
+
+      // Sum stacked datasets for this row
+      chart.data.datasets.forEach(ds => {
+        const value = ds.data[index];
+        if (typeof value === "number") total += value;
+      });
+
+      if (total > 0) {
+        const x = xScale.getPixelForValue(total) + 6; // offset right
+        const y = yScale.getPixelForTick(index);
+
+        ctx.fillText(total, x, y);
+      }
+    });
+
+    ctx.restore();
+  }
+};
+
+
+
+
 //
 // -----------------------------------------------------
 // LOAD BASE DATA
@@ -345,10 +389,16 @@ function renderRight({ airlines, datasets }) {
       },
   
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        barEndLabels: true
       }
-    }
+    },
+    plugins: [barEndLabelPlugin]
   });
+
+
+
+
   
     // Reset scroll to top so user sees “top 20” initially
     container.scrollTop = 0;
