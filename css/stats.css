@@ -68,6 +68,7 @@ body {
 
 
 
+
 /* Fixed header */
 .stats-panel--right .panel-head {
   flex: 0 0 auto;
@@ -113,6 +114,11 @@ body {
   display: block;
 }
 
+.chart-fill,
+.airline-scroll {
+  flex: 1;
+  min-height: 0; /* 🔑 REQUIRED for scroll + canvas */
+}
 
 /* Nice scrollbar (optional) */
 .airline-scroll::-webkit-scrollbar {
@@ -170,11 +176,6 @@ body {
 #flightsPerAirlineYearChart {
   display: block;
   width: 100% !important;
-}
-
-
-.stats-panel--right {
-  grid-row: 1 / span 2;   /* ⬅ spans both rows */
 }
 
 
