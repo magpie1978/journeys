@@ -362,7 +362,19 @@ function renderFlightsPerYearPerAirline(data) {
     type: "bar",
     data: {
       labels: data.years,
-      datasets: data.datasets,
+      datasets: data.datasets.map(ds => ({
+        ...ds,
+
+        // ✅ FORCE SAME COLOUR FOR ALL AIRLINES
+        backgroundColor: "rgba(201,162,77,0.7)",
+        borderColor: "rgba(201,162,77,0.9)",
+        borderWidth: 1,
+
+        // visual polish
+        borderSkipped: false,
+        barPercentage: 0.85,
+        categoryPercentage: 0.85,
+      })),
     },
     options: {
       responsive: true,
