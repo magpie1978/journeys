@@ -175,6 +175,9 @@ body {
 }
 
 
+.stats-panel--right {
+  grid-row: 1 / span 2;   /* ⬅ spans both rows */
+}
 
 
 .stats-panel--right {
