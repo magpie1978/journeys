@@ -5,7 +5,7 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-create or replace table public.journey_tracks (
+create table public.journey_tracks (
   timestamp bigint null,
   utc timestamp with time zone null,
   callsign text null,
