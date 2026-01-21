@@ -5,7 +5,7 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-CREATE OR REPLACE TABLE public.journey_destinations (
+create table public.journey_destinations (
   category text null,
   airport_code text not null,
   airport text null,
