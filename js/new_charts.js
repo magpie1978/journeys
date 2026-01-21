@@ -366,7 +366,7 @@ function renderYearChart(values, metric) {
 
 
 
-let airlineYearStackedChart = null;
+let airlineYearHorizontalChart = null;
 
 function renderFlightsPerAirlineByYear(data) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
@@ -376,15 +376,17 @@ function renderFlightsPerAirlineByYear(data) {
   const VISIBLE_ROWS = 20;
 
   const totalHeight = data.airlines.length * ROW_HEIGHT;
-  const minHeight = VISIBLE_ROWS * ROW_HEIGHT;
+  const visibleHeight = VISIBLE_ROWS * ROW_HEIGHT;
 
-  // Canvas must be tall (to scroll)
+  // Make canvas tall
   canvas.height = totalHeight;
   canvas.style.height = `${totalHeight}px`;
-  
-  // Parent container controls viewport
-  canvas.parentElement.style.maxHeight = `${visibleHeight}px`;
-  canvas.parentElement.style.height = `${visibleHeight}px`;
+
+  // Scroll container
+  const scrollContainer = canvas.parentElement;
+  scrollContainer.style.height = `${visibleHeight}px`;
+  scrollContainer.style.maxHeight = `${visibleHeight}px`;
+  scrollContainer.style.overflowY = "auto";
 
   const ctx = canvas.getContext("2d");
 
@@ -392,33 +394,31 @@ function renderFlightsPerAirlineByYear(data) {
     airlineYearHorizontalChart.destroy();
   }
 
-
   airlineYearHorizontalChart = new Chart(ctx, {
     type: "bar",
     data: {
       labels: data.airlines,
       datasets: data.datasets,
     },
-      options: {
-        indexAxis: "y",
-        responsive: false,        // 🔑 REQUIRED
-        maintainAspectRatio: false,
-        animation: false,
-        scales: {
-          x: { stacked: true },
-          y: {
-            stacked: true,
-            ticks: {
-              autoSkip: false   // 🔑 ensures all airlines render
-            }
-          }
-        },
-        plugins: {
-          legend: { display: false }
+    options: {
+      indexAxis: "y",
+      responsive: false,      // 🔑 MUST be false
+      maintainAspectRatio: false,
+      animation: false,
+      scales: {
+        x: { stacked: true },
+        y: {
+          stacked: true,
+          ticks: { autoSkip: false }
         }
+      },
+      plugins: {
+        legend: { display: false }
       }
+    }
   });
 }
+
 
 
 
@@ -486,58 +486,7 @@ function renderFlightsPerYearPerAirline(data) {
 
 let airlineYearHorizontalChart = null;
 
-function renderFlightsPerAirlineByYear(data) {
-  const canvas = document.getElementById("flightsPerAirlineYearChart");
-  if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
-
-  if (airlineYearHorizontalChart) {
-    airlineYearHorizontalChart.destroy();
-  }
-
-  airlineYearHorizontalChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: data.airlines,
-      datasets: data.datasets,
-    },
-    options: {
-      indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 400, easing: "easeOutQuart" },
-
-      scales: {
-        x: {
-          stacked: true,
-          ticks: { font: { size: 11 } },
-          grid: { color: "rgba(255,255,255,0.08)" },
-        },
-        y: {
-          stacked: true,
-          ticks: {
-            font: { size: 11 },
-            padding: 10,
-          },
-          grid: { display: false },
-        },
-      },
-
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items =>
-              `${items[0].label}`,
-            label: ctx =>
-              `${ctx.dataset.label}: ${ctx.raw} flights`,
-          },
-        },
-      },
-    },
-  });
-}
 
 
 
