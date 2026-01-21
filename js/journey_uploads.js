@@ -157,7 +157,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
     }
 
     closeModal(journeyDetailsModal);
-    alert("Journey details saved.");
+    alert("Journey details saved.  The website will be updated within 5 minutes");
 
   } catch (err) {
     console.error("[journey details]", err);
