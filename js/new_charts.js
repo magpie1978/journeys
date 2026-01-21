@@ -159,7 +159,10 @@ function flightsPerYearPerAirline(data) {
         (airlineTotals[airline] || 0) + 1;
     });
 
-  const airlines = Object.keys(airlineTotals).sort();
+  const airlines = Object.entries(airlineTotals)
+  .sort((a, b) => b[1] - a[1])
+  .map(([airline]) => airline);
+
   const years = Object.keys(map).sort();
 
   const datasets = airlines.map(airline => ({
