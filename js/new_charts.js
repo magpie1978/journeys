@@ -373,7 +373,12 @@ function renderFlightsPerAirlineByYear(data) {
   if (!canvas) return;
 
   const ROW_HEIGHT = 36;
-  const height = data.airlines.length * ROW_HEIGHT;
+  const visibleRows = 20;
+  
+  canvas.height = data.airlines.length * ROW_HEIGHT;
+  canvas.style.height = `${canvas.height}px`;
+  
+  airlineScroll.style.maxHeight = `${visibleRows * ROW_HEIGHT}px`;
 
   canvas.style.height = `${height}px`;
   canvas.height = height;
