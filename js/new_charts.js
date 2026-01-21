@@ -202,6 +202,8 @@ function flightsPerAirlinePerYear(data) {
     .sort((a, b) => b[1] - a[1])
     .map(([airline]) => airline);
 
+// 🔒 prevent accidental mutation elsewhere
+const orderedAirlines = [...airlines];
   // All years, ascending
   const years = [
     ...new Set(
@@ -217,7 +219,11 @@ function flightsPerAirlinePerYear(data) {
     borderWidth: 1,
   }));
 
-  return { airlines, years, datasets };
+  return {
+    airlines: orderedAirlines,
+    years,
+    datasets
+  };
 }
 
 
