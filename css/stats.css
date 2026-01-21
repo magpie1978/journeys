@@ -187,11 +187,13 @@ body {
 }
 
 .airline-scroll {
-  flex: 1;                     /* fill remaining panel height */
-  overflow-y: auto;
+  flex: 1;
+  min-height: 0;          /* REQUIRED for flex scrolling */
+  overflow-y: scroll;     /* 🔒 always show scrollbar */
   overflow-x: hidden;
-  padding-right: 6px;
+  padding-right: 8px;
 }
+
 
 .airline-scroll::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.25);
