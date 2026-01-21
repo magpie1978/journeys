@@ -270,7 +270,7 @@ function renderBottomLeft({ years, datasets }) {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 400, easing: "easeOutQuart" },
-      layout: { padding: { top: 6, right: 10, bottom: 16, left: 10 } },
+      layout: { padding: { top: 6, right: 12, bottom: 24, left: 12 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -327,7 +327,7 @@ function renderRight({ airlines, datasets }) {
       responsive: false, // critical for scroll + manual sizing
       maintainAspectRatio: false,
       animation: false,
-      layout: { padding: { top: 6, right: 18, bottom: 16, left: 10 } },
+      layout: { padding: { top: 6, right: 12, bottom: 24, left: 12 } },
       plugins: {
         legend: { display: false },
         tooltip: {
