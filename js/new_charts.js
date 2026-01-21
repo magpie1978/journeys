@@ -372,22 +372,21 @@ function renderFlightsPerAirlineByYear(data) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   if (!canvas) return;
 
-  const ROW_HEIGHT = 36;
-  const visibleRows = 20;
-  
-  canvas.height = data.airlines.length * ROW_HEIGHT;
-  canvas.style.height = `${canvas.height}px`;
-  
-  airlineScroll.style.maxHeight = `${visibleRows * ROW_HEIGHT}px`;
+  const ROW_HEIGHT = 28;
+  const VISIBLE_ROWS = 20;
 
-  canvas.style.height = `${height}px`;
-  canvas.height = height;
+  const totalHeight = data.airlines.length * ROW_HEIGHT;
+  const minHeight = VISIBLE_ROWS * ROW_HEIGHT;
+
+  canvas.height = Math.max(totalHeight, minHeight);
+  canvas.style.height = `${Math.max(totalHeight, minHeight)}px`;
 
   const ctx = canvas.getContext("2d");
 
   if (airlineYearHorizontalChart) {
     airlineYearHorizontalChart.destroy();
   }
+
 
   airlineYearHorizontalChart = new Chart(ctx, {
     type: "bar",
