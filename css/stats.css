@@ -36,17 +36,6 @@ body {
 }
 .back-link:hover { color: #fff; }
 
-/*
-.stats-header-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #aaa;
-  pointer-events: none;
-}*/
 
 /* ==============================
    GRID LAYOUT
@@ -78,24 +67,6 @@ body {
 }
 
 
-/* Right-hand panel spans both rows 
-.stats-panel--right {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; 
-  overflow-y: auto;
-}
-*/
-
-.stats-panel--right {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;          /* 🔑 allows children to scroll */
-}
 
 /* Fixed header */
 .stats-panel--right .panel-head {
@@ -142,13 +113,6 @@ body {
   display: block;
 }
 
-/* Scroll container */
-.airline-scroll {
-  flex: 1 1 auto;
-  min-height: 0;          /* 🔑 REQUIRED */
-  overflow-y: auto;
-  padding-right: 12px;
-}
 
 /* Nice scrollbar (optional) */
 .airline-scroll::-webkit-scrollbar {
@@ -208,4 +172,25 @@ body {
 #flightsPerAirlineYearChart {
   display: block;
   width: 100% !important;
+}
+
+
+
+
+.stats-panel--right {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.airline-scroll {
+  flex: 1;                     /* fill remaining panel height */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+}
+
+.airline-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.25);
+  border-radius: 4px;
 }
