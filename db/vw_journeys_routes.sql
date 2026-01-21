@@ -5,47 +5,20 @@
 -- Last updated: 2026-01-15
 -- ============================================
 
-create or replace view public.journeys_routes as
+create view public.journeys_routes as
 select
-  uid,
-  callsign,
-  airline,
-  type as journey_type,
-  origin,
-  destination,
-  destination_country,
-  journey_distance,
-  date (min("timestamp")) as journey_date,
-  date_trunc('year'::text, min("timestamp"))::date as year,
-  EXTRACT(
-    epoch
-    from
-      max("timestamp") - min("timestamp")
-  )::integer as journey_duration_seconds,
-  st_asgeojson (
-    st_simplifypreservetopology (
-      st_makeline (
-        st_setsrid (
-          st_makepoint (
-            split_part("position", ','::text, 2)::double precision,
-            split_part("position", ','::text, 1)::double precision
-          ),
-          4326
-        )
-        order by
-          "timestamp"
-      ),
-      0.002::double precision
-    )
-  )::json as geom
+  c.uid,
+  c.callsign,
+  c.airline,
+  c.journey_type,
+  c.origin,
+  c.destination,
+  c.destination_country,
+  c.journey_distance,
+  c.journey_date,
+  c.year,
+  c.journey_duration_seconds,
+  g.geom
 from
-  journeys
-group by
-  uid,
-  callsign,
-  airline,
-  type,
-  origin,
-  destination,
-  destination_country,
-  journey_distance;
+  journeys_routes_core_mv c
+  left join journeys_routes_geom_mv g using (uid);
