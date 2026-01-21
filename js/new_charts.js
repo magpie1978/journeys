@@ -197,8 +197,10 @@ function flightsPerAirlinePerYear(data) {
         (airlineTotals[r.airline] || 0) + 1;
     });
 
-  // ✅ ALL airlines, sorted alphabetically (or by totals if you prefer)
-  const airlines = Object.keys(airlineTotals).sort();
+  // ✅ SORT AIRLINES BY TOTAL FLIGHTS (DESC)
+  const airlines = Object.entries(airlineTotals)
+    .sort((a, b) => b[1] - a[1])
+    .map(([airline]) => airline);
 
   // All years, ascending
   const years = [
@@ -211,11 +213,8 @@ function flightsPerAirlinePerYear(data) {
     label: year,
     data: airlines.map(a => map[a]?.[year] || 0),
     backgroundColor: "rgba(201,162,77,0.7)",
-    borderColor: "rgba(201,162,77,0.25)",
+    borderColor: "rgba(201,162,77,0.9)",
     borderWidth: 1,
-    borderRadius: year === years[years.length - 1]
-      ? { topRight: 6, bottomRight: 6 }
-      : 0,
   }));
 
   return { airlines, years, datasets };
