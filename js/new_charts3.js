@@ -372,12 +372,30 @@ function renderRight({ airlines, datasets }) {
       indexAxis: "y",
       responsive: false,
       maintainAspectRatio: false,
-  
+
       scales: {
-        x: { stacked: true },
+        x: {
+          stacked: true,
+          grid: {
+            display: true,
+            color: "rgba(255,255,255,0.08)", // faint vertical lines
+            lineWidth: 1,
+            drawBorder: false
+          },
+          ticks: {
+            font: { size: 11 }
+          }
+        },
         y: {
           stacked: true,
-          ticks: { autoSkip: false }
+          grid: {
+            display: false // keep rows clean
+          },
+          ticks: {
+            autoSkip: false,
+            font: { size: 11 },
+            padding: 8
+          }
         }
       },
   
