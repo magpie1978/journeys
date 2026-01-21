@@ -305,7 +305,7 @@ function renderBottomLeft({ years, datasets }) {
         borderColor: YELLOW_BORDER,
         borderWidth: 1,
         borderSkipped: false,
-        barPercentage: 0.85,
+        barPercentage: 0.75,
         categoryPercentage: 0.85,
         stack: "airlines",
       })),
