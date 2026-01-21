@@ -1,3 +1,10 @@
+-- ============================================
+-- View: journeys_routes_cache
+-- Depends on: journeys_routes
+-- Used by: stats.html, flights.html
+-- Last updated: 2026-01-15
+-- ============================================
+
 create table public.mv_refresh_state (
   name text not null,
   dirty boolean not null default false,
