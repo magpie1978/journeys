@@ -378,8 +378,13 @@ function renderFlightsPerAirlineByYear(data) {
   const totalHeight = data.airlines.length * ROW_HEIGHT;
   const minHeight = VISIBLE_ROWS * ROW_HEIGHT;
 
-  canvas.height = Math.max(totalHeight, minHeight);
-  canvas.style.height = `${Math.max(totalHeight, minHeight)}px`;
+  // Canvas must be tall (to scroll)
+  canvas.height = totalHeight;
+  canvas.style.height = `${totalHeight}px`;
+  
+  // Parent container controls viewport
+  canvas.parentElement.style.maxHeight = `${visibleHeight}px`;
+  canvas.parentElement.style.height = `${visibleHeight}px`;
 
   const ctx = canvas.getContext("2d");
 
@@ -394,19 +399,24 @@ function renderFlightsPerAirlineByYear(data) {
       labels: data.airlines,
       datasets: data.datasets,
     },
-    options: {
-      indexAxis: "y",
-      responsive: false,
-      maintainAspectRatio: false,
-      animation: false,
-      scales: {
-        x: { stacked: true },
-        y: { stacked: true },
-      },
-      plugins: {
-        legend: { display: false },
-      },
-    },
+      options: {
+        indexAxis: "y",
+        responsive: false,        // 🔑 REQUIRED
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: { stacked: true },
+          y: {
+            stacked: true,
+            ticks: {
+              autoSkip: false   // 🔑 ensures all airlines render
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
   });
 }
 
