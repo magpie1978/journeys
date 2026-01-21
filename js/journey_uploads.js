@@ -147,7 +147,7 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
 
   try {
     const { error } = await sb
-      .from("journey_details_copy")
+      .from("journey_details")
       .insert([payload]);
 
     if (error) {
