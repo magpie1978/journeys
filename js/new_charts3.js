@@ -49,7 +49,7 @@ const YELLOW = "rgba(201,162,77,0.7)";
 const YELLOW_BORDER = "rgba(201,162,77,0.9)";
 const GRID = "rgba(255,255,255,0.08)";
 
-const RIGHT_ROW_HEIGHT = 28;
+const RIGHT_ROW_HEIGHT = 32;
 const RIGHT_VISIBLE_ROWS = 24;
 
 
