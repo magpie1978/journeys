@@ -136,7 +136,7 @@ function flightsPerYearPerAirline(data, topN = 8) {
   return { years, datasets };
 }
 
-function flightsPerAirlinePerYear(data, topN = 8) {
+function flightsPerAirlinePerYear(data) {
   const map = {};
   const airlineTotals = {};
 
@@ -263,6 +263,7 @@ function renderYearChart(values, metric) {
 
 let airlineYearStackedChart = null;
 
+/*
 function renderFlightsPerAirlineByYear(data) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   if (!canvas) return;
@@ -300,7 +301,7 @@ function renderFlightsPerAirlineByYear(data) {
     },
   });
 }
-
+*/
 
 
 function renderFlightsPerYearPerAirline(data) {
@@ -353,11 +354,25 @@ function renderFlightsPerYearPerAirline(data) {
 
 
 
+// declare FIRST
 let airlineYearHorizontalChart = null;
 
 function renderFlightsPerAirlineByYear(data) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   if (!canvas) return;
+
+  const ROW_HEIGHT = 28;
+  const VISIBLE_ROWS = 20;
+
+  const totalHeight = data.airlines.length * ROW_HEIGHT;
+  const visibleHeight = VISIBLE_ROWS * ROW_HEIGHT;
+
+  canvas.height = totalHeight;
+  canvas.style.height = `${totalHeight}px`;
+
+  const scroll = canvas.parentElement;
+  scroll.style.height = `${visibleHeight}px`;
+  scroll.style.maxHeight = `${visibleHeight}px`;
 
   const ctx = canvas.getContext("2d");
 
@@ -373,40 +388,23 @@ function renderFlightsPerAirlineByYear(data) {
     },
     options: {
       indexAxis: "y",
-      responsive: true,
+      responsive: false,
       maintainAspectRatio: false,
-      animation: { duration: 400, easing: "easeOutQuart" },
-
+      animation: false,
       scales: {
-        x: {
-          stacked: true,
-          ticks: { font: { size: 11 } },
-          grid: { color: "rgba(255,255,255,0.08)" },
-        },
+        x: { stacked: true },
         y: {
           stacked: true,
-          ticks: {
-            font: { size: 11 },
-            padding: 10,
-          },
-          grid: { display: false },
+          ticks: { autoSkip: false }
         },
       },
-
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items =>
-              `${items[0].label}`,
-            label: ctx =>
-              `${ctx.dataset.label}: ${ctx.raw} flights`,
-          },
-        },
       },
     },
   });
 }
+
 
 
 
@@ -471,8 +469,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderFlightsPerYearPerAirline(perYearAirlineData);
 
 
-  const airlineYearData = flightsPerAirlinePerYear(baseStatsData, 8);
-  renderFlightsPerAirlineByYear(airlineYearData);
+  //const airlineYearData = flightsPerAirlinePerYear(baseStatsData, 8);
+  //renderFlightsPerAirlineByYear(airlineYearData);
   
   function refresh() {
     renderYearChart(
