@@ -1,3 +1,6 @@
+/* =====================================================
+   BASE
+===================================================== */
 html, body {
   height: 100%;
 }
@@ -5,12 +8,13 @@ html, body {
 body {
   background: #0f0f0f;
   margin: 0;
-  overflow: hidden; /* page scroll handled inside panels */
+  overflow: hidden; /* scrolling handled inside panels */
 }
 
-/* ==============================
+
+/* =====================================================
    STICKY HEADER
-============================== */
+===================================================== */
 #statsHeader {
   position: sticky;
   top: 0;
@@ -34,39 +38,38 @@ body {
   text-decoration: none;
   font-size: 14px;
 }
-.back-link:hover { color: #fff; }
+.back-link:hover {
+  color: #fff;
+}
 
 
-/* ==============================
-   GRID LAYOUT
-============================== */
+/* =====================================================
+   PAGE + GRID LAYOUT
+===================================================== */
 #statsPage {
   max-width: 1800px;
   margin: 0 auto;
   padding: 24px;
-  height: calc(100vh - 56px); /* full viewport minus header */
+  height: calc(100vh - 56px); /* viewport minus header */
   box-sizing: border-box;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;   /* 🔑 force equal-height rows */
+  grid-template-rows: 1fr 1fr; /* equal-height left charts */
   gap: 20px;
-  height: calc(100vh - 120px);  /* adjust if your header differs */
+  height: 100%;
 }
 
+
+/* =====================================================
+   PANEL BASE
+===================================================== */
 .stats-panel {
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 🔑 CRITICAL for Chart.js */
-}
-
-
-
-/* Fixed header */
-.stats-panel--right .panel-head {
-  flex: 0 0 auto;
+  min-height: 0; /* 🔑 REQUIRED for Chart.js */
 }
 
 .stats-panel h2,
@@ -85,6 +88,35 @@ body {
   flex: 0 0 auto;
 }
 
+
+/* =====================================================
+   GRID PLACEMENT (EXPLICIT — FIXES SWAP ISSUE)
+===================================================== */
+/* LEFT TOP */
+.stats-panel--top-left {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* LEFT BOTTOM */
+.stats-panel--bottom-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* RIGHT (SPANS BOTH ROWS) */
+.stats-panel--right {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+
+/* =====================================================
+   CONTROLS
+===================================================== */
 .stats-select {
   background: #1a1a1a;
   color: #fff;
@@ -95,7 +127,11 @@ body {
   outline: none;
 }
 
-/* Chart fill wrapper so axis labels don't get clipped */
+
+/* =====================================================
+   CHART CONTAINERS
+===================================================== */
+/* Ensures axis labels never get clipped */
 .chart-fill {
   flex: 1;
   position: relative;
@@ -107,52 +143,46 @@ body {
   height: 100% !important;
 }
 
-.chart-fill,
+
+/* =====================================================
+   RIGHT-HAND SCROLLING AIRLINE CHART
+===================================================== */
 .airline-scroll {
   flex: 1;
-  min-height: 0; /* 🔑 REQUIRED for scroll + canvas */
+  min-height: 0;
+  overflow-y: auto;   /* permanent scrollbar */
+  overflow-x: hidden;
 }
 
-/* Nice scrollbar (optional) */
+/* Scrollbar styling */
 .airline-scroll::-webkit-scrollbar {
   width: 8px;
 }
 
 .airline-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 4px;
 }
 
 .airline-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.35);
 }
 
-.airline-chart-scroll {
-  height: 100%;
-  overflow-y: auto;
-  min-height: 0;
+.airline-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.airline-chart-scroll::-webkit-scrollbar {
-  width: 10px;
-}
 
-.airline-chart-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.18);
-  border-radius: 6px;
-}
-
-.airline-chart-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.25);
-}
-
-/* This canvas MUST be allowed to be taller than viewport */
-#airlineYearChart {
-  width: 100% !important;
+/* Canvas must be allowed to be taller than viewport */
+#flightsPerAirlineYearChart {
   display: block;
+  width: 100% !important;
 }
 
-/* Placeholder panel */
+
+/* =====================================================
+   OPTIONAL PLACEHOLDER (SAFE TO KEEP)
+===================================================== */
 .stats-placeholder {
   color: #777;
   font-size: 14px;
@@ -162,37 +192,4 @@ body {
   border: 1px dashed #333;
   border-radius: 12px;
   height: 100%;
-}
-
-
-/* Chart must be allowed to be tall */
-#flightsPerAirlineYearChart {
-  display: block;
-  width: 100% !important;
-}
-
-
-.stats-panel--right {
-  grid-row: 1 / span 2;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* 🔑 allows inner scrolling */
-}
-
-
-
-.airline-scroll {
-  flex: 1;
-  overflow-y: scroll;   /* permanent scrollbar */
-  overflow-x: hidden;
-  min-height: 0;
-}
-
-.airline-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.25);
-  border-radius: 4px;
-}
-
-.airline-scroll::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
 }
