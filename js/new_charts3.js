@@ -329,6 +329,34 @@ const barEndLabelPlugin = {
     }
 
 
+
+// ====================================================================================================
+// AGGREGATORS - RAW DATA TO CHART READY STRUCTURES
+//
+// This produces Visits per Country chart (right-hand side chart)
+// ====================================================================================================
+    function visitsPerCountry(data) {
+      const counts = {};
+    
+      data
+        .filter(r => r.journey_type === "Flight" && r.destination_country)
+        .forEach(r => {
+          const c = r.destination_country;
+          counts[c] = (counts[c] || 0) + 1;
+        });
+    
+      // Sort countries by total visits (desc)
+      const countries = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([country]) => country);
+    
+      return {
+        countries,
+        values: countries.map(c => counts[c])
+      };
+    }
+
+
 // ---------------------------------------------------------------------------
 // RENDERERS - TOP LEFT CHART
 
@@ -567,6 +595,76 @@ const barEndLabelPlugin = {
 
 
 
+// ---------------------------------------------------------------------------
+// RENDERERS - COUNTRY VISITS CHART
+// -----------------------------------------------------------------------------
+
+        let countryChart = null;
+        
+        function renderVisitsPerCountry({ countries, values }) {
+          const canvas = document.getElementById("visitsPerCountryChart");
+          if (!canvas) return;
+        
+          const ROW_HEIGHT = 30;
+          const VISIBLE_ROWS = 20;
+        
+          const totalHeight = countries.length * ROW_HEIGHT;
+          const visibleHeight = VISIBLE_ROWS * ROW_HEIGHT;
+        
+          // Scroll container
+          const scrollContainer = canvas.parentElement;
+          scrollContainer.style.height = `${visibleHeight}px`;
+          scrollContainer.style.maxHeight = `${visibleHeight}px`;
+          scrollContainer.style.overflowY = "auto";
+        
+          // Canvas must be taller than container
+          canvas.height = totalHeight;
+          canvas.style.height = `${totalHeight}px`;
+        
+          const ctx = canvas.getContext("2d");
+        
+          if (countryChart) countryChart.destroy();
+        
+          countryChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: countries,
+              datasets: [{
+                data: values,
+                backgroundColor: YELLOW,
+                borderColor: YELLOW_BORDER,
+                borderWidth: 1,
+                barPercentage: 0.9,
+                categoryPercentage: 1.0
+              }]
+            },
+            options: {
+              indexAxis: "y",
+              responsive: false,          // 🔑 critical for scrolling
+              maintainAspectRatio: false,
+              animation: false,
+        
+              scales: {
+                x: {
+                  grid: { color: GRID },
+                  ticks: { precision: 0 }
+                },
+                y: {
+                  grid: { display: false },
+                  ticks: { autoSkip: false }
+                }
+              },
+        
+              plugins: {
+                legend: { display: false }
+              }
+            }
+          });
+        }
+
+
+
+
 // -----------------------------------------------------
 // METRIC DISPATCH (top-left only)
 //
@@ -614,11 +712,14 @@ const barEndLabelPlugin = {
       const metricSelect = document.getElementById("metricSelector");
       const btnYear = document.getElementById("btnYear");
       const btnAllTime = document.getElementById("btnAllTime");
+      const countryData = visitsPerCountry(baseStatsData);
     
-      // Initial render (all three charts)
+    
+      // Initial render (all four charts)
       renderTopLeft(getTopLeftValues(metricSelect.value), metricSelect.value);
       renderBottomLeft(flightsPerYearPerAirline(baseStatsData));
       renderRight(flightsPerAirlineByYear(baseStatsData));
+      renderVisitsPerCountry(countryData);
     
       // Re-render top-left when metric changes
       metricSelect.addEventListener("change", () => {
