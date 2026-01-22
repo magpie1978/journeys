@@ -339,7 +339,11 @@ const barEndLabelPlugin = {
       const counts = {};
     
       data
-        .filter(r => r.journey_type === "Flight" && r.destination_country)
+        .filter(r => r.journey_type === "Flight" &&
+            r.destination_country &&
+            r.destination_country !== "United Kingdom"
+          )
+              
         .forEach(r => {
           const c = r.destination_country;
           counts[c] = (counts[c] || 0) + 1;
