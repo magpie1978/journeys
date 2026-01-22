@@ -66,6 +66,8 @@
     let yearChart = null;             // top-left
     let airlineStackedChart = null;   // bottom-left
     let airlineByYearChart = null;    // right
+    let currentAirlineMetric = "flights";  //toggle for chart with Flights / Miles per Airline per Year
+
 
 
 // --------------------------------------------------------------------------------------
@@ -359,6 +361,61 @@ const barEndLabelPlugin = {
         values: countries.map(c => counts[c])
       };
     }
+
+
+
+
+// ====================================================================================================
+// AGGREGATORS - RAW DATA TO CHART READY STRUCTURES
+//
+// This produces a new chart that toggles between Flights or Miles per Airline by Year
+// ====================================================================================================
+
+        function metricPerAirlinePerYear(data, metric = "flights") {
+          const map = {};
+          const airlineTotals = {};
+        
+          data
+            .filter(r => r.journey_type === "Flight" && r.airline)
+            .forEach(r => {
+              const year = String(r.year).slice(0, 4);
+              const airline = r.airline;
+        
+              map[airline] ??= {};
+              map[airline][year] ??= 0;
+        
+              const value =
+                metric === "miles"
+                  ? (r.journey_distance || 0)
+                  : 1;
+        
+              map[airline][year] += value;
+              airlineTotals[airline] =
+                (airlineTotals[airline] || 0) + value;
+            });
+        
+          // 🔑 sort airlines by total metric DESC
+          const airlines = Object.entries(airlineTotals)
+            .sort((a, b) => b[1] - a[1])
+            .map(([airline]) => airline);
+        
+          const years = [
+            ...new Set(
+              Object.values(map).flatMap(obj => Object.keys(obj))
+            ),
+          ].sort();
+        
+          const datasets = years.map(year => ({
+            label: year,
+            data: airlines.map(a => map[a]?.[year] || 0),
+            backgroundColor: "rgba(201,162,77,0.7)",
+            borderColor: "rgba(201,162,77,0.9)",
+            borderWidth: 1,
+          }));
+        
+          return { airlines, years, datasets };
+        }
+
 
 
 // ---------------------------------------------------------------------------
@@ -669,6 +726,96 @@ const barEndLabelPlugin = {
 
 
 
+
+
+// ---------------------------------------------------------------------------
+// RENDERERS - COUNTRY VISITS CHART
+// new chart that toggles between Flights or Miles per Airline by Year
+// -----------------------------------------------------------------------------
+
+        let airlineByYearChart = null;
+        
+        function renderAirlineByYearChart(data) {
+          const canvas = document.getElementById("flightsPerAirlineYearChart");
+          if (!canvas) return;
+        
+          const ROW_HEIGHT = 28;
+          const VISIBLE_ROWS = 20;
+        
+          const totalHeight = data.airlines.length * ROW_HEIGHT;
+          canvas.height = totalHeight;
+          canvas.style.height = `${totalHeight}px`;
+        
+          const scrollContainer = canvas.parentElement;
+          scrollContainer.style.height = `${VISIBLE_ROWS * ROW_HEIGHT}px`;
+          scrollContainer.style.overflowY = "auto";
+        
+          const ctx = canvas.getContext("2d");
+        
+          if (airlineByYearChart) {
+            airlineByYearChart.destroy();
+          }
+        
+          airlineByYearChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: data.airlines,
+              datasets: data.datasets,
+            },
+            options: {
+              indexAxis: "y",
+              responsive: false,
+              maintainAspectRatio: false,
+              animation: false,
+        
+              scales: {
+                x: {
+                  stacked: true,
+                  grid: {
+                    color: "rgba(255,255,255,0.08)" // faint vertical lines
+                  },
+                  ticks: {
+                    callback: v =>
+                      currentAirlineMetric === "miles"
+                        ? `${Math.round(v).toLocaleString()}`
+                        : v
+                  }
+                },
+                y: {
+                  stacked: true,
+                  ticks: { autoSkip: false }
+                }
+              },
+        
+              datasets: {
+                bar: {
+                  categoryPercentage: 0.9,
+                  barPercentage: 0.8
+                }
+              },
+        
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: ctx => {
+                      const v = ctx.raw;
+                      return currentAirlineMetric === "miles"
+                        ? `${v.toLocaleString()} miles`
+                        : `${v} flights`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+
+
+
+
+
+
 // -----------------------------------------------------
 // METRIC DISPATCH (top-left only)
 //
@@ -717,6 +864,7 @@ const barEndLabelPlugin = {
       const btnYear = document.getElementById("btnYear");
       const btnAllTime = document.getElementById("btnAllTime");
       const countryData = visitsPerCountry(baseStatsData);
+      
     
     
       // Initial render (all four charts)
@@ -737,6 +885,32 @@ const barEndLabelPlugin = {
         btnAllTime.classList.remove("active");
         renderTopLeft(getTopLeftValues(metricSelect.value), metricSelect.value);
       });
+
+
+
+      // Initialise and toggle the new chart showing Flight / Miles per Airline by Year
+      document.addEventListener("DOMContentLoaded", async () => {
+          baseStatsData = await loadStatsBaseData();
+        
+          const metricSelect = document.getElementById("airlineMetricSelect");
+        
+          function renderAirlineMetric() {
+            const data = metricPerAirlinePerYear(
+              baseStatsData,
+              currentAirlineMetric
+            );
+            renderAirlineByYearChart(data);
+          }
+        
+          metricSelect.addEventListener("change", e => {
+            currentAirlineMetric = e.target.value;
+            renderAirlineMetric();
+          });
+        
+            // initial render
+            renderAirlineMetric();
+      });
+
     
       btnAllTime.addEventListener("click", () => {
         viewMode = "alltime";
