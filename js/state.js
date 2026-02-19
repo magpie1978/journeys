@@ -12,7 +12,9 @@ const selected = {
   years: new Set(),
   airlines: new Set(),
   types: new Set(),
+  airports: new Set()
 };
+
 
 
 // =====================================================
