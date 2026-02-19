@@ -169,3 +169,10 @@ function updateAllCounters(routes) {
   );
   updateDurationCounter(totalSeconds);
 }
+
+
+
+// =====================================================
+// GLOBAL EXPORT
+// =====================================================
+window.updateAllCounters = updateAllCounters;
