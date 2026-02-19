@@ -89,12 +89,20 @@ function showAirportSummary(airport) {
   document.getElementById("airportName").textContent =
     airport.city || "";
 
+//  document.getElementById("outboundFlights").textContent =
+//    `${plural(departures.length, "flight")} to ${plural(departureCountries.size, "country")}`;
+
+//  document.getElementById("inboundFlights").textContent =
+//    `${plural(arrivals.length, "flight")} from ${plural(arrivalCountries.size, "country")}`;
+
+
   document.getElementById("outboundFlights").textContent =
-    `${plural(departures.length, "flight")} to ${plural(departureCountries.size, "country")}`;
+  `${plural(departures.length, "flight")} to ${plural(departureCountries.size, "country")}`;
 
   document.getElementById("inboundFlights").textContent =
-    `${plural(arrivals.length, "flight")} from ${plural(arrivalCountries.size, "country")}`;
+  `${plural(arrivals.length, "flight")} from ${plural(arrivalCountries.size, "country")}`;
 
+  
   document.getElementById("airportAirlines").textContent =
     airlines.size;
 
