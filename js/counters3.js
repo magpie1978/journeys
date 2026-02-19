@@ -33,6 +33,43 @@ function updateDurationCounter(seconds) {
   durationNumberEl.textContent = formatSecondsToHM(seconds);
 }
 
+//
+// TRANSPORT COUNTER //
+//
+function updateTransportCounter(routes) {
+  if (!transportNumberEl || !transportLabelEl) return;
+
+  // Normalise type values
+  const typeMap = {
+    Drive: ["Drive", "Car", "Road"],
+    Train: ["Train", "Rail"],
+    Boat: ["Boat", "Ferry", "Ship"],
+    Bus: ["Bus", "Coach"]
+  };
+
+  function countTypes(keys) {
+    return routes.filter(r =>
+      keys.includes(r.journey_type)
+    ).length;
+  }
+
+  const drives = countTypes(typeMap.Drive);
+  const trains = countTypes(typeMap.Train);
+  const boats  = countTypes(typeMap.Boat);
+  const buses  = countTypes(typeMap.Bus);
+
+  const totalSurface =
+    drives + trains + boats + buses;
+
+  transportNumberEl.textContent =
+    totalSurface.toLocaleString();
+
+  transportLabelEl.textContent =
+    `${drives}D • ${trains}T • ${boats}Bt • ${buses}Bs`;
+}
+////
+
+
 
 // Counter aggregation
 // Calculates and updates stats derived from the currently visible routes.
