@@ -46,21 +46,42 @@ function formatSecondsToHM(seconds) {
 // -----------------------------------------------------
 // TRANSPORT COUNTER
 // -----------------------------------------------------
+
+  //function updateTransportCounter(routes) {
+
+//  const surfaceRoutes =
+//    routes.filter(r => r.journey_type !== "Flight");
+
+//  const drives =
+//    surfaceRoutes.filter(r => r.journey_type === "Drive").length;
+
+//  transportNumberEl.textContent =
+//    surfaceRoutes.length.toLocaleString();
+
+//  transportLabelEl.textContent =
+//    `${drives} Drives`;
+//}
+
 function updateTransportCounter(routes) {
 
+  // All non-flight journeys
   const surfaceRoutes =
-    routes.filter(r => r.journey_type !== "Flight");
+    routes.filter(r =>
+      (r.journey_type || "")
+        .toLowerCase() !== "flight"
+    );
 
-  const drives =
-    surfaceRoutes.filter(r => r.journey_type === "Drive").length;
+  const landCount = surfaceRoutes.length;
 
+  // Top number
   transportNumberEl.textContent =
-    surfaceRoutes.length.toLocaleString();
+    landCount.toLocaleString();
 
+  // Bottom label (static)
   transportLabelEl.textContent =
-    `${drives} Drives`;
+    "LAND JOURNEYS";
 }
-
+  
 
 // -----------------------------------------------------
 // MASTER COUNTERS
