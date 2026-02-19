@@ -1,94 +1,154 @@
 // =====================================================
-// GLASS COUNTER HELPERS
+// GLASS COUNTER ELEMENTS
 // =====================================================
 
-// Journeys
+const journeyNumberEl =
+  document.querySelector("#journeyCounter .glass-number");
+const journeyLabelEl =
+  document.querySelector("#journeyCounter .glass-label");
+
+const transportNumberEl =
+  document.querySelector("#transportCounter .glass-number");
+const transportLabelEl =
+  document.querySelector("#transportCounter .glass-label");
+
+const milesNumberEl =
+  document.querySelector("#milesCounter .glass-number");
+
+const countriesNumberEl =
+  document.querySelector("#countriesCounter .glass-number");
+
+const airlinesNumberEl =
+  document.querySelector("#airlinesCounter .glass-number");
+
+const durationNumberEl =
+  document.querySelector("#durationCounter .glass-number");
+
+
+// =====================================================
+// JOURNEYS
+// =====================================================
 function updateJourneyCounter(n) {
   if (!journeyNumberEl || !journeyLabelEl) return;
+
   journeyNumberEl.textContent = n.toLocaleString();
-  journeyLabelEl.textContent = n === 1 ? "JOURNEY" : "JOURNEYS";
+  journeyLabelEl.textContent =
+    n === 1 ? "JOURNEY" : "JOURNEYS";
 }
 
 
 // =====================================================
-// Surface Transport Counter
+// SURFACE TRANSPORT
 // =====================================================
 function updateTransportCounter(routes) {
   if (!transportNumberEl || !transportLabelEl) return;
 
-  const drives = routes.filter(r => r.journey_type === "Drive").length;
-  const trains = routes.filter(r => r.journey_type === "Train").length;
-  const boats  = routes.filter(r => r.journey_type === "Boat").length;
-  const buses  = routes.filter(r => r.journey_type === "Bus").length;
+  const drives =
+    routes.filter(r => r.journey_type === "Drive").length;
 
-  const totalSurface = drives + trains + boats + buses;
+  const trains =
+    routes.filter(r => r.journey_type === "Train").length;
 
-  transportNumberEl.textContent = totalSurface.toLocaleString();
+  const boats =
+    routes.filter(r => r.journey_type === "Boat").length;
+
+  const buses =
+    routes.filter(r => r.journey_type === "Bus").length;
+
+  const totalSurface =
+    drives + trains + boats + buses;
+
+  transportNumberEl.textContent =
+    totalSurface.toLocaleString();
 
   transportLabelEl.textContent =
-    `${drives}D • ${trains}T • ${boats}B • ${buses}B`;
+    `${drives}D • ${trains}T • ${boats}Bt • ${buses}Bs`;
 }
 
 
-// Miles
+// =====================================================
+// MILES
+// =====================================================
 function updateMilesCounter(miles) {
   if (!milesNumberEl) return;
-  milesNumberEl.textContent = Math.round(miles).toLocaleString();
+
+  milesNumberEl.textContent =
+    Math.round(miles).toLocaleString();
 }
 
-// Countries
+
+// =====================================================
+// COUNTRIES
+// =====================================================
 function updateCountriesCounter(n) {
   if (!countriesNumberEl) return;
-  countriesNumberEl.textContent = n.toLocaleString();
+
+  countriesNumberEl.textContent =
+    n.toLocaleString();
 }
 
-// Airlines
+
+// =====================================================
+// AIRLINES
+// =====================================================
 function updateAirlinesCounter(n) {
   if (!airlinesNumberEl) return;
-  airlinesNumberEl.textContent = n.toLocaleString();
+
+  airlinesNumberEl.textContent =
+    n.toLocaleString();
 }
 
-// Duration
+
+// =====================================================
+// DURATION
+// =====================================================
 function updateDurationCounter(seconds) {
   if (!durationNumberEl) return;
-  durationNumberEl.textContent = formatSecondsToHM(seconds);
+
+  durationNumberEl.textContent =
+    formatSecondsToHM(seconds);
 }
 
 
-// Counter aggregation
-// Calculates and updates stats derived from the currently visible routes.
+// =====================================================
+// MASTER AGGREGATION
+// =====================================================
 function updateAllCounters(routes) {
-  
-function updateAllCounters(routes) {
-  
+
   // Journeys
   updateJourneyCounter(routes.length);
 
-  // NEW — Surface transport
+  // Surface transport
   updateTransportCounter(routes);
 
   // Miles
   const totalMiles = routes.reduce(
-    (sum, r) => sum + (Number(r.journey_distance) || 0),
+    (sum, r) =>
+      sum + (Number(r.journey_distance) || 0),
     0
   );
   updateMilesCounter(totalMiles);
 
   // Countries
   const countrySet = new Set(
-    routes.map(r => r.destination_country).filter(Boolean)
+    routes
+      .map(r => r.destination_country)
+      .filter(Boolean)
   );
   updateCountriesCounter(countrySet.size);
 
   // Airlines
   const airlineSet = new Set(
-    routes.map(r => r.airline).filter(Boolean)
+    routes
+      .map(r => r.airline)
+      .filter(Boolean)
   );
   updateAirlinesCounter(airlineSet.size);
 
   // Duration
   const totalSeconds = routes.reduce(
-    (sum, r) => sum + (Number(r.journey_duration_seconds) || 0),
+    (sum, r) =>
+      sum + (Number(r.journey_duration_seconds) || 0),
     0
   );
   updateDurationCounter(totalSeconds);
