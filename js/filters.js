@@ -1,15 +1,4 @@
 // =====================================================
-// FILTER STATE
-// =====================================================
-const selected = {
-  years: new Set(),
-  airlines: new Set(),
-  types: new Set(),
-  airports: new Set()
-};
-
-
-// =====================================================
 // FILTER UI (checkbox dropdowns)
 // =====================================================
 function buildFilterMenu(containerId, values, targetSet) {
