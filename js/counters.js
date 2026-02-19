@@ -9,6 +9,27 @@ function updateJourneyCounter(n) {
   journeyLabelEl.textContent = n === 1 ? "JOURNEY" : "JOURNEYS";
 }
 
+
+// =====================================================
+// Surface Transport Counter
+// =====================================================
+function updateTransportCounter(routes) {
+  if (!transportNumberEl || !transportLabelEl) return;
+
+  const drives = routes.filter(r => r.journey_type === "Drive").length;
+  const trains = routes.filter(r => r.journey_type === "Train").length;
+  const boats  = routes.filter(r => r.journey_type === "Boat").length;
+  const buses  = routes.filter(r => r.journey_type === "Bus").length;
+
+  const totalSurface = drives + trains + boats + buses;
+
+  transportNumberEl.textContent = totalSurface.toLocaleString();
+
+  transportLabelEl.textContent =
+    `${drives}D • ${trains}T • ${boats}B • ${buses}B`;
+}
+
+
 // Miles
 function updateMilesCounter(miles) {
   if (!milesNumberEl) return;
@@ -38,8 +59,13 @@ function updateDurationCounter(seconds) {
 // Calculates and updates stats derived from the currently visible routes.
 function updateAllCounters(routes) {
   
+function updateAllCounters(routes) {
+  
   // Journeys
   updateJourneyCounter(routes.length);
+
+  // NEW — Surface transport
+  updateTransportCounter(routes);
 
   // Miles
   const totalMiles = routes.reduce(
