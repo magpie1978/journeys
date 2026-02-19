@@ -1,4 +1,31 @@
 // =====================================================
+// DOM ELEMENT REFERENCES
+// =====================================================
+
+const journeyNumberEl =
+  document.querySelector("#journeyCounter .glass-number");
+const journeyLabelEl =
+  document.querySelector("#journeyCounter .glass-label");
+
+const transportNumberEl =
+  document.querySelector("#transportCounter .glass-number");
+const transportLabelEl =
+  document.querySelector("#transportCounter .glass-label");
+
+const milesNumberEl =
+  document.querySelector("#milesCounter .glass-number");
+
+const countriesNumberEl =
+  document.querySelector("#countriesCounter .glass-number");
+
+const airlinesNumberEl =
+  document.querySelector("#airlinesCounter .glass-number");
+
+const durationNumberEl =
+  document.querySelector("#durationCounter .glass-number");
+
+
+// =====================================================
 // GLASS COUNTER HELPERS
 // =====================================================
 
