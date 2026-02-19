@@ -71,7 +71,7 @@ function updateAllCounters(routes = []) {
     routes.length.toLocaleString();
 
   journeyLabelEl.textContent =
-    routes.length === 1 ? "JOURNEY" : "JOURNEYS";
+    routes.length === 1 ? "FLIGHT" : "FLIGHTS";
 
   updateTransportCounter(routes);
 
