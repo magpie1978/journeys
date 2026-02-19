@@ -266,7 +266,7 @@ function renderNonFlightEndpoints(routes) {
       source: "journey-endpoints",
       paint: {
         "circle-radius": 5,
-        "circle-color": "#FFD700",
+        "circle-color": "#FFFFFF",
         "circle-stroke-width": 1.5,
         "circle-stroke-color": "#000000",
       },
