@@ -143,9 +143,15 @@ async function loadFilters() {
   
   // Add virtual London group if any London airports exist
   const londonAirports = ["LHR","LGW","LCY","SEN","LTN","STN"];
+  const berlinAirports = ["BER","SXF","TXL"];
   
   if (airports.some(a => londonAirports.includes(a))) {
     airports = ["LON", ...airports];
+
+  if (airports.some(a => berlinAirports.includes(a))) {
+    airports = ["BER", ...airports];
+    
+  
   }
 
 
