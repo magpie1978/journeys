@@ -44,15 +44,36 @@ function buildFilterMenu(containerId, values, targetSet) {
   selectAll.onclick = () => {
     targetSet.clear();
     values.forEach(v => {
-      const val = typeof v === "object" ? v.value : v;
-      targetSet.add(val);
+    
+      // Divider row
+      if (v.divider) {
+        const hr = document.createElement("div");
+        hr.className = "filter-divider";
+        list.appendChild(hr);
+        return;
+      }
+    
+      const value = typeof v === "object" ? v.value : v;
+      const labelText = typeof v === "object" ? v.label : v;
+    
+      const label = document.createElement("label");
+    
+      label.innerHTML =
+        `<input type="checkbox" value="${value}"> ${labelText}`;
+    
+      const cb = label.querySelector("input");
+      cb.checked = targetSet.has(value);
+    
+      cb.addEventListener("change", () => {
+        cb.checked
+          ? targetSet.add(value)
+          : targetSet.delete(value);
+    
+        loadRoutes();
+      });
+    
+      list.appendChild(label);
     });
-
-    list.querySelectorAll("input")
-      .forEach(cb => (cb.checked = true));
-
-    loadRoutes();
-  };
 
   // Clear
   clear.onclick = () => {
@@ -188,20 +209,37 @@ async function loadFilters() {
   // =====================================================
   // CONVERT TO DISPLAY OBJECTS
   // =====================================================
-  airports = airports.map(code => {
-
+  
+  // Separate groups and individuals
+  const groupItems = [];
+  const airportItems = [];
+  
+  airports.forEach(code => {
+  
     if (AIRPORT_GROUPS[code]) {
-      return {
+      groupItems.push({
         value: code,
-        label: `${code} (All Airports)`
-      };
+        label: `${code} (All Airports)`,
+        isGroup: true
+      });
+    } else {
+      airportItems.push({
+        value: code,
+        label: airportMap[code] || code
+      });
     }
-
-    return {
-      value: code,
-      label: airportMap[code] || code
-    };
   });
+  
+  // Add divider if both exist
+  if (groupItems.length && airportItems.length) {
+    airports = [
+      ...groupItems,
+      { divider: true },
+      ...airportItems
+    ];
+  } else {
+    airports = [...groupItems, ...airportItems];
+  }
 
 
 
