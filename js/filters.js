@@ -139,8 +139,14 @@ async function loadFilters() {
     }
   });
 
-  const airports = [...airportSet].sort();
-
+  let airports = [...airportSet].sort();
+  
+  // Add virtual London group if any London airports exist
+  const londonAirports = ["LHR","LGW","LCY","SEN","LTN","STN"];
+  
+  if (airports.some(a => londonAirports.includes(a))) {
+    airports = ["LON", ...airports];
+  }
 
 
   // --------------------------------------------------
