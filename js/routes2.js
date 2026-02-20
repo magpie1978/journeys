@@ -288,14 +288,24 @@ async function loadRoutes() {
   // =====================================================
   if (selected.airports.size) {
 
-    routes = routes.filter(r => {
+  routes = routes.filter(r => {
 
-      if (r.journey_type !== "Flight")
-        return true;
+    if (r.journey_type !== "Flight")
+      return true;
 
+      const selectedAirports = [...selected.airports];
+  
+      // Expand airport groups
+      const expanded = selectedAirports.flatMap(code => {
+        if (AIRPORT_GROUPS[code]) {
+          return AIRPORT_GROUPS[code];
+        }
+        return code;
+      });
+  
       return (
-        selected.airports.has(r.origin) ||
-        selected.airports.has(r.destination)
+        expanded.includes(r.origin) ||
+        expanded.includes(r.destination)
       );
     });
   }
