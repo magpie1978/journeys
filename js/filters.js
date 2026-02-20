@@ -147,11 +147,10 @@ async function loadFilters() {
   
   if (airports.some(a => londonAirports.includes(a))) {
     airports = ["LON", ...airports];
+  }
 
   if (airports.some(a => berlinAirports.includes(a))) {
-    airports = ["BER", ...airports];
-    
-  
+    airports = ["BER_ALL", ...airports];
   }
 
 
