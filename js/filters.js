@@ -150,8 +150,35 @@ async function loadFilters() {
   }
 
   if (airports.some(a => berlinAirports.includes(a))) {
-    airports = ["BER_ALL", ...airports];
+    airports = ["BLN", ...airports];
   }
+
+  if (airports.some(a => milanAirports.includes(a))) {
+    airports = ["MIL", ...airports];
+  }
+
+  if (airports.some(a => bangkokAirports.includes(a))) {
+    airports = ["BAN", ...airports];
+  }
+
+  if (airports.some(a => newyorkAirports.includes(a))) {
+    airports = ["NYC", ...airports];
+  }
+
+  if (airports.some(a => washingtonAirports.includes(a))) {
+    airports = ["WDC", ...airports];
+  }
+
+  if (airports.some(a => romeAirports.includes(a))) {
+    airports = ["ROM", ...airports];
+  }
+
+  if (airports.some(a => parisAirports.includes(a))) {
+    airports = ["PAR", ...airports];
+  }
+
+
+  
 
 
   // --------------------------------------------------
