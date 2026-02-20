@@ -24,7 +24,7 @@ const AIRPORT_GROUPS = {
   Berlin: ["BER","SXF","TXL"],
   Milan: ["MXP","BGY","LIN"],
   Bangkok: ["BKK","DMK"],
-  NewYork: ["JFK","LGA","EWR"],
+  'New York': ["JFK","LGA","EWR"],
   Washington: ["IAD","DCA","BWI"],
   Rome: ["CIA","FCO"],
   Paris: ["ORY","BVA","CDG"]
