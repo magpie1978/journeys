@@ -889,3 +889,9 @@ body {
   padding: 6px;
   border-radius: 6px;
 }
+
+.filter-divider {
+  height: 1px;
+  margin: 8px 0;
+  background: rgba(255,255,255,0.25);
+}
