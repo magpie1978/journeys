@@ -16,6 +16,13 @@ const selected = {
 };
 
 
+// =====================================================
+// AIRPORT GROUPS
+// =====================================================
+const AIRPORT_GROUPS = {
+  LON: ["LHR", "LGW", "LCY", "SEN", "LTN", "STN"]
+};
+
 
 // =====================================================
 // DOM ELEMENTS   -   Caches references to frequently accessed DOM elements: Sidebar, Flight list, Buttons, “Glass counter” UI boxes.  This avoids repeated DOM queries later.
