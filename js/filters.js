@@ -142,8 +142,15 @@ async function loadFilters() {
   let airports = [...airportSet].sort();
   
   // Add virtual London group if any London airports exist
-  const londonAirports = ["LHR","LGW","LCY","SEN","LTN","STN"];
-  const berlinAirports = ["BER","SXF","TXL"];
+  const londonAirports     = ["LHR","LGW","LCY","SEN","LTN","STN"];
+  const berlinAirports     = ["BER","SXF","TXL"];
+  const milanAirports      = ["MXP","LIN","BGY"];
+  const bangkokAirports    = ["BKK","DMK"];
+  const newyorkAirports    = ["JFK","EWR","LGA"];
+  const washingtonAirports = ["DCA","BWI","IAD"];
+  const romeAirports       = ["FCO","CIA"];
+  const parisAirports      = ["CDG","BVA","ORY"];
+
   
   if (airports.some(a => londonAirports.includes(a))) {
     airports = ["LON", ...airports];
