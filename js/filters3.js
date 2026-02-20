@@ -186,7 +186,7 @@ async function loadFilters() {
     Berlin: ["BER","SXF","TXL"],
     Milan: ["MXP","LIN","BGY"],
     Bangkok: ["BKK","DMK"],
-    NewYork: ["JFK","EWR","LGA"],
+    'New York': ["JFK","EWR","LGA"],
     Washington: ["DCA","BWI","IAD"],
     Rome: ["FCO","CIA"],
     Paris: ["CDG","BVA","ORY"]
