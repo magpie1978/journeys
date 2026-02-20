@@ -21,7 +21,7 @@ const selected = {
 // =====================================================
 const AIRPORT_GROUPS = {
   LON: ["LHR", "LGW", "LCY", "SEN", "LTN", "STN"],
-  BER: ["BER", "SXF", "TXL"]
+  BER_ALL: ["BER", "SXF", "TXL"]
 };
 
 
