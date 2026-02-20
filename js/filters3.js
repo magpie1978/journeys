@@ -211,6 +211,11 @@ async function loadFilters() {
     });
   });
 
+  // ✅ Sort alphabetically by airport name (label)
+  airportItems.sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
+  
   // Divider between groups + singles
   let airports;
   if (groupItems.length && airportItems.length) {
