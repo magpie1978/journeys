@@ -182,14 +182,14 @@ async function loadFilters() {
   // VIRTUAL CITY GROUPS
   // =====================================================
   const AIRPORT_GROUPS = {
-    LON: ["LHR","LGW","LCY","SEN","LTN","STN"],
-    BLN: ["BER","SXF","TXL"],
-    MIL: ["MXP","LIN","BGY"],
-    BAN: ["BKK","DMK"],
-    NYC: ["JFK","EWR","LGA"],
-    WDC: ["DCA","BWI","IAD"],
-    ROM: ["FCO","CIA"],
-    PAR: ["CDG","BVA","ORY"]
+    London: ["LHR","LGW","LCY","SEN","LTN","STN"],
+    Berlin: ["BER","SXF","TXL"],
+    Milan: ["MXP","LIN","BGY"],
+    Bangkok: ["BKK","DMK"],
+    NewYork: ["JFK","EWR","LGA"],
+    Washington: ["DCA","BWI","IAD"],
+    Rome: ["FCO","CIA"],
+    Paris: ["CDG","BVA","ORY"]
   };
 
   const groupItems = [];
