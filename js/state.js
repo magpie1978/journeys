@@ -20,14 +20,14 @@ const selected = {
 // AIRPORT GROUPS
 // =====================================================
 const AIRPORT_GROUPS = {
-  LON: ["LHR", "LGW", "LCY", "SEN", "LTN", "STN"],
-  BLN: ["BER", "SXF", "TXL"],
-  MIL: ["MXP","BGY","LIN"],
-  BAN: ["BKK","DMK"],
-  NYC: ["JFK","LGA","EWR"],
-  WDC: ["IAD","DCA","BWI"],
-  ROM: ["CIA","FCO"],
-  PAR: ["ORY","BVA","CDG"]
+  London: ["LHR","LGW","LCY","SEN","LTN","STN"],
+  Berlin: ["BER","SXF","TXL"],
+  Milan: ["MXP","BGY","LIN"],
+  Bangkok: ["BKK","DMK"],
+  NewYork: ["JFK","LGA","EWR"],
+  Washington: ["IAD","DCA","BWI"],
+  Rome: ["CIA","FCO"],
+  Paris: ["ORY","BVA","CDG"]
 };
 
 
