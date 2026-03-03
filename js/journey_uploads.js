@@ -101,14 +101,11 @@ csvFileInput.addEventListener("change", async (e) => {
 
     uploadedJourneyUID = `${callsign}-${flightDate}`;
 
-    const { error } = await sb
-      .from("journey_details")
-      .upsert([payload], { onConflict: "uid" });
     
-    /*const { error } = await sb
+    const { error } = await sb
       .from("journey_tracks")
       .insert(rows);
-    */
+    
     
     if (error) {
       console.error("[journey upload]", error);
