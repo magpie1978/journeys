@@ -164,13 +164,39 @@ async function loadRoutes() {
   }
 
   let routes = (data || []).filter(r => r && r.geom);
-
-  routes = routes.sort(
-    (a, b) => new Date(b.journey_date) - new Date(a.journey_date)
-  );
-
-  renderRoutes(routes);
-}
+  
+  // =====================================================
+  // AIRPORT FILTER (FROM DROPDOWN)
+  // =====================================================
+  
+  if (selected.airports && selected.airports.size) {
+  
+    routes = routes.filter(r => {
+  
+      if (r.journey_type !== "Flight") return true;
+  
+      const selectedAirports = [...selected.airports];
+  
+      const expanded = selectedAirports.flatMap(code => {
+        if (AIRPORT_GROUPS?.[code]) {
+          return AIRPORT_GROUPS[code];
+        }
+        return code;
+      });
+  
+      return (
+        expanded.includes(r.origin) ||
+        expanded.includes(r.destination)
+      );
+  
+    });
+  }
+    routes = routes.sort(
+      (a, b) => new Date(b.journey_date) - new Date(a.journey_date)
+    );
+  
+    renderRoutes(routes);
+  }
 
 
 // =====================================================
