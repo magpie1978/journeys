@@ -18,7 +18,9 @@ function renderSidebar(routes) {
   (routes || []).forEach(r => {
     const li = document.createElement("li");
     li.dataset.uid = r.uid;
-    li.classList.toggle("active", r.uid === isolatedUid);
+    
+  /* li.classList.toggle("active", r.uid === isolatedUid); */
+    li.classList.toggle("active", r.uid === appState.isolatedUid);
 
     const logoUrl = getJourneyIcon(r);
 
@@ -61,7 +63,8 @@ function renderSidebar(routes) {
     `;
 
     li.addEventListener("click", () => {
-    toggleIsolation(r.uid);
+      /* toggleIsolation(r.uid); */
+      setIsolatedRoute(r.uid);
   
       // Only show flight summary when a single flight is isolated
       if (isolatedUid === r.uid) {
