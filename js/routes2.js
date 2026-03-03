@@ -311,6 +311,63 @@ async function loadRoutes() {
   }
 
 
+  // =====================================================
+// ROUTE ISOLATION SYSTEM
+// =====================================================
+
+  function toggleIsolation(uid) {
+  
+    if (!uid) return;
+  
+    // Clicking same route clears isolation
+    if (isolatedUid === uid) {
+      clearIsolation();
+      return;
+    }
+  
+    isolatedUid = uid;
+  
+    applyIsolation();
+    renderSidebar(currentRoutes);
+  
+    if (mapMode === "routes") {
+      const route = currentRoutes.find(r => r.uid === uid);
+      if (route?.geom) {
+        fitToBoundsFromLineGeoms([route.geom]);
+      }
+    }
+  }
+
+  function clearIsolation() {
+    isolatedUid = null;
+  
+    applyIsolation();
+    renderSidebar(currentRoutes);
+  
+    if (mapMode === "routes") {
+      fitToBoundsFromLineGeoms(currentRoutes.map(r => r.geom));
+    }
+  }
+  
+  function applyIsolation() {
+  
+    if (!map.getLayer("routes-line")) return;
+  
+    map.setPaintProperty("routes-line", "line-opacity", [
+      "case",
+      ["==", ["get", "uid"], isolatedUid],
+      1,
+      0.15
+    ]);
+  
+    map.setPaintProperty("routes-line", "line-width", [
+      "case",
+      ["==", ["get", "uid"], isolatedUid],
+      3,
+      1.4
+    ]);
+  }
+
 
   // ---------------- SORT ----------------
   routes = routes.sort(
