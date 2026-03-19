@@ -452,7 +452,8 @@ function renderVisitsPerCountry({ countries, values }) {
   canvas.style.width = "100%";
 
   // responsive:false => set width buffer
-  const w = container.clientWidth || 600;
+  //const w = container.clientWidth || 600;
+  const w = container.offsetWidth || 600;
   canvas.width = w;
 
   if (countryChart) countryChart.destroy();
