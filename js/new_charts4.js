@@ -636,6 +636,13 @@ function renderVisitsPerCountry({ countries, values }) {
   const canvas = document.getElementById("visitsPerCountryChart");
   if (!canvas) return;
 
+  const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
+
+  container.style.height = `${visibleHeight}px`;
+  container.style.maxHeight = `${visibleHeight}px`;
+  container.style.overflowY = "auto";   // ✅ scroll works again
+  container.style.overflowX = "hidden";
+
   if (countryChart) countryChart.destroy();
 
   countryChart = new Chart(canvas.getContext("2d"), {
@@ -664,7 +671,7 @@ function renderVisitsPerCountry({ countries, values }) {
       maintainAspectRatio: false,
       animation: { duration: 400, easing: "easeOutQuart" },
 
-      layout: { padding: { top: 10, right: 20, bottom: 10, left: 10 } },
+      layout: { padding: { top: 8, right: 40, bottom: 30, left: 8 } },
 
       plugins: {
         legend: { display: false },
