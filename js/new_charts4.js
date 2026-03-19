@@ -377,7 +377,8 @@ function renderRight({ airlines, datasets }, metric) {
       responsive: false,
       maintainAspectRatio: false,
       animation: false,
-      layout: { padding: { top: 8, right: 36, bottom: 8, left: 8 } }, // right padding for end labels
+      //layout: { padding: { top: 8, right: 36, bottom: 8, left: 8 } }, // right padding for end labels
+      layout: { padding: { top: 12, right: 40, bottom: 30, left: 12 } },
       scales: {
         x: {
           stacked: true,
