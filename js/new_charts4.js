@@ -636,22 +636,11 @@ function renderVisitsPerCountry({ countries, values }) {
   const canvas = document.getElementById("visitsPerCountryChart");
   if (!canvas) return;
 
-  const container = canvas.parentElement;
-  if (!container) return;
-
-  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
-  const finalHeight = Math.max(totalHeight, 400);
-
-  canvas.height = finalHeight;
-  canvas.style.width = "100%";
-
-  const w = container.clientWidth || 600;
-  canvas.width = w;
-
   if (countryChart) countryChart.destroy();
 
   countryChart = new Chart(canvas.getContext("2d"), {
     type: "bar",
+
     data: {
       labels: countries,
       datasets: [
@@ -660,28 +649,46 @@ function renderVisitsPerCountry({ countries, values }) {
           backgroundColor: YELLOW,
           borderColor: YELLOW_BORDER,
           borderWidth: 1,
-          barPercentage: 0.85,
-          categoryPercentage: 0.92,
+          borderRadius: 6,
         },
       ],
     },
+
+    // ✅ ADD LABELS HERE
+    plugins: [barTopLabelPlugin],
+
     options: {
-      indexAxis: "y",
-      responsive: false,
+      indexAxis: "y", // horizontal bars
+
+      responsive: true,
       maintainAspectRatio: false,
-      animation: false,
-      layout: { padding: { top: 8, right: 12, bottom: 30, left: 8 } },
-      plugins: { legend: { display: false } },
+      animation: { duration: 400, easing: "easeOutQuart" },
+
+      layout: { padding: { top: 10, right: 20, bottom: 10, left: 10 } },
+
+      plugins: {
+        legend: { display: false },
+
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw} visits`,
+          },
+        },
+      },
+
       scales: {
-        x: { grid: { color: GRID }, ticks: { precision: 0 } },
-        y: { grid: { display: false }, ticks: { autoSkip: false } },
+        x: {
+          grid: { color: GRID },
+          ticks: { font: { size: 11 } },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } },
+        },
       },
     },
   });
-
-  container.scrollTop = 0;
 }
-
 
 
 // ============================================================================
