@@ -76,7 +76,16 @@
   
         <!-- RIGHT SIDE -->
         <div class="top-actions">
-          <a href="stats.html" class="top-btn">Stats</a>
+          <!--<a href="stats.html" class="top-btn">Stats</a>-->
+          <li class="nav-item dropdown">
+            <a href="#" class="nav-link">Stats ▾</a>
+            <ul class="dropdown-menu">
+              <li><a href="stats-flights.html" class="dropdown-item">Flights Over Time</a></li>
+              <li><a href="stats-airlines.html" class="dropdown-item">Flights per Airline</a></li>
+              <li><a href="stats-airlines-year.html" class="dropdown-item">Airlines by Year</a></li>
+              <li><a href="stats-countries.html" class="dropdown-item">Countries Visited</a></li>
+            </ul>
+          </li>
           <button id="addJourneyBtn" class="top-btn primary">Add Journey</button>
         </div>          
       </div>
