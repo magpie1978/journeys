@@ -97,7 +97,8 @@ const barEndLabelPlugin = {
 async function loadStatsBaseData() {
   const { data, error } = await sb
     .from("journeys_routes_core_mv")
-    .select("year, journey_type, journey_distance, airline, destination_country");
+    //.select("year, journey_type, journey_distance, airline, destination_country");
+    .select("year, journey_type, journey_distance, airline, destination_country, origin_country");
 
   if (error) {
     console.error("[stats] load failed", error);
@@ -224,19 +225,31 @@ function visitsPerCountry(data) {
 
   (data || []).forEach(r => {
     if (r.journey_type !== "Flight") return;
-    if (!r.destination_country) return;
-    if (r.destination_country === "United Kingdom") return;
 
-    const c = r.destination_country;
-    counts[c] = (counts[c] || 0) + 1;
+    const origin = r.origin_country;
+    const dest = r.destination_country;
+
+    if (!origin || !dest) return;
+
+    // ❗ NEW RULE: must be international
+    if (origin === dest) return;
+
+    // Optional: still exclude UK if you want
+    if (dest === "United Kingdom") return;
+
+    counts[dest] = (counts[dest] || 0) + 1;
   });
 
   const countries = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .map(([c]) => c);
 
-  return { countries, values: countries.map(c => counts[c]) };
+  return {
+    countries,
+    values: countries.map(c => counts[c])
+  };
 }
+
 
 // ============================================================================
 // RENDERERS
