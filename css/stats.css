@@ -149,17 +149,18 @@ body {
   min-height: 0;
   position: relative;
 
-  overflow-y: auto;     /* 🔥 ALWAYS scrollable */
+  overflow-y: auto;
   overflow-x: hidden;
 
-  padding-bottom: 30px; /* 🔥 prevents axis cut-off */
+  max-height: 65vh;   /* 🔥 forces scroll behaviour */
+  padding-bottom: 30px;
 }
 
 
 /* Canvas behaviour */
 .chart-container canvas {
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;   /* 🔥 KEY FIX */
   display: block;
 }
 
