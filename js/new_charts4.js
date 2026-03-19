@@ -575,7 +575,16 @@ function getTopLeftValues(metric) {
 
 const page = window.location.pathname;
 
-baseStatsData = await loadStatsBaseData();
+document.addEventListener("DOMContentLoaded", async () => {
+
+  baseStatsData = await loadStatsBaseData();
+
+  if (document.getElementById("visitsPerCountryChart")) {
+    renderVisitsPerCountry(visitsPerCountry(baseStatsData));
+  }
+
+});
+
 
 // 🔹 Flights page
 if (document.getElementById("flightsByYearChart")) {
