@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journey Statistics – Countries</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Existing styles -->
+  <link rel="stylesheet" href="css/flights.css" />
+  <link rel="stylesheet" href="css/stats.css" />
+
+  <!-- Page-specific styling -->
+  <style>
+    .full-page {
+      height: calc(100vh - 80px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .airline-scroll {
+      flex: 1;
+      position: relative;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    canvas {
+      width: 100% !important;
+    }
+
+    .stats-nav {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .stats-nav a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .stats-nav a:hover {
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header id="statsHeader">
+    <a href="index.html" class="back-link">← Back to map</a>
+    <div class="stats-header-title">Journey Statistics</div>
+  </header>
+
+  <!-- MAIN -->
+  <main id="statsPage">
+    <div class="table-aligned-container">
+
+      <!-- NAV BETWEEN CHART PAGES -->
+      <div class="stats-nav">
+        <a href="stats-flights.html">Flights</a>
+        <a href="stats-airlines.html">Airlines</a>
+        <a href="stats-airlines-year.html">Airlines by Year</a>
+        <a href="stats-countries.html">Countries</a>
+      </div>
+
+      <!-- PAGE TITLE -->
+      <h1>Visits per Country</h1>
+
+      <!-- CHART PANEL -->
+      <section class="stats-panel full-page">
+
+        <div class="panel-head">
+          <h2>Visits per Country</h2>
+        </div>
+
+        <!-- SCROLLABLE CHART -->
+        <div class="airline-scroll">
+          <canvas id="visitsPerCountryChart"></canvas>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- CONFIG + CHART LOGIC -->
+  <script src="js/config.js"></script>
+  <script src="js/new_charts4.js"></script>
+
+</body>
+</html>
