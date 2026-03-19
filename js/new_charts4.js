@@ -345,19 +345,19 @@ function renderRight({ airlines, datasets }, metric) {
   if (!container) return;
 
   // Lock viewport height so only ~N rows show; scrollbar handles the rest
-  const visibleHeight = RIGHT_VISIBLE_ROWS * RIGHT_ROW_HEIGHT;
-  container.style.height = `${visibleHeight}px`;
-  container.style.maxHeight = `${visibleHeight}px`;
-  container.style.overflowY = "scroll"; // permanent
-  container.style.overflowX = "hidden";
-  container.style.position = "relative";
+  //const visibleHeight = RIGHT_VISIBLE_ROWS * RIGHT_ROW_HEIGHT;
+  //container.style.height = `${visibleHeight}px`;
+  //container.style.maxHeight = `${visibleHeight}px`;
+  //container.style.overflowY = "scroll"; // permanent
+  //container.style.overflowX = "hidden";
+  //container.style.position = "relative";
 
   // Make canvas tall so the container scrolls
   const totalHeight = (airlines?.length || 0) * RIGHT_ROW_HEIGHT;
   const finalHeight = Math.max(totalHeight, visibleHeight);
 
   canvas.height = finalHeight;
-  canvas.style.height = `${finalHeight}px`;
+  //canvas.style.height = `${finalHeight}px`;
   canvas.style.width = "100%";
 
   // Because responsive:false, explicitly size the drawing buffer width
@@ -439,18 +439,28 @@ function renderVisitsPerCountry({ countries, values }) {
   const container = canvas.parentElement;
   if (!container) return;
 
-  const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
-  container.style.height = `${visibleHeight}px`;
-  container.style.maxHeight = `${visibleHeight}px`;
-  container.style.overflowY = "scroll";
-  container.style.overflowX = "hidden";
+  //const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
+  //container.style.height = `${visibleHeight}px`;
+  //container.style.maxHeight = `${visibleHeight}px`;
+  //container.style.overflowY = "scroll";
+  //container.style.overflowX = "hidden";
 
   const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
   const finalHeight = Math.max(totalHeight, visibleHeight);
 
   canvas.height = finalHeight;
-  canvas.style.height = `${finalHeight}px`;
+  //canvas.style.height = `${finalHeight}px`;
   canvas.style.width = "100%";
+
+
+  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
+  const finalHeight = Math.max(totalHeight, 400);
+
+  canvas.height = finalHeight;
+  canvas.style.width = "100%";
+
+  const w = container.clientWidth || 600;
+  canvas.width = w;
 
   // responsive:false => set width buffer
   //const w = container.clientWidth || 600;
