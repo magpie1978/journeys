@@ -354,8 +354,9 @@ function renderRight({ airlines, datasets }, metric) {
 
   // Make canvas tall so the container scrolls
   const totalHeight = (airlines?.length || 0) * RIGHT_ROW_HEIGHT;
-  const finalHeight = Math.max(totalHeight, visibleHeight);
-
+  //const finalHeight = Math.max(totalHeight, visibleHeight);
+  const finalHeight = Math.max(totalHeight, 400);
+  
   canvas.height = finalHeight;
   //canvas.style.height = `${finalHeight}px`;
   canvas.style.width = "100%";
@@ -432,12 +433,12 @@ function renderRight({ airlines, datasets }, metric) {
   container.scrollTop = 0;
 }
 
-function renderVisitsPerCountry({ countries, values }) {
-  const canvas = document.getElementById("visitsPerCountryChart");
-  if (!canvas) return;
+//function renderVisitsPerCountry({ countries, values }) {
+//  const canvas = document.getElementById("visitsPerCountryChart");
+//  if (!canvas) return;
 
-  const container = canvas.parentElement;
-  if (!container) return;
+//  const container = canvas.parentElement;
+//  if (!container) return;
 
   //const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
   //container.style.height = `${visibleHeight}px`;
@@ -445,13 +446,71 @@ function renderVisitsPerCountry({ countries, values }) {
   //container.style.overflowY = "scroll";
   //container.style.overflowX = "hidden";
 
-  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
-  const finalHeight = Math.max(totalHeight, visibleHeight);
+//  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
+//  const finalHeight = Math.max(totalHeight, visibleHeight);
 
-  canvas.height = finalHeight;
+//  canvas.height = finalHeight;
   //canvas.style.height = `${finalHeight}px`;
-  canvas.style.width = "100%";
+//  canvas.style.width = "100%";
 
+
+//  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
+//  const finalHeight = Math.max(totalHeight, 400);
+
+//  canvas.height = finalHeight;
+//  canvas.style.width = "100%";
+
+//  const w = container.clientWidth || 600;
+//  canvas.width = w;
+
+  // responsive:false => set width buffer
+  //const w = container.clientWidth || 600;
+//  const w = container.offsetWidth || 600;
+//  canvas.width = w;
+
+//  if (countryChart) countryChart.destroy();
+
+//  countryChart = new Chart(canvas.getContext("2d"), {
+//    type: "bar",
+//    data: {
+//      labels: countries,
+//      datasets: [
+//        {
+//          data: values,
+//          backgroundColor: YELLOW,
+//          borderColor: YELLOW_BORDER,
+//          borderWidth: 1,
+//          barPercentage: 0.85,
+//          categoryPercentage: 0.92,
+//        },
+//      ],
+//    },
+//    options: {
+//      indexAxis: "y",
+//      responsive: false,
+//      maintainAspectRatio: false,
+//      animation: false,
+//      layout: { padding: { top: 8, right: 12, bottom: 8, left: 8 } },
+//      plugins: { legend: { display: false } },
+//      scales: {
+//        x: { grid: { color: GRID }, ticks: { precision: 0 } },
+//        y: { grid: { display: false }, ticks: { autoSkip: false } },
+//      },
+//    },
+//  });
+
+//  container.scrollTop = 0;
+//}
+
+// ============================================================================
+// RENDER VISIT PER COUNTRY
+// ============================================================================
+function renderVisitsPerCountry({ countries, values }) {
+  const canvas = document.getElementById("visitsPerCountryChart");
+  if (!canvas) return;
+
+  const container = canvas.parentElement;
+  if (!container) return;
 
   const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
   const finalHeight = Math.max(totalHeight, 400);
@@ -460,11 +519,6 @@ function renderVisitsPerCountry({ countries, values }) {
   canvas.style.width = "100%";
 
   const w = container.clientWidth || 600;
-  canvas.width = w;
-
-  // responsive:false => set width buffer
-  //const w = container.clientWidth || 600;
-  const w = container.offsetWidth || 600;
   canvas.width = w;
 
   if (countryChart) countryChart.destroy();
@@ -489,7 +543,7 @@ function renderVisitsPerCountry({ countries, values }) {
       responsive: false,
       maintainAspectRatio: false,
       animation: false,
-      layout: { padding: { top: 8, right: 12, bottom: 8, left: 8 } },
+      layout: { padding: { top: 8, right: 12, bottom: 30, left: 8 } },
       plugins: { legend: { display: false } },
       scales: {
         x: { grid: { color: GRID }, ticks: { precision: 0 } },
@@ -500,6 +554,8 @@ function renderVisitsPerCountry({ countries, values }) {
 
   container.scrollTop = 0;
 }
+
+
 
 // ============================================================================
 // TOP-LEFT METRIC DISPATCH
