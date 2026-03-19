@@ -895,3 +895,54 @@ body {
   margin: 8px 0;
   background: rgba(255,255,255,0.25);
 }
+
+
+
+
+
+
+/* =========================================
+   NAV DROPDOWN (STATS)
+========================================= */
+
+.nav-item.dropdown {
+  position: relative;
+}
+
+/* hidden by default */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  background: #0b0f2a;
+  min-width: 200px;
+  padding: 8px 0;
+  margin: 0;
+
+  list-style: none;
+  border-radius: 6px;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  z-index: 1000;
+}
+
+/* show on hover */
+.nav-item.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+/* items */
+.dropdown-item {
+  display: block;
+  padding: 10px 16px;
+  color: #ccc;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
