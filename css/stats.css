@@ -8,9 +8,8 @@ html, body {
 body {
   background: #0f0f0f;
   margin: 0;
-  overflow: hidden; /* scrolling handled inside panels */
+  overflow: hidden;
 }
-
 
 /* =====================================================
    STICKY HEADER
@@ -42,7 +41,6 @@ body {
   color: #fff;
 }
 
-
 /* =====================================================
    PAGE + GRID LAYOUT
 ===================================================== */
@@ -50,18 +48,17 @@ body {
   max-width: 1800px;
   margin: 0 auto;
   padding: 24px;
-  height: calc(100vh - 56px); /* viewport minus header */
+  height: calc(100vh - 56px);
   box-sizing: border-box;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr; /* equal-height left charts */
+  grid-template-rows: 1fr 1fr;
   gap: 20px;
   height: 100%;
 }
-
 
 /* =====================================================
    PANEL BASE
@@ -69,8 +66,8 @@ body {
 .stats-panel {
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 🔑 REQUIRED for Chart.js */
-  min-width: 0; 
+  min-height: 0;
+  min-width: 0;
 }
 
 .stats-panel h2,
@@ -89,23 +86,19 @@ body {
   flex: 0 0 auto;
 }
 
-
 /* =====================================================
-   GRID PLACEMENT (EXPLICIT — FIXES SWAP ISSUE)
+   GRID PLACEMENT
 ===================================================== */
-/* LEFT TOP */
 .stats-panel--top-left {
   grid-column: 1;
   grid-row: 1;
 }
 
-/* LEFT BOTTOM */
 .stats-panel--bottom-left {
   grid-column: 1;
   grid-row: 2;
 }
 
-/* RIGHT (SPANS BOTH ROWS) */
 .stats-panel--right {
   grid-column: 2;
   grid-row: 1 / span 2;
@@ -113,7 +106,6 @@ body {
   flex-direction: column;
   min-height: 0;
 }
-
 
 /* =====================================================
    CONTROLS
@@ -128,61 +120,51 @@ body {
   outline: none;
 }
 
+/* =========================================
+   STANDARD CHART SYSTEM (FINAL)
+========================================= */
 
-/* =====================================================
-   CHART CONTAINERS
-===================================================== */
-/* Ensures axis labels never get clipped */
-.chart-fill {
+.chart-card {
   flex: 1;
-  position: relative;
   min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 16px;
+  border-radius: 16px;
+
+  background: #14161f;
+  border: 1px solid #2a2d3a;
+
+  overflow: hidden;
 }
 
-.chart-fill canvas {
+/* Core container */
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+
+  overflow: hidden;
+}
+
+/* Scrollable charts only */
+.chart-container.scroll-y {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 24px;
+}
+
+/* Canvas behaviour */
+.chart-container canvas {
   width: 100% !important;
   height: 100% !important;
-}
-
-
-/* =====================================================
-   RIGHT-HAND SCROLLING AIRLINE CHART
-===================================================== */
-.airline-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;   /* permanent scrollbar */
-  overflow-x: hidden;
-}
-
-/* Scrollbar styling */
-.airline-scroll::-webkit-scrollbar {
-  width: 8px;
-}
-
-.airline-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
-}
-
-.airline-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.airline-scroll::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-
-/* Canvas must be allowed to be taller than viewport */
-#flightsPerAirlineYearChart {
   display: block;
-  width: 100% !important;
 }
 
-
 /* =====================================================
-   OPTIONAL PLACEHOLDER (SAFE TO KEEP)
+   OPTIONAL PLACEHOLDER
 ===================================================== */
 .stats-placeholder {
   color: #777;
@@ -193,45 +175,4 @@ body {
   border: 1px dashed #333;
   border-radius: 12px;
   height: 100%;
-}
-
-
-/* =====================================================
-   AIRLINE SCROLL
-===================================================== */
-.airline-scroll {
-  flex: 1;
-  position: relative;
-
-  overflow-y: scroll;
-  overflow-x: hidden;
-
-  min-height: 0;
-  padding-bottom: 20px; /* 🔥 THIS FIXES CUT-OFF */
-}
-
-.airline-scroll canvas {
-  width: 100% !important;
-  display: block;
-}
-
-
-/* =========================================
-   CHART CARD (SHARED ACROSS ALL PAGES)
-========================================= */
-
-.chart-card {
-  flex: 1;
-  min-height: 0;
-
-  padding: 16px;
-  border-radius: 16px;
-
-  background: #14161f;
-  border: 1px solid #2a2d3a;
-
-  display: flex;
-  flex-direction: column;
-
-  overflow: hidden; /* 🔥 prevents bleed */
 }
