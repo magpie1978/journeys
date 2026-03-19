@@ -560,94 +560,34 @@ function renderRight({ airlines, datasets }, metric) {
   container.scrollTop = 0;
 }
 
-//function renderVisitsPerCountry({ countries, values }) {
-//  const canvas = document.getElementById("visitsPerCountryChart");
-//  if (!canvas) return;
-
-//  const container = canvas.parentElement;
-//  if (!container) return;
-
-  //const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
-  //container.style.height = `${visibleHeight}px`;
-  //container.style.maxHeight = `${visibleHeight}px`;
-  //container.style.overflowY = "scroll";
-  //container.style.overflowX = "hidden";
-
-//  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
-//  const finalHeight = Math.max(totalHeight, visibleHeight);
-
-//  canvas.height = finalHeight;
-  //canvas.style.height = `${finalHeight}px`;
-//  canvas.style.width = "100%";
-
-
-//  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
-//  const finalHeight = Math.max(totalHeight, 400);
-
-//  canvas.height = finalHeight;
-//  canvas.style.width = "100%";
-
-//  const w = container.clientWidth || 600;
-//  canvas.width = w;
-
-  // responsive:false => set width buffer
-  //const w = container.clientWidth || 600;
-//  const w = container.offsetWidth || 600;
-//  canvas.width = w;
-
-//  if (countryChart) countryChart.destroy();
-
-//  countryChart = new Chart(canvas.getContext("2d"), {
-//    type: "bar",
-//    data: {
-//      labels: countries,
-//      datasets: [
-//        {
-//          data: values,
-//          backgroundColor: YELLOW,
-//          borderColor: YELLOW_BORDER,
-//          borderWidth: 1,
-//          barPercentage: 0.85,
-//          categoryPercentage: 0.92,
-//        },
-//      ],
-//    },
-//    options: {
-//      indexAxis: "y",
-//      responsive: false,
-//      maintainAspectRatio: false,
-//      animation: false,
-//      layout: { padding: { top: 8, right: 12, bottom: 8, left: 8 } },
-//      plugins: { legend: { display: false } },
-//      scales: {
-//        x: { grid: { color: GRID }, ticks: { precision: 0 } },
-//        y: { grid: { display: false }, ticks: { autoSkip: false } },
-//      },
-//    },
-//  });
-
-//  container.scrollTop = 0;
-//}
-
-// ============================================================================
-// RENDER VISIT PER COUNTRY
-// ============================================================================
 function renderVisitsPerCountry({ countries, values }) {
   const canvas = document.getElementById("visitsPerCountryChart");
   if (!canvas) return;
 
-  const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
+  const container = canvas.parentElement;
+  if (!container) return;
 
+  // ✅ restore scroll container
+  const visibleHeight = COUNTRY_VISIBLE_ROWS * COUNTRY_ROW_HEIGHT;
   container.style.height = `${visibleHeight}px`;
   container.style.maxHeight = `${visibleHeight}px`;
-  container.style.overflowY = "auto";   // ✅ scroll works again
+  container.style.overflowY = "auto";
   container.style.overflowX = "hidden";
+
+  // ✅ tall canvas for scrolling
+  const totalHeight = (countries?.length || 0) * COUNTRY_ROW_HEIGHT;
+  const finalHeight = Math.max(totalHeight, visibleHeight);
+
+  canvas.height = finalHeight;
+  canvas.style.width = "100%";
+
+  const w = container.clientWidth || 600;
+  canvas.width = w;
 
   if (countryChart) countryChart.destroy();
 
   countryChart = new Chart(canvas.getContext("2d"), {
     type: "bar",
-
     data: {
       labels: countries,
       datasets: [
@@ -656,45 +596,35 @@ function renderVisitsPerCountry({ countries, values }) {
           backgroundColor: YELLOW,
           borderColor: YELLOW_BORDER,
           borderWidth: 1,
-          borderRadius: 6,
+          barPercentage: 0.85,
+          categoryPercentage: 0.92,
         },
       ],
     },
 
-    // ✅ ADD LABELS HERE
-    plugins: [barTopLabelPlugin],
+    plugins: [barTopLabelPlugin], // ✅ labels
 
     options: {
-      indexAxis: "y", // horizontal bars
-
-      responsive: true,
+      indexAxis: "y",
+      responsive: false,
       maintainAspectRatio: false,
-      animation: { duration: 400, easing: "easeOutQuart" },
+      animation: false,
 
+      // ✅ extra right padding for labels
       layout: { padding: { top: 8, right: 40, bottom: 30, left: 8 } },
 
       plugins: {
         legend: { display: false },
-
-        tooltip: {
-          callbacks: {
-            label: ctx => `${ctx.raw} visits`,
-          },
-        },
       },
 
       scales: {
-        x: {
-          grid: { color: GRID },
-          ticks: { font: { size: 11 } },
-        },
-        y: {
-          grid: { display: false },
-          ticks: { font: { size: 11 } },
-        },
+        x: { grid: { color: GRID }, ticks: { precision: 0 } },
+        y: { grid: { display: false }, ticks: { autoSkip: false } },
       },
     },
   });
+
+  container.scrollTop = 0;
 }
 
 
