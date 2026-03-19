@@ -70,6 +70,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0; /* 🔑 REQUIRED for Chart.js */
+  min-width: 0; 
 }
 
 .stats-panel h2,
@@ -206,4 +207,10 @@ body {
 
   width: 100%;          /* 🔥 ADD THIS */
   min-width: 0;         /* 🔥 ADD THIS */
+}
+
+
+.airline-scroll canvas {
+  width: 100% !important;
+  display: block;
 }
