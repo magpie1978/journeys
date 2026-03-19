@@ -214,3 +214,24 @@ body {
   width: 100% !important;
   display: block;
 }
+
+
+/* =========================================
+   CHART CARD (SHARED ACROSS ALL PAGES)
+========================================= */
+
+.chart-card {
+  flex: 1;
+  min-height: 0;
+
+  padding: 16px;
+  border-radius: 16px;
+
+  background: #14161f;
+  border: 1px solid #2a2d3a;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden; /* 🔥 prevents bleed */
+}
