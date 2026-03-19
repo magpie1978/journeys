@@ -91,6 +91,41 @@ const barEndLabelPlugin = {
   }
 };
 
+
+// ============================================================================
+// PLUGIN: Top-of-bar labels (vertical charts)
+// ============================================================================
+const barTopLabelPlugin = {
+  id: "barTopLabels",
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+
+    ctx.save();
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.fillStyle = "#ccc";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+
+      meta.data.forEach((bar, index) => {
+        const value = dataset.data[index];
+        if (!value || value === 0) return;
+
+        const x = bar.x;
+        const y = bar.y - 6;
+
+        ctx.fillText(numberFmt(value), x, y);
+      });
+    });
+
+    ctx.restore();
+  }
+};
+
+
+
 // ============================================================================
 // LOAD BASE DATA (Supabase)
 // ============================================================================
@@ -268,6 +303,7 @@ function renderTopLeft(values, metric) {
 
   yearChart = new Chart(canvas.getContext("2d"), {
     type: isAllTime ? "line" : "bar",
+  
     data: {
       labels,
       datasets: [
@@ -283,13 +319,22 @@ function renderTopLeft(values, metric) {
         },
       ],
     },
+  
+    // ✅ ADD THIS BLOCK (OUTSIDE options)
+    plugins: isAllTime ? [] : [barTopLabelPlugin],
+  
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 400, easing: "easeOutQuart" },
       layout: { padding: { top: 6, right: 12, bottom: 24, left: 12 } },
+  
       plugins: {
         legend: { display: false },
+  
+        // optional: register config hook (not strictly required)
+        barTopLabels: {},
+  
         tooltip: {
           callbacks: {
             label: ctx => {
@@ -300,14 +345,15 @@ function renderTopLeft(values, metric) {
           },
         },
       },
+  
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
         y: { grid: { color: GRID }, ticks: { font: { size: 11 } } },
       },
     },
   });
-}
 
+  
 function renderBottomLeft({ years, datasets }) {
   const canvas = document.getElementById("flightsPerYearAirlineChart");
   if (!canvas) return;
