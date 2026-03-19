@@ -224,7 +224,8 @@ function visitsPerCountry(data) {
   const counts = {};
 
   (data || []).forEach(r => {
-    if (r.journey_type !== "Flight") return;
+    //if (r.journey_type !== "Flight") return;
+    if (r.journey_type !== "Flight" && r.journey_type !== "Drive") return;
 
     const origin = r.origin_country;
     const dest = r.destination_country;
