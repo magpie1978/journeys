@@ -979,3 +979,12 @@ body {
   background: rgba(255,255,255,0.08);
   color: #fff;
 }
+
+
+.top-btn,
+.top-btn:link,
+.top-btn:visited,
+.top-btn:hover,
+.top-btn:active {
+  text-decoration: none;
+}
