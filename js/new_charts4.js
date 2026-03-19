@@ -303,7 +303,7 @@ function renderTopLeft(values, metric) {
 
   yearChart = new Chart(canvas.getContext("2d"), {
     type: isAllTime ? "line" : "bar",
-  
+
     data: {
       labels,
       datasets: [
@@ -319,22 +319,19 @@ function renderTopLeft(values, metric) {
         },
       ],
     },
-  
-    // ✅ ADD THIS BLOCK (OUTSIDE options)
+
+    // ✅ Only apply labels for bar charts
     plugins: isAllTime ? [] : [barTopLabelPlugin],
-  
+
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 400, easing: "easeOutQuart" },
       layout: { padding: { top: 6, right: 12, bottom: 24, left: 12 } },
-  
+
       plugins: {
         legend: { display: false },
-  
-        // optional: register config hook (not strictly required)
-        barTopLabels: {},
-  
+
         tooltip: {
           callbacks: {
             label: ctx => {
@@ -345,14 +342,24 @@ function renderTopLeft(values, metric) {
           },
         },
       },
-  
+
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { grid: { color: GRID }, ticks: { font: { size: 11 } } },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } },
+        },
+        y: {
+          grid: { color: GRID },
+          ticks: { font: { size: 11 } },
+        },
       },
     },
   });
+}
 
+
+
+  
   
 function renderBottomLeft({ years, datasets }) {
   const canvas = document.getElementById("flightsPerYearAirlineChart");
