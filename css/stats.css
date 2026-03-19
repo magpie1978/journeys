@@ -8,7 +8,8 @@ html, body {
 body {
   background: #0f0f0f;
   margin: 0;
-  overflow: hidden;
+  overflow-y: auto;   /* 🔥 allow page to breathe */
+  overflow-x: hidden;
 }
 
 /* =====================================================
@@ -126,7 +127,8 @@ body {
 
 .chart-card {
   flex: 1;
-  min-height: 0;
+  min-height: 500px;   /* 🔥 key fix */
+  max-height: 70vh;    /* 🔥 keeps consistency */
 
   display: flex;
   flex-direction: column;
@@ -140,27 +142,38 @@ body {
   overflow: hidden;
 }
 
+
 /* Core container */
 .chart-container {
   flex: 1;
   min-height: 0;
   position: relative;
 
-  overflow: hidden;
+  overflow-y: auto;     /* 🔥 ALWAYS scrollable */
+  overflow-x: hidden;
+
+  padding-bottom: 30px; /* 🔥 prevents axis cut-off */
 }
 
-/* Scrollable charts only */
-.chart-container.scroll-y {
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-bottom: 24px;
-}
 
 /* Canvas behaviour */
 .chart-container canvas {
   width: 100% !important;
   height: 100% !important;
   display: block;
+}
+
+.chart-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chart-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+.chart-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.35);
 }
 
 /* =====================================================
