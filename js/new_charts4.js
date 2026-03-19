@@ -126,6 +126,48 @@ const barTopLabelPlugin = {
 
 
 
+
+// ============================================================================
+// PLUGIN: Totals for stacked vertical bars
+// ============================================================================
+const stackedBarTopLabelPlugin = {
+  id: "stackedBarTopLabels",
+  afterDatasetsDraw(chart) {
+    const { ctx, scales } = chart;
+    const xScale = scales.x;
+    const yScale = scales.y;
+
+    if (!xScale || !yScale) return;
+
+    ctx.save();
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.fillStyle = "#ccc";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+
+    chart.data.labels.forEach((label, i) => {
+      let total = 0;
+
+      chart.data.datasets.forEach(ds => {
+        const v = ds.data?.[i];
+        if (typeof v === "number") total += v;
+      });
+
+      if (total <= 0) return;
+
+      const x = xScale.getPixelForValue(label);
+      const y = yScale.getPixelForValue(total) - 6;
+
+      ctx.fillText(numberFmt(total), x, y);
+    });
+
+    ctx.restore();
+  }
+};
+
+
+
+
 // ============================================================================
 // LOAD BASE DATA (Supabase)
 // ============================================================================
@@ -369,6 +411,7 @@ function renderBottomLeft({ years, datasets }) {
 
   airlineStackedChart = new Chart(canvas.getContext("2d"), {
     type: "bar",
+
     data: {
       labels: years,
       datasets: (datasets || []).map(ds => ({
@@ -382,13 +425,19 @@ function renderBottomLeft({ years, datasets }) {
         stack: "airlines",
       })),
     },
+
+    // ✅ ADD THIS
+    plugins: [stackedBarTopLabelPlugin],
+
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 400, easing: "easeOutQuart" },
-      layout: { padding: { top: 6, right: 12, bottom: 30, left: 12 } },
+      layout: { padding: { top: 20, right: 12, bottom: 30, left: 12 } },
+
       plugins: {
         legend: { display: false },
+
         tooltip: {
           callbacks: {
             title: items => `Year ${items[0].label}`,
@@ -396,13 +445,24 @@ function renderBottomLeft({ years, datasets }) {
           },
         },
       },
+
       scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { stacked: true, grid: { color: GRID }, ticks: { font: { size: 11 } } },
+        x: {
+          stacked: true,
+          grid: { display: false },
+          ticks: { font: { size: 11 } },
+        },
+        y: {
+          stacked: true,
+          grid: { color: GRID },
+          ticks: { font: { size: 11 } },
+        },
       },
     },
   });
 }
+
+
 
 function renderRight({ airlines, datasets }, metric) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
