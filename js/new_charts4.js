@@ -508,66 +508,125 @@ function getTopLeftValues(metric) {
 // ============================================================================
 // INIT
 // ============================================================================
-document.addEventListener("DOMContentLoaded", async () => {
-  baseStatsData = await loadStatsBaseData();
+//document.addEventListener("DOMContentLoaded", async () => {
+//  baseStatsData = await loadStatsBaseData();
 
+//  const metricSelector = document.getElementById("metricSelector");
+//  const btnYear = document.getElementById("btnYear");
+//  const btnAllTime = document.getElementById("btnAllTime");
+//  const airlineMetricSelect = document.getElementById("airlineMetricSelect");
+
+  // initial render
+//  if (metricSelector) {
+//    renderTopLeft(getTopLeftValues(metricSelector.value), metricSelector.value);
+//  } else {
+//    renderTopLeft(getTopLeftValues("flights"), "flights");
+//  }
+
+//  renderBottomLeft(flightsPerYearPerAirline(baseStatsData));
+//  renderVisitsPerCountry(visitsPerCountry(baseStatsData));
+
+  // right panel uses its own dropdown (Flights/Miles)
+//  const initialMetric = airlineMetricSelect?.value || "flights";
+//  currentAirlineMetric = initialMetric;
+//  renderRight(metricPerAirlineByYear(baseStatsData, currentAirlineMetric), currentAirlineMetric);
+
+  // events: top-left metric change
+//  metricSelector?.addEventListener("change", () => {
+//    renderTopLeft(getTopLeftValues(metricSelector.value), metricSelector.value);
+//  });
+
+  // events: year/alltime toggle (top-left only)
+//  btnYear?.addEventListener("click", () => {
+//    viewMode = "year";
+//    btnYear.classList.add("active");
+//    btnAllTime?.classList.remove("active");
+//    const m = metricSelector?.value || "flights";
+//    renderTopLeft(getTopLeftValues(m), m);
+//  });
+
+//  btnAllTime?.addEventListener("click", () => {
+//    viewMode = "alltime";
+//    btnAllTime.classList.add("active");
+//    btnYear?.classList.remove("active");
+//    const m = metricSelector?.value || "flights";
+//    renderTopLeft(getTopLeftValues(m), m);
+//  });
+
+  // events: right panel dropdown (Flights/Miles)
+//  airlineMetricSelect?.addEventListener("change", e => {
+//    currentAirlineMetric = e.target.value;
+//    renderRight(
+//      metricPerAirlineByYear(baseStatsData, currentAirlineMetric),
+//      currentAirlineMetric
+//    );
+//  });
+
+  // resize: re-render right + country (because responsive:false uses manual widths)
+//  window.addEventListener("resize", () => {
+//    renderRight(
+//      metricPerAirlineByYear(baseStatsData, currentAirlineMetric),
+//      currentAirlineMetric
+//    );
+//    renderVisitsPerCountry(visitsPerCountry(baseStatsData));
+//  }); 
+
+
+const page = window.location.pathname;
+
+baseStatsData = await loadStatsBaseData();
+
+// 🔹 Flights page
+if (document.getElementById("flightsByYearChart")) {
   const metricSelector = document.getElementById("metricSelector");
   const btnYear = document.getElementById("btnYear");
   const btnAllTime = document.getElementById("btnAllTime");
-  const airlineMetricSelect = document.getElementById("airlineMetricSelect");
 
-  // initial render
-  if (metricSelector) {
-    renderTopLeft(getTopLeftValues(metricSelector.value), metricSelector.value);
-  } else {
-    renderTopLeft(getTopLeftValues("flights"), "flights");
-  }
+  const metric = metricSelector?.value || "flights";
+  renderTopLeft(getTopLeftValues(metric), metric);
 
-  renderBottomLeft(flightsPerYearPerAirline(baseStatsData));
-  renderVisitsPerCountry(visitsPerCountry(baseStatsData));
-
-  // right panel uses its own dropdown (Flights/Miles)
-  const initialMetric = airlineMetricSelect?.value || "flights";
-  currentAirlineMetric = initialMetric;
-  renderRight(metricPerAirlineByYear(baseStatsData, currentAirlineMetric), currentAirlineMetric);
-
-  // events: top-left metric change
   metricSelector?.addEventListener("change", () => {
     renderTopLeft(getTopLeftValues(metricSelector.value), metricSelector.value);
   });
 
-  // events: year/alltime toggle (top-left only)
   btnYear?.addEventListener("click", () => {
     viewMode = "year";
-    btnYear.classList.add("active");
-    btnAllTime?.classList.remove("active");
-    const m = metricSelector?.value || "flights";
-    renderTopLeft(getTopLeftValues(m), m);
+    renderTopLeft(getTopLeftValues(metricSelector.value), metricSelector.value);
   });
 
   btnAllTime?.addEventListener("click", () => {
     viewMode = "alltime";
-    btnAllTime.classList.add("active");
-    btnYear?.classList.remove("active");
-    const m = metricSelector?.value || "flights";
-    renderTopLeft(getTopLeftValues(m), m);
+    renderTopLeft(getTopLeftValues(metricSelector.value), metricSelector.value);
   });
+}
 
-  // events: right panel dropdown (Flights/Miles)
+// 🔹 Flights per airline
+if (document.getElementById("flightsPerYearAirlineChart")) {
+  renderBottomLeft(flightsPerYearPerAirline(baseStatsData));
+}
+
+// 🔹 Airline by year
+if (document.getElementById("flightsPerAirlineYearChart")) {
+  const airlineMetricSelect = document.getElementById("airlineMetricSelect");
+  const metric = airlineMetricSelect?.value || "flights";
+
+  renderRight(
+    metricPerAirlineByYear(baseStatsData, metric),
+    metric
+  );
+
   airlineMetricSelect?.addEventListener("change", e => {
-    currentAirlineMetric = e.target.value;
     renderRight(
-      metricPerAirlineByYear(baseStatsData, currentAirlineMetric),
-      currentAirlineMetric
+      metricPerAirlineByYear(baseStatsData, e.target.value),
+      e.target.value
     );
   });
+}
 
-  // resize: re-render right + country (because responsive:false uses manual widths)
-  window.addEventListener("resize", () => {
-    renderRight(
-      metricPerAirlineByYear(baseStatsData, currentAirlineMetric),
-      currentAirlineMetric
-    );
-    renderVisitsPerCountry(visitsPerCountry(baseStatsData));
-  });
+// 🔹 Countries
+if (document.getElementById("visitsPerCountryChart")) {
+  renderVisitsPerCountry(visitsPerCountry(baseStatsData));
+}
+
+
 });
