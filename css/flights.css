@@ -595,38 +595,71 @@ body {
 }
 
 
-/* =====================================================
-   TOP BAR ACTIONS (RIGHT SIDE)
-===================================================== */
+/* =========================================
+   TOP ACTIONS (RIGHT SIDE CLEAN)
+========================================= */
 
-
-
-.filters {
-  flex: 1; /* pushes actions to the right */
-}
-
-/* Right-side container */
 .top-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+  margin-left: auto; /* 🔥 pushes to right */
 }
 
-/* Button style (matches existing top buttons) */
+/* dropdown wrapper */
+.nav-item.dropdown {
+  position: relative;
+}
+
+/* dropdown menu */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+
+  background: #0b0f2a;
+  min-width: 200px;
+  border-radius: 8px;
+  padding: 6px 0;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  z-index: 1000;
+}
+
+/* show */
+.nav-item.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+/* items */
+.dropdown-item {
+  display: block;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #ccc;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+
 .top-btn {
   background: #fff;
   border: 1px solid #ccc;
   border-radius: 8px;
-  padding: 6px 14px;
+  padding: 6px 12px;
   font-size: 14px;
   color: #000;
-  text-decoration: none;
   cursor: pointer;
 }
 
 .top-btn:hover {
   background: #eee;
 }
-
 
 
 /* =====================================================
