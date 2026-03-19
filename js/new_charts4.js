@@ -103,8 +103,8 @@ const barTopLabelPlugin = {
     ctx.save();
     ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto";
     ctx.fillStyle = "#ccc";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
+    ctx.textAlign = "left";          // ✅ align left (so text grows right)
+    ctx.textBaseline = "middle";     // ✅ vertically centered
 
     chart.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
@@ -113,8 +113,8 @@ const barTopLabelPlugin = {
         const value = dataset.data[index];
         if (!value || value === 0) return;
 
-        const x = bar.x;
-        const y = bar.y - 6;
+        const x = bar.x + 8;   // ✅ push right of bar
+        const y = bar.y;       // ✅ exact vertical center
 
         ctx.fillText(numberFmt(value), x, y);
       });
