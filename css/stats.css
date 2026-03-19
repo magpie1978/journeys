@@ -202,13 +202,13 @@ body {
 .airline-scroll {
   flex: 1;
   position: relative;
+
   overflow-y: scroll;
   overflow-x: hidden;
 
-  width: 100%;          /* 🔥 ADD THIS */
-  min-width: 0;         /* 🔥 ADD THIS */
+  min-height: 0;
+  padding-bottom: 20px; /* 🔥 THIS FIXES CUT-OFF */
 }
-
 
 .airline-scroll canvas {
   width: 100% !important;
