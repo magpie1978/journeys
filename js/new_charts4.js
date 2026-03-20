@@ -342,6 +342,29 @@ function visitsPerCountry(data) {
 }
 
 
+function airlinesPerYear(data) {
+  const map = {};
+
+  (data || []).forEach(r => {
+    if (r.journey_type !== "Flight") return;
+    if (!r.airline) return;
+
+    const y = year4(r.year);
+    if (!y) return;
+
+    map[y] ??= new Set();
+    map[y].add(r.airline);
+  });
+
+  const years = Object.keys(map).sort();
+
+  return {
+    years,
+    values: years.map(y => map[y].size)
+  };
+}
+
+
 // ============================================================================
 // RENDERERS
 // ============================================================================
@@ -641,6 +664,70 @@ function renderVisitsPerCountry({ countries, values }) {
 }
 
 
+
+function renderAirlinesPerYear({ years, values }) {
+  const canvas = document.getElementById("flightsPerAirlineYearChart");
+  if (!canvas) return;
+
+  const container = canvas.parentElement;
+  if (!container) return;
+
+  // normal (non-scroll) chart
+  container.style.height = "400px";
+  container.style.overflow = "hidden";
+
+  canvas.height = 400;
+  canvas.width = container.clientWidth || 800;
+
+  if (airlineByYearChart) airlineByYearChart.destroy();
+
+  airlineByYearChart = new Chart(canvas.getContext("2d"), {
+    type: "bar",
+
+    data: {
+      labels: years,
+      datasets: [
+        {
+          data: values,
+          backgroundColor: YELLOW,
+          borderColor: YELLOW_BORDER,
+          borderWidth: 1,
+          borderRadius: 6,
+        },
+      ],
+    },
+
+    plugins: [barTopLabelPlugin], // ✅ reuse your labels
+
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+
+      layout: { padding: { top: 20, right: 12, bottom: 24, left: 12 } },
+
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw} airlines`,
+          },
+        },
+      },
+
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          grid: { color: GRID },
+          ticks: { precision: 0 },
+        },
+      },
+    },
+  });
+}
+
+
+
 // ============================================================================
 // TOP-LEFT METRIC DISPATCH
 // ============================================================================
@@ -695,10 +782,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     const airlineMetricSelect = document.getElementById("airlineMetricSelect");
     const metric = airlineMetricSelect?.value || "flights";
 
-    renderRight(
-      metricPerAirlineByYear(baseStatsData, metric),
-      metric
-    );
+    renderAirlineView(metric);
+
+    airlineMetricSelect?.addEventListener("change", e => {
+      renderAirlineView(e.target.value);
+  });
+
+//    renderRight(
+//      metricPerAirlineByYear(baseStatsData, metric),
+//      metric
+//    );
+
+    function renderAirlineView(metric) {
+      if (metric === "airlines") {
+        renderAirlinesPerYear(airlinesPerYear(baseStatsData));
+      } else {
+        renderRight(
+          metricPerAirlineByYear(baseStatsData, metric),
+          metric
+        );
+      }
+    }
 
     airlineMetricSelect?.addEventListener("change", e => {
       renderRight(
