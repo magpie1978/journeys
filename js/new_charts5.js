@@ -13,12 +13,7 @@ Chart.defaults.color = "#ccc";
 // GLOBAL STATE
 // ============================================================================
 let baseStatsData = [];
-let viewMode = "year";
-
-let yearChart = null;
-let airlineStackedChart = null;
 let airlineByYearChart = null;
-let countryChart = null;
 
 // ============================================================================
 // VISUAL CONSTANTS
@@ -26,10 +21,7 @@ let countryChart = null;
 const YELLOW = "rgba(201,162,77,0.7)";
 const YELLOW_BORDER = "rgba(201,162,77,0.9)";
 const GRID = "rgba(255,255,255,0.08)";
-
 const RIGHT_ROW_HEIGHT = 32;
-const COUNTRY_ROW_HEIGHT = 30;
-const COUNTRY_VISIBLE_ROWS = 20;
 
 // ============================================================================
 // HELPERS
@@ -45,8 +37,10 @@ function numberFmt(n) {
 }
 
 // ============================================================================
-// PLUGINS
+// LABEL PLUGINS
 // ============================================================================
+
+// 👉 Vertical bars (Flights Over Time / Airlines per Year)
 const barTopLabelPlugin = {
   id: "barTopLabels",
   afterDatasetsDraw(chart) {
@@ -86,38 +80,10 @@ const barTopLabelPlugin = {
   }
 };
 
-const stackedBarTopLabelPlugin = {
-  id: "stackedBarTopLabels",
-  afterDatasetsDraw(chart) {
-    const { ctx, scales } = chart;
-
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillStyle = "#ccc";
-    ctx.font = "12px system-ui";
-
-    chart.data.labels.forEach((label, i) => {
-      let total = 0;
-      chart.data.datasets.forEach(ds => {
-        total += ds.data[i] || 0;
-      });
-
-      if (!total) return;
-
-      const x = scales.x.getPixelForValue(label);
-      const y = scales.y.getPixelForValue(total) - 6;
-
-      ctx.fillText(numberFmt(total), x, y);
-    });
-
-    ctx.restore();
-  }
-};
-
+// 👉 Horizontal stacked bars (Flights/Miles)
 const barEndLabelPlugin = {
   id: "barEndLabels",
-  afterDatasetsDraw(chart, args, opts) {
+  afterDatasetsDraw(chart) {
     const { ctx, scales } = chart;
 
     ctx.save();
@@ -148,7 +114,7 @@ const barEndLabelPlugin = {
 async function loadStatsBaseData() {
   const { data } = await sb
     .from("journeys_routes_core_mv")
-    .select("year, journey_type, journey_distance, airline, destination_country, origin_country");
+    .select("year, journey_type, journey_distance, airline");
 
   return data || [];
 }
@@ -156,6 +122,8 @@ async function loadStatsBaseData() {
 // ============================================================================
 // AGGREGATORS
 // ============================================================================
+
+// 👉 DISTINCT airlines per year
 function airlinesPerYear(data) {
   const map = {};
 
@@ -177,6 +145,7 @@ function airlinesPerYear(data) {
   };
 }
 
+// 👉 Flights OR Miles per airline per year
 function metricPerAirlineByYear(data, metric = "flights") {
   const map = {};
   const airlines = new Set();
@@ -191,7 +160,10 @@ function metricPerAirlineByYear(data, metric = "flights") {
     airlines.add(r.airline);
     years.add(y);
 
-    const val = metric === "miles" ? (Number(r.journey_distance) || 0) : 1;
+    const val =
+      metric === "miles"
+        ? (Number(r.journey_distance) || 0)
+        : 1;
 
     map[r.airline] ??= {};
     map[r.airline][y] = (map[r.airline][y] || 0) + val;
@@ -213,6 +185,8 @@ function metricPerAirlineByYear(data, metric = "flights") {
 // ============================================================================
 // RENDERERS
 // ============================================================================
+
+// 👉 Airlines (NEW chart)
 function renderAirlinesPerYear({ years, values }) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   const container = canvas.parentElement;
@@ -250,6 +224,7 @@ function renderAirlinesPerYear({ years, values }) {
   });
 }
 
+// 👉 Flights / Miles (stacked horizontal)
 function renderRight(data, metric) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   const container = canvas.parentElement;
@@ -277,13 +252,16 @@ function renderRight(data, metric) {
 }
 
 // ============================================================================
-// ROUTER (KEY FIX)
+// ROUTER (CRITICAL FIX)
 // ============================================================================
 function renderAirlineView(metric) {
   if (metric === "airlines") {
     renderAirlinesPerYear(airlinesPerYear(baseStatsData));
   } else {
-    renderRight(metricPerAirlineByYear(baseStatsData, metric), metric);
+    renderRight(
+      metricPerAirlineByYear(baseStatsData, metric),
+      metric
+    );
   }
 }
 
