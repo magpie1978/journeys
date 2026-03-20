@@ -48,7 +48,8 @@ const barTopLabelPlugin = {
     const isHorizontal = options.indexAxis === "y";
 
     ctx.save();
-    ctx.font = "12px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto";
+    ctx.font =
+      "12px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto";
     ctx.fillStyle = "#ccc";
 
     chart.data.datasets.forEach((dataset, datasetIndex) => {
@@ -72,7 +73,7 @@ const barTopLabelPlugin = {
           y = bar.y - 6;
         }
 
-        ctx.fillText(numberFmt(value), x, y);
+        ctx.fillText(numberFmt(Math.round(value)), x, y);
       });
     });
 
@@ -83,11 +84,13 @@ const barTopLabelPlugin = {
 // Horizontal stacked bars: total at end of bar
 const barEndLabelPlugin = {
   id: "barEndLabels",
-  afterDatasetsDraw(chart) {
+  afterDatasetsDraw(chart, args, pluginOptions) {
     const { ctx, scales } = chart;
+    const metric = pluginOptions?.metric || "flights";
 
     ctx.save();
-    ctx.font = "12px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto";
+    ctx.font =
+      "12px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto";
     ctx.fillStyle = "#ccc";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
@@ -104,8 +107,12 @@ const barEndLabelPlugin = {
 
       const x = scales.x.getPixelForValue(total) + 8;
       const y = scales.y.getPixelForTick(i);
+      const text =
+        metric === "miles"
+          ? numberFmt(Math.round(total))
+          : numberFmt(total);
 
-      ctx.fillText(numberFmt(total), x, y);
+      ctx.fillText(text, x, y);
     });
 
     ctx.restore();
@@ -121,7 +128,7 @@ async function loadStatsBaseData() {
     .select("year, journey_type, journey_distance, airline");
 
   if (error) {
-    console.error("[stats] load failed", error);
+    console.error("[stats-airlines-year] load failed", error);
     return [];
   }
 
@@ -134,43 +141,46 @@ async function loadStatsBaseData() {
 
 // Distinct airlines per year
 function airlinesPerYear(data) {
-  const map = {};
+  const byYear = new Map();
 
   (data || []).forEach(r => {
-    if (r.journey_type !== "Flight" || !r.airline) return;
+    if (r.journey_type !== "Flight") return;
+    if (!r.airline) return;
 
     const y = year4(r.year);
     if (!y) return;
 
-    map[y] ??= new Set();
-    map[y].add(r.airline);
+    if (!byYear.has(y)) byYear.set(y, new Set());
+    byYear.get(y).add(r.airline);
   });
 
-  const years = Object.keys(map).sort();
+  const years = Array.from(byYear.keys()).sort();
 
   return {
     years,
-    values: years.map(y => map[y].size)
+    values: years.map(y => byYear.get(y).size)
   };
 }
 
-// Flights or miles per airline by year (for horizontal chart)
+// Flights or miles per airline by year (horizontal stacked chart)
 function metricPerAirlineByYear(data, metric = "flights") {
   const map = {};
   const airlineTotals = {};
   const yearsSet = new Set();
 
   (data || []).forEach(r => {
-    if (r.journey_type !== "Flight" || !r.airline) return;
+    if (r.journey_type !== "Flight") return;
+    if (!r.airline) return;
 
     const y = year4(r.year);
     if (!y) return;
 
     yearsSet.add(y);
 
-    const val = metric === "miles"
-      ? (Number(r.journey_distance) || 0)
-      : 1;
+    const val =
+      metric === "miles"
+        ? (Number(r.journey_distance) || 0)
+        : 1;
 
     map[r.airline] ??= {};
     map[r.airline][y] = (map[r.airline][y] || 0) + val;
@@ -201,7 +211,7 @@ function metricPerAirlineByYear(data, metric = "flights") {
 // RENDERERS
 // ============================================================================
 
-// NEW: Airlines option = vertical chart by year
+// Airlines = vertical chart by year
 function renderAirlinesPerYear({ years, values }) {
   const canvas = document.getElementById("flightsPerAirlineYearChart");
   if (!canvas) return;
@@ -216,6 +226,7 @@ function renderAirlinesPerYear({ years, values }) {
 
   canvas.height = 400;
   canvas.width = container.clientWidth || 800;
+  canvas.style.width = "100%";
 
   if (airlineByYearChart) airlineByYearChart.destroy();
 
@@ -250,11 +261,21 @@ function renderAirlinesPerYear({ years, values }) {
       scales: {
         x: {
           grid: { display: false },
-          ticks: { font: { size: 11 } }
+          ticks: {
+            font: { size: 11 },
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0
+          }
         },
         y: {
+          beginAtZero: true,
           grid: { color: GRID },
-          ticks: { precision: 0, font: { size: 11 } }
+          ticks: {
+            precision: 0,
+            stepSize: 1,
+            font: { size: 11 }
+          }
         }
       }
     }
@@ -269,15 +290,15 @@ function renderRight({ airlines, datasets }, metric) {
   const container = canvas.parentElement;
   if (!container) return;
 
-  const totalHeight = (airlines?.length || 0) * RIGHT_ROW_HEIGHT;
-  const finalHeight = Math.max(totalHeight, 400);
+  const totalHeight = Math.max((airlines?.length || 0) * RIGHT_ROW_HEIGHT, 220);
+  const visibleHeight = Math.min(Math.max(totalHeight + 24, 260), 560);
 
-  container.style.height = "400px";
-  container.style.maxHeight = "400px";
+  container.style.height = `${visibleHeight}px`;
+  container.style.maxHeight = `${visibleHeight}px`;
   container.style.overflowY = "auto";
   container.style.overflowX = "hidden";
 
-  canvas.height = finalHeight;
+  canvas.height = totalHeight;
   canvas.width = container.clientWidth || 800;
   canvas.style.width = "100%";
 
@@ -294,15 +315,21 @@ function renderRight({ airlines, datasets }, metric) {
       responsive: false,
       maintainAspectRatio: false,
       animation: false,
-      layout: { padding: { top: 12, right: 40, bottom: 30, left: 12 } },
+      layout: { padding: { top: 12, right: 80, bottom: 30, left: 12 } },
       scales: {
         x: {
           stacked: true,
-          grid: { color: GRID, lineWidth: 1, drawBorder: false },
+          grid: {
+            color: GRID,
+            lineWidth: 1,
+            drawBorder: false
+          },
           ticks: {
             font: { size: 11 },
             callback: v =>
-              metric === "miles" ? numberFmt(Math.round(v)) : v
+              metric === "miles"
+                ? numberFmt(Math.round(v))
+                : v
           }
         },
         y: {
@@ -323,6 +350,7 @@ function renderRight({ airlines, datasets }, metric) {
       },
       plugins: {
         legend: { display: false },
+        barEndLabels: { metric },
         tooltip: {
           callbacks: {
             label: ctx => {
