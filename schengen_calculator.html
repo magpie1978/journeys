@@ -204,89 +204,7 @@
       text-overflow: ellipsis;
     }
 
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1000;
-    }
-
-    .modal-backdrop.show {
-      display: flex;
-    }
-
-    .modal {
-      width: 100%;
-      max-width: 420px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-    }
-
-    .modal h3 {
-      margin: 0 0 8px;
-      font-size: 24px;
-    }
-
-    .modal p {
-      margin: 0 0 18px;
-      color: var(--muted);
-    }
-
-    .modal label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .modal select {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 16px;
-      margin-bottom: 18px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 10px 16px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .btn-secondary {
-      background: #334155;
-      color: var(--text);
-    }
-
-    .btn-clear {
-      background: #7f1d1d;
-      color: white;
-    }
-
-    .btn-save {
-      background: var(--accent);
-      color: #082f49;
-      font-weight: bold;
-    }
+    
 
     @media (max-width: 1100px) {
       .calendar-grid {
@@ -314,7 +232,7 @@
 <body>
   <div class="wrapper">
     <h1>2027 Calendar</h1>
-    <div class="subtitle">Click any day to mark it as Schengen or Non-Schengen.</div>
+    <div class="subtitle">Click any day once for Schengen, again for Non-Schengen, and a third time to clear it.</div>
 
     <div class="legend">
       <div class="legend-item"><span class="legend-swatch" style="background: var(--default-day);"></span>Not Set</div>
@@ -340,26 +258,6 @@
     <div id="calendar" class="calendar-grid"></div>
   </div>
 
-  <div id="modalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3 id="modalDateTitle">Select status</h3>
-      <p>Choose whether this date is Schengen or Non-Schengen.</p>
-
-      <label for="dayStatus">Status</label>
-      <select id="dayStatus">
-        <option value="">Not Set</option>
-        <option value="Schengen">Schengen</option>
-        <option value="Non-Schengen">Non-Schengen</option>
-      </select>
-
-      <div class="modal-buttons">
-        <button class="btn-secondary" id="cancelBtn">Cancel</button>
-        <button class="btn-clear" id="clearBtn">Clear</button>
-        <button class="btn-save" id="saveBtn">Save</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     const year = 2027;
     const monthNames = [
@@ -372,16 +270,11 @@
     const totalSchengenDaysEl = document.getElementById('totalSchengenDays');
     const maxRollingTotalEl = document.getElementById('maxRollingTotal');
     const statusTextEl = document.getElementById('statusText');
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    const modalDateTitle = document.getElementById('modalDateTitle');
-    const dayStatus = document.getElementById('dayStatus');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const saveBtn = document.getElementById('saveBtn');
+    
 
     const storageKey = 'schengen-calendar-2027';
     let selections = JSON.parse(localStorage.getItem(storageKey) || '{}');
-    let activeDateKey = null;
+    const statusCycle = ['', 'Schengen', 'Non-Schengen'];
 
     function getDateKey(monthIndex, day) {
       const month = String(monthIndex + 1).padStart(2, '0');
@@ -428,15 +321,12 @@
         for (const schengenKey of schengenSet) {
           const schengenDate = new Date(schengenKey + 'T00:00:00');
           const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
-
           if (diffDays >= 0 && diffDays <= 179) {
             rollingCount++;
           }
         }
 
-        if (rollingCount > maxRolling) {
-          maxRolling = rollingCount;
-        }
+        if (rollingCount > maxRolling) maxRolling = rollingCount;
       }
 
       const totalSchengen = schengenSet.size;
@@ -461,14 +351,12 @@
 
         const weekdays = document.createElement('div');
         weekdays.className = 'weekdays';
-
         weekdayNames.forEach(name => {
           const wd = document.createElement('div');
           wd.className = 'weekday';
           wd.textContent = name;
           weekdays.appendChild(wd);
         });
-
         monthCard.appendChild(weekdays);
 
         const daysGrid = document.createElement('div');
@@ -476,7 +364,7 @@
 
         const firstDay = new Date(year, month, 1);
         let startDay = firstDay.getDay();
-        startDay = startDay === 0 ? 6 : startDay - 1;
+        startDay = startDay === 0 ? 6 : startDay - 1; // convert Sunday=0 to Monday-first layout
 
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -498,7 +386,7 @@
           dayEl.setAttribute('data-label', status);
           dayEl.innerHTML = `<span class="day-number">${day}</span>`;
 
-          dayEl.addEventListener('click', () => openModal(dateKey));
+          dayEl.addEventListener('click', () => cycleSelection(dateKey));
           daysGrid.appendChild(dayEl);
         }
 
@@ -507,52 +395,25 @@
       }
     }
 
-    function openModal(dateKey) {
-      activeDateKey = dateKey;
-      modalDateTitle.textContent = getDisplayDate(dateKey);
-      dayStatus.value = selections[dateKey] || '';
-      modalBackdrop.classList.add('show');
-    }
+    function cycleSelection(dateKey) {
+      const current = selections[dateKey] || '';
+      const currentIndex = statusCycle.indexOf(current);
+      const nextIndex = (currentIndex + 1) % statusCycle.length;
+      const nextValue = statusCycle[nextIndex];
 
-    function closeModal() {
-      modalBackdrop.classList.remove('show');
-      activeDateKey = null;
-    }
-
-    function saveSelection() {
-      if (!activeDateKey) return;
-      const value = dayStatus.value;
-
-      if (value) {
-        selections[activeDateKey] = value;
+      if (nextValue) {
+        selections[dateKey] = nextValue;
       } else {
-        delete selections[activeDateKey];
+        delete selections[dateKey];
       }
 
       localStorage.setItem(storageKey, JSON.stringify(selections));
       renderCalendar();
-      closeModal();
     }
 
-    function clearSelection() {
-      if (!activeDateKey) return;
-      delete selections[activeDateKey];
-      localStorage.setItem(storageKey, JSON.stringify(selections));
-      renderCalendar();
-      closeModal();
-    }
+    
 
-    cancelBtn.addEventListener('click', closeModal);
-    clearBtn.addEventListener('click', clearSelection);
-    saveBtn.addEventListener('click', saveSelection);
-
-    modalBackdrop.addEventListener('click', (e) => {
-      if (e.target === modalBackdrop) closeModal();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
-    });
+    
 
     renderCalendar();
   </script>
