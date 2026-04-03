@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2027 Schengen Calendar</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --schengen: #14532d;
+      --schengen-border: #22c55e;
+      --non-schengen: #78350f;
+      --non-schengen-border: #f59e0b;
+      --default-day: #1e293b;
+      --default-border: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+      color: var(--text);
+    }
+
+    .wrapper {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 16px;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .month {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .month h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .weekdays,
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 0;
+      font-weight: bold;
+    }
+
+    .empty {
+      min-height: 58px;
+    }
+
+    .day {
+      min-height: 58px;
+      border-radius: 12px;
+      border: 1px solid var(--default-border);
+      background: var(--default-day);
+      color: var(--text);
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 8px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+      position: relative;
+    }
+
+    .day:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .day-number {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .day.schengen {
+      background: var(--schengen);
+      border-color: var(--schengen-border);
+    }
+
+    .day.non-schengen {
+      background: var(--non-schengen);
+      border-color: var(--non-schengen-border);
+    }
+
+    .day::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 6px;
+      font-size: 10px;
+      line-height: 1.1;
+      color: rgba(255,255,255,0.9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    .modal h3 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .modal label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .modal select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 18px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: #334155;
+      color: var(--text);
+    }
+
+    .btn-clear {
+      background: #7f1d1d;
+      color: white;
+    }
+
+    .btn-save {
+      background: var(--accent);
+      color: #082f49;
+      font-weight: bold;
+    }
+
+    @media (max-width: 1100px) {
+      .calendar-grid {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .calendar-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wrapper {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <h1>2027 Calendar</h1>
+    <div class="subtitle">Click any day to mark it as Schengen or Non-Schengen.</div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--default-day);"></span>Not Set</div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--schengen);"></span>Schengen</div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--non-schengen);"></span>Non-Schengen</div>
+    </div>
+
+    <div id="calendar" class="calendar-grid"></div>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <h3 id="modalDateTitle">Select status</h3>
+      <p>Choose whether this date is Schengen or Non-Schengen.</p>
+
+      <label for="dayStatus">Status</label>
+      <select id="dayStatus">
+        <option value="">Not Set</option>
+        <option value="Schengen">Schengen</option>
+        <option value="Non-Schengen">Non-Schengen</option>
+      </select>
+
+      <div class="modal-buttons">
+        <button class="btn-secondary" id="cancelBtn">Cancel</button>
+        <button class="btn-clear" id="clearBtn">Clear</button>
+        <button class="btn-save" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const year = 2027;
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    const calendarEl = document.getElementById('calendar');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalDateTitle = document.getElementById('modalDateTitle');
+    const dayStatus = document.getElementById('dayStatus');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    const storageKey = 'schengen-calendar-2027';
+    let selections = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    let activeDateKey = null;
+
+    function getDateKey(monthIndex, day) {
+      const month = String(monthIndex + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      return `${year}-${month}-${dayStr}`;
+    }
+
+    function getDisplayDate(dateKey) {
+      const [y, m, d] = dateKey.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+
+    function renderCalendar() {
+      calendarEl.innerHTML = '';
+
+      for (let month = 0; month < 12; month++) {
+        const monthCard = document.createElement('div');
+        monthCard.className = 'month';
+
+        const title = document.createElement('h2');
+        title.textContent = monthNames[month];
+        monthCard.appendChild(title);
+
+        const weekdays = document.createElement('div');
+        weekdays.className = 'weekdays';
+        weekdayNames.forEach(name => {
+          const wd = document.createElement('div');
+          wd.className = 'weekday';
+          wd.textContent = name;
+          weekdays.appendChild(wd);
+        });
+        monthCard.appendChild(weekdays);
+
+        const daysGrid = document.createElement('div');
+        daysGrid.className = 'days';
+
+        const firstDay = new Date(year, month, 1);
+        let startDay = firstDay.getDay();
+        startDay = startDay === 0 ? 6 : startDay - 1; // convert Sunday=0 to Monday-first layout
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < startDay; i++) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          daysGrid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateKey = getDateKey(month, day);
+          const status = selections[dateKey] || '';
+
+          const dayEl = document.createElement('button');
+          dayEl.className = 'day';
+          if (status === 'Schengen') dayEl.classList.add('schengen');
+          if (status === 'Non-Schengen') dayEl.classList.add('non-schengen');
+          dayEl.setAttribute('data-date', dateKey);
+          dayEl.setAttribute('data-label', status);
+          dayEl.innerHTML = `<span class="day-number">${day}</span>`;
+
+          dayEl.addEventListener('click', () => openModal(dateKey));
+          daysGrid.appendChild(dayEl);
+        }
+
+        monthCard.appendChild(daysGrid);
+        calendarEl.appendChild(monthCard);
+      }
+    }
+
+    function openModal(dateKey) {
+      activeDateKey = dateKey;
+      modalDateTitle.textContent = getDisplayDate(dateKey);
+      dayStatus.value = selections[dateKey] || '';
+      modalBackdrop.classList.add('show');
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('show');
+      activeDateKey = null;
+    }
+
+    function saveSelection() {
+      if (!activeDateKey) return;
+      const value = dayStatus.value;
+
+      if (value) {
+        selections[activeDateKey] = value;
+      } else {
+        delete selections[activeDateKey];
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(selections));
+      renderCalendar();
+      closeModal();
+    }
+
+    function clearSelection() {
+      if (!activeDateKey) return;
+      delete selections[activeDateKey];
+      localStorage.setItem(storageKey, JSON.stringify(selections));
+      renderCalendar();
+      closeModal();
+    }
+
+    cancelBtn.addEventListener('click', closeModal);
+    clearBtn.addEventListener('click', clearSelection);
+    saveBtn.addEventListener('click', saveSelection);
+
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    renderCalendar();
+  </script>
+</body>
+</html>
