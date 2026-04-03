@@ -428,12 +428,27 @@
         for (const schengenKey of schengenSet) {
           const schengenDate = new Date(schengenKey + 'T00:00:00');
           const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
+
           if (diffDays >= 0 && diffDays <= 179) {
             rollingCount++;
           }
         }
 
-        if (rollingCount > maxRolling) maxRolling = rollin
+        if (rollingCount > maxRolling) {
+          maxRolling = rollingCount;
+        }
+      }
+
+      const totalSchengen = schengenSet.size;
+      totalSchengenDaysEl.textContent = totalSchengen;
+      maxRollingTotalEl.textContent = maxRolling;
+      statusTextEl.textContent = maxRolling > 90 ? 'Over Limit' : 'Within Limit';
+      statusTextEl.classList.remove('status-ok', 'status-over');
+      statusTextEl.classList.add(maxRolling > 90 ? 'status-over' : 'status-ok');
+    }
+
+    function renderCalendar() {
+      calculateStats();
       calendarEl.innerHTML = '';
 
       for (let month = 0; month < 12; month++) {
@@ -446,12 +461,14 @@
 
         const weekdays = document.createElement('div');
         weekdays.className = 'weekdays';
+
         weekdayNames.forEach(name => {
           const wd = document.createElement('div');
           wd.className = 'weekday';
           wd.textContent = name;
           weekdays.appendChild(wd);
         });
+
         monthCard.appendChild(weekdays);
 
         const daysGrid = document.createElement('div');
@@ -459,7 +476,7 @@
 
         const firstDay = new Date(year, month, 1);
         let startDay = firstDay.getDay();
-        startDay = startDay === 0 ? 6 : startDay - 1; // convert Sunday=0 to Monday-first layout
+        startDay = startDay === 0 ? 6 : startDay - 1;
 
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
