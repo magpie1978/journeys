@@ -8,7 +8,6 @@
     :root {
       --bg: #0f172a;
       --panel: #111827;
-      --panel-2: #1f2937;
       --border: #334155;
       --text: #f8fafc;
       --muted: #94a3b8;
@@ -19,6 +18,8 @@
       --non-schengen-border: #f59e0b;
       --default-day: #1e293b;
       --default-border: #475569;
+      --unavailable: #475569;
+      --unavailable-border: #94a3b8;
     }
 
     * {
@@ -47,8 +48,25 @@
     .subtitle {
       text-align: center;
       color: var(--muted);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       font-size: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .toolbar button {
+      background: #7f1d1d;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
     }
 
     .legend {
@@ -195,14 +213,19 @@
     }
 
     .day.unavailable {
-      background: #475569;
-      border-color: #94a3b8;
+      background: var(--unavailable);
+      border-color: var(--unavailable-border);
       color: #cbd5e1;
       opacity: 0.65;
     }
 
     .day.unavailable:hover {
       border-color: #cbd5e1;
+    }
+
+    .day.selected {
+      outline: 2px solid #f8fafc;
+      outline-offset: 1px;
     }
 
     .day::after {
@@ -218,8 +241,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
-    
 
     @media (max-width: 1100px) {
       .calendar-grid {
@@ -249,20 +270,15 @@
     <h1>2027 Calendar</h1>
     <div class="subtitle">Click any day once for Schengen, again for Non-Schengen, and a third time to clear it.</div>
 
-    <div style="text-align:center; margin-bottom:20px;">
-      <button id="clearAllBtn" style="background:#7f1d1d;color:white;padding:10px 18px;border-radius:12px;border:none;cursor:pointer;font-weight:bold;">
-        Clear All
-      </button>
+    <div class="toolbar">
+      <button id="clearAllBtn">Clear All</button>
     </div>
 
     <div class="legend">
       <div class="legend-item"><span class="legend-swatch" style="background: var(--default-day);"></span>Not Set</div>
       <div class="legend-item"><span class="legend-swatch" style="background: var(--schengen);"></span>Schengen</div>
       <div class="legend-item"><span class="legend-swatch" style="background: var(--non-schengen);"></span>Non-Schengen</div>
-      <div class="legend-item"><span class="legend-swatch" style="background: #475569;"></span>Schengen Not Available</div>
-    </div>
-      <div class="legend-item"><span class="legend-swatch" style="background: var(--schengen);"></span>Schengen</div>
-      <div class="legend-item"><span class="legend-swatch" style="background: var(--non-schengen);"></span>Non-Schengen</div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--unavailable);"></span>Schengen Not Available</div>
     </div>
 
     <div class="stats-bar">
@@ -311,13 +327,12 @@
     const clickedRollingTotalEl = document.getElementById('clickedRollingTotal');
     const daysRemainingEl = document.getElementById('daysRemaining');
     const clearAllBtn = document.getElementById('clearAllBtn');
-    
 
     const storageKey = 'schengen-calendar-2027';
     const selectedDateStorageKey = 'schengen-calendar-2027-selected-date';
+
     let selections = JSON.parse(localStorage.getItem(storageKey) || '{}');
     let selectedDateKey = localStorage.getItem(selectedDateStorageKey) || null;
-    const statusCycle = ['', 'Schengen', 'Non-Schengen'];
 
     function getDateKey(monthIndex, day) {
       const month = String(monthIndex + 1).padStart(2, '0');
@@ -347,14 +362,16 @@
       return keys;
     }
 
-    function getRollingCountForDate(dateKey) {
+    function getRollingCountForDateFromSelections(dateKey, sourceSelections) {
       const currentDate = new Date(dateKey + 'T00:00:00');
       let rollingCount = 0;
 
-      for (const [schengenKey, value] of Object.entries(selections)) {
+      for (const [schengenKey, value] of Object.entries(sourceSelections)) {
         if (value !== 'Schengen') continue;
+
         const schengenDate = new Date(schengenKey + 'T00:00:00');
         const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
+
         if (diffDays >= 0 && diffDays <= 179) {
           rollingCount++;
         }
@@ -363,22 +380,26 @@
       return rollingCount;
     }
 
-    function canSetSchengen(dateKey) {
-      if (selections[dateKey] === 'Schengen') return true;
+    function getRollingCountForDate(dateKey) {
+      return getRollingCountForDateFromSelections(dateKey, selections);
+    }
 
-      const currentDate = new Date(dateKey + 'T00:00:00');
-      let priorWindowCount = 0;
+    function isSelectionSetValid(sourceSelections) {
+      const dateKeys = getAllDateKeysInYear();
 
-      for (const [schengenKey, value] of Object.entries(selections)) {
-        if (value !== 'Schengen' || schengenKey === dateKey) continue;
-        const schengenDate = new Date(schengenKey + 'T00:00:00');
-        const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
-        if (diffDays >= 0 && diffDays <= 179) {
-          priorWindowCount++;
+      for (const dateKey of dateKeys) {
+        const rollingCount = getRollingCountForDateFromSelections(dateKey, sourceSelections);
+        if (rollingCount > 90) {
+          return false;
         }
       }
 
-      return priorWindowCount < 90;
+      return true;
+    }
+
+    function canSetSchengen(dateKey) {
+      const testSelections = { ...selections, [dateKey]: 'Schengen' };
+      return isSelectionSetValid(testSelections);
     }
 
     function calculateStats() {
@@ -398,9 +419,8 @@
         }
       }
 
-      const totalSchengen = schengenSet.size;
-      totalSchengenDaysEl.textContent = totalSchengen;
-      maxRollingTotalEl.textContent = maxRolling;
+      totalSchengenDaysEl.textContent = String(schengenSet.size);
+      maxRollingTotalEl.textContent = String(maxRolling);
       statusTextEl.textContent = maxRolling > 90 ? 'Over Limit' : 'Within Limit';
       statusTextEl.classList.remove('status-ok', 'status-over');
       statusTextEl.classList.add(maxRolling > 90 ? 'status-over' : 'status-ok');
@@ -409,8 +429,8 @@
         const rollingTotal = getRollingCountForDate(selectedDateKey);
         const remaining = 90 - rollingTotal;
         selectedDateTextEl.textContent = getDisplayDate(selectedDateKey);
-        clickedRollingTotalEl.textContent = rollingTotal;
-        daysRemainingEl.textContent = remaining;
+        clickedRollingTotalEl.textContent = String(rollingTotal);
+        daysRemainingEl.textContent = String(remaining);
         daysRemainingEl.classList.remove('status-ok', 'status-over');
         daysRemainingEl.classList.add(remaining < 0 ? 'status-over' : 'status-ok');
       } else {
@@ -436,12 +456,14 @@
 
         const weekdays = document.createElement('div');
         weekdays.className = 'weekdays';
-        weekdayNames.forEach(name => {
+
+        weekdayNames.forEach((name) => {
           const wd = document.createElement('div');
           wd.className = 'weekday';
           wd.textContent = name;
           weekdays.appendChild(wd);
         });
+
         monthCard.appendChild(weekdays);
 
         const daysGrid = document.createElement('div');
@@ -449,7 +471,7 @@
 
         const firstDay = new Date(year, month, 1);
         let startDay = firstDay.getDay();
-        startDay = startDay === 0 ? 6 : startDay - 1; // convert Sunday=0 to Monday-first layout
+        startDay = startDay === 0 ? 6 : startDay - 1;
 
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -465,19 +487,19 @@
           const schengenAllowed = canSetSchengen(dateKey);
 
           const dayEl = document.createElement('button');
+          dayEl.type = 'button';
           dayEl.className = 'day';
+
           if (status === 'Schengen') dayEl.classList.add('schengen');
           if (status === 'Non-Schengen') dayEl.classList.add('non-schengen');
           if (!status && !schengenAllowed) dayEl.classList.add('unavailable');
+          if (dateKey === selectedDateKey) dayEl.classList.add('selected');
+
           dayEl.setAttribute('data-date', dateKey);
           dayEl.setAttribute('data-label', status || (!schengenAllowed ? 'Unavailable' : ''));
-          if (dateKey === selectedDateKey) {
-            dayEl.style.outline = '2px solid #f8fafc';
-            dayEl.style.outlineOffset = '1px';
-          }
           dayEl.innerHTML = `<span class="day-number">${day}</span>`;
-
           dayEl.addEventListener('click', () => cycleSelection(dateKey));
+
           daysGrid.appendChild(dayEl);
         }
 
@@ -491,25 +513,35 @@
       localStorage.setItem(selectedDateStorageKey, selectedDateKey);
 
       const current = selections[dateKey] || '';
-      const schengenAllowed = canSetSchengen(dateKey);
       let nextValue = '';
 
       if (current === '') {
-        nextValue = schengenAllowed ? 'Schengen' : 'Non-Schengen';
+        nextValue = canSetSchengen(dateKey) ? 'Schengen' : 'Non-Schengen';
       } else if (current === 'Schengen') {
         nextValue = 'Non-Schengen';
       } else {
         nextValue = '';
       }
 
+      const testSelections = { ...selections };
+
       if (nextValue) {
-        selections[dateKey] = nextValue;
+        testSelections[dateKey] = nextValue;
       } else {
-        delete selections[dateKey];
+        delete testSelections[dateKey];
       }
 
+      if (!isSelectionSetValid(testSelections)) {
+        renderCalendar();
+        return;
+      }
+
+      selections = testSelections;
       localStorage.setItem(storageKey, JSON.stringify(selections));
-      clearAllBtn.addEventListener('click', () => {
+      renderCalendar();
+    }
+
+    clearAllBtn.addEventListener('click', () => {
       if (!confirm('Clear all selections?')) return;
       selections = {};
       selectedDateKey = null;
@@ -518,12 +550,12 @@
       renderCalendar();
     });
 
-    renderCalendar();
+    if (!isSelectionSetValid(selections)) {
+      selections = {};
+      selectedDateKey = null;
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(selectedDateStorageKey);
     }
-
-    
-
-    
 
     renderCalendar();
   </script>
