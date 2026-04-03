@@ -108,6 +108,10 @@
       line-height: 1.1;
     }
 
+    .clicked-date-value {
+      font-size: 20px;
+    }
+
     .status-ok {
       color: #4ade80;
     }
@@ -253,6 +257,18 @@
         <div class="stat-label">90/180 Status</div>
         <div class="stat-value" id="statusText">Within Limit</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">Clicked Date</div>
+        <div class="stat-value clicked-date-value" id="selectedDateText">None</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Rolling Total For Clicked Date</div>
+        <div class="stat-value" id="clickedRollingTotal">0</div>
+      </div>
+      <div class="stat-card warning-card">
+        <div class="stat-label">Days Remaining</div>
+        <div class="stat-value" id="daysRemaining">90</div>
+      </div>
     </div>
 
     <div id="calendar" class="calendar-grid"></div>
@@ -270,10 +286,15 @@
     const totalSchengenDaysEl = document.getElementById('totalSchengenDays');
     const maxRollingTotalEl = document.getElementById('maxRollingTotal');
     const statusTextEl = document.getElementById('statusText');
+    const selectedDateTextEl = document.getElementById('selectedDateText');
+    const clickedRollingTotalEl = document.getElementById('clickedRollingTotal');
+    const daysRemainingEl = document.getElementById('daysRemaining');
     
 
     const storageKey = 'schengen-calendar-2027';
+    const selectedDateStorageKey = 'schengen-calendar-2027-selected-date';
     let selections = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    let selectedDateKey = localStorage.getItem(selectedDateStorageKey) || null;
     const statusCycle = ['', 'Schengen', 'Non-Schengen'];
 
     function getDateKey(monthIndex, day) {
@@ -304,6 +325,22 @@
       return keys;
     }
 
+    function getRollingCountForDate(dateKey) {
+      const currentDate = new Date(dateKey + 'T00:00:00');
+      let rollingCount = 0;
+
+      for (const [schengenKey, value] of Object.entries(selections)) {
+        if (value !== 'Schengen') continue;
+        const schengenDate = new Date(schengenKey + 'T00:00:00');
+        const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
+        if (diffDays >= 0 && diffDays <= 179) {
+          rollingCount++;
+        }
+      }
+
+      return rollingCount;
+    }
+
     function calculateStats() {
       const dateKeys = getAllDateKeysInYear();
       const schengenSet = new Set(
@@ -315,18 +352,10 @@
       let maxRolling = 0;
 
       for (const dateKey of dateKeys) {
-        const currentDate = new Date(dateKey + 'T00:00:00');
-        let rollingCount = 0;
-
-        for (const schengenKey of schengenSet) {
-          const schengenDate = new Date(schengenKey + 'T00:00:00');
-          const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
-          if (diffDays >= 0 && diffDays <= 179) {
-            rollingCount++;
-          }
+        const rollingCount = getRollingCountForDate(dateKey);
+        if (rollingCount > maxRolling) {
+          maxRolling = rollingCount;
         }
-
-        if (rollingCount > maxRolling) maxRolling = rollingCount;
       }
 
       const totalSchengen = schengenSet.size;
@@ -335,6 +364,22 @@
       statusTextEl.textContent = maxRolling > 90 ? 'Over Limit' : 'Within Limit';
       statusTextEl.classList.remove('status-ok', 'status-over');
       statusTextEl.classList.add(maxRolling > 90 ? 'status-over' : 'status-ok');
+
+      if (selectedDateKey) {
+        const rollingTotal = getRollingCountForDate(selectedDateKey);
+        const remaining = 90 - rollingTotal;
+        selectedDateTextEl.textContent = getDisplayDate(selectedDateKey);
+        clickedRollingTotalEl.textContent = rollingTotal;
+        daysRemainingEl.textContent = remaining;
+        daysRemainingEl.classList.remove('status-ok', 'status-over');
+        daysRemainingEl.classList.add(remaining < 0 ? 'status-over' : 'status-ok');
+      } else {
+        selectedDateTextEl.textContent = 'None';
+        clickedRollingTotalEl.textContent = '0';
+        daysRemainingEl.textContent = '90';
+        daysRemainingEl.classList.remove('status-ok', 'status-over');
+        daysRemainingEl.classList.add('status-ok');
+      }
     }
 
     function renderCalendar() {
@@ -384,6 +429,10 @@
           if (status === 'Non-Schengen') dayEl.classList.add('non-schengen');
           dayEl.setAttribute('data-date', dateKey);
           dayEl.setAttribute('data-label', status);
+          if (dateKey === selectedDateKey) {
+            dayEl.style.outline = '2px solid #f8fafc';
+            dayEl.style.outlineOffset = '1px';
+          }
           dayEl.innerHTML = `<span class="day-number">${day}</span>`;
 
           dayEl.addEventListener('click', () => cycleSelection(dateKey));
@@ -396,6 +445,9 @@
     }
 
     function cycleSelection(dateKey) {
+      selectedDateKey = dateKey;
+      localStorage.setItem(selectedDateStorageKey, selectedDateKey);
+
       const current = selections[dateKey] || '';
       const currentIndex = statusCycle.indexOf(current);
       const nextIndex = (currentIndex + 1) % statusCycle.length;
