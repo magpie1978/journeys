@@ -194,6 +194,17 @@
       border-color: var(--non-schengen-border);
     }
 
+    .day.unavailable {
+      background: #475569;
+      border-color: #94a3b8;
+      color: #cbd5e1;
+      opacity: 0.65;
+    }
+
+    .day.unavailable:hover {
+      border-color: #cbd5e1;
+    }
+
     .day::after {
       content: attr(data-label);
       position: absolute;
@@ -240,6 +251,10 @@
 
     <div class="legend">
       <div class="legend-item"><span class="legend-swatch" style="background: var(--default-day);"></span>Not Set</div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--schengen);"></span>Schengen</div>
+      <div class="legend-item"><span class="legend-swatch" style="background: var(--non-schengen);"></span>Non-Schengen</div>
+      <div class="legend-item"><span class="legend-swatch" style="background: #475569;"></span>Schengen Not Available</div>
+    </div>
       <div class="legend-item"><span class="legend-swatch" style="background: var(--schengen);"></span>Schengen</div>
       <div class="legend-item"><span class="legend-swatch" style="background: var(--non-schengen);"></span>Non-Schengen</div>
     </div>
@@ -341,6 +356,24 @@
       return rollingCount;
     }
 
+    function canSetSchengen(dateKey) {
+      if (selections[dateKey] === 'Schengen') return true;
+
+      const currentDate = new Date(dateKey + 'T00:00:00');
+      let priorWindowCount = 0;
+
+      for (const [schengenKey, value] of Object.entries(selections)) {
+        if (value !== 'Schengen' || schengenKey === dateKey) continue;
+        const schengenDate = new Date(schengenKey + 'T00:00:00');
+        const diffDays = Math.floor((currentDate - schengenDate) / 86400000);
+        if (diffDays >= 0 && diffDays <= 179) {
+          priorWindowCount++;
+        }
+      }
+
+      return priorWindowCount < 90;
+    }
+
     function calculateStats() {
       const dateKeys = getAllDateKeysInYear();
       const schengenSet = new Set(
@@ -422,13 +455,15 @@
         for (let day = 1; day <= daysInMonth; day++) {
           const dateKey = getDateKey(month, day);
           const status = selections[dateKey] || '';
+          const schengenAllowed = canSetSchengen(dateKey);
 
           const dayEl = document.createElement('button');
           dayEl.className = 'day';
           if (status === 'Schengen') dayEl.classList.add('schengen');
           if (status === 'Non-Schengen') dayEl.classList.add('non-schengen');
+          if (!status && !schengenAllowed) dayEl.classList.add('unavailable');
           dayEl.setAttribute('data-date', dateKey);
-          dayEl.setAttribute('data-label', status);
+          dayEl.setAttribute('data-label', status || (!schengenAllowed ? 'Unavailable' : ''));
           if (dateKey === selectedDateKey) {
             dayEl.style.outline = '2px solid #f8fafc';
             dayEl.style.outlineOffset = '1px';
@@ -449,9 +484,16 @@
       localStorage.setItem(selectedDateStorageKey, selectedDateKey);
 
       const current = selections[dateKey] || '';
-      const currentIndex = statusCycle.indexOf(current);
-      const nextIndex = (currentIndex + 1) % statusCycle.length;
-      const nextValue = statusCycle[nextIndex];
+      const schengenAllowed = canSetSchengen(dateKey);
+      let nextValue = '';
+
+      if (current === '') {
+        nextValue = schengenAllowed ? 'Schengen' : 'Non-Schengen';
+      } else if (current === 'Schengen') {
+        nextValue = 'Non-Schengen';
+      } else {
+        nextValue = '';
+      }
 
       if (nextValue) {
         selections[dateKey] = nextValue;
