@@ -39,45 +39,47 @@ function renderSidebar(routes) {
     
     li.classList.toggle("active", r.uid === appState.isolatedUid);
 
-    const logoUrl = getJourneyIcon(r);
+const logoUrl = getJourneyIcon(r);
 
-    li.innerHTML = `
-      <div class="sidebar-row">
+const logoClass =
+  r.journey_type === "Flight"
+    ? "airline-logo"
+    : "journey-logo";
 
-        <!-- LEFT: LOGO -->
-        <div class="sidebar-logo">
-          ${logoUrl ? `
-            <img
-              class="airline-logo"
-              src="${logoUrl}"
-              alt="${r.airline || r.journey_type}"
-              width="100"
-              height="100"
-              onerror="this.style.display='none'"
-            />
-          ` : ""}
-        </div>
+li.innerHTML = `
+  <div class="sidebar-row">
 
-        <!-- RIGHT: TEXT -->
+    <!-- LEFT: LOGO -->
+    <div class="sidebar-logo">
+      ${logoUrl ? `
+        <img
+          class="${logoClass}"
+          src="${logoUrl}"
+          alt="${r.airline || r.journey_type}"
+          onerror="this.style.display='none'"
+        />
+      ` : ""}
+    </div>
 
-        
-        <div class="sidebar-text">
+    <!-- RIGHT: TEXT -->
+    <div class="sidebar-text">
 
-          <!-- Journey type -->
-          <div class="sidebar-journey-type">
-            ${r.journey_type || ""}
-          </div>
-
-          <div class="sidebar-route">
-            <strong>${r.origin || ""} → ${r.destination || ""}</strong>
-          </div>
-
-          <div class="sidebar-date">
-            ${r.journey_date?.slice(0, 10) || ""}
-          </div>
-        </div>
+      <!-- Journey type -->
+      <div class="sidebar-journey-type">
+        ${r.journey_type || ""}
       </div>
-    `;
+
+      <div class="sidebar-route">
+        <strong>${r.origin || ""} → ${r.destination || ""}</strong>
+      </div>
+
+      <div class="sidebar-date">
+        ${r.journey_date?.slice(0, 10) || ""}
+      </div>
+    </div>
+  </div>
+`;
+    
 
     li.addEventListener("click", () => {
       setIsolatedRoute(r.uid);
