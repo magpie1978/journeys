@@ -3,12 +3,30 @@
 // =====================================================
 
 // Resolve correct icon for sidebar
+//function getJourneyIcon(route) {
+  // Flights → airline tailfin
+  //if (route.journey_type === "Flight") {
+  //  return getAirlineLogo(route.airline);
+  //}
+//}
+
+
 function getJourneyIcon(route) {
+  if (!route) return null;
+
   // Flights → airline tailfin
   if (route.journey_type === "Flight") {
     return getAirlineLogo(route.airline);
   }
+
+  // Bus / Train → operator logo if available
+  if (route.journey_type === "Bus" || route.journey_type === "Train") {
+    return getAirlineLogo(route.airline);
+  }
+
+  return null;
 }
+
 
 
 function renderSidebar(routes) {
