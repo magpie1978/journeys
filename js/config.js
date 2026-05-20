@@ -50,5 +50,6 @@ const airlineLogoMap = {
   "Virgin Blue": "VirginAustralia.webp",
   "Volotea": "Volotea.webp",
   "WestJet": "WestJet.webp",
-  "Vueling": "Vueling.webp"
+  "Vueling": "Vueling.webp",
+  "FlixBus": "Flix.webp"
 };
