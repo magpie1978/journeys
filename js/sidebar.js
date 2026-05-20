@@ -5,7 +5,9 @@
 // Resolve correct icon for sidebar
 function getJourneyIcon(route) {
   // Flights → airline tailfin
-  if (route.journey_type === "Flight") {
+
+  //  REMOVED TO ALLOW BUS AND TRAIN LOGOS//
+  //  if (route.journey_type === "Flight") {
     return getAirlineLogo(route.airline);
   }
 }
