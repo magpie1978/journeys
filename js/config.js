@@ -51,5 +51,8 @@ const airlineLogoMap = {
   "Volotea": "Volotea.webp",
   "WestJet": "WestJet.webp",
   "Vueling": "Vueling.webp",
-  "FlixBus": "Flix.webp"
+  //Bus
+  "FlixBus": "Flix.webp",
+  //Train
+  "OBB": "obb.webp"
 };
