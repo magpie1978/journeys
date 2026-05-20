@@ -432,6 +432,12 @@ body {
   transform: scale(1.5);   /* 🔥 KEY LINE */
 }
 
+.journey-logo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
 
 
 /* =====================================================
