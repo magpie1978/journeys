@@ -436,6 +436,8 @@ body {
   width: 100px;
   height: 100px;
   object-fit: contain;
+  object-position: center;
+  transform: scale(1.5);   /* 🔥 KEY LINE */
 }
 
 
