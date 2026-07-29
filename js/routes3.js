@@ -63,7 +63,7 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
   map.addSource("routes", {
     type: "geojson",
     data: fc,
-    tolerance: 0.05
+    tolerance: 0
   });
 
   map.addLayer({
