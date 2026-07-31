@@ -1,244 +1,142 @@
 // =====================================================
-// ROUTES3.JS
-// Efficient state-driven route rendering
+// ROUTES.JS — CLEAN STATE-DRIVEN VERSION
 // =====================================================
 
-
-// =====================================================
-// GLOBAL ROUTE STATE
-// =====================================================
-
+// Optional stable base set for airport filtering
 window.allRoutes = window.allRoutes || [];
-window.currentRoutes = window.currentRoutes || [];
-
-window._routesHandlersBound =
-  window._routesHandlersBound || false;
+window._routesHandlersBound = window._routesHandlersBound || false;
 
 
-// Preserve an existing appState if another script created it
-window.appState = window.appState || {
-  mode: "routes",
-  isolatedUid: null,
-  activeAirport: null
+// =====================================================
+// GLOBAL APP STATE
+// =====================================================
+
+window.appState = {
+  mode: "routes",         // "routes" | "countries"
+  isolatedUid: null,      // currently isolated route
+  activeAirport: null     // selected airport
 };
-
-
-// Ensure all expected properties exist
-if (!("mode" in window.appState)) {
-  window.appState.mode = "routes";
-}
-
-if (!("isolatedUid" in window.appState)) {
-  window.appState.isolatedUid = null;
-}
-
-if (!("activeAirport" in window.appState)) {
-  window.appState.activeAirport = null;
-}
-
-
-// =====================================================
-// CONSTANTS
-// =====================================================
-
-const ROUTES_SOURCE_ID = "routes";
-const ROUTES_LINE_LAYER_ID = "routes-line";
-const ROUTES_HIT_LAYER_ID = "routes-hit";
-
-
-// =====================================================
-// GEOJSON HELPERS
-// =====================================================
-
-function routeToFeature(route) {
-  const {
-    geom,
-    ...properties
-  } = route;
-
-  return {
-    type: "Feature",
-    geometry: geom,
-    properties
-  };
-}
-
-
-function routesToFeatureCollection(routes) {
-  return {
-    type: "FeatureCollection",
-    features: (routes || [])
-      .filter(route => route?.geom)
-      .map(routeToFeature)
-  };
-}
-
-
-// =====================================================
-// CREATE OR UPDATE MAP SOURCE
-// =====================================================
-
-function updateRoutesSource(routes) {
-  if (!map) return;
-
-  const featureCollection =
-    routesToFeatureCollection(routes);
-
-  const existingSource =
-    map.getSource(ROUTES_SOURCE_ID);
-
-  // Update the existing source rather than rebuilding it
-  if (existingSource) {
-    existingSource.setData(featureCollection);
-    return;
-  }
-
-  map.addSource(ROUTES_SOURCE_ID, {
-    type: "geojson",
-    data: featureCollection,
-    tolerance: 0
-  });
-}
-
-
-// =====================================================
-// CREATE ROUTE LAYERS
-// =====================================================
-
-function ensureRouteLayers() {
-  if (!map || !map.getSource(ROUTES_SOURCE_ID)) {
-    return;
-  }
-
-  if (!map.getLayer(ROUTES_LINE_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTES_LINE_LAYER_ID,
-      type: "line",
-      source: ROUTES_SOURCE_ID,
-
-      paint: {
-        "line-width": 1.4,
-        "line-opacity": 0.85,
-
-        "line-color": [
-          "case",
-
-          [
-            "==",
-            ["get", "journey_type"],
-            "Flight"
-          ],
-          "#FFD700",
-
-          [
-            "==",
-            ["get", "journey_type"],
-            "Drive"
-          ],
-          "#1E90FF",
-
-          "#E53935"
-        ]
-      }
-    });
-  }
-
-  if (!map.getLayer(ROUTES_HIT_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTES_HIT_LAYER_ID,
-      type: "line",
-      source: ROUTES_SOURCE_ID,
-
-      paint: {
-        "line-width": 18,
-        "line-opacity": 0
-      }
-    });
-  }
-
-  bindRouteHandlers();
-}
 
 
 // =====================================================
 // RENDER ROUTES
 // =====================================================
 
-function renderRoutes(
-  routes,
-  {
-    updateBaseRoutes = false,
-    fitMap = true
-  } = {}
-) {
-  const safeRoutes = (routes || [])
-    .filter(route => route?.geom);
+function renderRoutes(routes, { resetIsolation = true } = {}) {
 
-  /*
-   * allRoutes:
-   * Full route set returned by the current top-bar filters.
-   *
-   * currentRoutes:
-   * Routes currently visible on the map. This may be a
-   * subset when an airport is active.
-   */
-  if (updateBaseRoutes) {
-    window.allRoutes = safeRoutes.slice();
+  const safeRoutes = (routes || []).filter(r => r && r.geom);
+
+  if (!safeRoutes.length) {
+    currentRoutes = [];
+    window.allRoutes = [];
+    updateAllCounters([]);
+    renderSidebar([]);
+
+    if (typeof clearSource === "function") {
+      clearSource("routes");
+      clearSource("airports");
+    }
+    return;
   }
 
-  // Keep both the new and legacy route state synchronised
-  window.currentRoutes = safeRoutes.slice();
-  
-  if (typeof currentRoutes !== "undefined") {
-    currentRoutes = window.currentRoutes;
-  }
+  currentRoutes = safeRoutes.slice();
+  window.allRoutes = currentRoutes.slice();
 
-  // Update interface elements that genuinely depend
-  // on the currently visible route collection
-  updateAllCounters(window.currentRoutes);
-  renderSidebar(window.currentRoutes);
+  // ---------------- UI ----------------
+  updateAllCounters(currentRoutes);
+  renderSidebar(currentRoutes);
 
-  updateRoutesSource(window.currentRoutes);
-  ensureRouteLayers();
+  // ---------------- GEOJSON ----------------
+  const fc = {
+    type: "FeatureCollection",
+    features: currentRoutes.map(r => ({
+      type: "Feature",
+      geometry: r.geom,
+      properties: r
+    }))
+  };
+
+  if (map.getLayer("routes-hit")) map.removeLayer("routes-hit");
+  if (map.getLayer("routes-line")) map.removeLayer("routes-line");
+  if (map.getSource("routes")) map.removeSource("routes");
+
+  map.addSource("routes", {
+    type: "geojson",
+    data: fc,
+    tolerance: 0
+  });
+
+  map.addLayer({
+    id: "routes-line",
+    type: "line",
+    source: "routes",
+    paint: {
+      "line-width": 1.4,
+      "line-opacity": 0.85,
+      "line-color": [
+        "case",
+        ["==", ["get", "journey_type"], "Flight"], "#FFD700",
+        ["==", ["get", "journey_type"], "Drive"], "#1E90FF",
+        "#E53935"
+      ]
+    }
+  });
+
+  map.addLayer({
+    id: "routes-hit",
+    type: "line",
+    source: "routes",
+    paint: {
+      "line-width": 18,
+      "line-opacity": 0
+    }
+  });
+
+  bindRouteHandlers();
 
   if (typeof loadAirports === "function") {
-    loadAirports(window.currentRoutes);
+    loadAirports(currentRoutes);
   }
 
   applyIsolationStyling();
   applyMapModeFromState();
-  updateSidebarSelection();
-  updateFlightSummaryFromState();
-
-  if (fitMap && appState.mode === "routes") {
-    fitToCurrentRouteView();
+  
+  if (appState.mode === "routes") {
+  
+    const isolatedRoute = appState.isolatedUid
+      ? currentRoutes.find(r => r.uid === appState.isolatedUid)
+      : null;
+  
+    if (isolatedRoute?.geom) {
+  
+      // Zoom to the selected journey while keeping all tracks rendered
+      fitToBoundsFromLineGeoms([isolatedRoute.geom]);
+  
+    } else {
+  
+      // No journey selected: fit all visible tracks
+      fitToBoundsFromLineGeoms(
+        currentRoutes.map(r => r.geom)
+      );
+    }
   }
-}
+} 
 
 window.renderRoutes = renderRoutes;
 
 
 // =====================================================
-// LOAD ROUTES FROM SUPABASE
+// LOAD ROUTES
 // =====================================================
 
 async function loadRoutes() {
-  if (
-    !selected?.years ||
-    selected.years.size === 0
-  ) {
-    console.warn(
-      "[routes] loadRoutes aborted – no year selected"
-    );
 
-    renderRoutes([], {
-      updateBaseRoutes: true
-    });
-
+  if (!selected?.years || selected.years.size === 0) {
+    console.warn("[routes] loadRoutes aborted – no year selected yet");
     return;
   }
 
-  let query = sb
+  let q = sb
     .from("journeys_routes")
     .select(`
       uid,
@@ -255,240 +153,99 @@ async function loadRoutes() {
       geom
     `);
 
-  // -------------------------------------------------
-  // YEAR FILTER
-  // -------------------------------------------------
+  const years = [...selected.years].map(Number);
 
-  const years = [...selected.years]
-    .map(Number)
-    .filter(Number.isFinite);
-
-  const yearClauses = years.map(year =>
-    `and(` +
-      `journey_date.gte.${year}-01-01,` +
-      `journey_date.lt.${year + 1}-01-01` +
-    `)`
+  const yearClauses = years.map(y =>
+    `and(journey_date.gte.${y}-01-01,journey_date.lt.${y+1}-01-01)`
   );
 
-  if (yearClauses.length) {
-    query = query.or(yearClauses.join(","));
+  q = q.or(yearClauses.join(","));
+
+  if (selected.airlines.size) {
+    q = q.in("airline", [...selected.airlines]);
   }
 
-  // -------------------------------------------------
-  // AIRLINE FILTER
-  // -------------------------------------------------
-
-  if (selected.airlines?.size) {
-    query = query.in(
-      "airline",
-      [...selected.airlines]
-    );
+  if (selected.types.size) {
+    q = q.in("journey_type", [...selected.types]);
   }
 
-  // -------------------------------------------------
-  // JOURNEY TYPE FILTER
-  // -------------------------------------------------
-
-  if (selected.types?.size) {
-    query = query.in(
-      "journey_type",
-      [...selected.types]
-    );
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await q;
 
   if (error) {
-    console.error(
-      "[routes] load failed:",
-      error
-    );
-
+    console.error("[routes] load failed:", error);
+    currentRoutes = [];
     window.allRoutes = [];
-    window.currentRoutes = [];
-    
-    if (typeof currentRoutes !== "undefined") {
-      currentRoutes = [];
-    }
-
     updateAllCounters([]);
     renderSidebar([]);
-
-    if (
-      map &&
-      map.getSource(ROUTES_SOURCE_ID)
-    ) {
-      map
-        .getSource(ROUTES_SOURCE_ID)
-        .setData(routesToFeatureCollection([]));
-    }
-
     return;
   }
 
-  let routes = (data || [])
-    .filter(route => route?.geom);
-
-  // -------------------------------------------------
-  // AIRPORT FILTER
-  // -------------------------------------------------
-
-  if (selected.airports?.size) {
-    const selectedAirportValues =
-      [...selected.airports];
-
-    /*
-     * AIRPORT_GROUPS should ideally be defined once
-     * in a shared config file loaded before routes3.js
-     * and filters3.js.
-     */
-    const groups =
-      typeof AIRPORT_GROUPS !== "undefined"
-        ? AIRPORT_GROUPS
-        : {};
-
-    const expandedAirportSet = new Set(
-      selectedAirportValues.flatMap(value => {
-        const groupMembers = groups[value];
-
-        return Array.isArray(groupMembers)
-          ? groupMembers
-          : [value];
-      })
-    );
-
-    routes = routes.filter(route => {
-      /*
-       * Preserve non-flight journeys when an airport
-       * filter is active, matching the previous behaviour.
-       */
-      if (route.journey_type !== "Flight") {
-        return true;
-      }
-
+  let routes = (data || []).filter(r => r && r.geom);
+  
+  // =====================================================
+  // AIRPORT FILTER (FROM DROPDOWN)
+  // =====================================================
+  
+  if (selected.airports && selected.airports.size) {
+  
+    routes = routes.filter(r => {
+  
+      if (r.journey_type !== "Flight") return true;
+  
+      const selectedAirports = [...selected.airports];
+  
+      const expanded = selectedAirports.flatMap(code => {
+        if (AIRPORT_GROUPS?.[code]) {
+          return AIRPORT_GROUPS[code];
+        }
+        return code;
+      });
+  
       return (
-        expandedAirportSet.has(route.origin) ||
-        expandedAirportSet.has(route.destination)
+        expanded.includes(r.origin) ||
+        expanded.includes(r.destination)
       );
+  
     });
   }
-
-  // -------------------------------------------------
-  // SORT NEWEST FIRST
-  // -------------------------------------------------
-
-  routes.sort((a, b) => {
-    const dateA =
-      new Date(a.journey_date).getTime();
-
-    const dateB =
-      new Date(b.journey_date).getTime();
-
-    return dateB - dateA;
-  });
-
-  /*
-   * A new database/filter load becomes the new
-   * permanent base route collection.
-   */
-  appState.activeAirport = null;
-  appState.isolatedUid = null;
-
-  renderRoutes(routes, {
-    updateBaseRoutes: true,
-    fitMap: true
-  });
-}
+    routes = routes.sort(
+      (a, b) => new Date(b.journey_date) - new Date(a.journey_date)
+    );
+  
+    renderRoutes(routes);
+  }
 
 
 // =====================================================
-// ROUTE EVENT HANDLERS
+// ROUTE HANDLERS
 // =====================================================
 
 function bindRouteHandlers() {
-  if (
-    window._routesHandlersBound ||
-    !map
-  ) {
-    return;
-  }
 
+  if (window._routesHandlersBound) return;
   window._routesHandlersBound = true;
 
-  // -------------------------------------------------
-  // CLICK A ROUTE
-  // -------------------------------------------------
+  map.on("click", "routes-hit", e => {
+    const uid = e.features?.[0]?.properties?.uid;
+    if (uid) setIsolatedRoute(uid);
+  });
 
-  map.on(
-    "click",
-    ROUTES_HIT_LAYER_ID,
-    event => {
-      const uid =
-        event.features?.[0]?.properties?.uid;
+  map.on("mouseenter", "routes-hit", () => {
+    map.getCanvas().style.cursor = "pointer";
+  });
 
-      if (!uid) return;
+  map.on("mouseleave", "routes-hit", () => {
+    map.getCanvas().style.cursor = "";
+  });
 
-      /*
-       * Prevent the general map click handler from
-       * immediately clearing the selection.
-       */
-      if (
-        event.originalEvent &&
-        typeof event.originalEvent.stopPropagation ===
-          "function"
-      ) {
-        event.originalEvent.stopPropagation();
-      }
+  map.on("click", e => {
+    if (!appState.isolatedUid || appState.mode !== "routes") return;
 
-      setIsolatedRoute(uid);
-    }
-  );
+    const hits = map.queryRenderedFeatures(e.point, {
+      layers: ["routes-hit"]
+    });
 
-  // -------------------------------------------------
-  // POINTER CURSOR
-  // -------------------------------------------------
-
-  map.on(
-    "mouseenter",
-    ROUTES_HIT_LAYER_ID,
-    () => {
-      map.getCanvas().style.cursor = "pointer";
-    }
-  );
-
-  map.on(
-    "mouseleave",
-    ROUTES_HIT_LAYER_ID,
-    () => {
-      map.getCanvas().style.cursor = "";
-    }
-  );
-
-  // -------------------------------------------------
-  // CLICK EMPTY MAP AREA
-  // -------------------------------------------------
-
-  map.on("click", event => {
-    if (
-      !appState.isolatedUid ||
-      appState.mode !== "routes"
-    ) {
-      return;
-    }
-
-    if (!map.getLayer(ROUTES_HIT_LAYER_ID)) {
-      return;
-    }
-
-    const routeHits =
-      map.queryRenderedFeatures(
-        event.point,
-        {
-          layers: [ROUTES_HIT_LAYER_ID]
-        }
-      );
-
-    if (!routeHits.length) {
+    if (!hits.length) {
       setIsolatedRoute(null);
     }
   });
@@ -496,127 +253,57 @@ function bindRouteHandlers() {
 
 
 // =====================================================
-// ROUTE SELECTION
+// STATE CONTROLLER
 // =====================================================
 
 function setIsolatedRoute(uid) {
-  const nextUid =
-    appState.isolatedUid === uid
-      ? null
-      : uid;
 
-  appState.isolatedUid = nextUid;
-  appState.activeAirport = null;
-
-  // Keep older files synchronised
-  if (typeof isolatedUid !== "undefined") {
-    isolatedUid = nextUid;
+  if (appState.isolatedUid === uid) {
+    appState.isolatedUid = null;
+  } else {
+    appState.isolatedUid = uid;
   }
 
-  applyIsolationStyling();
-  updateSidebarSelection();
-  updateFlightSummaryFromState();
-  fitToCurrentRouteView();
+  appState.activeAirport = null;
+  updateUIFromState();
 }
-
-window.setIsolatedRoute = setIsolatedRoute;
-
-// =====================================================
-// ACTIVE AIRPORT
-// =====================================================
 
 function setActiveAirport(code) {
-  appState.activeAirport =
-    appState.activeAirport === code
-      ? null
-      : code;
+
+  if (appState.activeAirport === code) {
+    appState.activeAirport = null;
+  } else {
+    appState.activeAirport = code;
+  }
 
   appState.isolatedUid = null;
-
-  /*
-   * Airport selection genuinely changes which routes
-   * are visible, so derive a subset from allRoutes.
-   */
-  updateVisibleRoutesFromState();
+  updateUIFromState();
 }
-
-window.setActiveAirport = setActiveAirport;
-
-
-// =====================================================
-// MAP MODE
-// =====================================================
 
 function setMapMode(mode) {
-  if (mode !== "routes" && mode !== "countries") {
-    console.warn(`[routes] Invalid map mode: ${mode}`);
-    return;
-  }
-
   appState.mode = mode;
-
-  // Keep older map.js and airports2.js code synchronised
-  if (typeof mapMode !== "undefined") {
-    mapMode = mode;
-  }
-
-  applyMapModeFromState();
-
-  if (mode === "routes") {
-    applyIsolationStyling();
-    fitToCurrentRouteView();
-  } else if (
-    typeof fitToVisibleCountries === "function"
-  ) {
-    // Give Mapbox a render cycle to display the country layer
-    map.once("idle", fitToVisibleCountries);
-  }
+  updateUIFromState();
 }
 
-window.setMapMode = setMapMode;
 
 // =====================================================
-// DERIVE VISIBLE ROUTES FROM STATE
+// MASTER UI UPDATE
 // =====================================================
 
-function getVisibleRoutesFromState() {
-  let routes = window.allRoutes.slice();
+function updateUIFromState() {
+
+  let routes = currentRoutes.slice();
 
   if (appState.activeAirport) {
-    routes = routes.filter(route =>
-      route.journey_type === "Flight" &&
-      (
-        route.origin ===
-          appState.activeAirport ||
-
-        route.destination ===
-          appState.activeAirport
-      )
+    routes = routes.filter(r =>
+      r.journey_type === "Flight" &&
+      (r.origin === appState.activeAirport ||
+       r.destination === appState.activeAirport)
     );
   }
 
-  return routes;
+  renderRoutes(routes, { resetIsolation: false });
 }
-
-
-function updateVisibleRoutesFromState() {
-  const visibleRoutes =
-    getVisibleRoutesFromState();
-
-  renderRoutes(visibleRoutes, {
-    updateBaseRoutes: false,
-    fitMap: true
-  });
-}
-
-
-// Keep this function for compatibility with any other
-// existing files that may still call it.
-function updateUIFromState() {
-  updateVisibleRoutesFromState();
-}
-
-window.updateUIFromState = updateUIFromState;
 
 
 // =====================================================
@@ -624,247 +311,53 @@ window.updateUIFromState = updateUIFromState;
 // =====================================================
 
 function applyIsolationStyling() {
-  if (
-    !map ||
-    !map.getLayer(ROUTES_LINE_LAYER_ID)
-  ) {
-    return;
-  }
+
+  if (!map.getLayer("routes-line")) return;
 
   if (!appState.isolatedUid) {
-    map.setPaintProperty(
-      ROUTES_LINE_LAYER_ID,
-      "line-opacity",
-      0.85
-    );
-
-    map.setPaintProperty(
-      ROUTES_LINE_LAYER_ID,
-      "line-width",
-      1.4
-    );
-
+    map.setPaintProperty("routes-line", "line-opacity", 0.85);
+    map.setPaintProperty("routes-line", "line-width", 1.4);
     return;
   }
 
-  map.setPaintProperty(
-    ROUTES_LINE_LAYER_ID,
-    "line-opacity",
-    [
-      "case",
+  map.setPaintProperty("routes-line", "line-opacity", [
+    "case",
+    ["==", ["get", "uid"], appState.isolatedUid],
+    1,
+    0.15
+  ]);
 
-      [
-        "==",
-        ["get", "uid"],
-        appState.isolatedUid
-      ],
-
-      1,
-      0.15
-    ]
-  );
-
-  map.setPaintProperty(
-    ROUTES_LINE_LAYER_ID,
-    "line-width",
-    [
-      "case",
-
-      [
-        "==",
-        ["get", "uid"],
-        appState.isolatedUid
-      ],
-
-      3,
-      1.4
-    ]
-  );
-}
-
-window.applyIsolationStyling =
-  applyIsolationStyling;
-
-
-// =====================================================
-// SIDEBAR SELECTION STATE
-// =====================================================
-
-function updateSidebarSelection() {
-  const sidebarItems =
-    document.querySelectorAll(
-      "#flightList li[data-uid]"
-    );
-
-  sidebarItems.forEach(item => {
-    const isActive =
-      Boolean(appState.isolatedUid) &&
-      item.dataset.uid ===
-        String(appState.isolatedUid);
-
-    item.classList.toggle("active", isActive);
-  });
+  map.setPaintProperty("routes-line", "line-width", [
+    "case",
+    ["==", ["get", "uid"], appState.isolatedUid],
+    3,
+    1.4
+  ]);
 }
 
 
 // =====================================================
-// FLIGHT SUMMARY
-// =====================================================
-
-function getIsolatedRoute() {
-  if (!appState.isolatedUid) {
-    return null;
-  }
-
-  return (
-    window.currentRoutes.find(
-      route =>
-        String(route.uid) ===
-        String(appState.isolatedUid)
-    ) ||
-
-    window.allRoutes.find(
-      route =>
-        String(route.uid) ===
-        String(appState.isolatedUid)
-    ) ||
-
-    null
-  );
-}
-
-
-function updateFlightSummaryFromState() {
-  const isolatedRoute =
-    getIsolatedRoute();
-
-  if (
-    isolatedRoute &&
-    typeof showFlightSummary === "function"
-  ) {
-    showFlightSummary(isolatedRoute);
-    return;
-  }
-
-  if (typeof hideFlightSummary === "function") {
-    hideFlightSummary();
-  }
-}
-
-
-// =====================================================
-// FIT MAP TO CURRENT ROUTE VIEW
-// =====================================================
-
-function fitToCurrentRouteView() {
-  if (
-    !map ||
-    appState.mode !== "routes" ||
-    typeof fitToBoundsFromLineGeoms !==
-      "function"
-  ) {
-    return;
-  }
-
-  const isolatedRoute =
-    getIsolatedRoute();
-
-  if (isolatedRoute?.geom) {
-    /*
-     * All routes remain rendered, but the camera fits
-     * only the selected route.
-     */
-    fitToBoundsFromLineGeoms([
-      isolatedRoute.geom
-    ]);
-
-    return;
-  }
-
-  const visibleGeometries =
-    window.currentRoutes
-      .map(route => route.geom)
-      .filter(Boolean);
-
-  if (visibleGeometries.length) {
-    fitToBoundsFromLineGeoms(
-      visibleGeometries
-    );
-  }
-}
-
-window.fitToCurrentRouteView =
-  fitToCurrentRouteView;
-
-// =====================================================
-// MAP MODE VISIBILITY
+// MAP MODE
 // =====================================================
 
 function applyMapModeFromState() {
-  if (!map) return;
 
   if (appState.mode === "countries") {
-    if (map.getLayer(ROUTES_LINE_LAYER_ID)) {
-      map.setLayoutProperty(
-        ROUTES_LINE_LAYER_ID,
-        "visibility",
-        "none"
-      );
-    }
 
-    if (map.getLayer(ROUTES_HIT_LAYER_ID)) {
-      map.setLayoutProperty(
-        ROUTES_HIT_LAYER_ID,
-        "visibility",
-        "none"
-      );
-    }
+    if (map.getLayer("routes-line"))
+      map.setLayoutProperty("routes-line", "visibility", "none");
 
-    if (
-      typeof setCountriesFilterFromRoutes ===
-      "function"
-    ) {
-      setCountriesFilterFromRoutes(
-        window.currentRoutes
-      );
-    }
+    setCountriesFilterFromRoutes(currentRoutes);
 
-    if (map.getLayer("countries-fill")) {
-      map.setLayoutProperty(
-        "countries-fill",
-        "visibility",
-        "visible"
-      );
-    }
+    if (map.getLayer("countries-fill"))
+      map.setLayoutProperty("countries-fill", "visibility", "visible");
 
-    return;
-  }
+  } else {
 
-  // Routes mode
-  if (map.getLayer("countries-fill")) {
-    map.setLayoutProperty(
-      "countries-fill",
-      "visibility",
-      "none"
-    );
-  }
+    if (map.getLayer("countries-fill"))
+      map.setLayoutProperty("countries-fill", "visibility", "none");
 
-  if (map.getLayer(ROUTES_LINE_LAYER_ID)) {
-    map.setLayoutProperty(
-      ROUTES_LINE_LAYER_ID,
-      "visibility",
-      "visible"
-    );
-  }
-
-  if (map.getLayer(ROUTES_HIT_LAYER_ID)) {
-    map.setLayoutProperty(
-      ROUTES_HIT_LAYER_ID,
-      "visibility",
-      "visible"
-    );
+    if (map.getLayer("routes-line"))
+      map.setLayoutProperty("routes-line", "visibility", "visible");
   }
 }
-
-window.applyMapModeFromState =
-  applyMapModeFromState;
