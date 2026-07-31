@@ -100,12 +100,28 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
 
   applyIsolationStyling();
   applyMapModeFromState();
-
+  
   if (appState.mode === "routes") {
-    fitToBoundsFromLineGeoms(currentRoutes.map(r => r.geom));
+  
+      const isolatedRoute = appState.isolatedUid
+          ? currentRoutes.find(r => r.uid === appState.isolatedUid)
+          : null;
+  
+      if (isolatedRoute && isolatedRoute.geom) {
+  
+          // Zoom only to the selected journey
+          fitToBoundsFromLineGeoms([isolatedRoute.geom]);
+  
+      } else {
+  
+          // No selection → show everything
+          fitToBoundsFromLineGeoms(
+              currentRoutes.map(r => r.geom)
+          );
+  
+      }
   }
-}
-
+  
 window.renderRoutes = renderRoutes;
 
 
