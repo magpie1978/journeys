@@ -82,15 +82,7 @@ li.innerHTML = `
     
 
 li.addEventListener("click", () => {
-
   setIsolatedRoute(r.uid);
-
-  if (appState.isolatedUid === r.uid) {
-    showFlightSummary(r);
-  } else {
-    hideFlightSummary();
-  }
-
 });
 
 flightListEl.appendChild(li);
