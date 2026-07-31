@@ -56,15 +56,3 @@ const airlineLogoMap = {
   //Train
   "OBB": "obb.webp"
 };
-
-
-const AIRPORT_GROUPS = Object.freeze({
-  London: ["LHR", "LGW", "LCY", "SEN", "LTN", "STN"],
-  Berlin: ["BER", "SXF", "TXL"],
-  Milan: ["MXP", "LIN", "BGY"],
-  Bangkok: ["BKK", "DMK"],
-  "New York": ["JFK", "EWR", "LGA"],
-  Washington: ["DCA", "BWI", "IAD"],
-  Rome: ["FCO", "CIA"],
-  Paris: ["CDG", "BVA", "ORY"]
-});
