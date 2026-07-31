@@ -61,25 +61,135 @@ function hideCityLabels() {
 // =====================================================
 // ROUTE FITTING
 // =====================================================
+
+function expandBounds(bounds, xPercent = 0.10, yPercent = 0.15) {
+
+    const west  = bounds.getWest();
+    const east  = bounds.getEast();
+    const south = bounds.getSouth();
+    const north = bounds.getNorth();
+
+    const width  = east - west;
+    const height = north - south;
+
+    return new mapboxgl.LngLatBounds(
+        [
+            west  - (width  * xPercent),
+            south - (height * yPercent)
+        ],
+        [
+            east  + (width  * xPercent),
+            north + (height * yPercent)
+        ]
+    );
+}
+
+
+
 function fitToBoundsFromLineGeoms(geoms) {
-  if (!geoms?.length) return;
+  if (!map || !Array.isArray(geoms) || geoms.length === 0) {
+    return;
+  }
 
   const bounds = new mapboxgl.LngLatBounds();
-  geoms.forEach(g => {
-    if (!g?.coordinates?.length) return;
-    g.coordinates.forEach(c => bounds.extend(c));
+  let validCoordinateCount = 0;
+
+  // Recursively extract coordinates from LineString,
+  // MultiLineString and other nested coordinate arrays.
+  function addCoordinatesToBounds(coordinates) {
+    if (!Array.isArray(coordinates)) {
+      return;
+    }
+
+    // A single valid [longitude, latitude] coordinate
+    if (
+      coordinates.length >= 2 &&
+      Number.isFinite(Number(coordinates[0])) &&
+      Number.isFinite(Number(coordinates[1]))
+    ) {
+      const longitude = Number(coordinates[0]);
+      const latitude = Number(coordinates[1]);
+
+      bounds.extend([longitude, latitude]);
+      validCoordinateCount += 1;
+      return;
+    }
+
+    // Continue through nested coordinate arrays
+    coordinates.forEach(addCoordinatesToBounds);
+  }
+
+  geoms.forEach(geom => {
+    if (!geom) {
+      return;
+    }
+
+    // Accept either a geometry object or raw coordinates
+    const coordinates = geom.coordinates || geom;
+    addCoordinatesToBounds(coordinates);
   });
 
-  map.fitBounds(bounds, {
+  if (validCoordinateCount === 0 || bounds.isEmpty()) {
+    console.warn(
+      "[map] fitToBoundsFromLineGeoms: no valid coordinates found"
+    );
+    return;
+  }
+
+  const west = bounds.getWest();
+  const east = bounds.getEast();
+  const south = bounds.getSouth();
+  const north = bounds.getNorth();
+
+  const longitudeSpan = east - west;
+  const latitudeSpan = north - south;
+
+  /*
+   * Expand the geographic bounds.
+   *
+   * Horizontal: 10% on the left and right
+   * Vertical:   15% on the top and bottom
+   *
+   * The larger vertical expansion gives tall routes more
+   * room around their origin and destination markers.
+   */
+  const horizontalExpansion = Math.max(
+    longitudeSpan * 0.10,
+    0.05
+  );
+
+  const verticalExpansion = Math.max(
+    latitudeSpan * 0.15,
+    0.05
+  );
+
+  const expandedBounds = new mapboxgl.LngLatBounds(
+    [
+      west - horizontalExpansion,
+      south - verticalExpansion
+    ],
+    [
+      east + horizontalExpansion,
+      north + verticalExpansion
+    ]
+  );
+
+  map.fitBounds(expandedBounds, {
     padding: {
-      top: 320,
-      bottom: 180,
-      left: getSidebarLeftPad() + 80,
-      right: 120,
+      top: 100,
+      bottom: 100,
+      left:
+        typeof getSidebarLeftPad === "function"
+          ? getSidebarLeftPad()
+          : 100,
+      right: 100
     },
     duration: 650,
+    essential: true
   });
 }
+
+
 
 // =====================================================
 // VIEW RESTORATION (robust camera snapshot + restore)
