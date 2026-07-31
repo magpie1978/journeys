@@ -103,25 +103,25 @@ function renderRoutes(routes, { resetIsolation = true } = {}) {
   
   if (appState.mode === "routes") {
   
-      const isolatedRoute = appState.isolatedUid
-          ? currentRoutes.find(r => r.uid === appState.isolatedUid)
-          : null;
+    const isolatedRoute = appState.isolatedUid
+      ? currentRoutes.find(r => r.uid === appState.isolatedUid)
+      : null;
   
-      if (isolatedRoute && isolatedRoute.geom) {
+    if (isolatedRoute?.geom) {
   
-          // Zoom only to the selected journey
-          fitToBoundsFromLineGeoms([isolatedRoute.geom]);
+      // Zoom to the selected journey while keeping all tracks rendered
+      fitToBoundsFromLineGeoms([isolatedRoute.geom]);
   
-      } else {
+    } else {
   
-          // No selection → show everything
-          fitToBoundsFromLineGeoms(
-              currentRoutes.map(r => r.geom)
-          );
-  
-      }
+      // No journey selected: fit all visible tracks
+      fitToBoundsFromLineGeoms(
+        currentRoutes.map(r => r.geom)
+      );
+    }
   }
-  
+} 
+
 window.renderRoutes = renderRoutes;
 
 
