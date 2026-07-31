@@ -72,10 +72,10 @@ function fitToBoundsFromLineGeoms(geoms) {
 
   map.fitBounds(bounds, {
     padding: {
-      top: 140,
-      bottom: 80,
-      left: getSidebarLeftPad(),
-      right: 80,
+      top: 240,
+      bottom: 180,
+      left: getSidebarLeftPad() + 100,
+      right: 180,
     },
     duration: 650,
   });
@@ -191,10 +191,10 @@ function fitToVisibleCountries() {
 
   map.fitBounds(bounds, {
     padding: {
-      top: 140,
-      bottom: 80,
-      left: getSidebarLeftPad(),
-      right: 80,
+      top: 240,
+      bottom: 180,
+      left: getSidebarLeftPad() + 100,
+      right: 180,
     },
     duration: 650,
   });
