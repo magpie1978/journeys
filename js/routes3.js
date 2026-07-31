@@ -186,7 +186,12 @@ function renderRoutes(
     window.allRoutes = safeRoutes.slice();
   }
 
+  // Keep both the new and legacy route state synchronised
   window.currentRoutes = safeRoutes.slice();
+  
+  if (typeof currentRoutes !== "undefined") {
+    currentRoutes = window.currentRoutes;
+  }
 
   // Update interface elements that genuinely depend
   // on the currently visible route collection
@@ -301,6 +306,10 @@ async function loadRoutes() {
 
     window.allRoutes = [];
     window.currentRoutes = [];
+    
+    if (typeof currentRoutes !== "undefined") {
+      currentRoutes = [];
+    }
 
     updateAllCounters([]);
     renderSidebar([]);
@@ -499,10 +508,11 @@ function setIsolatedRoute(uid) {
   appState.isolatedUid = nextUid;
   appState.activeAirport = null;
 
-  /*
-   * Route selection does not change route data.
-   * Therefore, do not call renderRoutes().
-   */
+  // Keep older files synchronised
+  if (typeof isolatedUid !== "undefined") {
+    isolatedUid = nextUid;
+  }
+
   applyIsolationStyling();
   updateSidebarSelection();
   updateFlightSummaryFromState();
@@ -510,7 +520,6 @@ function setIsolatedRoute(uid) {
 }
 
 window.setIsolatedRoute = setIsolatedRoute;
-
 
 // =====================================================
 // ACTIVE AIRPORT
@@ -539,18 +548,17 @@ window.setActiveAirport = setActiveAirport;
 // =====================================================
 
 function setMapMode(mode) {
-  if (
-    mode !== "routes" &&
-    mode !== "countries"
-  ) {
-    console.warn(
-      `[routes] Invalid map mode: ${mode}`
-    );
-
+  if (mode !== "routes" && mode !== "countries") {
+    console.warn(`[routes] Invalid map mode: ${mode}`);
     return;
   }
 
   appState.mode = mode;
+
+  // Keep older map.js and airports2.js code synchronised
+  if (typeof mapMode !== "undefined") {
+    mapMode = mode;
+  }
 
   applyMapModeFromState();
 
@@ -560,12 +568,12 @@ function setMapMode(mode) {
   } else if (
     typeof fitToVisibleCountries === "function"
   ) {
-    fitToVisibleCountries();
+    // Give Mapbox a render cycle to display the country layer
+    map.once("idle", fitToVisibleCountries);
   }
 }
 
 window.setMapMode = setMapMode;
-
 
 // =====================================================
 // DERIVE VISIBLE ROUTES FROM STATE
@@ -685,9 +693,7 @@ window.applyIsolationStyling =
 function updateSidebarSelection() {
   const sidebarItems =
     document.querySelectorAll(
-      "#flight-list li[data-uid], " +
-      ".flight-list li[data-uid], " +
-      ".sidebar li[data-uid]"
+      "#flightList li[data-uid]"
     );
 
   sidebarItems.forEach(item => {
@@ -696,10 +702,7 @@ function updateSidebarSelection() {
       item.dataset.uid ===
         String(appState.isolatedUid);
 
-    item.classList.toggle(
-      "active",
-      isActive
-    );
+    item.classList.toggle("active", isActive);
   });
 }
 
@@ -790,6 +793,7 @@ function fitToCurrentRouteView() {
   }
 }
 
+window.fitToCurrentRouteView = fitToCurrentRouteView;
 
 // =====================================================
 // MAP MODE VISIBILITY
