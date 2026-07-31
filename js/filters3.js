@@ -77,46 +77,28 @@ function buildFilterMenu(containerId, values, targetSet) {
     loadRoutes();
   };
 
-// -------------------------------------------------
-// TOGGLE DROPDOWN
-// -------------------------------------------------
-toggle.onclick = e => {
-  e.preventDefault();
-  e.stopPropagation();
+  // -------------------------------------------------
+  // TOGGLE DROPDOWN
+  // -------------------------------------------------
+  toggle.onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    menu.classList.toggle("open");
+  };
+}
 
-  const wasOpen = menu.classList.contains("open");
-
-  document
-    .querySelectorAll(".filter-menu.open")
-    .forEach(m => {
-      if (m !== menu) {
-        m.classList.remove("open");
-      }
-    });
-
-  if (wasOpen) {
-    menu.classList.remove("open");
-  } else {
-    menu.classList.add("open");
-  }
-};
-
-}   
 
 // =====================================================
 // CLOSE DROPDOWNS ON OUTSIDE CLICK
 // =====================================================
 document.addEventListener("click", e => {
-
-  // Ignore clicks inside any filter
   if (e.target.closest(".filter")) return;
 
-  // Close every open filter menu
   document
     .querySelectorAll(".filter-menu.open")
-    .forEach(menu => menu.classList.remove("open"));
-
+    .forEach(m => m.classList.remove("open"));
 });
+
 
 
 // =====================================================
@@ -196,7 +178,19 @@ async function loadFilters() {
     }
   }
 
-
+  // =====================================================
+  // VIRTUAL CITY GROUPS
+  // =====================================================
+  const AIRPORT_GROUPS = {
+    London: ["LHR","LGW","LCY","SEN","LTN","STN"],
+    Berlin: ["BER","SXF","TXL"],
+    Milan: ["MXP","LIN","BGY"],
+    Bangkok: ["BKK","DMK"],
+    'New York': ["JFK","EWR","LGA"],
+    Washington: ["DCA","BWI","IAD"],
+    Rome: ["FCO","CIA"],
+    Paris: ["CDG","BVA","ORY"]
+  };
 
   const groupItems = [];
   const airportItems = [];
