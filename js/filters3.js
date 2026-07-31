@@ -86,7 +86,6 @@ toggle.onclick = e => {
 
   const wasOpen = menu.classList.contains("open");
 
-  // Close every other filter menu
   document
     .querySelectorAll(".filter-menu.open")
     .forEach(m => {
@@ -95,14 +94,14 @@ toggle.onclick = e => {
       }
     });
 
-  // Toggle this one
   if (wasOpen) {
     menu.classList.remove("open");
   } else {
     menu.classList.add("open");
   }
 };
-  
+
+}   
 
 // =====================================================
 // CLOSE DROPDOWNS ON OUTSIDE CLICK
