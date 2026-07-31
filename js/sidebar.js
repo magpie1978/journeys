@@ -81,21 +81,19 @@ li.innerHTML = `
 `;
     
 
-    li.addEventListener("click", () => {
+  li.addEventListener("click", () => {
+  
       setIsolatedRoute(r.uid);
   
-      // Only show flight summary when a single flight is isolated
-      if (isolatedUid === r.uid) {
-        showFlightSummary(r);
+      if (appState.isolatedUid === r.uid) {
+          showFlightSummary(r);
       } else {
-        hideFlightSummary();
+          hideFlightSummary();
       }
-    });
-      flightListEl.appendChild(li);
-    });
-  }
+  
+  });
 
-
+    
 // =====================================================
 // AIRLINES SLIDE-OUT CONTAINER
 // =====================================================
