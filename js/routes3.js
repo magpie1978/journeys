@@ -793,7 +793,8 @@ function fitToCurrentRouteView() {
   }
 }
 
-window.fitToCurrentRouteView = fitToCurrentRouteView;
+window.fitToCurrentRouteView =
+  fitToCurrentRouteView;
 
 // =====================================================
 // MAP MODE VISIBILITY
