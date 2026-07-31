@@ -32,17 +32,28 @@ function getJourneyIcon(route) {
 // =====================================================
 
 function renderSidebar(routes) {
-  if (!flightListEl) return;
+  if (
+    typeof flightListEl === "undefined" ||
+    !flightListEl
+  ) {
+    return;
+  }
 
   flightListEl.innerHTML = "";
 
   (routes || []).forEach(route => {
+    if (!route) return;
+
     const li = document.createElement("li");
 
-    li.dataset.uid = route.uid;
+    li.dataset.uid =
+      route.uid != null
+        ? String(route.uid)
+        : "";
 
     li.classList.toggle(
       "active",
+      Boolean(appState?.isolatedUid) &&
       String(route.uid) ===
         String(appState.isolatedUid)
     );
@@ -94,7 +105,11 @@ function renderSidebar(routes) {
     `;
 
     li.addEventListener("click", () => {
-      setIsolatedRoute(route.uid);
+      if (
+        typeof setIsolatedRoute === "function"
+      ) {
+        setIsolatedRoute(route.uid);
+      }
     });
 
     flightListEl.appendChild(li);
@@ -105,37 +120,22 @@ window.renderSidebar = renderSidebar;
 
 
 // =====================================================
-// AIRLINES SLIDE-OUT CONTAINER
-// =====================================================
-
-airlinesBox?.addEventListener("click", () => {
-  if (!airlinesPanel) return;
-
-  const isOpen =
-    airlinesPanel.classList.contains("visible");
-
-  if (isOpen) {
-    airlinesPanel.classList.remove("visible");
-    airlinesPanel.classList.add("hidden");
-  } else {
-    renderAirlinesPanel(
-      window.currentRoutes || []
-    );
-
-    airlinesPanel.classList.remove("hidden");
-    airlinesPanel.classList.add("visible");
-  }
-});
-
-
-// =====================================================
 // SIDEBAR-AWARE MAP PADDING
 // =====================================================
 
 function getSidebarLeftPad() {
-  return sidebar?.classList.contains("collapsed")
+  const sidebarElement =
+    typeof sidebar !== "undefined"
+      ? sidebar
+      : document.getElementById("sidebar");
+
+  if (!sidebarElement) {
+    return 100;
+  }
+
+  return sidebarElement.classList.contains("collapsed")
     ? 80
-    : (sidebar?.offsetWidth || 260) + 80;
+    : (sidebarElement.offsetWidth || 280) + 80;
 }
 
 window.getSidebarLeftPad = getSidebarLeftPad;
@@ -146,31 +146,89 @@ window.getSidebarLeftPad = getSidebarLeftPad;
 // =====================================================
 
 function renderAirlinesPanel(routes) {
-  if (!airlinesListEl) return;
+  if (
+    typeof airlinesListEl === "undefined" ||
+    !airlinesListEl
+  ) {
+    return;
+  }
 
   const airlines = [
     ...new Set(
       (routes || [])
-        .map(route => route.airline)
+        .map(route => route?.airline)
         .filter(Boolean)
     )
-  ].sort((a, b) => a.localeCompare(b));
+  ].sort((a, b) =>
+    String(a).localeCompare(String(b))
+  );
 
   airlinesListEl.innerHTML = "";
 
   airlines.forEach(name => {
     const li = document.createElement("li");
 
+    const logoUrl =
+      typeof getAirlineLogo === "function"
+        ? getAirlineLogo(name)
+        : "";
+
     li.innerHTML = `
-      <img
-        src="${getAirlineLogo(name)}"
-        alt="${name}"
-        onerror="this.style.display='none'"
-      />
+      ${
+        logoUrl
+          ? `
+            <img
+              src="${logoUrl}"
+              alt="${name}"
+              onerror="this.style.display='none'"
+            />
+          `
+          : ""
+      }
       <span>${name}</span>
     `;
 
     airlinesListEl.appendChild(li);
+  });
+}
+
+window.renderAirlinesPanel =
+  renderAirlinesPanel;
+
+
+// =====================================================
+// AIRLINES SLIDE-OUT CONTAINER
+// =====================================================
+
+if (
+  typeof airlinesBox !== "undefined" &&
+  airlinesBox
+) {
+  airlinesBox.addEventListener("click", () => {
+    if (
+      typeof airlinesPanel === "undefined" ||
+      !airlinesPanel
+    ) {
+      return;
+    }
+
+    const isOpen =
+      airlinesPanel.classList.contains("visible");
+
+    if (isOpen) {
+      airlinesPanel.classList.remove("visible");
+      airlinesPanel.classList.add("hidden");
+      return;
+    }
+
+    renderAirlinesPanel(
+      Array.isArray(window.currentRoutes)
+        ? window.currentRoutes
+        : []
+    );
+
+    airlinesPanel.classList.remove("hidden");
+    airlinesPanel.classList.add("visible");
   });
 }
 
@@ -179,47 +237,121 @@ function renderAirlinesPanel(routes) {
 // SIDEBAR TOGGLE
 // =====================================================
 
-sidebarToggle?.addEventListener("click", () => {
-  sidebar?.classList.toggle("collapsed");
+if (
+  typeof sidebarToggle !== "undefined" &&
+  sidebarToggle
+) {
+  sidebarToggle.addEventListener("click", () => {
+    const sidebarElement =
+      typeof sidebar !== "undefined"
+        ? sidebar
+        : document.getElementById("sidebar");
 
-  if (flightListEl) {
-    flightListEl.style.display =
-      sidebar?.classList.contains("collapsed")
-        ? "none"
-        : "";
-  }
+    if (!sidebarElement) return;
 
-  setTimeout(() => {
-    if (typeof map !== "undefined") {
-      map.resize();
+    sidebarElement.classList.toggle(
+      "collapsed"
+    );
+
+    if (
+      typeof flightListEl !== "undefined" &&
+      flightListEl
+    ) {
+      flightListEl.style.display =
+        sidebarElement.classList.contains(
+          "collapsed"
+        )
+          ? "none"
+          : "";
     }
 
-    if (appState.mode === "countries") {
+    /*
+     * Allow the sidebar CSS transition to complete
+     * before resizing and refitting the map.
+     */
+    setTimeout(() => {
       if (
-        typeof fitToVisibleCountries ===
+        typeof map !== "undefined" &&
+        map
+      ) {
+        map.resize();
+      }
+
+      if (
+        window.appState?.mode === "countries"
+      ) {
+        if (
+          typeof fitToVisibleCountries ===
+          "function"
+        ) {
+          fitToVisibleCountries();
+        }
+
+        return;
+      }
+
+      if (
+        typeof fitToCurrentRouteView ===
         "function"
       ) {
-        fitToVisibleCountries();
+        fitToCurrentRouteView();
+        return;
       }
-    } else if (
-      typeof fitToCurrentRouteView ===
-      "function"
-    ) {
-      fitToCurrentRouteView();
-    }
-  }, 250);
-});
+
+      /*
+       * Compatibility fallback for the older map code.
+       */
+      if (
+        typeof applyIsolation === "function"
+      ) {
+        applyIsolation();
+      }
+    }, 250);
+  });
+}
 
 
 // =====================================================
 // COUNTRIES / ROUTES MODE TOGGLE
 // =====================================================
 
-countriesBox?.addEventListener("click", () => {
-  const nextMode =
-    appState.mode === "routes"
-      ? "countries"
-      : "routes";
+if (
+  typeof countriesBox !== "undefined" &&
+  countriesBox
+) {
+  countriesBox.addEventListener("click", () => {
+    const currentMode =
+      window.appState?.mode || "routes";
 
-  setMapMode(nextMode);
-});
+    const nextMode =
+      currentMode === "routes"
+        ? "countries"
+        : "routes";
+
+    if (
+      typeof setMapMode === "function"
+    ) {
+      setMapMode(nextMode);
+      return;
+    }
+
+    /*
+     * Compatibility fallback for the older map code.
+     */
+    if (typeof mapMode !== "undefined") {
+      mapMode = nextMode;
+    }
+
+    if (
+      window.appState
+    ) {
+      window.appState.mode = nextMode;
+    }
+
+    if (
+      typeof applyMapMode === "function"
+    ) {
+      applyMapMode();
+    }
+  });
+}
