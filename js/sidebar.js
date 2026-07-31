@@ -98,12 +98,15 @@ flightListEl.appendChild(li);
 airlinesBox?.addEventListener("click", () => {
   if (!airlinesPanel) return;
 
-  const isOpen = airlinesPanel.classList.contains("visible");
+  const isOpen =
+    airlinesPanel.classList.contains("visible");
+
   if (isOpen) {
     airlinesPanel.classList.remove("visible");
     airlinesPanel.classList.add("hidden");
   } else {
-    renderAirlinesPanel(currentRoutes);
+    renderAirlinesPanel(window.currentRoutes || []);
+
     airlinesPanel.classList.remove("hidden");
     airlinesPanel.classList.add("visible");
   }
@@ -149,22 +152,27 @@ function renderAirlinesPanel(routes) {
 sidebarToggle?.addEventListener("click", () => {
   sidebar?.classList.toggle("collapsed");
 
-  if (sidebar?.classList.contains("collapsed")) {
-    if (flightListEl) flightListEl.style.display = "none";
-  } else {
-    if (flightListEl) flightListEl.style.display = "";
+  if (flightListEl) {
+    flightListEl.style.display =
+      sidebar?.classList.contains("collapsed")
+        ? "none"
+        : "";
   }
 
-  // Allow CSS transition to complete before resizing map
+  // Allow the CSS transition to finish before resizing
   setTimeout(() => {
     if (typeof map !== "undefined") {
       map.resize();
     }
 
-    if (mapMode === "countries") {
-      fitToVisibleCountries();
+    if (appState.mode === "countries") {
+      if (typeof fitToVisibleCountries === "function") {
+        fitToVisibleCountries();
+      }
     } else {
-      applyIsolation();
+      if (typeof fitToCurrentRouteView === "function") {
+        fitToCurrentRouteView();
+      }
     }
   }, 250);
 });
@@ -174,6 +182,10 @@ sidebarToggle?.addEventListener("click", () => {
 // COUNTRIES GLASS BOX TOGGLE
 // =====================================================
 countriesBox?.addEventListener("click", () => {
-  mapMode = mapMode === "routes" ? "countries" : "routes";
-  applyMapMode();
+  const nextMode =
+    appState.mode === "routes"
+      ? "countries"
+      : "routes";
+
+  setMapMode(nextMode);
 });
