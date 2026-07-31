@@ -72,8 +72,8 @@ function fitToBoundsFromLineGeoms(geoms) {
 
   map.fitBounds(bounds, {
     padding: {
-      top: 180,
-      bottom: 120,
+      top: 320,
+      bottom: 180,
       left: getSidebarLeftPad() + 80,
       right: 120,
     },
@@ -120,15 +120,15 @@ function restoreLastRoutesViewOrBoundsOrAllRoutes() {
   }
 
   if (window.lastRoutesBounds) {
-    map.fitBounds(window.lastRoutesBounds, {
-      padding: {
-        top: 180,
-        bottom: 120,
-        left: getSidebarLeftPad() + 80,
-        right: 120,
-      },
-      duration: 650,
-    });
+  map.fitBounds(bounds, {
+    padding: {
+      top: 320,
+      bottom: 180,
+      left: getSidebarLeftPad() + 80,
+      right: 120,
+    },
+    duration: 650,
+  });
     return;
   }
 
@@ -191,8 +191,8 @@ function fitToVisibleCountries() {
 
   map.fitBounds(bounds, {
     padding: {
-      top: 180,
-      bottom: 120,
+      top: 320,
+      bottom: 180,
       left: getSidebarLeftPad() + 80,
       right: 120,
     },
