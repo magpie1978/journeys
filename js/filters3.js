@@ -77,28 +77,47 @@ function buildFilterMenu(containerId, values, targetSet) {
     loadRoutes();
   };
 
-  // -------------------------------------------------
-  // TOGGLE DROPDOWN
-  // -------------------------------------------------
-  toggle.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    menu.classList.toggle("open");
-  };
-}
+// -------------------------------------------------
+// TOGGLE DROPDOWN
+// -------------------------------------------------
+toggle.onclick = e => {
+  e.preventDefault();
+  e.stopPropagation();
 
+  const wasOpen = menu.classList.contains("open");
+
+  // Close every other filter menu
+  document
+    .querySelectorAll(".filter-menu.open")
+    .forEach(m => {
+      if (m !== menu) {
+        m.classList.remove("open");
+      }
+    });
+
+  // Toggle this one
+  if (wasOpen) {
+    menu.classList.remove("open");
+  } else {
+    menu.classList.add("open");
+  }
+};
+  
 
 // =====================================================
 // CLOSE DROPDOWNS ON OUTSIDE CLICK
 // =====================================================
 document.addEventListener("click", e => {
+
+  // Ignore clicks inside any filter
   if (e.target.closest(".filter")) return;
 
+  // Close every open filter menu
   document
     .querySelectorAll(".filter-menu.open")
-    .forEach(m => m.classList.remove("open"));
-});
+    .forEach(menu => menu.classList.remove("open"));
 
+});
 
 
 // =====================================================
