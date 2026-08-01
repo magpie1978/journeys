@@ -1,189 +1,568 @@
 // =====================================================
 // AIRPORTS.JS — FINAL UNIFIED BUILD
+
+// This file has four main responsibilities:
+//     Load airport metadata for the currently displayed flight routes.
+//     Draw airport and non-flight endpoint markers.
+//     Add hover and click interactions.
+//     Filter the displayed routes when an airport is selected.
 // =====================================================
 
-window.activeAirportFilter = null;
-
-let airportHoverBound = false;
-let airportClickBound = false;
-let airportClearClickBound = false;
-let nonFlightHoverBound = false;
 
 
 // =====================================================
-// LOAD AIRPORTS + ENDPOINTS
+// STATE
 // =====================================================
+
+window.activeAirportFilter =
+  window.activeAirportFilter || null;
+
+/*
+ * loadAirports() may run many times.
+ *
+ * These flags ensure each Mapbox event handler is
+ * registered only once.
+ */
+const airportHandlerState = {
+  airportHoverBound: false,
+  airportClickBound: false,
+  airportClearBound: false,
+  nonFlightHoverBound: false
+};
+
+
+// =====================================================
+// MAP IDS
+// =====================================================
+
+const AIRPORT_SOURCE_ID = "airports";
+const AIRPORT_CIRCLE_LAYER_ID = "airports-circle";
+const AIRPORT_HIT_LAYER_ID = "airports-hit";
+
+const ENDPOINT_SOURCE_ID = "journey-endpoints";
+const ENDPOINT_CIRCLE_LAYER_ID =
+  "journey-endpoints-circle";
+const ENDPOINT_HIT_LAYER_ID =
+  "journey-endpoints-hit";
+
+
+// =====================================================
+// EMPTY FEATURE COLLECTION
+// =====================================================
+
+function emptyFeatureCollection() {
+  return {
+    type: "FeatureCollection",
+    features: []
+  };
+}
+
+
+// =====================================================
+// CURRENT MAP MODE
+// =====================================================
+
+function getCurrentMapMode() {
+  if (window.appState?.mode) {
+    return window.appState.mode;
+  }
+
+  if (typeof mapMode !== "undefined") {
+    return mapMode;
+  }
+
+  return "routes";
+}
+
+
+// =====================================================
+// AIRPORT FILTER STATE
+// =====================================================
+
+function getActiveAirportFilter() {
+  return (
+    window.appState?.activeAirport ||
+    window.activeAirportFilter ||
+    null
+  );
+}
+
+
+function setActiveAirportFilter(airportCode) {
+  window.activeAirportFilter =
+    airportCode || null;
+
+  if (window.appState) {
+    window.appState.activeAirport =
+      airportCode || null;
+  }
+}
+
+
+// =====================================================
+// CLEAR ISOLATED ROUTE
+// =====================================================
+
+function clearIsolatedRoute() {
+  if (window.appState) {
+    window.appState.isolatedUid = null;
+  }
+
+  /*
+   * Compatibility with files that still use the
+   * older standalone isolatedUid variable.
+   */
+  if (typeof isolatedUid !== "undefined") {
+    isolatedUid = null;
+  }
+}
+
+
+// =====================================================
+// ESCAPE POPUP HTML
+// =====================================================
+
+function escapePopupHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+// =====================================================
+// SOURCE HELPERS
+// =====================================================
+
+function clearGeoJsonSource(sourceId) {
+  if (
+    typeof map === "undefined" ||
+    !map
+  ) {
+    return;
+  }
+
+  /*
+   * Use the existing shared helper when it is
+   * available.
+   */
+  if (typeof clearSource === "function") {
+    clearSource(sourceId);
+    return;
+  }
+
+  const source = map.getSource(sourceId);
+
+  if (
+    source &&
+    typeof source.setData === "function"
+  ) {
+    source.setData(emptyFeatureCollection());
+  }
+}
+
+
+function setLayerVisibility(layerId, visibility) {
+  if (
+    typeof map === "undefined" ||
+    !map ||
+    !map.getLayer(layerId)
+  ) {
+    return;
+  }
+
+  map.setLayoutProperty(
+    layerId,
+    "visibility",
+    visibility
+  );
+}
+
+
+// =====================================================
+// LOAD AIRPORTS AND ENDPOINTS
+// =====================================================
+
 async function loadAirports(routes) {
+  if (
+    typeof map === "undefined" ||
+    !map
+  ) {
+    return;
+  }
 
-  if (mapMode !== "routes") {
+  if (getCurrentMapMode() !== "routes") {
     hideAirportLayers();
     return;
   }
 
-  // --------------------------------------------------
-  // 1️⃣ FLIGHT AIRPORT MARKERS
-  // --------------------------------------------------
+  const safeRoutes =
+    Array.isArray(routes)
+      ? routes.filter(Boolean)
+      : [];
+
+  // -------------------------------------------------
+  // FLIGHT AIRPORT CODES
+  // -------------------------------------------------
+
   const flightCodes = new Set();
 
-  (routes || []).forEach(r => {
-    if ((r.journey_type || "").toLowerCase() === "flight") {
-      if (r.origin) flightCodes.add(r.origin);
-      if (r.destination) flightCodes.add(r.destination);
+  safeRoutes.forEach(route => {
+    if (
+      String(route.journey_type)
+        .toLowerCase() !== "flight"
+    ) {
+      return;
+    }
+
+    if (route.origin) {
+      flightCodes.add(route.origin);
+    }
+
+    if (route.destination) {
+      flightCodes.add(route.destination);
     }
   });
 
-  if (!flightCodes.size) {
-    hideAirportLayers();
-  } else {
-
+  if (flightCodes.size > 0) {
     const { data, error } = await sb
       .from("journey_locations")
-      .select("airport_code, airport, city, country, longitude, latitude")
-      .in("airport_code", [...flightCodes]);
+      .select(`
+        airport_code,
+        city,
+        country,
+        longitude,
+        latitude
+      `)
+      .in(
+        "airport_code",
+        [...flightCodes]
+      );
 
     if (error) {
-      console.error("[airports] load failed:", error);
+      console.error(
+        "[airports] Airport lookup failed:",
+        error
+      );
+
+      clearGeoJsonSource(
+        AIRPORT_SOURCE_ID
+      );
     } else {
       renderAirportMarkers(data || []);
     }
+  } else {
+    clearGeoJsonSource(
+      AIRPORT_SOURCE_ID
+    );
+
+    setLayerVisibility(
+      AIRPORT_CIRCLE_LAYER_ID,
+      "none"
+    );
+
+    setLayerVisibility(
+      AIRPORT_HIT_LAYER_ID,
+      "none"
+    );
   }
 
-  // --------------------------------------------------
-  // 2️⃣ NON-FLIGHT ENDPOINTS
-  // --------------------------------------------------
-  renderNonFlightEndpoints(routes);
+  // -------------------------------------------------
+  // NON-FLIGHT ENDPOINTS
+  // -------------------------------------------------
 
-  // --------------------------------------------------
-  // 3️⃣ CLICK-AWAY HANDLER
-  // --------------------------------------------------
+  renderNonFlightEndpoints(safeRoutes);
+
+  // -------------------------------------------------
+  // CLICK-AWAY HANDLER
+  // -------------------------------------------------
+
   bindAirportClearOnMapClick();
 }
 
+window.loadAirports = loadAirports;
 
 
 // =====================================================
 // RENDER FLIGHT AIRPORT MARKERS
 // =====================================================
-function renderAirportMarkers(data) {
 
-  const airportFC = {
+function renderAirportMarkers(airports) {
+  const featureCollection = {
     type: "FeatureCollection",
-    features: data
-      .filter(a => a.longitude != null && a.latitude != null)
-      .map(a => ({
+
+    features: (airports || [])
+      .filter(airport =>
+        Number.isFinite(
+          Number(airport.longitude)
+        ) &&
+        Number.isFinite(
+          Number(airport.latitude)
+        )
+      )
+      .map(airport => ({
         type: "Feature",
+
         geometry: {
           type: "Point",
-          coordinates: [a.longitude, a.latitude]
+
+          coordinates: [
+            Number(airport.longitude),
+            Number(airport.latitude)
+          ]
         },
-        properties: a
-      })),
+
+        properties: {
+          airport_code:
+            airport.airport_code || "",
+
+          city:
+            airport.city || "",
+
+          country:
+            airport.country || ""
+        }
+      }))
   };
 
-  if (map.getSource("airports")) {
-    map.getSource("airports").setData(airportFC);
+  const existingSource =
+    map.getSource(AIRPORT_SOURCE_ID);
+
+  if (existingSource) {
+    existingSource.setData(featureCollection);
   } else {
-
-    map.addSource("airports", {
+    map.addSource(AIRPORT_SOURCE_ID, {
       type: "geojson",
-      data: airportFC
+      data: featureCollection
     });
+  }
 
+  if (
+    !map.getLayer(
+      AIRPORT_CIRCLE_LAYER_ID
+    )
+  ) {
     map.addLayer({
-      id: "airports-circle",
+      id: AIRPORT_CIRCLE_LAYER_ID,
       type: "circle",
-      source: "airports",
+      source: AIRPORT_SOURCE_ID,
+
       paint: {
         "circle-radius": 6,
         "circle-color": "#ffffff",
         "circle-stroke-width": 1.5,
-        "circle-stroke-color": "#000000",
-      },
+        "circle-stroke-color": "#000000"
+      }
     });
-
-    map.addLayer({
-      id: "airports-hit",
-      type: "circle",
-      source: "airports",
-      paint: {
-        "circle-radius": 18,
-        "circle-color": "rgba(0,0,0,0)",
-      },
-    });
-
-    map.moveLayer("airports-hit");
-    map.moveLayer("airports-circle");
   }
 
-  map.setLayoutProperty("airports-circle", "visibility", "visible");
-  map.setLayoutProperty("airports-hit", "visibility", "visible");
+  if (
+    !map.getLayer(
+      AIRPORT_HIT_LAYER_ID
+    )
+  ) {
+    map.addLayer({
+      id: AIRPORT_HIT_LAYER_ID,
+      type: "circle",
+      source: AIRPORT_SOURCE_ID,
+
+      paint: {
+        "circle-radius": 18,
+        "circle-color":
+          "rgba(0, 0, 0, 0)"
+      }
+    });
+  }
+
+  /*
+   * Keep the visible marker above the larger
+   * invisible interaction layer.
+   */
+  if (
+    map.getLayer(AIRPORT_HIT_LAYER_ID)
+  ) {
+    map.moveLayer(AIRPORT_HIT_LAYER_ID);
+  }
+
+  if (
+    map.getLayer(AIRPORT_CIRCLE_LAYER_ID)
+  ) {
+    map.moveLayer(
+      AIRPORT_CIRCLE_LAYER_ID
+    );
+  }
+
+  setLayerVisibility(
+    AIRPORT_CIRCLE_LAYER_ID,
+    "visible"
+  );
+
+  setLayerVisibility(
+    AIRPORT_HIT_LAYER_ID,
+    "visible"
+  );
 
   bindAirportHover();
   bindAirportClick();
 }
 
 
+// =====================================================
+// NON-FLIGHT GEOMETRY ENDPOINTS
+// =====================================================
+
+function getRouteEndpointCoordinates(route) {
+  const geometry = route?.geom;
+
+  if (
+    !geometry ||
+    !Array.isArray(geometry.coordinates)
+  ) {
+    return null;
+  }
+
+  // Standard LineString
+  if (geometry.type === "LineString") {
+    const coordinates =
+      geometry.coordinates;
+
+    if (coordinates.length < 2) {
+      return null;
+    }
+
+    return {
+      start: coordinates[0],
+      end:
+        coordinates[
+          coordinates.length - 1
+        ]
+    };
+  }
+
+  // MultiLineString
+  if (
+    geometry.type ===
+    "MultiLineString"
+  ) {
+    const lines =
+      geometry.coordinates.filter(
+        line =>
+          Array.isArray(line) &&
+          line.length > 0
+      );
+
+    if (!lines.length) {
+      return null;
+    }
+
+    const firstLine = lines[0];
+    const lastLine =
+      lines[lines.length - 1];
+
+    return {
+      start: firstLine[0],
+
+      end:
+        lastLine[
+          lastLine.length - 1
+        ]
+    };
+  }
+
+  return null;
+}
+
 
 // =====================================================
-// RENDER NON-FLIGHT ENDPOINT MARKERS
+// RENDER NON-FLIGHT ENDPOINTS
 // =====================================================
+
 function renderNonFlightEndpoints(routes) {
+  const features = [];
 
-  const endpointFC = {
+  (routes || []).forEach(route => {
+    if (
+      String(route?.journey_type)
+        .toLowerCase() === "flight"
+    ) {
+      return;
+    }
+
+    const endpoints =
+      getRouteEndpointCoordinates(route);
+
+    if (!endpoints) {
+      return;
+    }
+
+    const properties = {
+      type:
+        route.journey_type ||
+        "Journey",
+
+      from:
+        route.origin || "",
+
+      to:
+        route.destination || "",
+
+      date:
+        route.journey_date || ""
+    };
+
+    features.push(
+      {
+        type: "Feature",
+
+        geometry: {
+          type: "Point",
+          coordinates: endpoints.start
+        },
+
+        properties
+      },
+      {
+        type: "Feature",
+
+        geometry: {
+          type: "Point",
+          coordinates: endpoints.end
+        },
+
+        properties
+      }
+    );
+  });
+
+  const featureCollection = {
     type: "FeatureCollection",
-    features: (routes || [])
-      .filter(r =>
-        (r.journey_type || "").toLowerCase() !== "flight" &&
-        r.geom?.coordinates?.length
-      )
-      .flatMap(r => {
-
-        const coords = r.geom.coordinates;
-
-        return [
-          {
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: coords[0]
-            },
-            properties: {
-              type: r.journey_type,
-              from: r.origin || "",
-              to: r.destination || "",
-              date: r.journey_date || ""
-            }
-          },
-          {
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: coords[coords.length - 1]
-            },
-            properties: {
-              type: r.journey_type,
-              from: r.origin || "",
-              to: r.destination || "",
-              date: r.journey_date || ""
-            }
-          }
-        ];
-      })
+    features
   };
 
-  if (map.getSource("journey-endpoints")) {
-    map.getSource("journey-endpoints").setData(endpointFC);
+  const existingSource =
+    map.getSource(ENDPOINT_SOURCE_ID);
+
+  if (existingSource) {
+    existingSource.setData(featureCollection);
   } else {
-
-    map.addSource("journey-endpoints", {
+    map.addSource(ENDPOINT_SOURCE_ID, {
       type: "geojson",
-      data: endpointFC
+      data: featureCollection
     });
+  }
 
+  if (
+    !map.getLayer(
+      ENDPOINT_CIRCLE_LAYER_ID
+    )
+  ) {
     map.addLayer({
-      id: "journey-endpoints-circle",
+      id: ENDPOINT_CIRCLE_LAYER_ID,
       type: "circle",
-      source: "journey-endpoints",
+      source: ENDPOINT_SOURCE_ID,
+
       paint: {
         "circle-radius": 5,
         "circle-color": "#ffffff",
@@ -191,217 +570,478 @@ function renderNonFlightEndpoints(routes) {
         "circle-stroke-color": "#000000"
       }
     });
+  }
 
+  if (
+    !map.getLayer(
+      ENDPOINT_HIT_LAYER_ID
+    )
+  ) {
     map.addLayer({
-      id: "journey-endpoints-hit",
+      id: ENDPOINT_HIT_LAYER_ID,
       type: "circle",
-      source: "journey-endpoints",
+      source: ENDPOINT_SOURCE_ID,
+
       paint: {
         "circle-radius": 18,
-        "circle-color": "rgba(0,0,0,0)"
+        "circle-color":
+          "rgba(0, 0, 0, 0)"
       }
     });
-
-    map.moveLayer("journey-endpoints-hit");
-    map.moveLayer("journey-endpoints-circle");
   }
+
+  if (
+    map.getLayer(ENDPOINT_HIT_LAYER_ID)
+  ) {
+    map.moveLayer(
+      ENDPOINT_HIT_LAYER_ID
+    );
+  }
+
+  if (
+    map.getLayer(
+      ENDPOINT_CIRCLE_LAYER_ID
+    )
+  ) {
+    map.moveLayer(
+      ENDPOINT_CIRCLE_LAYER_ID
+    );
+  }
+
+  const visibility =
+    features.length
+      ? "visible"
+      : "none";
+
+  setLayerVisibility(
+    ENDPOINT_CIRCLE_LAYER_ID,
+    visibility
+  );
+
+  setLayerVisibility(
+    ENDPOINT_HIT_LAYER_ID,
+    visibility
+  );
 
   bindNonFlightHover();
 }
 
 
+// =====================================================
+// AIRPORT POPUP
+// =====================================================
+
+const airportPopup =
+  new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    offset: 10
+  });
+
 
 // =====================================================
-// AIRPORT HOVER TOOLTIP
+// AIRPORT HOVER
 // =====================================================
-const airportPopup = new mapboxgl.Popup({
-  closeButton: false,
-  closeOnClick: false,
-  offset: 10,
-});
 
 function bindAirportHover() {
+  if (
+    airportHandlerState
+      .airportHoverBound
+  ) {
+    return;
+  }
 
-  if (airportHoverBound) return;
-  airportHoverBound = true;
+  airportHandlerState
+    .airportHoverBound = true;
 
-  map.on("mouseenter", "airports-circle", e => {
+  map.on(
+    "mouseenter",
+    AIRPORT_HIT_LAYER_ID,
+    event => {
+      map.getCanvas().style.cursor =
+        "pointer";
 
-    map.getCanvas().style.cursor = "pointer";
+      const feature =
+        event.features?.[0];
 
-    const f = e.features?.[0];
-    if (!f) return;
+      if (!feature) {
+        return;
+      }
 
-    const p = f.properties || {};
+      const properties =
+        feature.properties || {};
 
-    airportPopup
-      .setLngLat(f.geometry.coordinates)
-      .setHTML(`
-        <strong>${p.airport_code || ""}</strong><br/>
-        ${p.city || ""}${p.city && p.country ? ", " : ""}${p.country || ""}
-      `)
-      .addTo(map);
-  });
+      const city =
+        escapePopupHtml(
+          properties.city
+        );
 
-  map.on("mouseleave", "airports-circle", () => {
-    map.getCanvas().style.cursor = "";
-    airportPopup.remove();
-  });
+      const country =
+        escapePopupHtml(
+          properties.country
+        );
+
+      const locationText =
+        city && country
+          ? `${city}, ${country}`
+          : city || country;
+
+      airportPopup
+        .setLngLat(
+          feature.geometry.coordinates
+        )
+        .setHTML(`
+          <strong>
+            ${escapePopupHtml(
+              properties.airport_code
+            )}
+          </strong>
+          ${
+            locationText
+              ? `<br>${locationText}`
+              : ""
+          }
+        `)
+        .addTo(map);
+    }
+  );
+
+  map.on(
+    "mouseleave",
+    AIRPORT_HIT_LAYER_ID,
+    () => {
+      map.getCanvas().style.cursor = "";
+      airportPopup.remove();
+    }
+  );
 }
 
 
+// =====================================================
+// NON-FLIGHT POPUP
+// =====================================================
+
+const nonFlightPopup =
+  new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    offset: 10,
+    className: "journey-tooltip"
+  });
+
 
 // =====================================================
-// NON-FLIGHT HOVER TOOLTIP
+// NON-FLIGHT ENDPOINT HOVER
 // =====================================================
-const nonFlightPopup = new mapboxgl.Popup({
-  closeButton: false,
-  closeOnClick: false,
-  offset: 10,
-  className: "journey-tooltip"
-});
 
 function bindNonFlightHover() {
+  if (
+    airportHandlerState
+      .nonFlightHoverBound
+  ) {
+    return;
+  }
 
-  if (nonFlightHoverBound) return;
-  nonFlightHoverBound = true;
+  airportHandlerState
+    .nonFlightHoverBound = true;
 
-  map.on("mouseenter", "journey-endpoints-circle", e => {
+  map.on(
+    "mouseenter",
+    ENDPOINT_HIT_LAYER_ID,
+    event => {
+      map.getCanvas().style.cursor =
+        "pointer";
 
-    map.getCanvas().style.cursor = "pointer";
+      const feature =
+        event.features?.[0];
 
-    const f = e.features?.[0];
-    if (!f) return;
+      if (!feature) {
+        return;
+      }
 
-    const p = f.properties || {};
+      const properties =
+        feature.properties || {};
 
-    nonFlightPopup
-      .setLngLat(f.geometry.coordinates)
-      .setHTML(`
-        <div style="font-size:12px;">
-          <strong>${p.type || "Journey"}</strong><br/>
-          ${p.from} → ${p.to}<br/>
-          ${p.date}
-        </div>
-      `)
-      .addTo(map);
-  });
-
-  map.on("mouseleave", "journey-endpoints-circle", () => {
-    map.getCanvas().style.cursor = "";
-    nonFlightPopup.remove();
-  });
-}
-
-
-
-// =====================================================
-// CLICK AIRPORT (DRILL-DOWN)
-// =====================================================
-function bindAirportClick() {
-
-  if (airportClickBound) return;
-  airportClickBound = true;
-
-  map.on("click", "airports-hit", e => {
-
-    e.originalEvent?.stopPropagation();
-
-    const f = e.features?.[0];
-    if (!f) return;
-
-    const airportCode = f.properties?.airport_code;
-    if (!airportCode) return;
-
-    filterRoutesByAirport(airportCode);
-
-    if (window.onAirportSelected) {
-      window.onAirportSelected({
-        code: airportCode,
-        city: f.properties.city,
-      });
+      nonFlightPopup
+        .setLngLat(
+          feature.geometry.coordinates
+        )
+        .setHTML(`
+          <div class="journey-tooltip-content">
+            <strong>
+              ${escapePopupHtml(
+                properties.type ||
+                "Journey"
+              )}
+            </strong>
+            <br>
+            ${escapePopupHtml(
+              properties.from
+            )}
+            →
+            ${escapePopupHtml(
+              properties.to
+            )}
+            ${
+              properties.date
+                ? `
+                  <br>
+                  ${escapePopupHtml(
+                    properties.date
+                  )}
+                `
+                : ""
+            }
+          </div>
+        `)
+        .addTo(map);
     }
-  });
+  );
+
+  map.on(
+    "mouseleave",
+    ENDPOINT_HIT_LAYER_ID,
+    () => {
+      map.getCanvas().style.cursor = "";
+      nonFlightPopup.remove();
+    }
+  );
 }
 
+
+// =====================================================
+// AIRPORT CLICK
+// =====================================================
+
+function bindAirportClick() {
+  if (
+    airportHandlerState
+      .airportClickBound
+  ) {
+    return;
+  }
+
+  airportHandlerState
+    .airportClickBound = true;
+
+  map.on(
+    "click",
+    AIRPORT_HIT_LAYER_ID,
+    event => {
+      event.originalEvent
+        ?.stopPropagation();
+
+      const feature =
+        event.features?.[0];
+
+      if (!feature) {
+        return;
+      }
+
+      const airportCode =
+        feature.properties
+          ?.airport_code;
+
+      if (!airportCode) {
+        return;
+      }
+
+      const selectionResult =
+        filterRoutesByAirport(
+          airportCode
+        );
+
+      /*
+       * Only show the airport bar when the
+       * click selected the airport rather than
+       * clearing an existing selection.
+       */
+      if (
+        selectionResult === "selected" &&
+        typeof window.onAirportSelected ===
+          "function"
+      ) {
+        window.onAirportSelected({
+          code: airportCode,
+          city:
+            feature.properties?.city ||
+            ""
+        });
+      }
+    }
+  );
+}
 
 
 // =====================================================
 // FILTER ROUTES BY AIRPORT
 // =====================================================
+
 function filterRoutesByAirport(airportCode) {
+  if (!airportCode) {
+    return "unchanged";
+  }
 
-  if (!airportCode || !Array.isArray(currentRoutes)) return;
+  const baseRoutes =
+    Array.isArray(window.allRoutes)
+      ? window.allRoutes
+      : [];
 
-  if (window.activeAirportFilter === airportCode) {
-    window.activeAirportFilter = null;
-    isolatedUid = null;
+  if (!baseRoutes.length) {
+    return "unchanged";
+  }
 
-    if (window.onAirportCleared) {
+  const currentAirport =
+    getActiveAirportFilter();
+
+  // Clicking the selected airport again clears it.
+  if (currentAirport === airportCode) {
+    setActiveAirportFilter(null);
+    clearIsolatedRoute();
+
+    renderRoutes(baseRoutes, {
+      updateBaseRoutes: false,
+      fitMap: true
+    });
+
+    if (
+      typeof window.onAirportCleared ===
+      "function"
+    ) {
       window.onAirportCleared();
     }
 
-    loadRoutes();
+    return "cleared";
+  }
+
+  setActiveAirportFilter(airportCode);
+  clearIsolatedRoute();
+
+  const filteredRoutes =
+    baseRoutes.filter(route =>
+      route?.journey_type === "Flight" &&
+      (
+        route.origin === airportCode ||
+        route.destination === airportCode
+      )
+    );
+
+  renderRoutes(filteredRoutes, {
+    updateBaseRoutes: false,
+    fitMap: true
+  });
+
+  return "selected";
+}
+
+window.filterRoutesByAirport =
+  filterRoutesByAirport;
+
+
+// =====================================================
+// CLEAR AIRPORT ON MAP CLICK
+// =====================================================
+
+function bindAirportClearOnMapClick() {
+  if (
+    airportHandlerState
+      .airportClearBound
+  ) {
     return;
   }
 
-  window.activeAirportFilter = airportCode;
-  isolatedUid = null;
+  airportHandlerState
+    .airportClearBound = true;
 
-  const filtered = currentRoutes.filter(r =>
-    r.journey_type === "Flight" &&
-    (r.origin === airportCode || r.destination === airportCode)
-  );
-
-  renderRoutes(filtered, { resetIsolation: true });
-}
-
-
-
-// =====================================================
-// CLICK-AWAY CLEAR
-// =====================================================
-function bindAirportClearOnMapClick() {
-
-  if (airportClearClickBound) return;
-  airportClearClickBound = true;
-
-  map.on("click", e => {
-
-    if (!window.activeAirportFilter) return;
-    if (mapMode !== "routes") return;
-
-    const airportHits = map.queryRenderedFeatures(e.point, {
-      layers: ["airports-hit"],
-    });
-
-    if (airportHits.length) return;
-
-    window.activeAirportFilter = null;
-    isolatedUid = null;
-
-    if (window.onAirportCleared) {
-      window.onAirportCleared();
+  map.on("click", event => {
+    if (!getActiveAirportFilter()) {
+      return;
     }
 
-    loadRoutes();
+    if (getCurrentMapMode() !== "routes") {
+      return;
+    }
+
+    let airportHits = [];
+
+    if (
+      map.getLayer(
+        AIRPORT_HIT_LAYER_ID
+      )
+    ) {
+      airportHits =
+        map.queryRenderedFeatures(
+          event.point,
+          {
+            layers: [
+              AIRPORT_HIT_LAYER_ID
+            ]
+          }
+        );
+    }
+
+    if (airportHits.length) {
+      return;
+    }
+
+    setActiveAirportFilter(null);
+    clearIsolatedRoute();
+
+    const baseRoutes =
+      Array.isArray(window.allRoutes)
+        ? window.allRoutes
+        : [];
+
+    renderRoutes(baseRoutes, {
+      updateBaseRoutes: false,
+      fitMap: true
+    });
+
+    if (
+      typeof window.onAirportCleared ===
+      "function"
+    ) {
+      window.onAirportCleared();
+    }
   });
 }
 
 
+// =====================================================
+// HIDE AIRPORT AND ENDPOINT LAYERS
+// =====================================================
 
-// =====================================================
-// HIDE LAYERS
-// =====================================================
 function hideAirportLayers() {
+  clearGeoJsonSource(
+    AIRPORT_SOURCE_ID
+  );
 
-  clearSource("airports");
-  clearSource("journey-endpoints");
+  clearGeoJsonSource(
+    ENDPOINT_SOURCE_ID
+  );
 
-  ["airports-circle","airports-hit","journey-endpoints-circle"]
-    .forEach(id => {
-      if (map.getLayer(id)) {
-        map.setLayoutProperty(id,"visibility","none");
-      }
-    });
+  [
+    AIRPORT_CIRCLE_LAYER_ID,
+    AIRPORT_HIT_LAYER_ID,
+    ENDPOINT_CIRCLE_LAYER_ID,
+    ENDPOINT_HIT_LAYER_ID
+  ].forEach(layerId => {
+    setLayerVisibility(
+      layerId,
+      "none"
+    );
+  });
+
+  airportPopup.remove();
+  nonFlightPopup.remove();
+
+  if (
+    typeof map !== "undefined" &&
+    map
+  ) {
+    map.getCanvas().style.cursor = "";
+  }
 }
+
+window.hideAirportLayers =
+  hideAirportLayers;
