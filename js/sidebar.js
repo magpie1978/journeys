@@ -1,187 +1,504 @@
 // =====================================================
-// SIDEBAR
+// SIDEBAR.JS
+// 
+// This file has five responsibilities:
+//    Builds the journey list shown in the left sidebar.
+//    Chooses an airline or operator logo for each journey.
+//    Opens and closes the Airlines slide-out panel.
+//    Collapses and expands the sidebar.
+//    Switches between Routes and Countries map modes.
+// 
+// The overall flow is:
+//    renderRoutes(routes)
+//        ↓
+//    renderSidebar(routes)
+//        ↓
+//    Create one <li> for each journey
+//        ↓
+//    Show logo, journey type, route and date
+//        ↓
+//    Clicking an item calls setIsolatedRoute(uid)
+
 // =====================================================
 
-// Resolve correct icon for sidebar
-//function getJourneyIcon(route) {
-  // Flights → airline tailfin
-  //if (route.journey_type === "Flight") {
-  //  return getAirlineLogo(route.airline);
-  //}
-//}
+
+// =====================================================
+// DOM REFERENCES
+// =====================================================
+
+const sidebarElement =
+  document.getElementById("sidebar");
+
+const sidebarToggleElement =
+  document.getElementById("sidebarToggle");
+
+const flightListElement =
+  document.getElementById("flightList");
+
+const airlinesBoxElement =
+  document.getElementById("airlinesBox");
+
+const airlinesPanelElement =
+  document.getElementById("airlinesPanel");
+
+const airlinesListElement =
+  document.getElementById("airlinesList");
+
+const countriesBoxElement =
+  document.getElementById("countriesBox");
 
 
-function getJourneyIcon(route) {
-  if (!route) return null;
+// =====================================================
+// BASIC HELPERS
+// =====================================================
 
-  // Flights → airline tailfin
-  if (route.journey_type === "Flight") {
-    return getAirlineLogo(route.airline);
+function escapeSidebarHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+function getJourneyType(route) {
+  return String(
+    route?.journey_type || ""
+  ).toLowerCase();
+}
+
+
+function formatSidebarDate(dateValue) {
+  if (!dateValue) {
+    return "";
   }
 
-  // Bus / Train → operator logo if available
-  if (route.journey_type === "Bus" || route.journey_type === "Train") {
-    return getAirlineLogo(route.airline);
+  return String(dateValue).slice(0, 10);
+}
+
+
+// =====================================================
+// JOURNEY ICON
+// =====================================================
+
+function getJourneyIcon(route) {
+  if (
+    !route ||
+    typeof getAirlineLogo !== "function"
+  ) {
+    return null;
+  }
+
+  const journeyType =
+    getJourneyType(route);
+
+  /*
+   * Flights use airline tailfin logos.
+   * Bus and train journeys may use operator logos.
+   */
+  if (
+    journeyType === "flight" ||
+    journeyType === "bus" ||
+    journeyType === "train"
+  ) {
+    return getAirlineLogo(
+      route.airline
+    );
   }
 
   return null;
 }
 
+window.getJourneyIcon =
+  getJourneyIcon;
 
+
+// =====================================================
+// RENDER SIDEBAR
+// =====================================================
 
 function renderSidebar(routes) {
-  if (!flightListEl) return;
-  flightListEl.innerHTML = "";
-
-  (routes || []).forEach(r => {
-    const li = document.createElement("li");
-    li.dataset.uid = r.uid;
-    
-    li.classList.toggle("active", r.uid === appState.isolatedUid);
-
-const logoUrl = getJourneyIcon(r);
-
-const logoClass =
-  r.journey_type === "Flight"
-    ? "airline-logo"
-    : "journey-logo";
-
-li.innerHTML = `
-  <div class="sidebar-row">
-
-    <!-- LEFT: LOGO -->
-    <div class="sidebar-logo">
-      ${logoUrl ? `
-        <img
-          class="${logoClass}"
-          src="${logoUrl}"
-          alt="${r.airline || r.journey_type}"
-          onerror="this.style.display='none'"
-        />
-      ` : ""}
-    </div>
-
-    <!-- RIGHT: TEXT -->
-    <div class="sidebar-text">
-
-      <!-- Journey type -->
-      <div class="sidebar-journey-type">
-        ${r.journey_type || ""}
-      </div>
-
-      <div class="sidebar-route">
-        <strong>${r.origin || ""} → ${r.destination || ""}</strong>
-      </div>
-
-      <div class="sidebar-date">
-        ${r.journey_date?.slice(0, 10) || ""}
-      </div>
-    </div>
-  </div>
-`;
-    
-
-li.addEventListener("click", () => {
-
-  setIsolatedRoute(r.uid);
-
-  if (appState.isolatedUid === r.uid) {
-    showFlightSummary(r);
-  } else {
-    hideFlightSummary();
+  if (!flightListElement) {
+    return;
   }
 
-});
+  flightListElement.innerHTML = "";
 
-flightListEl.appendChild(li);
+  const safeRoutes =
+    Array.isArray(routes)
+      ? routes.filter(Boolean)
+      : [];
 
-  }); // End of routes.forEach()
+  safeRoutes.forEach(route => {
+    const listItem =
+      document.createElement("li");
 
-} 
+    const routeUid =
+      route.uid != null
+        ? String(route.uid)
+        : "";
 
+    listItem.dataset.uid =
+      routeUid;
 
-// =====================================================
-// AIRLINES SLIDE-OUT CONTAINER
-// =====================================================
-airlinesBox?.addEventListener("click", () => {
-  if (!airlinesPanel) return;
+    const isolatedUid =
+      window.appState?.isolatedUid;
 
-  const isOpen = airlinesPanel.classList.contains("visible");
-  if (isOpen) {
-    airlinesPanel.classList.remove("visible");
-    airlinesPanel.classList.add("hidden");
-  } else {
-    renderAirlinesPanel(currentRoutes);
-    airlinesPanel.classList.remove("hidden");
-    airlinesPanel.classList.add("visible");
-  }
-});
+    listItem.classList.toggle(
+      "active",
+      isolatedUid != null &&
+      String(isolatedUid) === routeUid
+    );
+
+    const logoUrl =
+      getJourneyIcon(route);
+
+    const logoClass =
+      getJourneyType(route) === "flight"
+        ? "airline-logo"
+        : "journey-logo";
+
+    const airlineOrType =
+      route.airline ||
+      route.journey_type ||
+      "";
+
+    listItem.innerHTML = `
+      <div class="sidebar-row">
+
+        <div class="sidebar-logo">
+          ${
+            logoUrl
+              ? `
+                <img
+                  class="${logoClass}"
+                  src="${escapeSidebarHtml(logoUrl)}"
+                  alt="${escapeSidebarHtml(airlineOrType)}"
+                  onerror="this.style.display='none'"
+                >
+              `
+              : ""
+          }
+        </div>
+
+        <div class="sidebar-text">
+
+          <div class="sidebar-journey-type">
+            ${escapeSidebarHtml(route.journey_type)}
+          </div>
+
+          <div class="sidebar-route">
+            <strong>
+              ${escapeSidebarHtml(route.origin)}
+              →
+              ${escapeSidebarHtml(route.destination)}
+            </strong>
+          </div>
+
+          <div class="sidebar-date">
+            ${escapeSidebarHtml(
+              formatSidebarDate(
+                route.journey_date
+              )
+            )}
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    listItem.addEventListener(
+      "click",
+      () => {
+        /*
+         * setIsolatedRoute() now handles:
+         * - selected-row styling;
+         * - route opacity and width;
+         * - flight summary display;
+         * - camera fitting.
+         */
+        if (
+          typeof setIsolatedRoute ===
+          "function"
+        ) {
+          setIsolatedRoute(
+            route.uid
+          );
+        }
+      }
+    );
+
+    flightListElement.appendChild(
+      listItem
+    );
+  });
+}
+
+window.renderSidebar =
+  renderSidebar;
 
 
 // =====================================================
 // SIDEBAR-AWARE MAP PADDING
 // =====================================================
+
 function getSidebarLeftPad() {
-  return sidebar?.classList.contains("collapsed")
-    ? 80
-    : (sidebar?.offsetWidth || 260) + 80;
+  if (!sidebarElement) {
+    return 100;
+  }
+
+  if (
+    sidebarElement.classList.contains(
+      "collapsed"
+    )
+  ) {
+    return 80;
+  }
+
+  return (
+    sidebarElement.offsetWidth ||
+    260
+  ) + 80;
 }
+
+window.getSidebarLeftPad =
+  getSidebarLeftPad;
 
 
 // =====================================================
 // AIRLINES PANEL
 // =====================================================
+
 function renderAirlinesPanel(routes) {
-  if (!airlinesListEl) return;
+  if (!airlinesListElement) {
+    return;
+  }
 
-  const airlines = [...new Set(
-    routes.map(r => r.airline).filter(Boolean)
-  )].sort();
+  const safeRoutes =
+    Array.isArray(routes)
+      ? routes
+      : [];
 
-  airlinesListEl.innerHTML = "";
+  const airlines = [
+    ...new Set(
+      safeRoutes
+        .map(route =>
+          route?.airline
+        )
+        .filter(Boolean)
+    )
+  ].sort((airlineA, airlineB) =>
+    String(airlineA).localeCompare(
+      String(airlineB)
+    )
+  );
+
+  airlinesListElement.innerHTML = "";
 
   airlines.forEach(name => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <img src="${getAirlineLogo(name)}" alt="${name}" />
-      <span>${name}</span>
+    const listItem =
+      document.createElement("li");
+
+    const logoUrl =
+      typeof getAirlineLogo === "function"
+        ? getAirlineLogo(name)
+        : null;
+
+    listItem.innerHTML = `
+      ${
+        logoUrl
+          ? `
+            <img
+              src="${escapeSidebarHtml(logoUrl)}"
+              alt="${escapeSidebarHtml(name)}"
+              onerror="this.style.display='none'"
+            >
+          `
+          : ""
+      }
+
+      <span>
+        ${escapeSidebarHtml(name)}
+      </span>
     `;
-    airlinesListEl.appendChild(li);
+
+    airlinesListElement.appendChild(
+      listItem
+    );
   });
+}
+
+window.renderAirlinesPanel =
+  renderAirlinesPanel;
+
+
+// =====================================================
+// AIRLINES SLIDE-OUT PANEL
+// =====================================================
+
+if (
+  airlinesBoxElement &&
+  airlinesPanelElement
+) {
+  airlinesBoxElement.addEventListener(
+    "click",
+    () => {
+      const isOpen =
+        airlinesPanelElement
+          .classList
+          .contains("visible");
+
+      if (isOpen) {
+        airlinesPanelElement
+          .classList
+          .remove("visible");
+
+        airlinesPanelElement
+          .classList
+          .add("hidden");
+
+        return;
+      }
+
+      renderAirlinesPanel(
+        Array.isArray(
+          window.currentRoutes
+        )
+          ? window.currentRoutes
+          : []
+      );
+
+      airlinesPanelElement
+        .classList
+        .remove("hidden");
+
+      airlinesPanelElement
+        .classList
+        .add("visible");
+    }
+  );
 }
 
 
 // =====================================================
-// SIDEBAR TOGGLE (SHOW / HIDE)
+// SIDEBAR COLLAPSE / EXPAND
 // =====================================================
-sidebarToggle?.addEventListener("click", () => {
-  sidebar?.classList.toggle("collapsed");
 
-  if (sidebar?.classList.contains("collapsed")) {
-    if (flightListEl) flightListEl.style.display = "none";
-  } else {
-    if (flightListEl) flightListEl.style.display = "";
-  }
+if (
+  sidebarToggleElement &&
+  sidebarElement
+) {
+  sidebarToggleElement.addEventListener(
+    "click",
+    () => {
+      sidebarElement.classList.toggle(
+        "collapsed"
+      );
 
-  // Allow CSS transition to complete before resizing map
-  setTimeout(() => {
-    if (typeof map !== "undefined") {
-      map.resize();
+      if (flightListElement) {
+        flightListElement.style.display =
+          sidebarElement.classList.contains(
+            "collapsed"
+          )
+            ? "none"
+            : "";
+      }
+
+      /*
+       * Wait for the CSS width transition before resizing
+       * and refitting the Mapbox canvas.
+       */
+      setTimeout(() => {
+        if (
+          typeof map !== "undefined" &&
+          map
+        ) {
+          map.resize();
+        }
+
+        const currentMode =
+          window.appState?.mode ||
+          (
+            typeof mapMode !== "undefined"
+              ? mapMode
+              : "routes"
+          );
+
+        if (
+          currentMode === "countries"
+        ) {
+          if (
+            typeof fitToVisibleCountries ===
+            "function"
+          ) {
+            fitToVisibleCountries();
+          }
+
+          return;
+        }
+
+        if (
+          typeof fitToCurrentRouteView ===
+          "function"
+        ) {
+          fitToCurrentRouteView();
+        }
+      }, 250);
     }
+  );
+}
 
-    if (mapMode === "countries") {
-      fitToVisibleCountries();
-    } else {
-      applyIsolation();
+
+// =====================================================
+// COUNTRIES / ROUTES MODE TOGGLE
+// =====================================================
+
+if (countriesBoxElement) {
+  countriesBoxElement.addEventListener(
+    "click",
+    () => {
+      const currentMode =
+        window.appState?.mode ||
+        (
+          typeof mapMode !== "undefined"
+            ? mapMode
+            : "routes"
+        );
+
+      const nextMode =
+        currentMode === "routes"
+          ? "countries"
+          : "routes";
+
+      if (
+        typeof setMapMode === "function"
+      ) {
+        setMapMode(nextMode);
+        return;
+      }
+
+      /*
+       * Compatibility fallback for older route code.
+       */
+      if (window.appState) {
+        window.appState.mode =
+          nextMode;
+      }
+
+      if (
+        typeof mapMode !== "undefined"
+      ) {
+        mapMode =
+          nextMode;
+      }
+
+      if (
+        typeof applyMapMode ===
+        "function"
+      ) {
+        applyMapMode();
+      }
     }
-  }, 250);
-});
-
-
-// =====================================================
-// COUNTRIES GLASS BOX TOGGLE
-// =====================================================
-countriesBox?.addEventListener("click", () => {
-  mapMode = mapMode === "routes" ? "countries" : "routes";
-  applyMapMode();
-});
+  );
+}
