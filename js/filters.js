@@ -133,7 +133,7 @@ toggle.onclick = e => {
     !wasOpen
   );
 };
-
+}
 
 // =====================================================
 // CLOSE DROPDOWNS ON OUTSIDE CLICK
