@@ -9,6 +9,11 @@
 // =====================================================
 
 
+// =====================================================
+// AIRPORTS.JS
+// Airport markers, non-flight endpoints and filtering
+// =====================================================
+
 
 // =====================================================
 // STATE
@@ -29,9 +34,8 @@ const airportHandlerState = {
 };
 
 /*
- * Clicking an airport marker also reaches the map canvas.
- * This flag prevents that same click from immediately
- * clearing the airport selection.
+ * Prevents the airport-marker click from also being
+ * treated as a click-away action during the same event.
  */
 let suppressNextAirportClear = false;
 
@@ -399,10 +403,6 @@ function renderAirportMarkers(airports) {
     });
   }
 
-  /*
-   * Keep the visible airport marker above the
-   * larger invisible interaction layer.
-   */
   if (
     map.getLayer(
       AIRPORT_HIT_LAYER_ID
@@ -455,7 +455,6 @@ function getRouteEndpointCoordinates(route) {
     return null;
   }
 
-  // Standard LineString
   if (
     geometry.type === "LineString"
   ) {
@@ -475,7 +474,6 @@ function getRouteEndpointCoordinates(route) {
     };
   }
 
-  // MultiLineString
   if (
     geometry.type ===
     "MultiLineString"
@@ -898,11 +896,19 @@ function bindAirportClick() {
       }
 
       /*
-       * The airport marker click also reaches the
-       * canvas listener. Ignore that one click.
+       * Prevent this airport-marker click from also
+       * being treated as a click-away action.
        */
-      suppressNextAirportClear =
-        true;
+      suppressNextAirportClear = true;
+
+      /*
+       * Clear the suppression as soon as the current
+       * browser event cycle has completed. This prevents
+       * the user's next real map click being ignored.
+       */
+      setTimeout(() => {
+        suppressNextAirportClear = false;
+      }, 0);
 
       const selectionResult =
         filterRoutesByAirport(
@@ -932,27 +938,24 @@ function bindAirportClick() {
 // =====================================================
 
 function clearAirportSelection() {
-  // Clear the selected airport state
   setActiveAirportFilter(null);
-
-  // Clear any selected individual journey
   clearIsolatedRoute();
 
-  // Restore the complete route collection produced
-  // by the current top-bar filters
   const baseRoutes =
-    Array.isArray(window.allRoutes)
+    Array.isArray(
+      window.allRoutes
+    )
       ? window.allRoutes
       : [];
 
-  if (typeof renderRoutes === "function") {
+  if (
+    typeof renderRoutes ===
+    "function"
+  ) {
     /*
-     * Restore all routes, counters, sidebar entries
-     * and airport markers.
-     *
-     * Disable the automatic fit here because we will
-     * perform a reliable fit after Mapbox has processed
-     * the restored GeoJSON source.
+     * Restore all routes and markers first.
+     * Map fitting is handled separately below after
+     * Mapbox has processed the restored source data.
      */
     renderRoutes(baseRoutes, {
       updateBaseRoutes: false,
@@ -962,20 +965,24 @@ function clearAirportSelection() {
 
   const refocusMap = () => {
     if (
-      typeof fitToBoundsFromLineGeoms !== "function"
+      typeof fitToBoundsFromLineGeoms !==
+      "function"
     ) {
       return;
     }
 
-    const geometries = baseRoutes
-      .map(route => route?.geom)
-      .filter(Boolean);
+    const geometries =
+      baseRoutes
+        .map(route => route?.geom)
+        .filter(Boolean);
 
     if (!geometries.length) {
       return;
     }
 
-    fitToBoundsFromLineGeoms(geometries);
+    fitToBoundsFromLineGeoms(
+      geometries
+    );
   };
 
   /*
@@ -986,18 +993,12 @@ function clearAirportSelection() {
     typeof map !== "undefined" &&
     map
   ) {
-    if (map.loaded()) {
-      map.once("idle", refocusMap);
-    } else {
-      map.once("load", () => {
-        map.once("idle", refocusMap);
-      });
-    }
+    map.once("idle", refocusMap);
   }
 
-  // Restore the normal statistics bar
   if (
-    typeof window.onAirportCleared === "function"
+    typeof window.onAirportCleared ===
+    "function"
   ) {
     window.onAirportCleared();
   }
@@ -1005,7 +1006,6 @@ function clearAirportSelection() {
 
 window.clearAirportSelection =
   clearAirportSelection;
-
 
 
 // =====================================================
@@ -1034,8 +1034,7 @@ function filterRoutesByAirport(
     getActiveAirportFilter();
 
   /*
-   * Clicking the currently selected airport again
-   * clears the filter.
+   * Clicking the selected airport again clears it.
    */
   if (
     currentAirport === airportCode
@@ -1104,13 +1103,10 @@ function bindAirportClearOnMapClick() {
     "click",
     event => {
       /*
-       * Ignore the canvas click caused by selecting
-       * an airport marker.
+       * Ignore only the airport-marker click that is
+       * currently being processed.
        */
       if (suppressNextAirportClear) {
-        suppressNextAirportClear =
-          false;
-
         return;
       }
 
@@ -1140,17 +1136,15 @@ function bindAirportClearOnMapClick() {
         );
 
       /*
-       * If this click landed on an airport marker,
-       * let the airport-layer handler manage it.
+       * Clicking an airport marker should select or
+       * switch airport, not clear the airport filter.
        */
-      let airportHits = [];
-
       if (
         map.getLayer(
           AIRPORT_HIT_LAYER_ID
         )
       ) {
-        airportHits =
+        const airportHits =
           map.queryRenderedFeatures(
             point,
             {
@@ -1159,12 +1153,12 @@ function bindAirportClearOnMapClick() {
               ]
             }
           );
-      }
 
-      if (
-        airportHits.length > 0
-      ) {
-        return;
+        if (
+          airportHits.length > 0
+        ) {
+          return;
+        }
       }
 
       clearAirportSelection();
