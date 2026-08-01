@@ -195,3 +195,35 @@ body {
 .chart-card {
   height: 65vh;
 }
+
+
+
+/* =====================================================
+   SHARED STATISTICS PAGE LAYOUT
+===================================================== */
+
+.full-page {
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-nav {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.stats-nav a {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.stats-nav a:hover {
+  color: #fff;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+}
