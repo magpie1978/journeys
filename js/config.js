@@ -56,3 +56,19 @@ const airlineLogoMap = {
   //Train
   "OBB": "obb.webp"
 };
+
+
+
+// =====================================================
+// AIRPORT GROUPS
+// =====================================================
+const AIRPORT_GROUPS = {
+  London: ["LHR","LGW","LCY","SEN","LTN","STN"],
+  Berlin: ["BER","SXF","TXL"],
+  Milan: ["MXP","BGY","LIN"],
+  Bangkok: ["BKK","DMK"],
+  'New York': ["JFK","LGA","EWR"],
+  Washington: ["IAD","DCA","BWI"],
+  Rome: ["CIA","FCO"],
+  Paris: ["ORY","BVA","CDG"]
+};
