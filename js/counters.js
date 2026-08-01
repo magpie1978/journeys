@@ -68,6 +68,24 @@ function formatSecondsToHM(seconds) {
 }
 
 
+function formatSecondsToHM(seconds) {
+
+  const totalSeconds = Number(seconds) || 0;
+
+  if (totalSeconds <= 0) {
+    return "0h 00min";
+  }
+
+  const hours =
+    Math.floor(totalSeconds / 3600);
+
+  const minutes =
+    Math.floor((totalSeconds % 3600) / 60);
+
+  return `${hours}h ${String(minutes).padStart(2,"0")}min`;
+}
+
+
 function updateTransportCounter(routes) {
 
   // All non-flight journeys
