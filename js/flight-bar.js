@@ -2,86 +2,298 @@
 // FLIGHT SUMMARY BAR
 // =====================================================
 
-function showFlightSummary(r) {
-  // Hide other bars
-  const glassBar = document.getElementById("glassBar");
-  const airportBar = document.getElementById("airportSummaryBar");
-  const flightBar = document.getElementById("flightSummaryBar");
 
-  if (glassBar) glassBar.classList.add("hidden");
-  if (airportBar) airportBar.classList.add("hidden");
+// =====================================================
+// DOM REFERENCES
+// =====================================================
 
-  if (!flightBar) return;
-  flightBar.classList.remove("hidden");
+const flightSummaryElements = {
+  glassBar:
+    document.getElementById("glassBar"),
 
-  populateFlightSummary(r);
+  airportBar:
+    document.getElementById("airportSummaryBar"),
+
+  flightBar:
+    document.getElementById("flightSummaryBar"),
+
+  date:
+    document.getElementById("flightDate"),
+
+  origin:
+    document.getElementById("flightOrigin"),
+
+  destination:
+    document.getElementById("flightDestination"),
+
+  originCountry:
+    document.getElementById("originCountry"),
+
+  destinationCountry:
+    document.getElementById("destinationCountry"),
+
+  flightNumber:
+    document.getElementById("flightNumber"),
+
+  airline:
+    document.getElementById("flightAirline"),
+
+  duration:
+    document.getElementById("flightDuration"),
+
+  distance:
+    document.getElementById("flightDistance")
+};
+
+
+// =====================================================
+// BASIC DOM HELPER
+// =====================================================
+
+function setElementText(element, value) {
+  if (!element) return;
+
+  element.textContent =
+    value == null || value === ""
+      ? "—"
+      : String(value);
 }
+
+
+// =====================================================
+// SHOW FLIGHT SUMMARY
+// =====================================================
+
+function showFlightSummary(route) {
+  if (!route) {
+    console.warn(
+      "[flight-bar] Cannot show summary because no route was supplied"
+    );
+
+    return;
+  }
+
+  const {
+    glassBar,
+    airportBar,
+    flightBar
+  } = flightSummaryElements;
+
+  if (glassBar) {
+    glassBar.classList.add("hidden");
+  }
+
+  if (airportBar) {
+    airportBar.classList.add("hidden");
+  }
+
+  if (!flightBar) {
+    return;
+  }
+
+  populateFlightSummary(route);
+
+  flightBar.classList.remove("hidden");
+}
+
+
+// =====================================================
+// HIDE FLIGHT SUMMARY
+// =====================================================
 
 function hideFlightSummary() {
-  const glassBar = document.getElementById("glassBar");
-  const flightBar = document.getElementById("flightSummaryBar");
+  const {
+    glassBar,
+    airportBar,
+    flightBar
+  } = flightSummaryElements;
 
-  if (flightBar) flightBar.classList.add("hidden");
-  if (glassBar) glassBar.classList.remove("hidden");
+  if (flightBar) {
+    flightBar.classList.add("hidden");
+  }
+
+  /*
+   * Restore the normal glass bar only when the airport
+   * summary bar is not currently active.
+   */
+  const airportBarIsVisible =
+    airportBar &&
+    !airportBar.classList.contains("hidden");
+
+  if (
+    glassBar &&
+    !airportBarIsVisible
+  ) {
+    glassBar.classList.remove("hidden");
+  }
 }
 
+
 // =====================================================
-// POPULATION
+// POPULATE FLIGHT SUMMARY
 // =====================================================
 
-function populateFlightSummary(r) {
-  setText("flightDate", formatJourneyDate(r.journey_date));
-  setText("flightOrigin", r.origin || "—");
-  setText("flightDestination", r.destination || "—");
+function populateFlightSummary(route) {
+  setElementText(
+    flightSummaryElements.date,
+    formatJourneyDate(
+      route.journey_date
+    )
+  );
 
-  setText("originCountry", r.origin_country || "");
-  setText("destinationCountry", r.destination_country || "");
+  setElementText(
+    flightSummaryElements.origin,
+    route.origin
+  );
 
-  setText("flightNumber", getFlightNumber(r));
-  setText("flightAirline", r.airline || "—");
+  setElementText(
+    flightSummaryElements.destination,
+    route.destination
+  );
 
-  // Prefer journey_duration_seconds (matches your airport bar)
-  setText("flightDuration", formatDurationFromSeconds(r.journey_duration_seconds));
+  setElementText(
+    flightSummaryElements.originCountry,
+    route.origin_country
+  );
 
-  setText(
-    "flightDistance",
-    r.journey_distance != null ? `${Math.round(Number(r.journey_distance))} mi` : "—"
+  setElementText(
+    flightSummaryElements.destinationCountry,
+    route.destination_country
+  );
+
+  setElementText(
+    flightSummaryElements.flightNumber,
+    getFlightNumber(route)
+  );
+
+  setElementText(
+    flightSummaryElements.airline,
+    route.airline
+  );
+
+  setElementText(
+    flightSummaryElements.duration,
+    formatDurationFromSeconds(
+      route.journey_duration_seconds
+    )
+  );
+
+  setElementText(
+    flightSummaryElements.distance,
+    formatJourneyDistance(
+      route.journey_distance
+    )
   );
 }
 
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
 
 // =====================================================
-// FORMATTERS
+// DATE FORMATTER
 // =====================================================
 
-function formatJourneyDate(dateStr) {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return String(dateStr).slice(0, 10);
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+function formatJourneyDate(dateValue) {
+  if (!dateValue) {
+    return "—";
+  }
+
+  const date =
+    new Date(dateValue);
+
+  if (
+    Number.isNaN(date.getTime())
+  ) {
+    return String(dateValue)
+      .slice(0, 10);
+  }
+
+  return date.toLocaleDateString(
+    "en-GB",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    }
+  );
 }
 
-function formatDurationFromSeconds(seconds) {
-  const s = Number(seconds);
-  if (!Number.isFinite(s) || s <= 0) return "—";
-  const mins = Math.round(s / 60);
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${h}h ${m}min`;
-}
-
-function getFlightNumber(r) {
-  // Choose the best available identifier
-  return r.flight_number || r.flightNumber || r.callsign || "—";
-}
 
 // =====================================================
-// EXPOSE GLOBAL API (so sidebar.js can always call it)
+// DURATION FORMATTER
 // =====================================================
 
-window.showFlightSummary = showFlightSummary;
-window.hideFlightSummary = hideFlightSummary;
+function formatDurationFromSeconds(
+  seconds
+) {
+  const totalSeconds =
+    Number(seconds);
+
+  if (
+    !Number.isFinite(totalSeconds) ||
+    totalSeconds <= 0
+  ) {
+    return "—";
+  }
+
+  const totalMinutes =
+    Math.round(totalSeconds / 60);
+
+  const hours =
+    Math.floor(totalMinutes / 60);
+
+  const minutes =
+    totalMinutes % 60;
+
+  return (
+    `${hours}h ` +
+    `${String(minutes).padStart(2, "0")}min`
+  );
+}
+
+
+// =====================================================
+// DISTANCE FORMATTER
+// =====================================================
+
+function formatJourneyDistance(
+  distance
+) {
+  const numericDistance =
+    Number(distance);
+
+  if (
+    !Number.isFinite(numericDistance) ||
+    numericDistance < 0
+  ) {
+    return "—";
+  }
+
+  return (
+    `${Math.round(numericDistance)
+      .toLocaleString()} mi`
+  );
+}
+
+
+// =====================================================
+// FLIGHT IDENTIFIER
+// =====================================================
+
+function getFlightNumber(route) {
+  return (
+    route?.flight_number ||
+    route?.flightNumber ||
+    route?.callsign ||
+    "—"
+  );
+}
+
+
+// =====================================================
+// GLOBAL API
+// =====================================================
+
+window.showFlightSummary =
+  showFlightSummary;
+
+window.hideFlightSummary =
+  hideFlightSummary;
