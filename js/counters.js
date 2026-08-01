@@ -1,6 +1,31 @@
 // =====================================================
-// COUNTERS3 — CLEAN SAFE BUILD
+// COUNTERS
+//
+// This file controls the six summary counters shown above the map:
+//    total journeys;
+//    land journeys;
+//    total miles;
+//    destination countries;
+//    airlines;
+//    total duration.
+//
+// Its overall flow is:
+//    File loads
+//   ↓
+// Check whether it has already been initialised
+//   ↓
+// Find and store references to the counter elements
+//   ↓
+// Define formatting and calculation helpers
+//   ↓
+// Expose updateAllCounters() globally
+//   ↓
+// Other files call updateAllCounters(routes)
+//   ↓
+// The counters are recalculated from the supplied route array
 // =====================================================
+
+
 
 // Prevent duplicate initialisation
 if (!window.__COUNTERS3__) {
@@ -43,25 +68,6 @@ function formatSecondsToHM(seconds) {
 }
 
 
-// -----------------------------------------------------
-// TRANSPORT COUNTER
-// -----------------------------------------------------
-
-  //function updateTransportCounter(routes) {
-
-//  const surfaceRoutes =
-//    routes.filter(r => r.journey_type !== "Flight");
-
-//  const drives =
-//    surfaceRoutes.filter(r => r.journey_type === "Drive").length;
-
-//  transportNumberEl.textContent =
-//    surfaceRoutes.length.toLocaleString();
-
-//  transportLabelEl.textContent =
-//    `${drives} Drives`;
-//}
-
 function updateTransportCounter(routes) {
 
   // All non-flight journeys
@@ -88,12 +94,33 @@ function updateTransportCounter(routes) {
 // -----------------------------------------------------
 function updateAllCounters(routes = []) {
 
+//  journeyNumberEl.textContent =
+//    routes.length.toLocaleString();
+
+//  journeyLabelEl.textContent =
+//    routes.length === 1 ? "FLIGHT" : "FLIGHTS";
+
+
+
+  const flightCount = routes.filter(
+  route =>
+    String(route?.journey_type || "")
+      .toLowerCase() === "flight"
+  ).length;
+
   journeyNumberEl.textContent =
-    routes.length.toLocaleString();
+    flightCount.toLocaleString();
 
   journeyLabelEl.textContent =
-    routes.length === 1 ? "FLIGHT" : "FLIGHTS";
+    flightCount === 1
+      ? "FLIGHT"
+      : "FLIGHTS";
 
+
+
+
+
+  
   updateTransportCounter(routes);
 
   const miles = routes.reduce(
