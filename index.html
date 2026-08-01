@@ -4,31 +4,40 @@
     <meta charset="UTF-8" />
     <title>Journeys Map</title>
   
-    <!-- Mapbox -->
+    <!-- ===================================================== -->
+    <!-- MAPBOX SCRIPTING -->
+    <!-- ===================================================== -->
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  
-    <!-- Supabase -->
+
+    
+    <!-- ===================================================== -->
+    <!-- SUPABASE CONNECTIVIRY -->
+    <!-- ===================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-    <!-- Chart JS -->  
+
+    
+    <!-- ===================================================== -->
+    <!-- CHART.JS SCRIPTING -->
+    <!-- ===================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   
-    <!-- App styles -->
+    <!-- ===================================================== -->
+    <!-- STYLESHEETS -->
+    <!-- ===================================================== -->
     <link rel="stylesheet" href="css/flights.css" />
-  
-    
   </head>
   
   <body>
     
     <!-- ===================================================== -->
-    <!-- TOP BAR -->
+    <!-- TOP BAR FILTER OPTIONS-->
     <!-- ===================================================== -->
     <div id="top-bar">
       <div class="filters">
-  
+
+        <!-- YEAR DROPDOWN -->
         <div class="filter" id="filter-year">
           <button class="filter-toggle">Year ▾</button>
           <div class="filter-menu">
@@ -39,7 +48,8 @@
             <div class="filter-options"></div>
           </div>
         </div>
-  
+
+        <!-- AIRLINE DROPDOWN -->
         <div class="filter" id="filter-airline">
           <button class="filter-toggle">Airline ▾</button>
           <div class="filter-menu">
@@ -50,7 +60,8 @@
             <div class="filter-options"></div>
           </div>
         </div>
-  
+
+        <!-- JOURNEY TYPE DROPDOWN -->
         <div class="filter" id="filter-type">
           <button class="filter-toggle">Type ▾</button>
           <div class="filter-menu">
@@ -62,6 +73,7 @@
           </div>
         </div>
 
+        <!-- AIRPORT DROPDOWN -->
         <div class="filter" id="filter-airport">
           <button class="filter-toggle">Airport ▾</button>
           <div class="filter-menu">
@@ -94,7 +106,8 @@
         </div>
       </div>
     </div>
-  
+
+    
     <!-- ===================================================== -->
     <!-- MAIN LAYOUT -->
     <!-- ===================================================== -->
@@ -116,32 +129,32 @@
         <div id="glassBar">
                 
           <div id="journeyCounter" class="glass-box">
-            <div class="glass-number">0</div>
+            <div class="glass-number"></div>
             <div class="glass-label">Flights</div>
           </div>
           
           <div id="transportCounter" class="glass-box">
-            <div class="glass-number">0</div>
+            <div class="glass-number"></div>
             <div class="glass-label">Land Travel</div>
           </div>      
           
           <div id="milesCounter" class="glass-box">
-            <div class="glass-number">0</div>
+            <div class="glass-number"></div>
             <div class="glass-label">Miles</div>
           </div>
       
           <div id="countriesCounter" class="glass-box">
-            <div class="glass-number">0</div>
+            <div class="glass-number"></div>
             <div class="glass-label">Countries</div>
           </div>
       
           <div class="glass-box" id="airlinesCounter">
-            <div class="glass-number">0</div>
+            <div class="glass-number"></div>
             <div class="glass-label">Airlines</div>
           </div>
       
           <div id="durationCounter" class="glass-box">
-            <div class="glass-number">0h 00min</div>
+            <div class="glass-number"></div>
             <div class="glass-label">Duration</div>
           </div>
       
@@ -153,7 +166,8 @@
           </div>
           -->
         
-        </div> <!-- end of glass bar -->
+        </div> 
+        <!-- end of glass bar -->
 
 
         <!-- ===== AIRPORT SUMMARY BAR (hidden by default) ===== -->
