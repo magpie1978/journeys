@@ -17,21 +17,6 @@ const selected = {
 
 
 // =====================================================
-// AIRPORT GROUPS
-// =====================================================
-const AIRPORT_GROUPS = {
-  London: ["LHR","LGW","LCY","SEN","LTN","STN"],
-  Berlin: ["BER","SXF","TXL"],
-  Milan: ["MXP","BGY","LIN"],
-  Bangkok: ["BKK","DMK"],
-  'New York': ["JFK","LGA","EWR"],
-  Washington: ["IAD","DCA","BWI"],
-  Rome: ["CIA","FCO"],
-  Paris: ["ORY","BVA","CDG"]
-};
-
-
-// =====================================================
 // DOM ELEMENTS   -   Caches references to frequently accessed DOM elements: Sidebar, Flight list, Buttons, “Glass counter” UI boxes.  This avoids repeated DOM queries later.
 // =====================================================
 const sidebar = document.getElementById("sidebar");
