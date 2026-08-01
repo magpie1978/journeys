@@ -1,134 +1,238 @@
 // =====================================================
-// AIRPORT BAR HELPERS
+// OVERALL PURPOSE
 // =====================================================
-function plural(n, word) {
-  return `${n} ${word}${n === 1 ? "" : "s"}`;
+
+// This file is responsible for the Airport Summary Bar.
+
+// When a user clicks on an airport marker, it:
+   // Hides the normal journey summary.
+   // Calculates statistics for that airport.
+   // Updates the Airport Summary Bar.
+   // Displays the Airport Summary Bar.
+// When the user deselects the airport, it hides the Airport Summary Bar and restores the normal UI.
+
+
+
+// =====================================================
+// WORKFLOW
+//
+/// Airport selected
+//        ↓
+// Hide route summary
+//        ↓
+// Read all routes
+//        ↓
+// Find departures
+//        ↓
+// Find arrivals
+//        ↓
+// Calculate totals
+//        ↓
+// Update HTML
+//        ↓
+// Show airport bar
+// =====================================================
+
+
+
+
+// =====================================================
+// HELPERS
+// =====================================================
+
+function getRouteDurationMinutes(route) {
+  const seconds = Number(route?.journey_duration_seconds);
+
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return 0;
+  }
+
+  return Math.round(seconds / 60);
 }
 
-function getRouteDurationMinutes(r) {
-  if (typeof r.journey_duration_seconds === "number") {
-    return Math.round(r.journey_duration_seconds / 60);
-  }
-  return 0;
+
+function formatCount(count, singularWord) {
+  const word =
+    count === 1
+      ? singularWord
+      : `${singularWord}S`;
+
+  return `${count} ${word}`;
 }
+
 
 // =====================================================
 // SHOW AIRPORT SUMMARY BAR
 // =====================================================
-function showAirportSummary(airport) {
 
-  // 🔒 Ensure route header is hidden when airport is selected
+function showAirportSummary(airport) {
+  if (!airport?.code) {
+    console.warn(
+      "[airport-bar] Cannot show summary: airport code is missing"
+    );
+
+    return;
+  }
+
+  // Prevent the flight summary and airport summary
+  // from being displayed at the same time.
   if (typeof hideFlightSummary === "function") {
     hideFlightSummary();
   }
 
   const airportCode = airport.code;
+
   const routes =
-    Array.isArray(window.allRoutes) && window.allRoutes.length
+    Array.isArray(window.allRoutes)
       ? window.allRoutes
       : [];
 
-  // Only flight journeys
+  // Only flight journeys are relevant to airport statistics.
   const flightRoutes = routes.filter(
-    r => r.journey_type === "Flight"
+    route => route?.journey_type === "Flight"
   );
 
-  // --------------------------------------------------
-  // Departures (↗): origin === airport
-  // --------------------------------------------------
+  // Journeys leaving the selected airport.
   const departures = flightRoutes.filter(
-    r => r.origin === airportCode
+    route => route.origin === airportCode
   );
 
-  const departureCountries = new Set(
-    departures
-      .map(r => r.destination_country)
-      .filter(Boolean)
-  );
-
-  // --------------------------------------------------
-  // Arrivals (↘): destination === airport
-  // --------------------------------------------------
+  // Journeys arriving at the selected airport.
   const arrivals = flightRoutes.filter(
-    r => r.destination === airportCode
+    route => route.destination === airportCode
   );
 
-  const arrivalCountries = new Set(
-  arrivals
-    .map(r => r.origin_country || r.destination_country)
-    .filter(Boolean)
-);
+  // Combine both directions once for shared calculations.
+  const airportRoutes = [
+    ...departures,
+    ...arrivals
+  ];
 
-
-  // --------------------------------------------------
-  // Airlines (both directions)
-  // --------------------------------------------------
+  // Count unique airlines operating to or from the airport.
   const airlines = new Set(
-    [...departures, ...arrivals]
-      .map(r => r.airline)
+    airportRoutes
+      .map(route => route.airline)
       .filter(Boolean)
   );
 
-  // --------------------------------------------------
-  // Total duration (minutes)
-  // --------------------------------------------------
-  const totalMinutes = [...departures, ...arrivals].reduce(
-    (sum, r) => sum + getRouteDurationMinutes(r),
+  // Calculate the combined duration of all airport routes.
+  const totalMinutes = airportRoutes.reduce(
+    (total, route) =>
+      total + getRouteDurationMinutes(route),
     0
   );
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  // --------------------------------------------------
-  // Update UI
-  // --------------------------------------------------
-  document.getElementById("airportCode").textContent =
-    airportCode;
+  // -------------------------------------------------
+  // UPDATE SUMMARY CONTENT
+  // -------------------------------------------------
 
-  document.getElementById("airportName").textContent =
-    airport.city || "";
+  const airportCodeEl =
+    document.getElementById("airportCode");
 
-document.getElementById("outboundFlights").textContent =
-  departures.length === 1
-    ? "1 DEPARTURE"
-    : `${departures.length} DEPARTURES`;
+  const airportNameEl =
+    document.getElementById("airportName");
 
-document.getElementById("inboundFlights").textContent =
-  arrivals.length === 1
-    ? "1 ARRIVAL"
-    : `${arrivals.length} ARRIVALS`;
+  const outboundFlightsEl =
+    document.getElementById("outboundFlights");
 
-  
-  document.getElementById("airportAirlines").textContent =
-    airlines.size;
+  const inboundFlightsEl =
+    document.getElementById("inboundFlights");
 
-  document.getElementById("airportDuration").textContent =
-    `${hours}h ${minutes}m`;
+  const airportAirlinesEl =
+    document.getElementById("airportAirlines");
 
-  // --------------------------------------------------
-  // Toggle bars
-  // --------------------------------------------------
-  const glassBar = document.getElementById("glassBar");
-  const airportBar = document.getElementById("airportSummaryBar");
+  const airportDurationEl =
+    document.getElementById("airportDuration");
 
-  if (glassBar) glassBar.style.display = "none";
-  if (airportBar) airportBar.classList.remove("hidden");
+  if (airportCodeEl) {
+    airportCodeEl.textContent = airportCode;
+  }
+
+  if (airportNameEl) {
+    airportNameEl.textContent =
+      airport.city || "";
+  }
+
+  if (outboundFlightsEl) {
+    outboundFlightsEl.textContent =
+      formatCount(
+        departures.length,
+        "DEPARTURE"
+      );
+  }
+
+  if (inboundFlightsEl) {
+    inboundFlightsEl.textContent =
+      formatCount(
+        arrivals.length,
+        "ARRIVAL"
+      );
+  }
+
+  if (airportAirlinesEl) {
+    airportAirlinesEl.textContent =
+      String(airlines.size);
+  }
+
+  if (airportDurationEl) {
+    airportDurationEl.textContent =
+      `${hours}h ${minutes}m`;
+  }
+
+  // -------------------------------------------------
+  // SHOW AIRPORT BAR
+  // -------------------------------------------------
+
+  const glassBar =
+    document.getElementById("glassBar");
+
+  const airportBar =
+    document.getElementById(
+      "airportSummaryBar"
+    );
+
+  if (glassBar) {
+    glassBar.style.display = "none";
+  }
+
+  if (airportBar) {
+    airportBar.classList.remove("hidden");
+  }
 }
+
 
 // =====================================================
 // HIDE AIRPORT SUMMARY BAR
 // =====================================================
-function hideAirportSummary() {
-  const glassBar = document.getElementById("glassBar");
-  const airportBar = document.getElementById("airportSummaryBar");
 
-  if (airportBar) airportBar.classList.add("hidden");
-  if (glassBar) glassBar.style.display = "";
+function hideAirportSummary() {
+  const glassBar =
+    document.getElementById("glassBar");
+
+  const airportBar =
+    document.getElementById(
+      "airportSummaryBar"
+    );
+
+  if (airportBar) {
+    airportBar.classList.add("hidden");
+  }
+
+  if (glassBar) {
+    glassBar.style.display = "";
+  }
 }
+
 
 // =====================================================
 // EXPOSE GLOBAL API
 // =====================================================
-window.showAirportSummary = showAirportSummary;
-window.hideAirportSummary = hideAirportSummary;
+
+window.showAirportSummary =
+  showAirportSummary;
+
+window.hideAirportSummary =
+  hideAirportSummary;
