@@ -37,20 +37,28 @@ const airportHandlerState = {
  */
 let routesBeforeAirportFilter = null;
 
+/*
+ * Airport metadata does not normally change during a page
+ * session, so retain records that have already been loaded.
+ */
+const airportLocationCache = new Map();
+
 
 // =====================================================
 // MAP SOURCE AND LAYER IDS
 // =====================================================
 
-const AIRPORT_SOURCE_ID = "airports";
-const AIRPORT_CIRCLE_LAYER_ID = "airports-circle";
-const AIRPORT_HIT_LAYER_ID = "airports-hit";
+const AIRPORT_SOURCE_ID =
+  "airports";
 
-const ENDPOINT_SOURCE_ID = "journey-endpoints";
+const AIRPORT_CIRCLE_LAYER_ID =
+  "airports-circle";
+
+const ENDPOINT_SOURCE_ID =
+  "journey-endpoints";
+
 const ENDPOINT_CIRCLE_LAYER_ID =
   "journey-endpoints-circle";
-const ENDPOINT_HIT_LAYER_ID =
-  "journey-endpoints-hit";
 
 
 // =====================================================
@@ -65,11 +73,22 @@ function emptyFeatureCollection() {
 }
 
 
+function getJourneyType(route) {
+  return String(
+    route?.journey_type || ""
+  ).toLowerCase();
+}
+
+
 function getCurrentMapMode() {
   if (window.appState?.mode) {
     return window.appState.mode;
   }
 
+  /*
+   * Compatibility with older files that still use
+   * the standalone mapMode variable.
+   */
   if (typeof mapMode !== "undefined") {
     return mapMode;
   }
@@ -91,6 +110,10 @@ function setActiveAirportFilter(airportCode) {
   const nextAirport =
     airportCode || null;
 
+  /*
+   * Retain both state forms until the rest of the
+   * application consistently uses appState.
+   */
   window.activeAirportFilter =
     nextAirport;
 
@@ -138,6 +161,9 @@ function clearGeoJsonSource(sourceId) {
     return;
   }
 
+  /*
+   * Use the shared helper when available.
+   */
   if (typeof clearSource === "function") {
     clearSource(sourceId);
     return;
@@ -178,6 +204,79 @@ function setLayerVisibility(
 
 
 // =====================================================
+// AIRPORT LOCATION LOADING
+// =====================================================
+
+async function getAirportLocations(
+  airportCodes
+) {
+  const codes =
+    [...new Set(
+      (airportCodes || [])
+        .filter(Boolean)
+    )];
+
+  if (!codes.length) {
+    return [];
+  }
+
+  /*
+   * Only request airport records that have not already
+   * been loaded during this page session.
+   */
+  const missingCodes =
+    codes.filter(
+      code =>
+        !airportLocationCache.has(code)
+    );
+
+  if (missingCodes.length) {
+    const { data, error } = await sb
+      .from("journey_locations")
+      .select(`
+        airport_code,
+        city,
+        country,
+        longitude,
+        latitude
+      `)
+      .in(
+        "airport_code",
+        missingCodes
+      );
+
+    if (error) {
+      console.error(
+        "[airports] Airport lookup failed:",
+        error
+      );
+    } else {
+      (data || []).forEach(airport => {
+        if (!airport?.airport_code) {
+          return;
+        }
+
+        airportLocationCache.set(
+          airport.airport_code,
+          airport
+        );
+      });
+    }
+  }
+
+  /*
+   * Return only records corresponding to the current
+   * collection of visible flight routes.
+   */
+  return codes
+    .map(code =>
+      airportLocationCache.get(code)
+    )
+    .filter(Boolean);
+}
+
+
+// =====================================================
 // LOAD AIRPORTS AND ENDPOINTS
 // =====================================================
 
@@ -206,12 +305,7 @@ async function loadAirports(routes) {
   const flightCodes = new Set();
 
   safeRoutes.forEach(route => {
-    const journeyType =
-      String(
-        route?.journey_type || ""
-      ).toLowerCase();
-
-    if (journeyType !== "flight") {
+    if (getJourneyType(route) !== "flight") {
       return;
     }
 
@@ -230,45 +324,15 @@ async function loadAirports(routes) {
   // LOAD AND RENDER FLIGHT AIRPORTS
   // -------------------------------------------------
 
-  if (flightCodes.size > 0) {
-    const { data, error } = await sb
-      .from("journey_locations")
-      .select(`
-        airport_code,
-        city,
-        country,
-        longitude,
-        latitude
-      `)
-      .in(
-        "airport_code",
+  if (flightCodes.size) {
+    const airportLocations =
+      await getAirportLocations(
         [...flightCodes]
       );
 
-    if (error) {
-      console.error(
-        "[airports] Airport lookup failed:",
-        error
-      );
-
-      clearGeoJsonSource(
-        AIRPORT_SOURCE_ID
-      );
-
-      setLayerVisibility(
-        AIRPORT_CIRCLE_LAYER_ID,
-        "none"
-      );
-
-      setLayerVisibility(
-        AIRPORT_HIT_LAYER_ID,
-        "none"
-      );
-    } else {
-      renderAirportMarkers(
-        data || []
-      );
-    }
+    renderAirportMarkers(
+      airportLocations
+    );
   } else {
     clearGeoJsonSource(
       AIRPORT_SOURCE_ID
@@ -276,11 +340,6 @@ async function loadAirports(routes) {
 
     setLayerVisibility(
       AIRPORT_CIRCLE_LAYER_ID,
-      "none"
-    );
-
-    setLayerVisibility(
-      AIRPORT_HIT_LAYER_ID,
       "none"
     );
   }
@@ -294,13 +353,14 @@ async function loadAirports(routes) {
   );
 
   // -------------------------------------------------
-  // MAP CLICK CONTROLLER
+  // MAIN MAP CLICK CONTROLLER
   // -------------------------------------------------
 
   bindAirportMapClick();
 }
 
-window.loadAirports = loadAirports;
+window.loadAirports =
+  loadAirports;
 
 
 // =====================================================
@@ -314,10 +374,10 @@ function renderAirportMarkers(airports) {
     features: (airports || [])
       .filter(airport =>
         Number.isFinite(
-          Number(airport.longitude)
+          Number(airport?.longitude)
         ) &&
         Number.isFinite(
-          Number(airport.latitude)
+          Number(airport?.latitude)
         )
       )
       .map(airport => ({
@@ -364,19 +424,23 @@ function renderAirportMarkers(airports) {
     );
   }
 
-  // -------------------------------------------------
-  // VISIBLE AIRPORT MARKER
-  // -------------------------------------------------
-
+  /*
+   * Create the visible marker layer once.
+   * Later calls only update its source data.
+   */
   if (
     !map.getLayer(
       AIRPORT_CIRCLE_LAYER_ID
     )
   ) {
     map.addLayer({
-      id: AIRPORT_CIRCLE_LAYER_ID,
+      id:
+        AIRPORT_CIRCLE_LAYER_ID,
+
       type: "circle",
-      source: AIRPORT_SOURCE_ID,
+
+      source:
+        AIRPORT_SOURCE_ID,
 
       paint: {
         "circle-radius": 6,
@@ -386,73 +450,26 @@ function renderAirportMarkers(airports) {
           "#000000"
       }
     });
-  }
 
-  // -------------------------------------------------
-  // LARGER INVISIBLE HIT AREA
-  // -------------------------------------------------
-
-  if (
-    !map.getLayer(
-      AIRPORT_HIT_LAYER_ID
-    )
-  ) {
-    map.addLayer({
-      id: AIRPORT_HIT_LAYER_ID,
-      type: "circle",
-      source: AIRPORT_SOURCE_ID,
-
-      paint: {
-        "circle-radius": 18,
-
-        /*
-         * Nearly transparent rather than completely
-         * transparent, so Mapbox continues to treat the
-         * layer as rendered and interactive.
-         */
-        "circle-color":
-          "rgba(0, 0, 0, 0.01)",
-
-        "circle-stroke-width": 0
-      }
-    });
-  }
-
-  /*
-   * Put the large hit area below the visible marker.
-   */
-  if (
-    map.getLayer(
-      AIRPORT_HIT_LAYER_ID
-    )
-  ) {
-    map.moveLayer(
-      AIRPORT_HIT_LAYER_ID
-    );
-  }
-
-  if (
-    map.getLayer(
-      AIRPORT_CIRCLE_LAYER_ID
-    )
-  ) {
+    /*
+     * Move it to the top only when it is first created.
+     */
     map.moveLayer(
       AIRPORT_CIRCLE_LAYER_ID
     );
   }
+
+  const visibility =
+    featureCollection.features.length
+      ? "visible"
+      : "none";
 
   setLayerVisibility(
     AIRPORT_CIRCLE_LAYER_ID,
-    "visible"
-  );
-
-  setLayerVisibility(
-    AIRPORT_HIT_LAYER_ID,
-    "visible"
+    visibility
   );
 
   bindAirportHover();
-  bindAirportMapClick();
 }
 
 
@@ -474,9 +491,7 @@ function getRouteEndpointCoordinates(route) {
   }
 
   // Standard LineString
-  if (
-    geometry.type === "LineString"
-  ) {
+  if (geometry.type === "LineString") {
     const coordinates =
       geometry.coordinates;
 
@@ -517,7 +532,8 @@ function getRouteEndpointCoordinates(route) {
       lines[lines.length - 1];
 
     return {
-      start: firstLine[0],
+      start:
+        firstLine[0],
 
       end:
         lastLine[
@@ -538,12 +554,7 @@ function renderNonFlightEndpoints(routes) {
   const features = [];
 
   (routes || []).forEach(route => {
-    const journeyType =
-      String(
-        route?.journey_type || ""
-      ).toLowerCase();
-
-    if (journeyType === "flight") {
+    if (getJourneyType(route) === "flight") {
       return;
     }
 
@@ -577,6 +588,7 @@ function renderNonFlightEndpoints(routes) {
 
         geometry: {
           type: "Point",
+
           coordinates:
             endpoints.start
         },
@@ -588,6 +600,7 @@ function renderNonFlightEndpoints(routes) {
 
         geometry: {
           type: "Point",
+
           coordinates:
             endpoints.end
         },
@@ -596,6 +609,24 @@ function renderNonFlightEndpoints(routes) {
       }
     );
   });
+
+  /*
+   * Most initial views may contain flights only.
+   * Do not create an unused source and layer unless
+   * non-flight endpoints actually exist.
+   */
+  if (!features.length) {
+    clearGeoJsonSource(
+      ENDPOINT_SOURCE_ID
+    );
+
+    setLayerVisibility(
+      ENDPOINT_CIRCLE_LAYER_ID,
+      "none"
+    );
+
+    return;
+  }
 
   const featureCollection = {
     type: "FeatureCollection",
@@ -621,6 +652,10 @@ function renderNonFlightEndpoints(routes) {
     );
   }
 
+  /*
+   * Create the visible endpoint layer only when there
+   * are endpoint features to display.
+   */
   if (
     !map.getLayer(
       ENDPOINT_CIRCLE_LAYER_ID
@@ -631,6 +666,7 @@ function renderNonFlightEndpoints(routes) {
         ENDPOINT_CIRCLE_LAYER_ID,
 
       type: "circle",
+
       source:
         ENDPOINT_SOURCE_ID,
 
@@ -642,63 +678,15 @@ function renderNonFlightEndpoints(routes) {
           "#000000"
       }
     });
-  }
 
-  if (
-    !map.getLayer(
-      ENDPOINT_HIT_LAYER_ID
-    )
-  ) {
-    map.addLayer({
-      id:
-        ENDPOINT_HIT_LAYER_ID,
-
-      type: "circle",
-      source:
-        ENDPOINT_SOURCE_ID,
-
-      paint: {
-        "circle-radius": 18,
-        "circle-color":
-          "rgba(0, 0, 0, 0.01)",
-        "circle-stroke-width": 0
-      }
-    });
-  }
-
-  if (
-    map.getLayer(
-      ENDPOINT_HIT_LAYER_ID
-    )
-  ) {
-    map.moveLayer(
-      ENDPOINT_HIT_LAYER_ID
-    );
-  }
-
-  if (
-    map.getLayer(
-      ENDPOINT_CIRCLE_LAYER_ID
-    )
-  ) {
     map.moveLayer(
       ENDPOINT_CIRCLE_LAYER_ID
     );
   }
-
-  const visibility =
-    features.length > 0
-      ? "visible"
-      : "none";
 
   setLayerVisibility(
     ENDPOINT_CIRCLE_LAYER_ID,
-    visibility
-  );
-
-  setLayerVisibility(
-    ENDPOINT_HIT_LAYER_ID,
-    visibility
+    "visible"
   );
 
   bindNonFlightHover();
@@ -716,11 +704,13 @@ const airportPopup =
     offset: 10
   });
 
+
 const nonFlightPopup =
   new mapboxgl.Popup({
     closeButton: false,
     closeOnClick: false,
     offset: 10,
+
     className:
       "journey-tooltip"
   });
@@ -741,10 +731,6 @@ function bindAirportHover() {
   airportHandlerState
     .airportHoverBound = true;
 
-  /*
-   * Use the visible marker layer for dependable
-   * Mapbox interaction.
-   */
   map.on(
     "mouseenter",
     AIRPORT_CIRCLE_LAYER_ID,
@@ -809,7 +795,7 @@ function bindAirportHover() {
 
 
 // =====================================================
-// NON-FLIGHT HOVER
+// NON-FLIGHT ENDPOINT HOVER
 // =====================================================
 
 function bindNonFlightHover() {
@@ -892,7 +878,7 @@ function bindNonFlightHover() {
 
 // =====================================================
 // MAP CLICK CONTROLLER
-// Select an airport or clear the current airport filter
+// Select an airport or clear the active airport filter
 // =====================================================
 
 function bindAirportMapClick() {
@@ -908,22 +894,17 @@ function bindAirportMapClick() {
 
   map.on("click", event => {
     if (
-      getCurrentMapMode() !==
-      "routes"
+      getCurrentMapMode() !== "routes"
     ) {
       return;
     }
 
     // -------------------------------------------------
-    // DETECT AIRPORT MARKER
+    // DETECT AN AIRPORT MARKER
     // -------------------------------------------------
 
     let airportFeatures = [];
 
-    /*
-     * Use the visible airport layer for dependable
-     * click detection.
-     */
     if (
       map.getLayer(
         AIRPORT_CIRCLE_LAYER_ID
@@ -967,8 +948,7 @@ function bindAirportMapClick() {
         );
 
       if (
-        selectionResult ===
-          "selected" &&
+        selectionResult === "selected" &&
         typeof window.onAirportSelected ===
           "function"
       ) {
@@ -985,12 +965,10 @@ function bindAirportMapClick() {
     }
 
     // -------------------------------------------------
-    // EMPTY MAP AREA CLICKED
+    // NON-AIRPORT MAP AREA CLICKED
     // -------------------------------------------------
 
-    if (
-      getActiveAirportFilter()
-    ) {
+    if (getActiveAirportFilter()) {
       clearAirportSelection();
     }
   });
@@ -1006,8 +984,8 @@ function clearAirportSelection() {
   clearIsolatedRoute();
 
   /*
-   * Restore the exact route collection that was visible
-   * before the airport marker was selected.
+   * Restore the exact collection that was visible before
+   * the first airport selection in this interaction.
    */
   const restoredRoutes =
     Array.isArray(
@@ -1021,9 +999,12 @@ function clearAirportSelection() {
         : [];
 
   if (
-    typeof renderRoutes ===
-    "function"
+    typeof renderRoutes === "function"
   ) {
+    /*
+     * Restore routes, counters, sidebar and markers.
+     * Camera fitting is performed explicitly afterwards.
+     */
     renderRoutes(restoredRoutes, {
       updateBaseRoutes: false,
       fitMap: false
@@ -1033,7 +1014,7 @@ function clearAirportSelection() {
   const refocusMap = () => {
     if (
       typeof fitToBoundsFromLineGeoms !==
-      "function"
+        "function"
     ) {
       return;
     }
@@ -1053,19 +1034,18 @@ function clearAirportSelection() {
   };
 
   /*
-   * Wait two animation frames so the source, sidebar,
-   * counters and marker data have been restored before
-   * refitting the map.
+   * Allow Mapbox and the surrounding layout two frames
+   * to process the restored sources and UI dimensions.
    */
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      refocusMap();
-    });
+    requestAnimationFrame(
+      refocusMap
+    );
   });
 
   if (
     typeof window.onAirportCleared ===
-    "function"
+      "function"
   ) {
     window.onAirportCleared();
   }
@@ -1092,22 +1072,20 @@ function filterRoutesByAirport(
     getActiveAirportFilter();
 
   /*
-   * Clicking the currently selected airport again
-   * clears the airport selection.
+   * Clicking the currently selected airport again clears
+   * the filter and restores the previous collection.
    */
-  if (
-    currentAirport === airportCode
-  ) {
+  if (currentAirport === airportCode) {
     clearAirportSelection();
     return "cleared";
   }
 
   /*
-   * Save the full route collection before applying
+   * Capture the complete visible route set before applying
    * the first airport filter.
    *
-   * Do not overwrite it when switching directly from
-   * one selected airport to another.
+   * Do not overwrite it when switching directly between
+   * selected airports.
    */
   if (
     !currentAirport ||
@@ -1120,8 +1098,10 @@ function filterRoutesByAirport(
         window.currentRoutes
       )
         ? window.currentRoutes.slice()
+
         : Array.isArray(window.allRoutes)
           ? window.allRoutes.slice()
+
           : [];
   }
 
@@ -1134,7 +1114,7 @@ function filterRoutesByAirport(
 
   if (!baseRoutes.length) {
     console.warn(
-      "[airports] Cannot apply airport filter because no base routes are available"
+      "[airports] Cannot filter because no base routes are available"
     );
 
     return "unchanged";
@@ -1148,41 +1128,36 @@ function filterRoutesByAirport(
 
   const filteredRoutes =
     baseRoutes.filter(route =>
-      route?.journey_type ===
-        "Flight" &&
+      getJourneyType(route) === "flight" &&
       (
-        route.origin ===
-          airportCode ||
-
-        route.destination ===
-          airportCode
+        route.origin === airportCode ||
+        route.destination === airportCode
       )
     );
 
   if (!filteredRoutes.length) {
     console.warn(
-      `[airports] No routes found for airport ${airportCode}`
+      `[airports] No routes found for ${airportCode}`
     );
   }
 
   if (
-    typeof renderRoutes ===
-    "function"
+    typeof renderRoutes !== "function"
   ) {
-    renderRoutes(
-      filteredRoutes,
-      {
-        updateBaseRoutes: false,
-        fitMap: true
-      }
-    );
-  } else {
     console.error(
-      "[airports] renderRoutes() is not available"
+      "[airports] renderRoutes() is unavailable"
     );
 
     return "unchanged";
   }
+
+  renderRoutes(
+    filteredRoutes,
+    {
+      updateBaseRoutes: false,
+      fitMap: true
+    }
+  );
 
   return "selected";
 }
@@ -1206,9 +1181,7 @@ function hideAirportLayers() {
 
   [
     AIRPORT_CIRCLE_LAYER_ID,
-    AIRPORT_HIT_LAYER_ID,
-    ENDPOINT_CIRCLE_LAYER_ID,
-    ENDPOINT_HIT_LAYER_ID
+    ENDPOINT_CIRCLE_LAYER_ID
   ].forEach(layerId => {
     setLayerVisibility(
       layerId,
