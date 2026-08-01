@@ -1,6 +1,36 @@
 // =====================================================
 // FILTER UI (checkbox dropdowns)
+//
+// This file has two responsibilities:
+//    Build and control the four checkbox dropdowns:
+//    Year
+//    Airline
+//    Journey type
+//    Airport
+//    Load the available filter values from Supabase and establish the initial selections.
+//
+// Its overall sequence is:
+//    loadFilters()
+//    ↓
+//    Read available route metadata from Supabase
+//    ↓
+//    Create unique lists of years, airlines, journey types and airports
+//    ↓
+//    Look up airport display names
+//    ↓
+//    Add virtual city groups such as London and Paris
+//    ↓
+//    Set default selections
+//    ↓
+//    Build the four dropdown menus
+//    ↓
+//    Call loadRoutes()
 // =====================================================
+
+
+
+
+
 function buildFilterMenu(containerId, values, targetSet) {
 
   const container = document.getElementById(containerId);
@@ -77,15 +107,32 @@ function buildFilterMenu(containerId, values, targetSet) {
     loadRoutes();
   };
 
-  // -------------------------------------------------
-  // TOGGLE DROPDOWN
-  // -------------------------------------------------
-  toggle.onclick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    menu.classList.toggle("open");
-  };
-}
+// -------------------------------------------------
+// TOGGLE DROPDOWN
+// Only one filter menu can be open at a time
+// -------------------------------------------------
+toggle.onclick = e => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const wasOpen =
+    menu.classList.contains("open");
+
+  // Close every other open filter menu
+  document
+    .querySelectorAll(".filter-menu.open")
+    .forEach(openMenu => {
+      if (openMenu !== menu) {
+        openMenu.classList.remove("open");
+      }
+    });
+
+  // Toggle the menu that was clicked
+  menu.classList.toggle(
+    "open",
+    !wasOpen
+  );
+};
 
 
 // =====================================================
@@ -154,7 +201,8 @@ async function loadFilters() {
     }
   });
 
-  let airportCodes = [...airportSet].sort();
+  //let airportCodes = [...airportSet].sort();
+  const airportCodes = [...airportSet].sort();
 
   // =====================================================
   // FETCH DISPLAY NAMES
@@ -181,16 +229,16 @@ async function loadFilters() {
   // =====================================================
   // VIRTUAL CITY GROUPS
   // =====================================================
-  const AIRPORT_GROUPS = {
-    London: ["LHR","LGW","LCY","SEN","LTN","STN"],
-    Berlin: ["BER","SXF","TXL"],
-    Milan: ["MXP","LIN","BGY"],
-    Bangkok: ["BKK","DMK"],
-    'New York': ["JFK","EWR","LGA"],
-    Washington: ["DCA","BWI","IAD"],
-    Rome: ["FCO","CIA"],
-    Paris: ["CDG","BVA","ORY"]
-  };
+  //const AIRPORT_GROUPS = {
+  //  London: ["LHR","LGW","LCY","SEN","LTN","STN"],
+  //  Berlin: ["BER","SXF","TXL"],
+  //  Milan: ["MXP","LIN","BGY"],
+  //  Bangkok: ["BKK","DMK"],
+  //  'New York': ["JFK","EWR","LGA"],
+  //  Washington: ["DCA","BWI","IAD"],
+  //  Rome: ["FCO","CIA"],
+  //  Paris: ["CDG","BVA","ORY"]
+  //};
 
   const groupItems = [];
   const airportItems = [];
