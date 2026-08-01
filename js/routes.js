@@ -1,6 +1,12 @@
 // =====================================================
 // ROUTES.JS
-// Route loading, rendering, selection and interaction
+// This file is the central controller for route data and route interaction. It:
+//    Loads journeys from Supabase using the top-bar filters.
+//    Converts those journeys into GeoJSON.
+//    Displays the tracks on the Mapbox map.
+//    Updates the sidebar, counters and airport markers.
+//    Handles clicking and highlighting individual routes.
+//    Coordinates route mode and countries mode.
 // =====================================================
 
 
