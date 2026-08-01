@@ -489,7 +489,7 @@ async function loadRoutes() {
       journey_duration_seconds,
       geom
     `);
-}
+
 
   // -------------------------------------------------
   // YEAR FILTER
