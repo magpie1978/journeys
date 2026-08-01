@@ -208,7 +208,7 @@ async function loadAirports(routes) {
   safeRoutes.forEach(route => {
     const journeyType =
       String(
-        route.journey_type || ""
+        route?.journey_type || ""
       ).toLowerCase();
 
     if (journeyType !== "flight") {
@@ -364,6 +364,10 @@ function renderAirportMarkers(airports) {
     );
   }
 
+  // -------------------------------------------------
+  // VISIBLE AIRPORT MARKER
+  // -------------------------------------------------
+
   if (
     !map.getLayer(
       AIRPORT_CIRCLE_LAYER_ID
@@ -384,6 +388,10 @@ function renderAirportMarkers(airports) {
     });
   }
 
+  // -------------------------------------------------
+  // LARGER INVISIBLE HIT AREA
+  // -------------------------------------------------
+
   if (
     !map.getLayer(
       AIRPORT_HIT_LAYER_ID
@@ -396,15 +404,22 @@ function renderAirportMarkers(airports) {
 
       paint: {
         "circle-radius": 18,
+
+        /*
+         * Nearly transparent rather than completely
+         * transparent, so Mapbox continues to treat the
+         * layer as rendered and interactive.
+         */
         "circle-color":
-          "rgba(0, 0, 0, 0)"
+          "rgba(0, 0, 0, 0.01)",
+
+        "circle-stroke-width": 0
       }
     });
   }
 
   /*
-   * Keep the visible marker above the larger invisible
-   * interaction layer.
+   * Put the large hit area below the visible marker.
    */
   if (
     map.getLayer(
@@ -645,7 +660,8 @@ function renderNonFlightEndpoints(routes) {
       paint: {
         "circle-radius": 18,
         "circle-color":
-          "rgba(0, 0, 0, 0)"
+          "rgba(0, 0, 0, 0.01)",
+        "circle-stroke-width": 0
       }
     });
   }
@@ -725,9 +741,13 @@ function bindAirportHover() {
   airportHandlerState
     .airportHoverBound = true;
 
+  /*
+   * Use the visible marker layer for dependable
+   * Mapbox interaction.
+   */
   map.on(
     "mouseenter",
-    AIRPORT_HIT_LAYER_ID,
+    AIRPORT_CIRCLE_LAYER_ID,
     event => {
       map.getCanvas().style.cursor =
         "pointer";
@@ -779,7 +799,7 @@ function bindAirportHover() {
 
   map.on(
     "mouseleave",
-    AIRPORT_HIT_LAYER_ID,
+    AIRPORT_CIRCLE_LAYER_ID,
     () => {
       map.getCanvas().style.cursor = "";
       airportPopup.remove();
@@ -805,7 +825,7 @@ function bindNonFlightHover() {
 
   map.on(
     "mouseenter",
-    ENDPOINT_HIT_LAYER_ID,
+    ENDPOINT_CIRCLE_LAYER_ID,
     event => {
       map.getCanvas().style.cursor =
         "pointer";
@@ -861,7 +881,7 @@ function bindNonFlightHover() {
 
   map.on(
     "mouseleave",
-    ENDPOINT_HIT_LAYER_ID,
+    ENDPOINT_CIRCLE_LAYER_ID,
     () => {
       map.getCanvas().style.cursor = "";
       nonFlightPopup.remove();
@@ -900,9 +920,13 @@ function bindAirportMapClick() {
 
     let airportFeatures = [];
 
+    /*
+     * Use the visible airport layer for dependable
+     * click detection.
+     */
     if (
       map.getLayer(
-        AIRPORT_HIT_LAYER_ID
+        AIRPORT_CIRCLE_LAYER_ID
       )
     ) {
       airportFeatures =
@@ -910,7 +934,7 @@ function bindAirportMapClick() {
           event.point,
           {
             layers: [
-              AIRPORT_HIT_LAYER_ID
+              AIRPORT_CIRCLE_LAYER_ID
             ]
           }
         );
@@ -929,6 +953,11 @@ function bindAirportMapClick() {
           ?.airport_code;
 
       if (!airportCode) {
+        console.warn(
+          "[airports] Clicked airport feature has no airport_code",
+          airportFeature
+        );
+
         return;
       }
 
@@ -995,15 +1024,6 @@ function clearAirportSelection() {
     typeof renderRoutes ===
     "function"
   ) {
-    /*
-     * Restore:
-     * - route source
-     * - counters
-     * - sidebar entries
-     * - airport markers
-     *
-     * Map fitting is performed explicitly afterwards.
-     */
     renderRoutes(restoredRoutes, {
       updateBaseRoutes: false,
       fitMap: false
@@ -1033,8 +1053,9 @@ function clearAirportSelection() {
   };
 
   /*
-   * Wait for two animation frames so Mapbox has time to
-   * process the restored GeoJSON source before fitting.
+   * Wait two animation frames so the source, sidebar,
+   * counters and marker data have been restored before
+   * refitting the map.
    */
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -1071,8 +1092,8 @@ function filterRoutesByAirport(
     getActiveAirportFilter();
 
   /*
-   * Clicking the currently selected airport again clears
-   * the filter and restores the previous route collection.
+   * Clicking the currently selected airport again
+   * clears the airport selection.
    */
   if (
     currentAirport === airportCode
@@ -1082,11 +1103,11 @@ function filterRoutesByAirport(
   }
 
   /*
-   * Save the route collection currently shown before
-   * applying the first airport filter.
+   * Save the full route collection before applying
+   * the first airport filter.
    *
-   * Do not overwrite it when switching directly between
-   * selected airports.
+   * Do not overwrite it when switching directly from
+   * one selected airport to another.
    */
   if (
     !currentAirport ||
@@ -1099,7 +1120,9 @@ function filterRoutesByAirport(
         window.currentRoutes
       )
         ? window.currentRoutes.slice()
-        : [];
+        : Array.isArray(window.allRoutes)
+          ? window.allRoutes.slice()
+          : [];
   }
 
   const baseRoutes =
@@ -1110,6 +1133,10 @@ function filterRoutesByAirport(
       : [];
 
   if (!baseRoutes.length) {
+    console.warn(
+      "[airports] Cannot apply airport filter because no base routes are available"
+    );
+
     return "unchanged";
   }
 
@@ -1132,6 +1159,12 @@ function filterRoutesByAirport(
       )
     );
 
+  if (!filteredRoutes.length) {
+    console.warn(
+      `[airports] No routes found for airport ${airportCode}`
+    );
+  }
+
   if (
     typeof renderRoutes ===
     "function"
@@ -1143,6 +1176,12 @@ function filterRoutesByAirport(
         fitMap: true
       }
     );
+  } else {
+    console.error(
+      "[airports] renderRoutes() is not available"
+    );
+
+    return "unchanged";
   }
 
   return "selected";
