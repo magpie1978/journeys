@@ -1,385 +1,742 @@
 // =====================================================
-// SAFE GLOBAL STATE (prevents redeclaration errors)
+// MAP.JS
+// Map creation, camera fitting and map-mode management
 // =====================================================
+
+
+// =====================================================
+// SAFE GLOBAL STATE
+// =====================================================
+
 if (typeof window.lastRoutesBounds === "undefined") {
   window.lastRoutesBounds = null;
 }
+
 if (typeof window.lastRoutesView === "undefined") {
-  window.lastRoutesView = null; // { center, zoom, bearing, pitch }
+  window.lastRoutesView = null;
 }
+
 if (typeof window._prevMapMode === "undefined") {
   window._prevMapMode = "routes";
 }
 
+
 // =====================================================
-// MAP INIT - Dark theme, UK-centric starting view
+// MAP INITIALISATION
 // =====================================================
+
 const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/mapbox/dark-v11",
+
+  // UK-centred initial view
   center: [-1.5, 53.5],
-  zoom: 4,
+  zoom: 4
 });
 
-map.addControl(new mapboxgl.NavigationControl(), "top-right");
+map.addControl(
+  new mapboxgl.NavigationControl(),
+  "top-right"
+);
+
+window.map = map;
+
+
+// =====================================================
+// STATE HELPERS
+// =====================================================
+
+function getCurrentMapMode() {
+  if (window.appState?.mode) {
+    return window.appState.mode;
+  }
+
+  if (typeof mapMode !== "undefined") {
+    return mapMode;
+  }
+
+  return "routes";
+}
+
+
+function getCurrentIsolatedUid() {
+  if (window.appState?.isolatedUid) {
+    return window.appState.isolatedUid;
+  }
+
+  if (typeof isolatedUid !== "undefined") {
+    return isolatedUid;
+  }
+
+  return null;
+}
+
+
+function getCurrentRoutes() {
+  if (Array.isArray(window.currentRoutes)) {
+    return window.currentRoutes;
+  }
+
+  /*
+   * Compatibility with files that still expose
+   * currentRoutes as a standalone global variable.
+   */
+  if (
+    typeof currentRoutes !== "undefined" &&
+    Array.isArray(currentRoutes)
+  ) {
+    return currentRoutes;
+  }
+
+  return [];
+}
+
+
+// =====================================================
+// GENERIC MAP HELPERS
+// =====================================================
+
+function setMapLayerVisibility(
+  layerId,
+  visibility
+) {
+  if (!map.getLayer(layerId)) {
+    return;
+  }
+
+  map.setLayoutProperty(
+    layerId,
+    "visibility",
+    visibility
+  );
+}
+
+
+/*
+ * Recursively walks through nested GeoJSON coordinate
+ * arrays and passes each valid longitude/latitude pair
+ * to the supplied callback.
+ */
+function walkCoordinates(
+  coordinates,
+  callback
+) {
+  if (!Array.isArray(coordinates)) {
+    return;
+  }
+
+  const longitude =
+    Number(coordinates[0]);
+
+  const latitude =
+    Number(coordinates[1]);
+
+  if (
+    coordinates.length >= 2 &&
+    Number.isFinite(longitude) &&
+    Number.isFinite(latitude)
+  ) {
+    callback([
+      longitude,
+      latitude
+    ]);
+
+    return;
+  }
+
+  coordinates.forEach(item => {
+    walkCoordinates(item, callback);
+  });
+}
+
 
 // =====================================================
 // BASE MAP CLEANUP
 // =====================================================
 
 function hideSubCountryBorders() {
-  const layers = map.getStyle().layers || [];
+  const layers =
+    map.getStyle()?.layers || [];
+
   layers.forEach(layer => {
-    const id = layer.id || "";
-    if (
-      id.includes("admin-1") ||
-      id.includes("admin-2") ||
-      id.includes("boundary-state") ||
-      id.includes("boundary-province")
-    ) {
-      try { map.setLayoutProperty(id, "visibility", "none"); } catch {}
+    const layerId =
+      String(layer.id || "");
+
+    const isSubCountryBorder =
+      layerId.includes("admin-1") ||
+      layerId.includes("admin-2") ||
+      layerId.includes("boundary-state") ||
+      layerId.includes("boundary-province");
+
+    if (!isSubCountryBorder) {
+      return;
     }
+
+    setMapLayerVisibility(
+      layerId,
+      "none"
+    );
   });
 }
+
 
 function hideCityLabels() {
-  const layers = map.getStyle().layers || [];
+  const layers =
+    map.getStyle()?.layers || [];
+
   layers.forEach(layer => {
-    const id = layer.id || "";
-    if (
-      id.includes("place-city") ||
-      id.includes("place-town") ||
-      id.includes("place-village") ||
-      id.includes("settlement") ||
-      (id.includes("place-label") && !id.includes("country"))
-    ) {
-      try { map.setLayoutProperty(id, "visibility", "none"); } catch {}
+    const layerId =
+      String(layer.id || "");
+
+    const isCityLabel =
+      layerId.includes("place-city") ||
+      layerId.includes("place-town") ||
+      layerId.includes("place-village") ||
+      layerId.includes("settlement") ||
+      (
+        layerId.includes("place-label") &&
+        !layerId.includes("country")
+      );
+
+    if (!isCityLabel) {
+      return;
     }
+
+    setMapLayerVisibility(
+      layerId,
+      "none"
+    );
   });
 }
 
+window.hideSubCountryBorders =
+  hideSubCountryBorders;
+
+window.hideCityLabels =
+  hideCityLabels;
+
+
 // =====================================================
-// ROUTE FITTING
+// ROUTE CAMERA FITTING
 // =====================================================
 
-function expandBounds(bounds, xPercent = 0.10, yPercent = 0.15) {
-
-    const west  = bounds.getWest();
-    const east  = bounds.getEast();
-    const south = bounds.getSouth();
-    const north = bounds.getNorth();
-
-    const width  = east - west;
-    const height = north - south;
-
-    return new mapboxgl.LngLatBounds(
-        [
-            west  - (width  * xPercent),
-            south - (height * yPercent)
-        ],
-        [
-            east  + (width  * xPercent),
-            north + (height * yPercent)
-        ]
-    );
-}
-
-
-
-function fitToBoundsFromLineGeoms(geoms) {
-  if (!map || !Array.isArray(geoms) || geoms.length === 0) {
+function fitToBoundsFromLineGeoms(geometries) {
+  if (
+    !Array.isArray(geometries) ||
+    geometries.length === 0
+  ) {
     return;
   }
 
-  const bounds = new mapboxgl.LngLatBounds();
+  const bounds =
+    new mapboxgl.LngLatBounds();
+
   let validCoordinateCount = 0;
 
-  // Recursively extract coordinates from LineString,
-  // MultiLineString and other nested coordinate arrays.
-  function addCoordinatesToBounds(coordinates) {
-    if (!Array.isArray(coordinates)) {
+  geometries.forEach(geometry => {
+    if (!geometry) {
       return;
     }
 
-    // A single valid [longitude, latitude] coordinate
-    if (
-      coordinates.length >= 2 &&
-      Number.isFinite(Number(coordinates[0])) &&
-      Number.isFinite(Number(coordinates[1]))
-    ) {
-      const longitude = Number(coordinates[0]);
-      const latitude = Number(coordinates[1]);
+    /*
+     * Accept either:
+     * - a GeoJSON geometry object; or
+     * - a raw nested coordinate array.
+     */
+    const coordinates =
+      geometry.coordinates ||
+      geometry;
 
-      bounds.extend([longitude, latitude]);
-      validCoordinateCount += 1;
-      return;
-    }
-
-    // Continue through nested coordinate arrays
-    coordinates.forEach(addCoordinatesToBounds);
-  }
-
-  geoms.forEach(geom => {
-    if (!geom) {
-      return;
-    }
-
-    // Accept either a geometry object or raw coordinates
-    const coordinates = geom.coordinates || geom;
-    addCoordinatesToBounds(coordinates);
+    walkCoordinates(
+      coordinates,
+      coordinate => {
+        bounds.extend(coordinate);
+        validCoordinateCount += 1;
+      }
+    );
   });
 
-  if (validCoordinateCount === 0 || bounds.isEmpty()) {
+  if (
+    validCoordinateCount === 0 ||
+    bounds.isEmpty()
+  ) {
     console.warn(
-      "[map] fitToBoundsFromLineGeoms: no valid coordinates found"
+      "[map] No valid coordinates were available for camera fitting"
     );
+
     return;
   }
 
-  const west = bounds.getWest();
-  const east = bounds.getEast();
-  const south = bounds.getSouth();
-  const north = bounds.getNorth();
+  const west =
+    bounds.getWest();
 
-  const longitudeSpan = east - west;
-  const latitudeSpan = north - south;
+  const east =
+    bounds.getEast();
+
+  const south =
+    bounds.getSouth();
+
+  const north =
+    bounds.getNorth();
+
+  const longitudeSpan =
+    east - west;
+
+  const latitudeSpan =
+    north - south;
 
   /*
-   * Expand the geographic bounds.
+   * Expand geographic bounds before applying the
+   * Mapbox pixel padding.
    *
-   * Horizontal: 10% on the left and right
-   * Vertical:   15% on the top and bottom
-   *
-   * The larger vertical expansion gives tall routes more
-   * room around their origin and destination markers.
+   * The larger vertical percentage gives tall routes
+   * more space above and below their endpoints.
    */
-  const horizontalExpansion = Math.max(
-    longitudeSpan * 0.10,
-    0.05
-  );
+  const horizontalExpansion =
+    Math.max(
+      longitudeSpan * 0.10,
+      0.05
+    );
 
-  const verticalExpansion = Math.max(
-    latitudeSpan * 0.15,
-    0.05
-  );
+  const verticalExpansion =
+    Math.max(
+      latitudeSpan * 0.15,
+      0.05
+    );
 
-  const expandedBounds = new mapboxgl.LngLatBounds(
-    [
-      west - horizontalExpansion,
-      south - verticalExpansion
-    ],
-    [
-      east + horizontalExpansion,
-      north + verticalExpansion
-    ]
-  );
+  const expandedBounds =
+    new mapboxgl.LngLatBounds(
+      [
+        west - horizontalExpansion,
+        south - verticalExpansion
+      ],
+      [
+        east + horizontalExpansion,
+        north + verticalExpansion
+      ]
+    );
 
-  map.fitBounds(expandedBounds, {
-    padding: {
-      top: 100,
-      bottom: 100,
-      left:
-        typeof getSidebarLeftPad === "function"
-          ? getSidebarLeftPad()
-          : 100,
-      right: 100
-    },
-    duration: 650,
-    essential: true
-  });
+  const leftPadding =
+    typeof getSidebarLeftPad === "function"
+      ? getSidebarLeftPad()
+      : 100;
+
+  map.fitBounds(
+    expandedBounds,
+    {
+      padding: {
+        top: 100,
+        bottom: 100,
+        left: leftPadding,
+        right: 100
+      },
+
+      duration: 650,
+      essential: true
+    }
+  );
 }
 
+window.fitToBoundsFromLineGeoms =
+  fitToBoundsFromLineGeoms;
 
 
 // =====================================================
-// VIEW RESTORATION (robust camera snapshot + restore)
+// ROUTE VIEW SNAPSHOT
 // =====================================================
+
 function storeCurrentMapViewAsLastRoutes() {
-  try {
-    window.lastRoutesView = {
-      center: map.getCenter(),
-      zoom: map.getZoom(),
-      bearing: map.getBearing(),
-      pitch: map.getPitch(),
-    };
-  } catch {
-    window.lastRoutesView = null;
-  }
+  window.lastRoutesView = {
+    center: map.getCenter(),
+    zoom: map.getZoom(),
+    bearing: map.getBearing(),
+    pitch: map.getPitch()
+  };
 
-  // Keep bounds as a fallback
-  try {
-    window.lastRoutesBounds = map.getBounds();
-  } catch {
-    window.lastRoutesBounds = null;
-  }
+  window.lastRoutesBounds =
+    map.getBounds();
 }
+
+
+// =====================================================
+// RESTORE ROUTE VIEW
+// =====================================================
 
 function restoreLastRoutesViewOrBoundsOrAllRoutes() {
-  // Stop any in-flight camera animation from the countries fitBounds
-  try { map.stop(); } catch {}
+  /*
+   * Stop any camera animation started while entering
+   * Countries mode.
+   */
+  map.stop();
 
+  // Best option: restore exact centre and zoom.
   if (window.lastRoutesView) {
     map.easeTo({
-      center: window.lastRoutesView.center,
-      zoom: window.lastRoutesView.zoom,
-      bearing: window.lastRoutesView.bearing,
-      pitch: window.lastRoutesView.pitch,
+      center:
+        window.lastRoutesView.center,
+
+      zoom:
+        window.lastRoutesView.zoom,
+
+      bearing:
+        window.lastRoutesView.bearing,
+
+      pitch:
+        window.lastRoutesView.pitch,
+
       duration: 650,
+      essential: true
     });
+
     return;
   }
 
+  // Fallback: restore the saved map bounds.
   if (window.lastRoutesBounds) {
-  map.fitBounds(bounds, {
-    padding: {
-      top: 320,
-      bottom: 180,
-      left: getSidebarLeftPad() + 80,
-      right: 120,
-    },
-    duration: 650,
-  });
+    const leftPadding =
+      typeof getSidebarLeftPad === "function"
+        ? getSidebarLeftPad() + 80
+        : 180;
+
+    map.fitBounds(
+      window.lastRoutesBounds,
+      {
+        padding: {
+          top: 320,
+          bottom: 180,
+          left: leftPadding,
+          right: 120
+        },
+
+        duration: 650,
+        essential: true
+      }
+    );
+
     return;
   }
 
-  if (Array.isArray(currentRoutes)) {
-    fitToBoundsFromLineGeoms(currentRoutes.map(r => r.geom));
+  /*
+   * Final fallback: calculate the view again from all
+   * currently displayed route geometries.
+   */
+  const geometries =
+    getCurrentRoutes()
+      .map(route => route?.geom)
+      .filter(Boolean);
+
+  fitToBoundsFromLineGeoms(
+    geometries
+  );
+}
+
+window.storeCurrentMapViewAsLastRoutes =
+  storeCurrentMapViewAsLastRoutes;
+
+window.restoreLastRoutesViewOrBoundsOrAllRoutes =
+  restoreLastRoutesViewOrBoundsOrAllRoutes;
+
+
+// =====================================================
+// COUNTRIES LAYER
+// =====================================================
+
+function ensureCountriesLayer() {
+  if (!map.getSource("countries")) {
+    map.addSource("countries", {
+      type: "vector",
+      url:
+        "mapbox://mapbox.country-boundaries-v1"
+    });
+  }
+
+  if (!map.getLayer("countries-fill")) {
+    map.addLayer({
+      id: "countries-fill",
+      type: "fill",
+      source: "countries",
+      "source-layer":
+        "country_boundaries",
+
+      paint: {
+        "fill-color": "#C9A24D",
+        "fill-opacity": 0.45
+      },
+
+      /*
+       * Begin with a filter that matches no real
+       * country until route countries are supplied.
+       */
+      filter: [
+        "in",
+        "name_en",
+        ""
+      ]
+    });
   }
 }
 
-// =====================================================
-// COUNTRIES MODE (Mapbox boundaries)
-// =====================================================
-function ensureCountriesLayer() {
-  if (map.getSource("countries")) return;
 
-  map.addSource("countries", {
-    type: "vector",
-    url: "mapbox://mapbox.country-boundaries-v1",
-  });
-
-  map.addLayer({
-    id: "countries-fill",
-    type: "fill",
-    source: "countries",
-    "source-layer": "country_boundaries",
-    paint: {
-      "fill-color": "#C9A24D",
-      "fill-opacity": 0.45,
-    },
-    filter: ["in", "name_en", ""],
-  });
-}
+// =====================================================
+// COUNTRY FILTER FROM ROUTES
+// =====================================================
 
 function setCountriesFilterFromRoutes(routes) {
   ensureCountriesLayer();
-  const names = [...new Set(
-    (routes || []).map(r => r.destination_country).filter(Boolean)
-  )];
-  map.setFilter("countries-fill", ["in", "name_en", ...names]);
+
+  const countryNames = [
+    ...new Set(
+      (routes || [])
+        .map(route =>
+          route?.destination_country
+        )
+        .filter(Boolean)
+    )
+  ];
+
+  map.setFilter(
+    "countries-fill",
+    [
+      "in",
+      "name_en",
+      ...countryNames
+    ]
+  );
 }
+
+window.setCountriesFilterFromRoutes =
+  setCountriesFilterFromRoutes;
+
+
+// =====================================================
+// FIT TO VISIBLE COUNTRIES
+// =====================================================
 
 function fitToVisibleCountries() {
-  if (!map.getLayer("countries-fill")) return;
+  if (!map.getLayer("countries-fill")) {
+    return;
+  }
 
-  const rendered = map.queryRenderedFeatures({ layers: ["countries-fill"] });
-  if (!rendered?.length) return;
+  const renderedCountries =
+    map.queryRenderedFeatures({
+      layers: ["countries-fill"]
+    });
 
-  const bounds = new mapboxgl.LngLatBounds();
+  if (!renderedCountries.length) {
+    return;
+  }
 
-  rendered.forEach(f => {
-    const walk = c => {
-      if (!Array.isArray(c)) return;
-      if (typeof c[0] === "number" && typeof c[1] === "number") {
-        bounds.extend(c);
-      } else {
-        c.forEach(walk);
+  const bounds =
+    new mapboxgl.LngLatBounds();
+
+  renderedCountries.forEach(feature => {
+    walkCoordinates(
+      feature.geometry?.coordinates,
+      coordinate => {
+        bounds.extend(coordinate);
       }
-    };
-    walk(f.geometry?.coordinates);
+    );
   });
 
-  map.fitBounds(bounds, {
-    padding: {
-      top: 320,
-      bottom: 180,
-      left: getSidebarLeftPad() + 80,
-      right: 120,
-    },
-    duration: 650,
-  });
+  if (bounds.isEmpty()) {
+    return;
+  }
+
+  const leftPadding =
+    typeof getSidebarLeftPad === "function"
+      ? getSidebarLeftPad() + 80
+      : 180;
+
+  map.fitBounds(
+    bounds,
+    {
+      padding: {
+        top: 320,
+        bottom: 180,
+        left: leftPadding,
+        right: 120
+      },
+
+      duration: 650,
+      essential: true
+    }
+  );
 }
 
-// =====================================================
-// MAP MODE SWITCHING (FIXED FOR YOUR BUG)
-// =====================================================
-function applyMapMode() {
-  const prev = window._prevMapMode;
+window.fitToVisibleCountries =
+  fitToVisibleCountries;
 
-  if (mapMode === "countries") {
-    // Only snapshot when actually switching into countries mode
-    // (prevents overwriting the saved routes view)
-    if (prev !== "countries") {
+
+// =====================================================
+// MAP MODE SWITCHING
+// =====================================================
+
+function applyMapMode() {
+  const currentMode =
+    getCurrentMapMode();
+
+  const previousMode =
+    window._prevMapMode;
+
+  // -------------------------------------------------
+  // COUNTRIES MODE
+  // -------------------------------------------------
+
+  if (currentMode === "countries") {
+    /*
+     * Store the Routes view only when genuinely
+     * switching into Countries mode.
+     */
+    if (previousMode !== "countries") {
       storeCurrentMapViewAsLastRoutes();
     }
 
-    if (map.getLayer("routes-line")) map.setLayoutProperty("routes-line", "visibility", "none");
-    if (map.getLayer("routes-hit")) map.setLayoutProperty("routes-hit", "visibility", "none");
-    if (map.getLayer("airports-circle")) map.setLayoutProperty("airports-circle", "visibility", "none");
+    setMapLayerVisibility(
+      "routes-line",
+      "none"
+    );
 
-    const visibleRoutes = isolatedUid
-      ? currentRoutes.filter(r => r.uid === isolatedUid)
-      : currentRoutes;
+    setMapLayerVisibility(
+      "routes-hit",
+      "none"
+    );
 
-    setCountriesFilterFromRoutes(visibleRoutes);
+    setMapLayerVisibility(
+      "airports-circle",
+      "none"
+    );
 
-    if (map.getLayer("countries-fill")) {
-      map.setLayoutProperty("countries-fill", "visibility", "visible");
-    }
+    setMapLayerVisibility(
+      "journey-endpoints-circle",
+      "none"
+    );
 
-    // Fit after render completes
-    map.once("idle", fitToVisibleCountries);
+    const currentRoutes =
+      getCurrentRoutes();
 
-  } else {
-    // ROUTES MODE
-    if (map.getLayer("countries-fill")) {
-      map.setLayoutProperty("countries-fill", "visibility", "none");
-    }
-    if (map.getLayer("routes-line")) map.setLayoutProperty("routes-line", "visibility", "visible");
-    if (map.getLayer("routes-hit")) map.setLayoutProperty("routes-hit", "visibility", "visible");
-    if (map.getLayer("airports-circle")) map.setLayoutProperty("airports-circle", "visibility", "visible");
+    const isolatedRouteUid =
+      getCurrentIsolatedUid();
 
-    // Restore AFTER the map has settled the layer visibility changes
+    const visibleRoutes =
+      isolatedRouteUid
+        ? currentRoutes.filter(route =>
+            String(route.uid) ===
+            String(isolatedRouteUid)
+          )
+        : currentRoutes;
+
+    setCountriesFilterFromRoutes(
+      visibleRoutes
+    );
+
+    setMapLayerVisibility(
+      "countries-fill",
+      "visible"
+    );
+
+    /*
+     * Wait for Mapbox to render the country features
+     * before calculating their bounds.
+     */
+    map.once(
+      "idle",
+      fitToVisibleCountries
+    );
+  }
+
+  // -------------------------------------------------
+  // ROUTES MODE
+  // -------------------------------------------------
+
+  else {
+    setMapLayerVisibility(
+      "countries-fill",
+      "none"
+    );
+
+    setMapLayerVisibility(
+      "routes-line",
+      "visible"
+    );
+
+    setMapLayerVisibility(
+      "routes-hit",
+      "visible"
+    );
+
+    setMapLayerVisibility(
+      "airports-circle",
+      "visible"
+    );
+
+    setMapLayerVisibility(
+      "journey-endpoints-circle",
+      "visible"
+    );
+
+    /*
+     * Restore the previous Routes camera after Mapbox
+     * has applied the layer visibility changes.
+     */
     map.once("idle", () => {
       restoreLastRoutesViewOrBoundsOrAllRoutes();
 
-      // Re-apply isolation styling only (no zoom)
-      if (isolatedUid && typeof highlightIsolatedRoute === "function") {
-        highlightIsolatedRoute(isolatedUid);
+      const isolatedRouteUid =
+        getCurrentIsolatedUid();
+
+      /*
+       * Compatibility with older route-highlighting code.
+       */
+      if (
+        isolatedRouteUid &&
+        typeof highlightIsolatedRoute ===
+          "function"
+      ) {
+        highlightIsolatedRoute(
+          isolatedRouteUid
+        );
+      } else if (
+        typeof applyIsolationStyling ===
+          "function"
+      ) {
+        applyIsolationStyling();
       }
     });
   }
 
-  window._prevMapMode = mapMode;
+  window._prevMapMode =
+    currentMode;
 }
 
-
+window.applyMapMode =
+  applyMapMode;
 
 
 // =====================================================
-// AIRPORT SELECTION HOOKS (called from other files)
+// AIRPORT SELECTION HOOKS
 // =====================================================
 
-window.onAirportSelected = function (airportProps) {
-  // Hide global stats, show airport summary
-  if (window.showAirportSummary) {
-    window.showAirportSummary(airportProps);
-  }
-};
+window.onAirportSelected =
+  function onAirportSelected(
+    airportProperties
+  ) {
+    if (
+      typeof window.showAirportSummary ===
+      "function"
+    ) {
+      window.showAirportSummary(
+        airportProperties
+      );
+    }
+  };
 
-window.onAirportCleared = function () {
-  // Restore global stats bar
-  if (window.hideAirportSummary) {
-    window.hideAirportSummary();
-  }
-};
+
+window.onAirportCleared =
+  function onAirportCleared() {
+    if (
+      typeof window.hideAirportSummary ===
+      "function"
+    ) {
+      window.hideAirportSummary();
+    }
+  };
