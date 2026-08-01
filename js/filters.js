@@ -27,7 +27,23 @@
 //    Call loadRoutes()
 // =====================================================
 
+async function loadFilters() {
 
+  const previousSelections = {
+    years: new Set(selected.years || []),
+    airlines: new Set(selected.airlines || []),
+    types: new Set(selected.types || []),
+    airports: new Set(selected.airports || [])
+  };
+
+  const { data, error } = await sb
+    .from("journeys_routes_core_mv")
+    .select(
+      "year, airline, journey_type, origin, destination"
+    );
+
+  // Continue with the rest of loadFilters()
+}
 
 
 
@@ -153,6 +169,14 @@ document.addEventListener("click", e => {
 // =====================================================
 async function loadFilters() {
 
+  const previousSelections = {
+  years: new Set(selected.years || []),
+  airlines: new Set(selected.airlines || []),
+  types: new Set(selected.types || []),
+  airports: new Set(selected.airports || [])
+};
+
+  
   const { data, error } = await sb
     .from("journeys_routes_core_mv")
     .select("year, airline, journey_type, origin, destination");
@@ -276,33 +300,110 @@ async function loadFilters() {
     airports = [...groupItems, ...airportItems];
   }
 
-  // =====================================================
-  // RESET SELECTIONS
-  // =====================================================
-  selected.years.clear();
-  selected.airlines.clear();
-  selected.types.clear();
-  selected.airports = selected.airports || new Set();
-  selected.airports.clear();
+// =====================================================
+// PRESERVE AND RESTORE SELECTIONS
+// =====================================================
 
-  // =====================================================
-  // DEFAULTS
-  // =====================================================
-  const currentYear = String(new Date().getFullYear());
+selected.years =
+  selected.years || new Set();
 
+selected.airlines =
+  selected.airlines || new Set();
+
+selected.types =
+  selected.types || new Set();
+
+selected.airports =
+  selected.airports || new Set();
+
+selected.years.clear();
+selected.airlines.clear();
+selected.types.clear();
+selected.airports.clear();
+
+
+// -------------------------------------------------
+// RESTORE VALID YEAR SELECTIONS
+// -------------------------------------------------
+
+previousSelections.years.forEach(year => {
+  if (years.includes(year)) {
+    selected.years.add(year);
+  }
+});
+
+
+// -------------------------------------------------
+// RESTORE VALID AIRLINE SELECTIONS
+// -------------------------------------------------
+
+previousSelections.airlines.forEach(airline => {
+  if (airlines.includes(airline)) {
+    selected.airlines.add(airline);
+  }
+});
+
+
+// -------------------------------------------------
+// RESTORE VALID JOURNEY-TYPE SELECTIONS
+// -------------------------------------------------
+
+previousSelections.types.forEach(type => {
+  if (types.includes(type)) {
+    selected.types.add(type);
+  }
+});
+
+
+// -------------------------------------------------
+// RESTORE VALID AIRPORT SELECTIONS
+// -------------------------------------------------
+
+const validAirportValues = new Set(
+  airports
+    .filter(item => !item.divider)
+    .map(item =>
+      typeof item === "object"
+        ? item.value
+        : item
+    )
+);
+
+selected.airports.size === 0
+
+
+// =====================================================
+// DEFAULTS
+// Only apply when no valid saved selection remains
+// =====================================================
+
+const currentYear =
+  String(new Date().getFullYear());
+
+if (selected.years.size === 0) {
   if (years.includes(currentYear)) {
     selected.years.add(currentYear);
   } else if (years.length) {
     selected.years.add(years[0]);
   }
+}
 
-  if (types.includes("Flight")) {
-    selected.types.add("Flight");
-  }
+if (
+  selected.types.size === 0 &&
+  types.includes("Flight")
+) {
+  selected.types.add("Flight");
+}
 
-  airports.forEach(a => {
-    if (a.value) selected.airports.add(a.value);
-  });
+/*
+ * Leave airlines empty to mean:
+ * "Do not restrict by airline."
+ */
+
+/*
+ * Leave airports empty to mean:
+ * "Do not restrict by airport."
+ */
 
   // =====================================================
   // BUILD MENUS
