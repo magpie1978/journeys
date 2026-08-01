@@ -1,42 +1,58 @@
-// =====================================================================
-// STATE
-// =====================================================================
-let currentRoutes = [];          // Holds the currently loaded + filtered routes from Supabase.
-let isolatedUid = null;          // Stores the UID of the currently “isolated” route (clicked in map or sidebar).
-let mapMode = "routes";          // defaults map to routes 
-let lastNonIsolatedView = null;  // Used to restore map position after: Route isolation or Mode switching
-let lastRoutesBounds = null;     // for “revert to prior view” after isolate
+// =====================================================
+// STATE.JS
+// Shared application and filter state
+// =====================================================
 
-// Holds active filter selections  -  Using Set avoids duplicates and makes add/remove trivial
+
+// =====================================================
+// APPLICATION STATE
+// =====================================================
+
+window.appState =
+  window.appState || {
+    mode: "routes",
+    isolatedUid: null,
+    activeAirport: null
+  };
+
+
+// Ensure all expected properties exist if another file
+// created appState before this one loaded.
+if (!("mode" in window.appState)) {
+  window.appState.mode = "routes";
+}
+
+if (!("isolatedUid" in window.appState)) {
+  window.appState.isolatedUid = null;
+}
+
+if (!("activeAirport" in window.appState)) {
+  window.appState.activeAirport = null;
+}
+
+
+// =====================================================
+// ROUTE COLLECTIONS
+// =====================================================
+
+window.allRoutes =
+  Array.isArray(window.allRoutes)
+    ? window.allRoutes
+    : [];
+
+window.currentRoutes =
+  Array.isArray(window.currentRoutes)
+    ? window.currentRoutes
+    : [];
+
+
+// =====================================================
+// FILTER SELECTIONS
+// =====================================================
+
 const selected = {
   years: new Set(),
   airlines: new Set(),
   types: new Set(),
   airports: new Set()
 };
-
-
-// =====================================================
-// DOM ELEMENTS   -   Caches references to frequently accessed DOM elements: Sidebar, Flight list, Buttons, “Glass counter” UI boxes.  This avoids repeated DOM queries later.
-// =====================================================
-const sidebar = document.getElementById("sidebar");
-const flightListEl = document.getElementById("flightList");
-const sidebarToggle = document.getElementById("sidebarToggle");
-const reloadBtn = document.getElementById("reloadBtn");
-
-// Glass boxes
-const journeyBox = document.getElementById("journeyCounter");
-const milesBox = document.getElementById("milesCounter");
-const countriesBox = document.getElementById("countriesCounter");
-const airlinesBox = document.getElementById("airlinesCounter");
-const durationBox = document.getElementById("durationCounter");
-
-// Numbers insode glass boxes
-const journeyNumberEl = journeyBox?.querySelector(".glass-number");
-const journeyLabelEl = journeyBox?.querySelector(".glass-label");
-const milesNumberEl = milesBox?.querySelector(".glass-number");
-const countriesNumberEl = countriesBox?.querySelector(".glass-number");
-const airlinesNumberEl = airlinesBox?.querySelector(".glass-number");
-const durationNumberEl = durationBox?.querySelector(".glass-number");
-const airlinesPanel = document.getElementById("airlinesPanel");
-const airlinesListEl = document.getElementById("airlinesList");
