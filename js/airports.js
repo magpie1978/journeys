@@ -932,29 +932,72 @@ function bindAirportClick() {
 // =====================================================
 
 function clearAirportSelection() {
+  // Clear the selected airport state
   setActiveAirportFilter(null);
+
+  // Clear any selected individual journey
   clearIsolatedRoute();
 
+  // Restore the complete route collection produced
+  // by the current top-bar filters
   const baseRoutes =
-    Array.isArray(
-      window.allRoutes
-    )
+    Array.isArray(window.allRoutes)
       ? window.allRoutes
       : [];
 
-  if (
-    typeof renderRoutes ===
-    "function"
-  ) {
+  if (typeof renderRoutes === "function") {
+    /*
+     * Restore all routes, counters, sidebar entries
+     * and airport markers.
+     *
+     * Disable the automatic fit here because we will
+     * perform a reliable fit after Mapbox has processed
+     * the restored GeoJSON source.
+     */
     renderRoutes(baseRoutes, {
       updateBaseRoutes: false,
-      fitMap: true
+      fitMap: false
     });
   }
 
+  const refocusMap = () => {
+    if (
+      typeof fitToBoundsFromLineGeoms !== "function"
+    ) {
+      return;
+    }
+
+    const geometries = baseRoutes
+      .map(route => route?.geom)
+      .filter(Boolean);
+
+    if (!geometries.length) {
+      return;
+    }
+
+    fitToBoundsFromLineGeoms(geometries);
+  };
+
+  /*
+   * Wait until Mapbox has processed the restored
+   * route source before fitting the camera.
+   */
   if (
-    typeof window.onAirportCleared ===
-    "function"
+    typeof map !== "undefined" &&
+    map
+  ) {
+    if (map.loaded()) {
+      map.once("idle", refocusMap);
+    } else {
+      map.once("load", () => {
+        map.once("idle", refocusMap);
+      });
+    }
+  }
+
+  // Restore the normal statistics bar
+  if (
+    typeof window.onAirportCleared === "function"
   ) {
     window.onAirportCleared();
   }
@@ -962,6 +1005,7 @@ function clearAirportSelection() {
 
 window.clearAirportSelection =
   clearAirportSelection;
+
 
 
 // =====================================================
