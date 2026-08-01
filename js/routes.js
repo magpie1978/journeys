@@ -458,7 +458,8 @@ window.renderRoutes =
 
 async function loadRoutes() {
   if (
-    !window.selected?.years ||
+    typeof selected === "undefined" ||
+    !(selected.years instanceof Set) ||
     selected.years.size === 0
   ) {
     console.warn(
@@ -481,7 +482,6 @@ async function loadRoutes() {
       journey_type,
       origin,
       destination,
-      origin_country,
       destination_country,
       journey_distance,
       journey_date,
@@ -489,6 +489,7 @@ async function loadRoutes() {
       journey_duration_seconds,
       geom
     `);
+}
 
   // -------------------------------------------------
   // YEAR FILTER
