@@ -144,7 +144,6 @@ function formatSecondsToHM(seconds) {
   const minutes =
     Math.floor((totalSeconds % 3600) / 60);
 
-  //return `${hours}h ${String(minutes).padStart(2,"0")}min`;
   return `${hours}h ${String(minutes).padStart(2,"0")}`;
 }
 
