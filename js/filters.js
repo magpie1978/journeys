@@ -387,6 +387,24 @@ async function loadFilters() {
   )].sort();
 
   // =====================================================
+  // CABIN
+  // =====================================================
+  const {
+    data: cabinData,
+    error: cabinError
+  } = await sb
+    .from("flights")
+    .select("cabin")
+    .not("cabin", "is", null);
+
+  if (cabinError) {
+    console.error(
+      "[filters] cabin load failed:",
+      cabinError
+    );
+  }
+
+  // =====================================================
   // TYPES
   // =====================================================
   const types = [...new Set(
@@ -394,6 +412,19 @@ async function loadFilters() {
       .map(d => d.journey_type)
       .filter(Boolean)
   )].sort();
+
+
+
+  // =====================================================
+  // CABIN / CLASS OF FLIGHT
+  // =====================================================
+  const cabins = [
+    ...new Set(
+      (cabinData || [])
+        .map(row => row.cabin)
+        .filter(Boolean)
+    )
+  ].sort();
 
   // =====================================================
   // AIRPORT CODES USED IN ROUTES
@@ -498,12 +529,16 @@ selected.types =
 selected.airports =
   selected.airports || new Set();
 
+selected.cabins =
+  selected.cabins || new Set();
+
 selected.years.clear();
 selected.airlines.clear();
 selected.types.clear();
 selected.airports.clear();
+selected.cabins.clear();
 
-
+  
 // -------------------------------------------------
 // RESTORE VALID YEAR SELECTIONS
 // -------------------------------------------------
@@ -594,6 +629,7 @@ if (
   buildFilterMenu("filter-airline", airlines, selected.airlines);
   buildFilterMenu("filter-type", types, selected.types);
   buildFilterMenu("filter-airport", airports, selected.airports);
+  buildFilterMenu("filter-cabin",cabins,selected.cabins);
 
   // =====================================================
   // INITIAL LOAD
