@@ -215,10 +215,11 @@ body {
 
 
 /* =====================================================
-   AIRPORT SEARCH
+   FILTER SEARCH
+   Used by Airport and Airline dropdowns
 ===================================================== */
 
-.airport-search-wrapper {
+.filter-search-wrapper {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -229,7 +230,7 @@ body {
 }
 
 
-.airport-search {
+.filter-search {
   width: 100%;
   height: 34px;
 
@@ -248,23 +249,21 @@ body {
 }
 
 
-.airport-search::placeholder {
+.filter-search::placeholder {
   color: #777;
 }
 
 
-.airport-search:focus {
+.filter-search:focus {
   border-color: #9fc9ff;
+
   box-shadow:
     0 0 0 2px
     rgba(159, 201, 255, 0.2);
 }
 
 
-/* Remove browser-specific decoration from
-   the search field where possible */
-
-.airport-search::-webkit-search-cancel-button {
+.filter-search::-webkit-search-cancel-button {
   cursor: pointer;
 }
 
