@@ -482,12 +482,19 @@ body {
 
 .airline-name-box {
   min-width: 180px !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
 }
 
 .airline-name-box .airline-name {
   font-size: 20px;
   line-height: 1.15;
   white-space: nowrap;
+  text-align: center;
 }
 
 /* =====================================================
