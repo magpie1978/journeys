@@ -497,6 +497,35 @@ body {
   text-align: center;
 }
 
+.airport-name-box {
+  min-width: 200px !important;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.airport-code-display {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.airport-name-display {
+  margin-top: 3px;
+
+  font-size: 12px;
+  line-height: 1.2;
+
+  opacity: 0.85;
+
+  white-space: nowrap;
+}
+
 /* =====================================================
    AIRPORT SUMMARY BAR
 ===================================================== */
