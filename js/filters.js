@@ -29,14 +29,15 @@
 
 async function loadFilters() {
 
-  const previousSelections = {
-    years: new Set(selected.years || []),
-    airlines: new Set(selected.airlines || []),
-    types: new Set(selected.types || []),
-    airports: new Set(selected.airports || []),
-    cabins: new Set(selected.cabins || [])
-  };
+const previousSelections = {
+  years: new Set(selected.years || []),
+  airlines: new Set(selected.airlines || []),
+  types: new Set(selected.types || []),
+  airports: new Set(selected.airports || []),
+  cabins: new Set(selected.cabins || [])
+};
 
+  
   const { data, error } = await sb
     .from("journeys_routes_core_3_mv")
     .select(
