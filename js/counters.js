@@ -14,22 +14,22 @@
 //   ↓
 // Check whether it has already been initialised
 //   ↓
-// Find and store references to the counter elements
+// Find and store references to the  elements
 //   ↓
 // Define formatting and calculation helpers
 //   ↓
-// Expose updateAllCounters() globally
+// Expose updateAlls() globally
 //   ↓
-// Other files call updateAllCounters(routes)
+// Other files call updateAlls(routes)
 //   ↓
-// The counters are recalculated from the supplied route array
+// The s are recalculated from the supplied route array
 // =====================================================
 
 
 
 // Prevent duplicate initialisation
-if (!window.__COUNTERS3__) {
-  window.__COUNTERS3__ = true;
+if (!window.__S3__) {
+  window.__S3__ = true;
 
 
 // -----------------------------------------------------
@@ -51,6 +51,19 @@ const transportNumberEl =
 const transportLabelEl =
   document.querySelector(
     "#transportCounter .glass-label"
+  );
+
+const trainCounterEl =
+  document.getElementById("trainCounter");
+
+const trainNumberEl =
+  document.querySelector(
+    "#trainCounter .glass-number"
+  );
+
+const trainLabelEl =
+  document.querySelector(
+    "#trainCounter .glass-label"
   );
 
 const milesNumberEl =
@@ -157,6 +170,70 @@ function updateTransportCounter(routes = []) {
         : "DRIVES";
   }
 }
+
+
+function updateTrainCounter(routes = []) {
+
+  // -----------------------------------------------------
+  // SHOW ONLY WHEN "TRAIN" IS SELECTED
+  // -----------------------------------------------------
+
+  const trainSelected =
+    typeof selected !== "undefined" &&
+    selected.types instanceof Set &&
+    [...selected.types].some(
+      type =>
+        String(type).toLowerCase() === "train"
+    );
+
+
+  if (trainCounterEl) {
+    trainCounterEl.classList.toggle(
+      "hidden",
+      !trainSelected
+    );
+  }
+
+
+  if (!trainSelected) {
+    return;
+  }
+
+
+  // -----------------------------------------------------
+  // COUNT TRAIN JOURNEYS ONLY
+  // -----------------------------------------------------
+
+  const trains =
+    routes.filter(
+      route =>
+        String(
+          route?.journey_type || ""
+        ).toLowerCase() === "train"
+    );
+
+  const trainCount =
+    trains.length;
+
+
+  // -----------------------------------------------------
+  // UPDATE GLASS CONTAINER
+  // -----------------------------------------------------
+
+  if (trainNumberEl) {
+    trainNumberEl.textContent =
+      trainCount.toLocaleString();
+  }
+
+  if (trainLabelEl) {
+    trainLabelEl.textContent =
+      trainCount === 1
+        ? "TRAIN"
+        : "TRAINS";
+  }
+}
+
+
   
 
 // -----------------------------------------------------
@@ -192,6 +269,7 @@ function updateAllCounters(routes = []) {
 
   
   updateTransportCounter(routes);
+  updateTrainCounter(routes);
 
   const miles = routes.reduce(
     (s,r) => s + (Number(r.journey_distance)||0), 0);
