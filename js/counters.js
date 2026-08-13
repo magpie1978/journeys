@@ -35,6 +35,17 @@ if (!window.__S3__) {
 // -----------------------------------------------------
 // DOM REFS
 // -----------------------------------------------------
+
+const selectedAirlineCounterEl =
+  document.getElementById(
+    "selectedAirlineCounter"
+  );
+
+const selectedAirlineNameEl =
+  document.querySelector(
+    "#selectedAirlineCounter .airline-name"
+  );
+  
 const journeyNumberEl =
   document.querySelector("#journeyCounter .glass-number");
 const journeyLabelEl =
@@ -321,6 +332,41 @@ function updateBoatCounter(routes = []) {
 }
 
 
+
+function updateSelectedAirlineCounter() {
+
+  if (
+    typeof selected === "undefined" ||
+    !(selected.airlines instanceof Set)
+  ) {
+    return;
+  }
+
+  const selectedAirlines =
+    [...selected.airlines];
+
+  // Show only when exactly one airline
+  // has been explicitly selected.
+  const showAirline =
+    selectedAirlines.length === 1;
+
+  if (selectedAirlineCounterEl) {
+    selectedAirlineCounterEl.classList.toggle(
+      "hidden",
+      !showAirline
+    );
+  }
+
+  if (
+    showAirline &&
+    selectedAirlineNameEl
+  ) {
+    selectedAirlineNameEl.textContent =
+      selectedAirlines[0];
+  }
+}
+
+  
 function updateBusCounter(routes = []) {
 
   const busSelected =
@@ -423,7 +469,7 @@ function updateAllCounters(routes = []) {
 //  journeyLabelEl.textContent =
 //    routes.length === 1 ? "FLIGHT" : "FLIGHTS";
 
-
+  updateSelectedAirlineCounter();
 
   const flightCount = routes.filter(
   route =>
