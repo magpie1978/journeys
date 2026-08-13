@@ -483,6 +483,7 @@ async function loadRoutes() {
       origin,
       destination,
       destination_country,
+      cabin,
       journey_distance,
       journey_date,
       year,
@@ -569,40 +570,6 @@ async function loadRoutes() {
   }
 
 
-  // -------------------------------------------------
-  // CABIN / CLASS FILTER
-  // -------------------------------------------------
-  
-  let allowedFlightUids = null;
-  
-  if (
-    selected.cabins instanceof Set &&
-    selected.cabins.size > 0
-  ) {
-  
-    const {
-      data: cabinRows,
-      error: cabinError
-    } = await sb
-      .from("flights")
-      .select("uid, cabin")
-      .in(
-        "cabin",
-        [...selected.cabins]
-      );
-  
-    if (cabinError) {
-      console.error(
-        "[routes] Cabin filter failed:",
-        cabinError
-      );
-    } else {
-      allowedFlightUids =
-        new Set(
-          (cabinRows || [])
-            .map(row => row.uid)
-            .filter(Boolean)
-        );
     }
   }
 
@@ -612,30 +579,34 @@ let routes =
 
 
 // -------------------------------------------------
-// APPLY CABIN FILTER TO FLIGHTS ONLY
+// CABIN / CLASS FILTER
+// Applies only to Flight journeys
 // -------------------------------------------------
 
-if (allowedFlightUids) {
+if (
+  selected.cabins instanceof Set &&
+  selected.cabins.size > 0
+) {
 
-  routes =
-    routes.filter(route => {
+  routes = routes.filter(route => {
 
-      const journeyType =
-        String(
-          route?.journey_type || ""
-        ).toLowerCase();
+    const journeyType =
+      String(
+        route?.journey_type || ""
+      ).toLowerCase();
 
-      // Cabin/class applies only to flights.
-      // Keep Drive, Train, Boat, Bus, Walk etc.
-      if (journeyType !== "flight") {
-        return true;
-      }
+    // Cabin does not apply to Drive, Train,
+    // Boat, Bus or Walk journeys.
+    if (journeyType !== "flight") {
+      return true;
+    }
 
-      return allowedFlightUids.has(
-        route.uid
-      );
-    });
+    return selected.cabins.has(
+      route.cabin
+    );
+  });
 }
+
 
   // -------------------------------------------------
   // AIRPORT DROPDOWN FILTER
