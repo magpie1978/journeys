@@ -45,7 +45,8 @@ const airlinesListElement =
   document.getElementById("airlinesList");
 
 const countriesBoxElement =
-  document.getElementById("countriesBox");
+  //document.getElementById("countriesBox");
+  document.getElementById("countriesCounter");
 
 
 // =====================================================
