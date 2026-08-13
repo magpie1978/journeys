@@ -33,7 +33,8 @@ async function loadFilters() {
     years: new Set(selected.years || []),
     airlines: new Set(selected.airlines || []),
     types: new Set(selected.types || []),
-    airports: new Set(selected.airports || [])
+    airports: new Set(selected.airports || []),
+    cabins: new Set(selected.cabins || [])
   };
 
   const { data, error } = await sb
@@ -386,23 +387,7 @@ async function loadFilters() {
       .filter(Boolean)
   )].sort();
 
-  // =====================================================
-  // CABIN
-  // =====================================================
-  const {
-    data: cabinData,
-    error: cabinError
-  } = await sb
-    .from("flights")
-    .select("cabin")
-    .not("cabin", "is", null);
-
-  if (cabinError) {
-    console.error(
-      "[filters] cabin load failed:",
-      cabinError
-    );
-  }
+ 
 
   // =====================================================
   // TYPES
@@ -420,12 +405,13 @@ async function loadFilters() {
   // =====================================================
   const cabins = [
     ...new Set(
-      (cabinData || [])
+      (data || [])
         .map(row => row.cabin)
         .filter(Boolean)
     )
   ].sort();
 
+  
   // =====================================================
   // AIRPORT CODES USED IN ROUTES
   // =====================================================
@@ -587,6 +573,18 @@ const validAirportValues = new Set(
 );
 
 selected.airports.size === 0
+
+
+
+// -------------------------------------------------
+// RESTORE VALID CABIN SELECTIONS
+// -------------------------------------------------
+
+previousSelections.cabins.forEach(cabin => {
+  if (cabins.includes(cabin)) {
+    selected.cabins.add(cabin);
+  }
+});
 
 
 // =====================================================
