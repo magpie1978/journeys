@@ -440,13 +440,14 @@ function updateAllCounters(routes = []) {
       : "FLIGHTS";
 
 
-
-
-
   
   updateTransportCounter(routes);
   updateTrainCounter(routes);
+  updateBoatCounter(routes);
+  updateBusCounter(routes);
+  updateWalkCounter(routes);
 
+  
   const miles = routes.reduce(
     (s,r) => s + (Number(r.journey_distance)||0), 0);
 
