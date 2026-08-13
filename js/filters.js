@@ -62,94 +62,258 @@ function buildFilterMenu(containerId, values, targetSet) {
 
   list.innerHTML = "";
 
+  // =====================================================
+  // AIRPORT SEARCH
+  // =====================================================
+  // Only add the search box to the Airport dropdown.
+  let searchInput = null;
+
+  if (containerId === "filter-airport") {
+
+    const searchWrapper = document.createElement("div");
+    searchWrapper.className = "airport-search-wrapper";
+
+    searchInput = document.createElement("input");
+    searchInput.type = "search";
+    searchInput.className = "airport-search";
+    searchInput.placeholder = "Search airports...";
+    searchInput.autocomplete = "off";
+    searchInput.setAttribute(
+      "aria-label",
+      "Search airports"
+    );
+
+    searchWrapper.appendChild(searchInput);
+
+    // Put the search box above the airport options.
+    list.appendChild(searchWrapper);
+  }
+
+
+  // =====================================================
+  // BUILD OPTIONS
+  // =====================================================
+
   values.forEach(v => {
 
     // Divider row
     if (v.divider) {
       const hr = document.createElement("div");
       hr.className = "filter-divider";
+
+      // Mark it so the search logic can identify it.
+      hr.dataset.filterDivider = "true";
+
       list.appendChild(hr);
       return;
     }
 
-    const value = typeof v === "object" ? v.value : v;
-    const labelText = typeof v === "object" ? v.label : v;
+    const value =
+      typeof v === "object"
+        ? v.value
+        : v;
 
-    const label = document.createElement("label");
+    const labelText =
+      typeof v === "object"
+        ? v.label
+        : v;
+
+    const label =
+      document.createElement("label");
+
     label.innerHTML =
       `<input type="checkbox" value="${value}"> ${labelText}`;
 
-    const cb = label.querySelector("input");
-    cb.checked = targetSet.has(value);
+    // Store searchable text on the row.
+    label.dataset.searchText =
+      `${value} ${labelText}`.toLowerCase();
 
-    cb.addEventListener("change", () => {
-      cb.checked
-        ? targetSet.add(value)
-        : targetSet.delete(value);
+    const cb =
+      label.querySelector("input");
 
-      loadRoutes();
-    });
+    cb.checked =
+      targetSet.has(value);
+
+    cb.addEventListener(
+      "change",
+      () => {
+
+        cb.checked
+          ? targetSet.add(value)
+          : targetSet.delete(value);
+
+        loadRoutes();
+      }
+    );
 
     list.appendChild(label);
   });
 
-  // -------------------------------------------------
+
+  // =====================================================
+  // AIRPORT SEARCH FILTERING
+  // =====================================================
+
+  if (searchInput) {
+
+    searchInput.addEventListener(
+      "input",
+      () => {
+
+        const query =
+          searchInput.value
+            .trim()
+            .toLowerCase();
+
+        const optionLabels =
+          list.querySelectorAll(
+            "label[data-search-text]"
+          );
+
+        optionLabels.forEach(label => {
+
+          const searchText =
+            label.dataset.searchText || "";
+
+          const matches =
+            !query ||
+            searchText.includes(query);
+
+          label.style.display =
+            matches
+              ? ""
+              : "none";
+        });
+
+
+        // Hide dividers while searching.
+        // This keeps the filtered results tidy.
+        list
+          .querySelectorAll(
+            '[data-filter-divider="true"]'
+          )
+          .forEach(divider => {
+
+            divider.style.display =
+              query
+                ? "none"
+                : "";
+          });
+      }
+    );
+
+
+    // Prevent clicks inside the search field from
+    // bubbling up and affecting the dropdown.
+    searchInput.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+      }
+    );
+  }
+
+
+  // =====================================================
   // SELECT ALL
-  // -------------------------------------------------
+  // =====================================================
+
   selectAll.onclick = () => {
+
     targetSet.clear();
 
     values.forEach(v => {
+
       if (v.divider) return;
-      const value = typeof v === "object" ? v.value : v;
+
+      const value =
+        typeof v === "object"
+          ? v.value
+          : v;
+
       targetSet.add(value);
     });
 
-    list.querySelectorAll("input")
-      .forEach(cb => (cb.checked = true));
+    list
+      .querySelectorAll(
+        'input[type="checkbox"]'
+      )
+      .forEach(cb => {
+        cb.checked = true;
+      });
 
     loadRoutes();
   };
 
-  // -------------------------------------------------
+
+  // =====================================================
   // CLEAR
-  // -------------------------------------------------
+  // =====================================================
+
   clear.onclick = () => {
+
     targetSet.clear();
 
-    list.querySelectorAll("input")
-      .forEach(cb => (cb.checked = false));
+    list
+      .querySelectorAll(
+        'input[type="checkbox"]'
+      )
+      .forEach(cb => {
+        cb.checked = false;
+      });
 
     loadRoutes();
   };
 
-// -------------------------------------------------
-// TOGGLE DROPDOWN
-// Only one filter menu can be open at a time
-// -------------------------------------------------
-toggle.onclick = e => {
-  e.preventDefault();
-  e.stopPropagation();
 
-  const wasOpen =
-    menu.classList.contains("open");
+  // =====================================================
+  // TOGGLE DROPDOWN
+  // Only one filter menu can be open at a time
+  // =====================================================
 
-  // Close every other open filter menu
-  document
-    .querySelectorAll(".filter-menu.open")
-    .forEach(openMenu => {
-      if (openMenu !== menu) {
-        openMenu.classList.remove("open");
-      }
-    });
+  toggle.onclick = e => {
 
-  // Toggle the menu that was clicked
-  menu.classList.toggle(
-    "open",
-    !wasOpen
-  );
-};
+    e.preventDefault();
+    e.stopPropagation();
+
+    const wasOpen =
+      menu.classList.contains("open");
+
+    // Close every other open filter menu
+    document
+      .querySelectorAll(
+        ".filter-menu.open"
+      )
+      .forEach(openMenu => {
+
+        if (openMenu !== menu) {
+          openMenu.classList.remove(
+            "open"
+          );
+        }
+      });
+
+    // Toggle the menu that was clicked
+    menu.classList.toggle(
+      "open",
+      !wasOpen
+    );
+
+
+    // If opening the Airport dropdown,
+    // put the cursor straight into Search.
+    if (
+      !wasOpen &&
+      containerId === "filter-airport" &&
+      searchInput
+    ) {
+      requestAnimationFrame(() => {
+        searchInput.focus();
+      });
+    }
+  };
 }
+
 
 // =====================================================
 // CLOSE DROPDOWNS ON OUTSIDE CLICK
