@@ -420,6 +420,10 @@ body {
   text-transform: uppercase;
 }
 
+#countriesCounter {
+  cursor: pointer;
+}
+
 
 /* =====================================================
    AIRPORT SUMMARY BAR
