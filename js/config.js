@@ -54,7 +54,7 @@ const airlineLogoMap = {
   //Bus
   "FlixBus": "Flix.webp",
   //Train
-  "OBB": "obb.webp"
+  "OBB": "obb.webp",
   "British Rail":"britishrail.webp"
 };
 
