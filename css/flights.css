@@ -450,7 +450,7 @@ body {
 }
 
 .glass-box {
-  min-width: 126px;
+  min-width: 100px;
   padding: 10px 14px;
 
   background: rgba(255, 255, 255, 0.15);
