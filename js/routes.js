@@ -551,32 +551,28 @@ async function loadRoutes() {
     );
   }
 
-  const {
-    data,
+const {
+  data,
+  error
+} = await query;
+
+if (error) {
+  console.error(
+    "[routes] Route load failed:",
     error
-  } = await query;
+  );
 
-  if (error) {
-    console.error(
-      "[routes] Route load failed:",
-      error
-    );
+  clearRouteDisplay({
+    updateBaseRoutes: true
+  });
 
-    clearRouteDisplay({
-      updateBaseRoutes: true
-    });
+  return;
+}
 
-    return;
-  }
-
-
-    }
-  }
 
 let routes =
   (data || [])
     .filter(route => route?.geom);
-
 
 // -------------------------------------------------
 // CABIN / CLASS FILTER
