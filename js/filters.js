@@ -380,16 +380,26 @@ const previousSelections = {
 
 
 
-  // =====================================================
-  // CABIN / CLASS OF FLIGHT
-  // =====================================================
-  const cabins = [
-    ...new Set(
-      (data || [])
-        .map(row => row.cabin)
-        .filter(Boolean)
-    )
-  ].sort();
+// =====================================================
+// CABIN / CLASS OF FLIGHT
+// =====================================================
+
+  const cabinOrder = [
+    "First",
+    "Business",
+    "Premium Economy",
+    "Economy"
+  ];
+  
+  const availableCabins = new Set(
+    (data || [])
+      .map(row => row.cabin)
+      .filter(Boolean)
+  );
+  
+  const cabins = cabinOrder.filter(
+    cabin => availableCabins.has(cabin)
+  );
 
   
   // =====================================================
