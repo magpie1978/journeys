@@ -66,6 +66,47 @@ const trainLabelEl =
     "#trainCounter .glass-label"
   );
 
+  const boatCounterEl =
+  document.getElementById("boatCounter");
+
+const boatNumberEl =
+  document.querySelector(
+    "#boatCounter .glass-number"
+  );
+
+const boatLabelEl =
+  document.querySelector(
+    "#boatCounter .glass-label"
+  );
+
+
+const busCounterEl =
+  document.getElementById("busCounter");
+
+const busNumberEl =
+  document.querySelector(
+    "#busCounter .glass-number"
+  );
+
+const busLabelEl =
+  document.querySelector(
+    "#busCounter .glass-label"
+  );
+
+
+const walkCounterEl =
+  document.getElementById("walkCounter");
+
+const walkNumberEl =
+  document.querySelector(
+    "#walkCounter .glass-number"
+  );
+
+const walkLabelEl =
+  document.querySelector(
+    "#walkCounter .glass-label"
+  );
+
 const milesNumberEl =
   document.querySelector("#milesCounter .glass-number");
 
