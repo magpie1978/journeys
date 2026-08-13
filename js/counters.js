@@ -275,7 +275,142 @@ function updateTrainCounter(routes = []) {
 }
 
 
-  
+function updateBoatCounter(routes = []) {
+
+  const boatSelected =
+    typeof selected !== "undefined" &&
+    selected.types instanceof Set &&
+    [...selected.types].some(
+      type =>
+        String(type).toLowerCase() === "boat"
+    );
+
+  if (boatCounterEl) {
+    boatCounterEl.classList.toggle(
+      "hidden",
+      !boatSelected
+    );
+  }
+
+  if (!boatSelected) {
+    return;
+  }
+
+  const boats =
+    routes.filter(
+      route =>
+        String(
+          route?.journey_type || ""
+        ).toLowerCase() === "boat"
+    );
+
+  const boatCount =
+    boats.length;
+
+  if (boatNumberEl) {
+    boatNumberEl.textContent =
+      boatCount.toLocaleString();
+  }
+
+  if (boatLabelEl) {
+    boatLabelEl.textContent =
+      boatCount === 1
+        ? "BOAT"
+        : "BOATS";
+  }
+}
+
+
+function updateBusCounter(routes = []) {
+
+  const busSelected =
+    typeof selected !== "undefined" &&
+    selected.types instanceof Set &&
+    [...selected.types].some(
+      type =>
+        String(type).toLowerCase() === "bus"
+    );
+
+  if (busCounterEl) {
+    busCounterEl.classList.toggle(
+      "hidden",
+      !busSelected
+    );
+  }
+
+  if (!busSelected) {
+    return;
+  }
+
+  const buses =
+    routes.filter(
+      route =>
+        String(
+          route?.journey_type || ""
+        ).toLowerCase() === "bus"
+    );
+
+  const busCount =
+    buses.length;
+
+  if (busNumberEl) {
+    busNumberEl.textContent =
+      busCount.toLocaleString();
+  }
+
+  if (busLabelEl) {
+    busLabelEl.textContent =
+      busCount === 1
+        ? "BUS"
+        : "BUSES";
+  }
+}
+
+
+function updateWalkCounter(routes = []) {
+
+  const walkSelected =
+    typeof selected !== "undefined" &&
+    selected.types instanceof Set &&
+    [...selected.types].some(
+      type =>
+        String(type).toLowerCase() === "walk"
+    );
+
+  if (walkCounterEl) {
+    walkCounterEl.classList.toggle(
+      "hidden",
+      !walkSelected
+    );
+  }
+
+  if (!walkSelected) {
+    return;
+  }
+
+  const walks =
+    routes.filter(
+      route =>
+        String(
+          route?.journey_type || ""
+        ).toLowerCase() === "walk"
+    );
+
+  const walkCount =
+    walks.length;
+
+  if (walkNumberEl) {
+    walkNumberEl.textContent =
+      walkCount.toLocaleString();
+  }
+
+  if (walkLabelEl) {
+    walkLabelEl.textContent =
+      walkCount === 1
+        ? "WALK"
+        : "WALKS";
+  }
+}
 
 // -----------------------------------------------------
 // MASTER COUNTERS
