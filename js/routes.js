@@ -568,9 +568,74 @@ async function loadRoutes() {
     return;
   }
 
-  let routes =
-    (data || [])
-      .filter(route => route?.geom);
+
+  // -------------------------------------------------
+  // CABIN / CLASS FILTER
+  // -------------------------------------------------
+  
+  let allowedFlightUids = null;
+  
+  if (
+    selected.cabins instanceof Set &&
+    selected.cabins.size > 0
+  ) {
+  
+    const {
+      data: cabinRows,
+      error: cabinError
+    } = await sb
+      .from("flights")
+      .select("uid, cabin")
+      .in(
+        "cabin",
+        [...selected.cabins]
+      );
+  
+    if (cabinError) {
+      console.error(
+        "[routes] Cabin filter failed:",
+        cabinError
+      );
+    } else {
+      allowedFlightUids =
+        new Set(
+          (cabinRows || [])
+            .map(row => row.uid)
+            .filter(Boolean)
+        );
+    }
+  }
+
+let routes =
+  (data || [])
+    .filter(route => route?.geom);
+
+
+// -------------------------------------------------
+// APPLY CABIN FILTER TO FLIGHTS ONLY
+// -------------------------------------------------
+
+if (allowedFlightUids) {
+
+  routes =
+    routes.filter(route => {
+
+      const journeyType =
+        String(
+          route?.journey_type || ""
+        ).toLowerCase();
+
+      // Cabin/class applies only to flights.
+      // Keep Drive, Train, Boat, Bus, Walk etc.
+      if (journeyType !== "flight") {
+        return true;
+      }
+
+      return allowedFlightUids.has(
+        route.uid
+      );
+    });
+}
 
   // -------------------------------------------------
   // AIRPORT DROPDOWN FILTER
