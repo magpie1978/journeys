@@ -68,21 +68,37 @@ function buildFilterMenu(containerId, values, targetSet) {
   // Only add the search box to the Airport dropdown.
   let searchInput = null;
 
-  if (containerId === "filter-airport") {
+  if (
+    containerId === "filter-airport" ||
+    containerId === "filter-airline"
+  ) {
 
     const searchWrapper = document.createElement("div");
-    searchWrapper.className = "airport-search-wrapper";
-
+    //searchWrapper.className = "airport-search-wrapper";
+    searchWrapper.className = "filter-search-wrapper";
+    
     searchInput = document.createElement("input");
     searchInput.type = "search";
-    searchInput.className = "airport-search";
-    searchInput.placeholder = "Search airports...";
-    searchInput.autocomplete = "off";
-    searchInput.setAttribute(
-      "aria-label",
-      "Search airports"
-    );
+    
+    searchInput.className = "filter-search";
+    
+    if (containerId === "filter-airport") {
+      searchInput.placeholder = "Search airports...";
+      searchInput.setAttribute(
+        "aria-label",
+        "Search airports"
+      );
+    }
+    
+    if (containerId === "filter-airline") {
+      searchInput.placeholder = "Search airlines...";
+      searchInput.setAttribute(
+        "aria-label",
+        "Search airlines"
+      );
+    }
 
+    searchInput.autocomplete = "off";
     searchWrapper.appendChild(searchInput);
 
     // Put the search box above the airport options.
@@ -304,10 +320,12 @@ function buildFilterMenu(containerId, values, targetSet) {
     // put the cursor straight into Search.
     if (
       !wasOpen &&
-      containerId === "filter-airport" &&
+      (
+        containerId === "filter-airport" ||
+        containerId === "filter-airline"
+      ) &&
       searchInput
-    ) {
-      requestAnimationFrame(() => {
+    ) {      requestAnimationFrame(() => {
         searchInput.focus();
       });
     }
