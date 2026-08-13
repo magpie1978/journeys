@@ -37,9 +37,9 @@ async function loadFilters() {
   };
 
   const { data, error } = await sb
-    .from("journeys_routes_core_mv")
+    .from("journeys_routes_core_3_mv")
     .select(
-      "year, airline, journey_type, origin, destination"
+      "year, airline, journey_type, origin, destination, cabin"
     );
 
   // Continue with the rest of loadFilters()
@@ -360,8 +360,8 @@ async function loadFilters() {
 
   
   const { data, error } = await sb
-    .from("journeys_routes_core_mv")
-    .select("year, airline, journey_type, origin, destination");
+    .from("journeys_routes_core_3_mv")
+    .select("year, airline, journey_type, origin, destination, cabin");
 
   if (error) {
     console.error("[filters] failed:", error);
