@@ -45,6 +45,22 @@ const selectedAirlineNameEl =
   document.querySelector(
     "#selectedAirlineCounter .airline-name"
   );
+
+const selectedAirportCounterEl =
+  document.getElementById(
+    "selectedAirportCounter"
+  );
+
+const selectedAirportCodeEl =
+  document.querySelector(
+    "#selectedAirportCounter .airport-code-display"
+  );
+
+const selectedAirportNameEl =
+  document.querySelector(
+    "#selectedAirportCounter .airport-name-display"
+  );
+
   
 const journeyNumberEl =
   document.querySelector("#journeyCounter .glass-number");
@@ -366,6 +382,93 @@ function updateSelectedAirlineCounter() {
   }
 }
 
+
+async function updateSelectedAirportCounter() {
+
+  if (
+    typeof selected === "undefined" ||
+    !(selected.airports instanceof Set)
+  ) {
+    return;
+  }
+
+  const selectedAirports =
+    [...selected.airports];
+
+  // Only show when exactly one airport is selected
+  if (selectedAirports.length !== 1) {
+    if (selectedAirportCounterEl) {
+      selectedAirportCounterEl.classList.add(
+        "hidden"
+      );
+    }
+
+    return;
+  }
+
+  const airportCode =
+    selectedAirports[0];
+
+  // Ignore virtual airport groups such as London,
+  // Paris, New York etc.
+  if (
+    typeof AIRPORT_GROUPS !== "undefined" &&
+    AIRPORT_GROUPS[airportCode]
+  ) {
+    if (selectedAirportCounterEl) {
+      selectedAirportCounterEl.classList.add(
+        "hidden"
+      );
+    }
+
+    return;
+  }
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("journey_locations")
+    .select("airport_code, airport")
+    .eq("airport_code", airportCode)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[counters] Airport lookup failed:",
+      error
+    );
+
+    return;
+  }
+
+  if (!data) {
+    if (selectedAirportCounterEl) {
+      selectedAirportCounterEl.classList.add(
+        "hidden"
+      );
+    }
+
+    return;
+  }
+
+  if (selectedAirportCodeEl) {
+    selectedAirportCodeEl.textContent =
+      data.airport_code;
+  }
+
+  if (selectedAirportNameEl) {
+    selectedAirportNameEl.textContent =
+      data.airport;
+  }
+
+  if (selectedAirportCounterEl) {
+    selectedAirportCounterEl.classList.remove(
+      "hidden"
+    );
+  }
+}
+
   
 function updateBusCounter(routes = []) {
 
@@ -470,6 +573,7 @@ function updateAllCounters(routes = []) {
 //    routes.length === 1 ? "FLIGHT" : "FLIGHTS";
 
   updateSelectedAirlineCounter();
+  updateSelectedAirportCounter();
 
   const flightCount = routes.filter(
   route =>
