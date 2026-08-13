@@ -27,28 +27,6 @@
 //    Call loadRoutes()
 // =====================================================
 
-async function loadFilters() {
-
-const previousSelections = {
-  years: new Set(selected.years || []),
-  airlines: new Set(selected.airlines || []),
-  types: new Set(selected.types || []),
-  airports: new Set(selected.airports || []),
-  cabins: new Set(selected.cabins || [])
-};
-
-  
-  const { data, error } = await sb
-    .from("journeys_routes_core_3_mv")
-    .select(
-      "year, airline, journey_type, origin, destination, cabin"
-    );
-
-  // Continue with the rest of loadFilters()
-}
-
-
-
 function buildFilterMenu(containerId, values, targetSet) {
 
   const container = document.getElementById(containerId);
@@ -353,11 +331,12 @@ document.addEventListener("click", e => {
 // =====================================================
 async function loadFilters() {
 
-  const previousSelections = {
+const previousSelections = {
   years: new Set(selected.years || []),
   airlines: new Set(selected.airlines || []),
   types: new Set(selected.types || []),
-  airports: new Set(selected.airports || [])
+  airports: new Set(selected.airports || []),
+  cabins: new Set(selected.cabins || [])
 };
 
   
