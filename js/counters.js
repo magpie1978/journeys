@@ -40,10 +40,18 @@ const journeyNumberEl =
 const journeyLabelEl =
   document.querySelector("#journeyCounter .glass-label");
 
+const transportCounterEl =
+  document.getElementById("transportCounter");
+
 const transportNumberEl =
-  document.querySelector("#transportCounter .glass-number");
+  document.querySelector(
+    "#transportCounter .glass-number"
+  );
+
 const transportLabelEl =
-  document.querySelector("#transportCounter .glass-label");
+  document.querySelector(
+    "#transportCounter .glass-label"
+  );
 
 const milesNumberEl =
   document.querySelector("#milesCounter .glass-number");
@@ -86,24 +94,68 @@ function formatSecondsToHM(seconds) {
 }
 
 
-function updateTransportCounter(routes) {
+function updateTransportCounter(routes = []) {
 
-  // All non-flight journeys
-  const surfaceRoutes =
-    routes.filter(r =>
-      (r.journey_type || "")
-        .toLowerCase() !== "flight"
+  // -----------------------------------------------------
+  // SHOW ONLY WHEN "DRIVE" IS SELECTED
+  // -----------------------------------------------------
+
+  const driveSelected =
+    typeof selected !== "undefined" &&
+    selected.types instanceof Set &&
+    [...selected.types].some(
+      type =>
+        String(type).toLowerCase() === "drive"
     );
 
-  const landCount = surfaceRoutes.length;
 
-  // Top number
-  transportNumberEl.textContent =
-    landCount.toLocaleString();
+  // Hide the complete glass container if Drive
+  // has not been explicitly selected.
+  if (transportCounterEl) {
+    transportCounterEl.classList.toggle(
+      "hidden",
+      !driveSelected
+    );
+  }
 
-  // Bottom label (static)
-  transportLabelEl.textContent =
-    "LAND JOURNEYS";
+
+  // Nothing else needs updating while hidden.
+  if (!driveSelected) {
+    return;
+  }
+
+
+  // -----------------------------------------------------
+  // COUNT DRIVE JOURNEYS ONLY
+  // -----------------------------------------------------
+
+  const drives =
+    routes.filter(
+      route =>
+        String(
+          route?.journey_type || ""
+        ).toLowerCase() === "drive"
+    );
+
+  const driveCount =
+    drives.length;
+
+
+  // -----------------------------------------------------
+  // UPDATE GLASS CONTAINER
+  // -----------------------------------------------------
+
+  if (transportNumberEl) {
+    transportNumberEl.textContent =
+      driveCount.toLocaleString();
+  }
+
+  if (transportLabelEl) {
+    transportLabelEl.textContent =
+      driveCount === 1
+        ? "DRIVE"
+        : "DRIVES";
+  }
 }
   
 
