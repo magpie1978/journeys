@@ -36,7 +36,13 @@ if (!window.__S3__) {
 // DOM REFS
 // -----------------------------------------------------
 
-const selectedAirlineCounterEl =
+const airlinesCounterEl =
+  document.getElementById("airlinesCounter");
+
+const durationCounterEl =
+  document.getElementById("durationCounter");
+  
+  const selectedAirlineCounterEl =
   document.getElementById(
     "selectedAirlineCounter"
   );
@@ -570,72 +576,135 @@ function updateWalkCounter(routes = []) {
 // -----------------------------------------------------
 function updateAllCounters(routes = []) {
 
-//  journeyNumberEl.textContent =
-//    routes.length.toLocaleString();
-
-//  journeyLabelEl.textContent =
-//    routes.length === 1 ? "FLIGHT" : "FLIGHTS";
-
-  updateSelectedAirlineCounter();
-  updateSelectedAirportCounter();
-
-const flightCount = routes.filter(
-  route =>
-    String(route?.journey_type || "")
-      .toLowerCase() === "flight"
-).length;
-
-// Hide the Flights glass box if there are
-// no flights in the currently filtered routes.
-if (journeyCounterEl) {
-  journeyCounterEl.style.display =
-    flightCount > 0 ? "" : "none";
-}
-
-journeyNumberEl.textContent =
-  flightCount.toLocaleString();
-
-journeyLabelEl.textContent =
-  flightCount === 1
-    ? "FLIGHT"
-    : "FLIGHTS";
+  const flightSelected =
+    typeof selected !== "undefined" &&
+    selected.types instanceof Set &&
+    [...selected.types].some(
+      type =>
+        String(type).toLowerCase() === "flight"
+    );
 
 
-  
+  // -----------------------------------------------------
+  // FLIGHTS
+  // -----------------------------------------------------
+
+  const flightCount =
+    routes.filter(
+      route =>
+        String(
+          route?.journey_type || ""
+        ).toLowerCase() === "flight"
+    ).length;
+
+  journeyNumberEl.textContent =
+    flightCount.toLocaleString();
+
+  journeyLabelEl.textContent =
+    flightCount === 1
+      ? "FLIGHT"
+      : "FLIGHTS";
+
+
+  // -----------------------------------------------------
+  // TRANSPORT-TYPE COUNTERS
+  // -----------------------------------------------------
+
   updateTransportCounter(routes);
   updateTrainCounter(routes);
   updateBoatCounter(routes);
   updateBusCounter(routes);
   updateWalkCounter(routes);
 
-  
-  const miles = routes.reduce(
-    (s,r) => s + (Number(r.journey_distance)||0), 0);
+
+  // -----------------------------------------------------
+  // MILES — ALWAYS SHOW 3 DECIMAL PLACES
+  // -----------------------------------------------------
+
+  const miles =
+    routes.reduce(
+      (sum, route) =>
+        sum +
+        (
+          Number(
+            route.journey_distance
+          ) || 0
+        ),
+      0
+    );
 
   milesNumberEl.textContent =
-    Math.round(miles).toLocaleString();
+    miles.toLocaleString(
+      "en-GB",
+      {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3
+      }
+    );
 
-  const countries = new Set(
-    routes.map(r => r.destination_country).filter(Boolean)
-  );
+
+  // -----------------------------------------------------
+  // COUNTRIES
+  // -----------------------------------------------------
+
+  const countries =
+    new Set(
+      routes
+        .map(
+          route =>
+            route.destination_country
+        )
+        .filter(Boolean)
+    );
 
   countriesNumberEl.textContent =
     countries.size;
 
-  const airlines = new Set(
-    routes.map(r => r.airline).filter(Boolean)
-  );
 
-  airlinesNumberEl.textContent =
-    airlines.size;
+  // -----------------------------------------------------
+  // AIRLINES — ONLY WHEN FLIGHT IS SELECTED
+  // -----------------------------------------------------
 
-  const seconds = routes.reduce(
-    (s,r)=> s+(Number(r.journey_duration_seconds)||0),0);
+  if (airlinesCounterEl) {
+    airlinesCounterEl.classList.toggle(
+      "hidden",
+      !flightSelected
+    );
+  }
 
-  durationNumberEl.textContent =
-    formatSecondsToHM(seconds);
+  if (flightSelected) {
+
+    const airlines =
+      new Set(
+        routes
+          .filter(
+            route =>
+              String(
+                route?.journey_type || ""
+              ).toLowerCase() === "flight"
+          )
+          .map(
+            route =>
+              route.airline
+          )
+          .filter(Boolean)
+      );
+
+    airlinesNumberEl.textContent =
+      airlines.size;
+  }
+
+
+  // -----------------------------------------------------
+  // DURATION — PERMANENTLY HIDDEN
+  // -----------------------------------------------------
+
+  if (durationCounterEl) {
+    durationCounterEl.classList.add(
+      "hidden"
+    );
+  }
 }
-
 
 // -----------------------------------------------------
 // GLOBAL EXPORT
