@@ -68,7 +68,7 @@ const airlineLogoMap = {
   "LNER":"lner.png",
   "MÁV":"hungarianrail.png",
   "OBB":"obb.webp",
-  "RENFE","renfe.png",
+  "RENFE":"renfe.png",
   "SBB":"sbb.png",
   "SJ":"sj.png",
   "SNCF":"sncf.png",
