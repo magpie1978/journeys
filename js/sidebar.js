@@ -84,10 +84,8 @@ function formatSidebarDate(dateValue) {
 // =====================================================
 
 function getJourneyIcon(route) {
-  if (
-    !route ||
-    typeof getAirlineLogo !== "function"
-  ) {
+
+  if (!route) {
     return null;
   }
 
@@ -95,20 +93,42 @@ function getJourneyIcon(route) {
     getJourneyType(route);
 
   /*
-   * Flights use airline tailfin logos.
-   * Bus and train journeys may use operator logos.
+   * First try to use a specific operator logo
+   * where one exists.
    */
   if (
     journeyType === "flight" ||
     journeyType === "bus" ||
     journeyType === "train"
   ) {
-    return getAirlineLogo(
-      route.airline
-    );
+
+    if (
+      typeof getAirlineLogo === "function"
+    ) {
+
+      const operatorLogo =
+        getAirlineLogo(route.airline);
+
+      if (operatorLogo) {
+        return operatorLogo;
+      }
+    }
   }
 
-  return null;
+
+  /*
+   * If there is no specific operator logo,
+   * use the generic journey-type placeholder.
+   */
+  const placeholderIcons = {
+    drive: "tailfins/drive.png",
+    train: "tailfins/train.png",
+    walk: "tailfins/walk.png",
+    boat: "tailfins/boat.png",
+    bus: "tailfins/bus.png"
+  };
+
+  return placeholderIcons[journeyType] || null;
 }
 
 window.getJourneyIcon =
