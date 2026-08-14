@@ -62,8 +62,12 @@ const selectedAirportNameEl =
   );
 
   
+const journeyCounterEl =
+  document.querySelector("#journeyCounter");
+
 const journeyNumberEl =
   document.querySelector("#journeyCounter .glass-number");
+
 const journeyLabelEl =
   document.querySelector("#journeyCounter .glass-label");
 
@@ -575,19 +579,26 @@ function updateAllCounters(routes = []) {
   updateSelectedAirlineCounter();
   updateSelectedAirportCounter();
 
-  const flightCount = routes.filter(
+const flightCount = routes.filter(
   route =>
     String(route?.journey_type || "")
       .toLowerCase() === "flight"
-  ).length;
+).length;
 
-  journeyNumberEl.textContent =
-    flightCount.toLocaleString();
+// Hide the Flights glass box if there are
+// no flights in the currently filtered routes.
+if (journeyCounterEl) {
+  journeyCounterEl.style.display =
+    flightCount > 0 ? "" : "none";
+}
 
-  journeyLabelEl.textContent =
-    flightCount === 1
-      ? "FLIGHT"
-      : "FLIGHTS";
+journeyNumberEl.textContent =
+  flightCount.toLocaleString();
+
+journeyLabelEl.textContent =
+  flightCount === 1
+    ? "FLIGHT"
+    : "FLIGHTS";
 
 
   
