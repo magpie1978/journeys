@@ -66,6 +66,7 @@ const airlineLogoMap = {
   "GWR":"gwr.png",
   "Iarnród Éireann":"irishrail.png",
   "LNER":"lner.png",
+  "Northern":"northern.webp",
   "MÁV":"hungarianrail.png",
   "OBB":"obb.webp",
   "RENFE":"renfe.png",
