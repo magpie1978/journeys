@@ -576,13 +576,25 @@ function updateWalkCounter(routes = []) {
 // -----------------------------------------------------
 function updateAllCounters(routes = []) {
 
-  const flightSelected =
+  // -----------------------------------------------------
+  // CURRENT TYPE SELECTIONS
+  // -----------------------------------------------------
+
+  const selectedTypes =
     typeof selected !== "undefined" &&
-    selected.types instanceof Set &&
-    [...selected.types].some(
-      type =>
-        String(type).toLowerCase() === "flight"
-    );
+    selected.types instanceof Set
+      ? [...selected.types].map(
+          type =>
+            String(type).toLowerCase()
+        )
+      : [];
+
+  const flightSelected =
+    selectedTypes.includes("flight");
+
+  const walkOnly =
+    selectedTypes.length === 1 &&
+    selectedTypes.includes("walk");
 
 
   // -----------------------------------------------------
@@ -597,6 +609,17 @@ function updateAllCounters(routes = []) {
         ).toLowerCase() === "flight"
     ).length;
 
+  /*
+   * Hide the complete Flights glass box whenever
+   * Flight is not selected in the Type dropdown.
+   */
+  if (journeyCounterEl) {
+    journeyCounterEl.classList.toggle(
+      "hidden",
+      !flightSelected
+    );
+  }
+
   journeyNumberEl.textContent =
     flightCount.toLocaleString();
 
@@ -607,7 +630,7 @@ function updateAllCounters(routes = []) {
 
 
   // -----------------------------------------------------
-  // TRANSPORT-TYPE COUNTERS
+  // TRANSPORT COUNTERS
   // -----------------------------------------------------
 
   updateTransportCounter(routes);
@@ -618,7 +641,7 @@ function updateAllCounters(routes = []) {
 
 
   // -----------------------------------------------------
-  // MILES — ALWAYS SHOW 3 DECIMAL PLACES
+  // MILES — RESTORE ORIGINAL BEHAVIOUR
   // -----------------------------------------------------
 
   const miles =
@@ -634,13 +657,7 @@ function updateAllCounters(routes = []) {
     );
 
   milesNumberEl.textContent =
-    miles.toLocaleString(
-      "en-GB",
-      {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
-      }
-    );
+    Math.round(miles).toLocaleString();
 
 
   // -----------------------------------------------------
@@ -662,48 +679,49 @@ function updateAllCounters(routes = []) {
 
 
   // -----------------------------------------------------
-  // AIRLINES — ONLY WHEN FLIGHT IS SELECTED
+  // AIRLINES — RESTORED TO PREVIOUS BEHAVIOUR
   // -----------------------------------------------------
 
-  if (airlinesCounterEl) {
-    airlinesCounterEl.classList.toggle(
-      "hidden",
-      !flightSelected
+  const airlines =
+    new Set(
+      routes
+        .map(
+          route =>
+            route.airline
+        )
+        .filter(Boolean)
     );
-  }
 
-  if (flightSelected) {
-
-    const airlines =
-      new Set(
-        routes
-          .filter(
-            route =>
-              String(
-                route?.journey_type || ""
-              ).toLowerCase() === "flight"
-          )
-          .map(
-            route =>
-              route.airline
-          )
-          .filter(Boolean)
-      );
-
-    airlinesNumberEl.textContent =
-      airlines.size;
-  }
+  airlinesNumberEl.textContent =
+    airlines.size;
 
 
   // -----------------------------------------------------
-  // DURATION — PERMANENTLY HIDDEN
+  // DURATION
+  // Hide ONLY when Walk is the sole selected Type.
   // -----------------------------------------------------
 
   if (durationCounterEl) {
-    durationCounterEl.classList.add(
-      "hidden"
+    durationCounterEl.classList.toggle(
+      "hidden",
+      walkOnly
     );
   }
+
+  const seconds =
+    routes.reduce(
+      (sum, route) =>
+        sum +
+        (
+          Number(
+            route.journey_duration_seconds
+          ) || 0
+        ),
+      0
+    );
+
+  durationNumberEl.textContent =
+    formatSecondsToHM(seconds);
 }
 
 // -----------------------------------------------------
