@@ -14,6 +14,7 @@ const AIRLINE_LOGO_BASE = "tailfins/";
 /*const AIRLINE_LOGO_BASE = "https://raw.githubusercontent.com/magpie1978/douzepoints/main/tailfins/"; */
 
 const airlineLogoMap = {
+  // Airlines
   "Ryanair": "Ryanair.webp",
   "British Airways": "BritishAirways.webp",
   "EasyJet": "easyJet.webp",
@@ -51,23 +52,29 @@ const airlineLogoMap = {
   "Volotea": "Volotea.webp",
   "WestJet": "WestJet.webp",
   "Vueling": "Vueling.webp",
-  //Bus
+  
+  //Buses
   "FlixBus": "Flix.webp",
-  //Train
-  "OBB": "obb.webp",
+  
+  //Trains
   "Arriva":"arriva.png",
+  "České dráhyand ":"czechrailway.png",
+  "Comboios de Portugal":"portugalrail.png",
+  "DB":"db.png",
+  "Eurostar":"eurostar.png",
+  "Greater Anglia":"greateranglia.png",
+  "GWR":"gwr.png",
+  "Iarnród Éireann":"irishrail.png",
+  "LNER":"lner.png",
+  "MÁV":"hungarianrail.png",
+  "OBB": "obb.webp",
+  "RENFE","renfe.png",
   "SBB":"sbb.png",
   "SJ":"sj.png",
-  "Vietnam Railways":"vietnamrailways.png",
-  "Hungarian Rail":"hungarianrail.png",
-  "Czech Railway":"czechrailway.png",
-  "DB":"db.png",
-  "Tren Italia":"trenitalia.png",
   "SNCF":"sncf.png",
-  "Portugal Rail":"portugalrail.png",
-  "Irish Rail":"irishrail.png",
-  "Eurostar":"eurostar.png"
-  
+  "Trenitalia":"trenitalia.png",
+  "Vietnam Railways":"vietnamrailways.png",
+  "Virgin Trains":"virgintrains.png"
 };
 
 // =====================================================
