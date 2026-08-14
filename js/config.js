@@ -80,6 +80,15 @@ const airlineLogoMap = {
   "Virgin Trains":"virgintrains.png"
 };
 
+
+const placeholderIcons = {
+  drive: AIRLINE_LOGO_BASE + "drive.png",
+  train: AIRLINE_LOGO_BASE + "train.png",
+  walk: AIRLINE_LOGO_BASE + "walk.png",
+  boat: AIRLINE_LOGO_BASE + "boat.png",
+  bus: AIRLINE_LOGO_BASE + "bus.png"
+};
+
 // =====================================================
 // AIRLINE LOGOS (GLOBAL)
 // =====================================================
