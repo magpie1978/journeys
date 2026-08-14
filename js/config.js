@@ -73,6 +73,7 @@ const airlineLogoMap = {
   "SJ":"sj.png",
   "SNCF":"sncf.png",
   "Trenitalia":"trenitalia.png",
+  "TransPennine":"transpennine.png",
   "Vietnam Railways":"vietnamrailways.png",
   "Virgin Trains":"virgintrains.png"
 };
