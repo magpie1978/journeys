@@ -172,6 +172,54 @@ function renderSidebar(routes) {
       route.journey_type ||
       "";
 
+
+
+
+    
+
+const displayOrigin =
+  String(
+    route.display_origin ||
+    route.origin ||
+    ""
+  ).trim();
+
+const displayDestination =
+  String(
+    route.display_destination ||
+    route.destination ||
+    ""
+  ).trim();
+
+let routeDisplay;
+
+if (
+  displayOrigin &&
+  (
+    !displayDestination ||
+    displayOrigin === displayDestination
+  )
+) {
+  routeDisplay =
+    escapeSidebarHtml(displayOrigin);
+} else {
+  routeDisplay = `
+    ${escapeSidebarHtml(displayOrigin)}
+    →
+    ${escapeSidebarHtml(displayDestination)}
+  `;
+}
+
+
+
+
+
+
+
+
+
+    
+    
     listItem.innerHTML = `
       <div class="sidebar-row">
 
@@ -195,30 +243,13 @@ function renderSidebar(routes) {
           <div class="sidebar-journey-type">
             ${escapeSidebarHtml(route.journey_type)}
           </div>
-
+          
           <div class="sidebar-route">
             <strong>
-              ${
-                (
-                  (route.display_origin || route.origin) ===
-                  (route.display_destination || route.destination)
-                )
-                  ? escapeSidebarHtml(
-                      route.display_origin || route.origin
-                    )
-                  : `
-                      ${escapeSidebarHtml(
-                        route.display_origin || route.origin
-                      )}
-                      →
-                      ${escapeSidebarHtml(
-                        route.display_destination || route.destination
-                      )}
-                    `
-              }
+              ${routeDisplay}
             </strong>
           </div>
-
+          
           <div class="sidebar-date">
             ${escapeSidebarHtml(
               formatSidebarDate(
