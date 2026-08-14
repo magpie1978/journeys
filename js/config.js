@@ -55,7 +55,19 @@ const airlineLogoMap = {
   "FlixBus": "Flix.webp",
   //Train
   "OBB": "obb.webp",
-  "Arriva":"arriva.png"
+  "Arriva":"arriva.png",
+  "SBB":"sbb.png",
+  "SJ":"sj.png",
+  "Vietnam Railways":"vietnamrailways.png",
+  "Hungarian Rail":"hungarianrail.png",
+  "Czech Railway":"czechrailway.png",
+  "DB":"db.png",
+  "Tren Italia":"trenitalia.png",
+  "SNCF":"sncf.png",
+  "Portugal Rail":"portugalrail.png",
+  "Irish Rail":"irishrail.png",
+  "Eurostar":"eurostar.png"
+  
 };
 
 // =====================================================
