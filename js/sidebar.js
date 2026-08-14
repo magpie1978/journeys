@@ -240,9 +240,6 @@ if (
 
         <div class="sidebar-text">
 
-          <div class="sidebar-journey-type">
-            ${escapeSidebarHtml(route.journey_type)}
-          </div>
           
           <div class="sidebar-route">
             <strong>
