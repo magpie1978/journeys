@@ -23,6 +23,9 @@ const flightSummaryElements = {
   origin:
     document.getElementById("flightOrigin"),
 
+  routeArrow:
+  document.getElementById("flightRouteArrow"),
+
   destination:
     document.getElementById("flightDestination"),
 
@@ -134,6 +137,20 @@ function hideFlightSummary() {
 // =====================================================
 
 function populateFlightSummary(route) {
+
+  const journeyType =
+    String(
+      route?.journey_type || ""
+    ).toLowerCase();
+
+  const isWalk =
+    journeyType === "walk";
+
+
+  // -------------------------------------------------
+  // DATE
+  // -------------------------------------------------
+
   setElementText(
     flightSummaryElements.date,
     formatJourneyDate(
@@ -141,51 +158,159 @@ function populateFlightSummary(route) {
     )
   );
 
-  setElementText(
-    flightSummaryElements.origin,
-    route.origin
-  );
 
-  setElementText(
-    flightSummaryElements.destination,
-    route.destination
-  );
+  // -------------------------------------------------
+  // ROUTE / JOURNEY NAME
+  // -------------------------------------------------
 
-  setElementText(
-    flightSummaryElements.originCountry,
-    route.origin_country
-  );
+  const displayOrigin =
+    String(
+      route.display_origin ||
+      route.origin ||
+      ""
+    ).trim();
 
-  setElementText(
-    flightSummaryElements.destinationCountry,
-    route.destination_country
-  );
+  const displayDestination =
+    String(
+      route.display_destination ||
+      route.destination ||
+      ""
+    ).trim();
 
-  setElementText(
-    flightSummaryElements.flightNumber,
-    getFlightNumber(route)
-  );
 
-  setElementText(
-    flightSummaryElements.airline,
-    route.airline
-  );
+  if (isWalk) {
 
-  setElementText(
-    flightSummaryElements.duration,
-    formatDurationFromSeconds(
-      route.journey_duration_seconds
-    )
-  );
+    /*
+     * Walks with a friendly journey name should
+     * display the name once with no arrow.
+     */
+    setElementText(
+      flightSummaryElements.origin,
+      displayOrigin
+    );
+
+    if (flightSummaryElements.routeArrow) {
+      flightSummaryElements.routeArrow.style.display =
+        "none";
+    }
+
+    if (flightSummaryElements.destination) {
+      flightSummaryElements.destination.style.display =
+        "none";
+    }
+
+  } else {
+
+    /*
+     * Restore the normal origin → destination
+     * treatment for all other journey types.
+     */
+    setElementText(
+      flightSummaryElements.origin,
+      displayOrigin
+    );
+
+    setElementText(
+      flightSummaryElements.destination,
+      displayDestination
+    );
+
+    if (flightSummaryElements.routeArrow) {
+      flightSummaryElements.routeArrow.style.display =
+        "";
+    }
+
+    if (flightSummaryElements.destination) {
+      flightSummaryElements.destination.style.display =
+        "";
+    }
+  }
+
+
+  // -------------------------------------------------
+  // FLIGHT / AIRLINE / DURATION
+  // -------------------------------------------------
+
+  const flightMetric =
+    flightSummaryElements.flightNumber
+      ?.closest(".flight-metric");
+
+  const airlineMetric =
+    flightSummaryElements.airline
+      ?.closest(".flight-metric");
+
+  const durationMetric =
+    flightSummaryElements.duration
+      ?.closest(".flight-metric");
+
+
+  if (isWalk) {
+
+    /*
+     * These fields are not relevant to a walk,
+     * so remove the complete metric blocks.
+     */
+    if (flightMetric) {
+      flightMetric.style.display = "none";
+    }
+
+    if (airlineMetric) {
+      airlineMetric.style.display = "none";
+    }
+
+    if (durationMetric) {
+      durationMetric.style.display = "none";
+    }
+
+  } else {
+
+    /*
+     * Important: restore these fields when another
+     * journey type is subsequently selected.
+     */
+    if (flightMetric) {
+      flightMetric.style.display = "";
+    }
+
+    if (airlineMetric) {
+      airlineMetric.style.display = "";
+    }
+
+    if (durationMetric) {
+      durationMetric.style.display = "";
+    }
+
+    setElementText(
+      flightSummaryElements.flightNumber,
+      getFlightNumber(route)
+    );
+
+    setElementText(
+      flightSummaryElements.airline,
+      route.airline
+    );
+
+    setElementText(
+      flightSummaryElements.duration,
+      formatDurationFromSeconds(
+        route.journey_duration_seconds
+      )
+    );
+  }
+
+
+  // -------------------------------------------------
+  // DISTANCE
+  // -------------------------------------------------
 
   setElementText(
     flightSummaryElements.distance,
     formatJourneyDistance(
-      route.journey_distance
+      route.journey_distance,
+      isWalk ? 3 : 0
     )
   );
 }
-
 
 // =====================================================
 // DATE FORMATTER
@@ -255,8 +380,10 @@ function formatDurationFromSeconds(
 // =====================================================
 
 function formatJourneyDistance(
-  distance
+  distance,
+  decimalPlaces = 0
 ) {
+
   const numericDistance =
     Number(distance);
 
@@ -268,8 +395,17 @@ function formatJourneyDistance(
   }
 
   return (
-    `${Math.round(numericDistance)
-      .toLocaleString()} mi`
+    numericDistance.toLocaleString(
+      "en-GB",
+      {
+        minimumFractionDigits:
+          decimalPlaces,
+
+        maximumFractionDigits:
+          decimalPlaces
+      }
+    ) +
+    " mi"
   );
 }
 
