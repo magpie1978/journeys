@@ -198,9 +198,24 @@ function renderSidebar(routes) {
 
           <div class="sidebar-route">
             <strong>
-              ${escapeSidebarHtml(route.origin)}
-              →
-              ${escapeSidebarHtml(route.destination)}
+              ${
+                (
+                  (route.display_origin || route.origin) ===
+                  (route.display_destination || route.destination)
+                )
+                  ? escapeSidebarHtml(
+                      route.display_origin || route.origin
+                    )
+                  : `
+                      ${escapeSidebarHtml(
+                        route.display_origin || route.origin
+                      )}
+                      →
+                      ${escapeSidebarHtml(
+                        route.display_destination || route.destination
+                      )}
+                    `
+              }
             </strong>
           </div>
 
