@@ -58,7 +58,7 @@ const airlineLogoMap = {
   
   //Trains
   "Arriva":"arriva.png",
-  "České dráhyand ":"czechrailway.png",
+  "České dráhyand":"czechrailway.png",
   "Comboios de Portugal":"portugalrail.png",
   "DB":"db.png",
   "Eurostar":"eurostar.png",
@@ -67,7 +67,7 @@ const airlineLogoMap = {
   "Iarnród Éireann":"irishrail.png",
   "LNER":"lner.png",
   "MÁV":"hungarianrail.png",
-  "OBB": "obb.webp",
+  "OBB":"obb.webp",
   "RENFE","renfe.png",
   "SBB":"sbb.png",
   "SJ":"sj.png",
