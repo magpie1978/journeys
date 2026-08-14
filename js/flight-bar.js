@@ -45,7 +45,10 @@ const flightSummaryElements = {
     document.getElementById("flightDuration"),
 
   distance:
-    document.getElementById("flightDistance")
+    document.getElementById("flightDistance"),
+
+  journeyLabel:
+  document.getElementById("journeySummaryLabel"),
 };
 
 
@@ -145,6 +148,20 @@ function populateFlightSummary(route) {
 
   const isWalk =
     journeyType === "walk";
+
+  if (flightSummaryElements.journeyLabel) {
+
+  flightSummaryElements.journeyLabel
+    .classList.toggle(
+      "hidden",
+      !isWalk
+    );
+
+  if (isWalk) {
+    flightSummaryElements.journeyLabel
+      .textContent = "WALK";
+  }
+}
 
 
   // -------------------------------------------------
