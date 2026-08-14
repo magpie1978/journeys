@@ -40,6 +40,7 @@ const airlineLogoMap = {
   "Malaysia Airlines": "Malaysian.webp",
   "Norwegian": "Norwegian.webp",
   "Qantas": "Qantas.webp",
+  "PKP":"pkp.svg",
   "Qatar Airways": "QatarAirways.webp",
   "SAS": "SAS.webp",
   "Singapore Airlines": "SingaporeAirlines.webp",
