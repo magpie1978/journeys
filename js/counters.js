@@ -36,6 +36,7 @@ if (!window.__S3__) {
 // DOM REFS
 // -----------------------------------------------------
 
+
 const airlinesCounterEl =
   document.getElementById("airlinesCounter");
 
@@ -682,9 +683,29 @@ function updateAllCounters(routes = []) {
   // AIRLINES — RESTORED TO PREVIOUS BEHAVIOUR
   // -----------------------------------------------------
 
+// -----------------------------------------------------
+// AIRLINES
+// Show only when Flight is selected
+// -----------------------------------------------------
+
+if (airlinesCounterEl) {
+  airlinesCounterEl.classList.toggle(
+    "hidden",
+    !flightSelected
+  );
+}
+
+if (flightSelected) {
+
   const airlines =
     new Set(
       routes
+        .filter(
+          route =>
+            String(
+              route?.journey_type || ""
+            ).toLowerCase() === "flight"
+        )
         .map(
           route =>
             route.airline
@@ -694,6 +715,7 @@ function updateAllCounters(routes = []) {
 
   airlinesNumberEl.textContent =
     airlines.size;
+}
 
 
   // -----------------------------------------------------
