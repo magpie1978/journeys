@@ -115,19 +115,6 @@ function getJourneyIcon(route) {
     }
   }
 
-
-  /*
-   * If there is no specific operator logo,
-   * use the generic journey-type placeholder.
-   */
-  const placeholderIcons = {
-    drive: "tailfins/drive.png",
-    train: "tailfins/train.png",
-    walk: "tailfins/walk.png",
-    boat: "tailfins/boat.png",
-    bus: "tailfins/bus.png"
-  };
-
   return placeholderIcons[journeyType] || null;
 }
 
