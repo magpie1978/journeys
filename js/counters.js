@@ -657,10 +657,9 @@ function updateAllCounters(routes = []) {
       0
     );
 
-  milesNumberEl.textContent = walkOnly
-    ? totalMiles.toFixed(3)
-    : Math.round(totalMiles).toLocaleString();
-
+milesNumberEl.textContent = walkOnly
+  ? miles.toFixed(3)
+  : Math.round(miles).toLocaleString();
 
   // -----------------------------------------------------
   // COUNTRIES
