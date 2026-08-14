@@ -178,12 +178,21 @@ function populateFlightSummary(route) {
     ).trim();
 
 
-  if (isWalk) {
+if (isWalk) {
 
-    /*
-     * Walks with a friendly journey name should
-     * display the name once with no arrow.
-     */
+  const samePlace =
+    displayOrigin === displayDestination;
+
+  const noDestination =
+    !displayDestination;
+
+  if (
+    samePlace ||
+    noDestination
+  ) {
+
+    // Circular walk or named walk:
+    // show the origin/name only.
     setElementText(
       flightSummaryElements.origin,
       displayOrigin
@@ -201,10 +210,8 @@ function populateFlightSummary(route) {
 
   } else {
 
-    /*
-     * Restore the normal origin → destination
-     * treatment for all other journey types.
-     */
+    // Point-to-point walk:
+    // show origin → destination.
     setElementText(
       flightSummaryElements.origin,
       displayOrigin
@@ -225,6 +232,30 @@ function populateFlightSummary(route) {
         "";
     }
   }
+
+} else {
+
+  // Normal behaviour for other journey types.
+  setElementText(
+    flightSummaryElements.origin,
+    displayOrigin
+  );
+
+  setElementText(
+    flightSummaryElements.destination,
+    displayDestination
+  );
+
+  if (flightSummaryElements.routeArrow) {
+    flightSummaryElements.routeArrow.style.display =
+      "";
+  }
+
+  if (flightSummaryElements.destination) {
+    flightSummaryElements.destination.style.display =
+      "";
+  }
+}
 
 
   // -------------------------------------------------
