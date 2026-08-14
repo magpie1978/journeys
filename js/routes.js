@@ -474,7 +474,7 @@ async function loadRoutes() {
   }
 
   let query = sb
-    .from("journeys_routes")
+    .from("journeys_routes_2")
     .select(`
       uid,
       callsign,
