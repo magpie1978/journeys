@@ -403,10 +403,11 @@ body {
 }
 
 .journey-logo {
-  width: 90px;
-  height: 55px;
+  width: 75px;
+  height: 50px;
   object-fit: contain;
   object-position: center;
+  flex-shrink: 0;
 }
 
 /* =====================================================
