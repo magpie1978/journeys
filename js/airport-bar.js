@@ -51,15 +51,6 @@ function getRouteDurationMinutes(route) {
 }
 
 
-function formatCount(count, singularWord) {
-  const word =
-    count === 1
-      ? singularWord
-      : `${singularWord}S`;
-
-  return `${count} ${word}`;
-}
-
 
 // =====================================================
 // SHOW AIRPORT SUMMARY BAR
@@ -156,21 +147,15 @@ function showAirportSummary(airport) {
       airport.city || "";
   }
 
-  if (outboundFlightsEl) {
-    outboundFlightsEl.textContent =
-      formatCount(
-        departures.length,
-        "DEPARTURE"
-      );
-  }
+if (outboundFlightsEl) {
+  outboundFlightsEl.textContent =
+    departures.length.toLocaleString();
+}
 
-  if (inboundFlightsEl) {
-    inboundFlightsEl.textContent =
-      formatCount(
-        arrivals.length,
-        "ARRIVAL"
-      );
-  }
+if (inboundFlightsEl) {
+  inboundFlightsEl.textContent =
+    arrivals.length.toLocaleString();
+}
 
   if (airportAirlinesEl) {
     airportAirlinesEl.textContent =
@@ -194,13 +179,13 @@ function showAirportSummary(airport) {
       "airportSummaryBar"
     );
 
-  if (glassBar) {
-    glassBar.style.display = "none";
-  }
+if (glassBar) {
+  glassBar.classList.add("hidden");
+}
 
-  if (airportBar) {
-    airportBar.classList.remove("hidden");
-  }
+if (airportBar) {
+  airportBar.classList.remove("hidden");
+}
 }
 
 
@@ -209,6 +194,7 @@ function showAirportSummary(airport) {
 // =====================================================
 
 function hideAirportSummary() {
+
   const glassBar =
     document.getElementById("glassBar");
 
@@ -217,15 +203,30 @@ function hideAirportSummary() {
       "airportSummaryBar"
     );
 
+  const flightBar =
+    document.getElementById(
+      "flightSummaryBar"
+    );
+
   if (airportBar) {
     airportBar.classList.add("hidden");
   }
 
-  if (glassBar) {
-    glassBar.style.display = "";
+  /*
+   * Restore the normal counter bar only if a
+   * specific journey summary is not currently open.
+   */
+  const flightBarVisible =
+    flightBar &&
+    !flightBar.classList.contains("hidden");
+
+  if (
+    glassBar &&
+    !flightBarVisible
+  ) {
+    glassBar.classList.remove("hidden");
   }
 }
-
 
 // =====================================================
 // EXPOSE GLOBAL API
