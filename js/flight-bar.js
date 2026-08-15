@@ -47,8 +47,21 @@ const flightSummaryElements = {
   distance:
     document.getElementById("flightDistance"),
 
-  journeyLabel:
-  document.getElementById("journeySummaryLabel"),
+  journeyTypeLabel:
+  document.getElementById("journeyTypeLabel"),
+
+  operatorLabel:
+    document.getElementById("operatorLabel"),
+  
+  journeyTypeMetric:
+    document.getElementById("journeyTypeMetric"),
+  
+  operatorMetric:
+    document.getElementById("operatorMetric"),
+  
+  durationMetric:
+    document.getElementById("journeyDurationMetric"),
+
 };
 
 
@@ -144,24 +157,33 @@ function populateFlightSummary(route) {
   const journeyType =
     String(
       route?.journey_type || ""
-    ).toLowerCase();
+    ).trim();
+
+  const journeyTypeLower =
+    journeyType.toLowerCase();
+
+  const isFlight =
+    journeyTypeLower === "flight";
 
   const isWalk =
-    journeyType === "walk";
+    journeyTypeLower === "walk";
 
-  if (flightSummaryElements.journeyLabel) {
 
-  flightSummaryElements.journeyLabel
-    .classList.toggle(
-      "hidden",
-      !isWalk
-    );
+  // -------------------------------------------------
+  // DYNAMIC LABELS
+  // -------------------------------------------------
 
-  if (isWalk) {
-    flightSummaryElements.journeyLabel
-      .textContent = "WALK";
+  if (flightSummaryElements.journeyTypeLabel) {
+    flightSummaryElements.journeyTypeLabel.textContent =
+      journeyType || "Journey";
   }
-}
+
+  if (flightSummaryElements.operatorLabel) {
+    flightSummaryElements.operatorLabel.textContent =
+      isFlight
+        ? "Airline"
+        : "Operator";
+  }
 
 
   // -------------------------------------------------
@@ -177,7 +199,7 @@ function populateFlightSummary(route) {
 
 
   // -------------------------------------------------
-  // ROUTE / JOURNEY NAME
+  // ROUTE
   // -------------------------------------------------
 
   const displayOrigin =
@@ -195,21 +217,22 @@ function populateFlightSummary(route) {
     ).trim();
 
 
-if (isWalk) {
-
   const samePlace =
+    displayOrigin &&
     displayOrigin === displayDestination;
 
   const noDestination =
     !displayDestination;
 
+
   if (
-    samePlace ||
-    noDestination
+    isWalk &&
+    (
+      samePlace ||
+      noDestination
+    )
   ) {
 
-    // Circular walk or named walk:
-    // show the origin/name only.
     setElementText(
       flightSummaryElements.origin,
       displayOrigin
@@ -227,8 +250,6 @@ if (isWalk) {
 
   } else {
 
-    // Point-to-point walk:
-    // show origin → destination.
     setElementText(
       flightSummaryElements.origin,
       displayOrigin
@@ -250,94 +271,59 @@ if (isWalk) {
     }
   }
 
-} else {
 
-  // Normal behaviour for other journey types.
+// -------------------------------------------------
+// JOURNEY IDENTIFIER
+// -------------------------------------------------
+
+if (flightSummaryElements.journeyTypeMetric) {
+  flightSummaryElements.journeyTypeMetric.style.display =
+    isWalk
+      ? "none"
+      : "";
+}
+
+if (!isWalk) {
   setElementText(
-    flightSummaryElements.origin,
-    displayOrigin
+    flightSummaryElements.flightNumber,
+    getFlightNumber(route)
   );
-
-  setElementText(
-    flightSummaryElements.destination,
-    displayDestination
-  );
-
-  if (flightSummaryElements.routeArrow) {
-    flightSummaryElements.routeArrow.style.display =
-      "";
-  }
-
-  if (flightSummaryElements.destination) {
-    flightSummaryElements.destination.style.display =
-      "";
-  }
 }
 
 
+// -------------------------------------------------
+// AIRLINE / OPERATOR
+// -------------------------------------------------
+
+if (flightSummaryElements.operatorMetric) {
+  flightSummaryElements.operatorMetric.style.display =
+    isWalk
+      ? "none"
+      : "";
+}
+
+if (!isWalk) {
+  setElementText(
+    flightSummaryElements.airline,
+    route.airline
+  );
+}
+
   // -------------------------------------------------
-  // FLIGHT / AIRLINE / DURATION
+  // DURATION
+  //
+  // Preserve your existing Walk-specific rule:
+  // do not show Duration for Walks.
   // -------------------------------------------------
 
-  const flightMetric =
-    flightSummaryElements.flightNumber
-      ?.closest(".flight-metric");
+  if (flightSummaryElements.durationMetric) {
+    flightSummaryElements.durationMetric.style.display =
+      isWalk
+        ? "none"
+        : "";
+  }
 
-  const airlineMetric =
-    flightSummaryElements.airline
-      ?.closest(".flight-metric");
-
-  const durationMetric =
-    flightSummaryElements.duration
-      ?.closest(".flight-metric");
-
-
-  if (isWalk) {
-
-    /*
-     * These fields are not relevant to a walk,
-     * so remove the complete metric blocks.
-     */
-    if (flightMetric) {
-      flightMetric.style.display = "none";
-    }
-
-    if (airlineMetric) {
-      airlineMetric.style.display = "none";
-    }
-
-    if (durationMetric) {
-      durationMetric.style.display = "none";
-    }
-
-  } else {
-
-    /*
-     * Important: restore these fields when another
-     * journey type is subsequently selected.
-     */
-    if (flightMetric) {
-      flightMetric.style.display = "";
-    }
-
-    if (airlineMetric) {
-      airlineMetric.style.display = "";
-    }
-
-    if (durationMetric) {
-      durationMetric.style.display = "";
-    }
-
-    setElementText(
-      flightSummaryElements.flightNumber,
-      getFlightNumber(route)
-    );
-
-    setElementText(
-      flightSummaryElements.airline,
-      route.airline
-    );
-
+  if (!isWalk) {
     setElementText(
       flightSummaryElements.duration,
       formatDurationFromSeconds(
@@ -359,6 +345,9 @@ if (isWalk) {
     )
   );
 }
+
+
+
 
 // =====================================================
 // DATE FORMATTER
