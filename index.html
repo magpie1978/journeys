@@ -210,39 +210,35 @@
 
 
         <!-- ===== AIRPORT SUMMARY BAR (hidden by default) ===== -->
-        <div id="airportSummaryBar" class="airport-summary hidden">
-        
-          <div class="airport-left">
-            <div class="metric-label">Airport</div>
-        
-            <div class="airport-code" id="airportCode">ZRH</div>
-            <div class="airport-name" id="airportName">Zurich</div>
-          </div>
-        
-          <div class="airport-metrics">
-        
-            <div class="airport-metric">
-              <span class="metric-label">Departures</span>
-              <span id="outboundFlights">0</span>
-            </div>
-        
-            <div class="airport-metric">
-              <span class="metric-label">Arrivals</span>
-              <span id="inboundFlights">0</span>
-            </div>
-        
-            <div class="airport-metric">
-              <span class="metric-label">Airlines</span>
-              <span id="airportAirlines">0</span>
-            </div>
-        
-            <div class="airport-metric">
-              <span class="metric-label">Duration</span>
-              <span id="airportDuration">0</span>
-            </div>
-        
-          </div>
-        </div>
+<div id="airportSummaryBar" class="airport-summary-bar hidden">
+
+  <div class="airport-summary-metric airport-summary-location">
+    <div class="airport-summary-label">AIRPORT</div>
+    <div id="airportCode" class="airport-summary-value">—</div>
+    <div id="airportName" class="airport-summary-subvalue">—</div>
+  </div>
+
+  <div class="airport-summary-metric">
+    <div class="airport-summary-label">DEPARTURES</div>
+    <div id="outboundFlights" class="airport-summary-value">—</div>
+  </div>
+
+  <div class="airport-summary-metric">
+    <div class="airport-summary-label">ARRIVALS</div>
+    <div id="inboundFlights" class="airport-summary-value">—</div>
+  </div>
+
+  <div class="airport-summary-metric">
+    <div class="airport-summary-label">AIRLINES</div>
+    <div id="airportAirlines" class="airport-summary-value">—</div>
+  </div>
+
+  <div class="airport-summary-metric">
+    <div class="airport-summary-label">DURATION</div>
+    <div id="airportDuration" class="airport-summary-value">—</div>
+  </div>
+
+</div>
         
         
         <!-- ===== JOURNEY SUMMARY BAR (hidden by default) ===== -->
