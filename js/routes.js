@@ -815,11 +815,23 @@ function setIsolatedRoute(uid) {
       ? null
       : uid;
 
-  window.appState.isolatedUid =
-    nextUid;
+window.appState.isolatedUid =
+  nextUid;
 
-  window.appState.activeAirport =
-    null;
+window.appState.activeAirport =
+  null;
+
+/*
+ * If a specific journey has just been selected,
+ * make sure any Airport Summary Bar is closed.
+ */
+if (
+  nextUid &&
+  typeof hideAirportSummary ===
+    "function"
+) {
+  hideAirportSummary();
+}
 
   /*
    * Maintain compatibility with older standalone state.
