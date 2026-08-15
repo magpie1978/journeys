@@ -547,67 +547,96 @@ body {
 
 /* =====================================================
    AIRPORT SUMMARY BAR
-===================================================== */
+   ===================================================== */
 
-.airport-summary {
-  max-width: calc(100% - 40px);
-  margin: 12px auto;
-  padding: 14px 28px;
+.airport-summary-bar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: calc(100% - 100px);
+  max-width: 1450px;
+  min-height: 100px;
 
   display: flex;
   align-items: center;
-  gap: 32px;
+  justify-content: space-around;
 
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 28px;
+  padding: 0 32px;
 
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #343434;
+  border-radius: 50px;
 
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  z-index: 20;
 }
 
-.airport-left {
-  min-width: 140px;
-}
 
-.airport-code {
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.1;
-}
+/* Each metric */
 
-.airport-name {
-  margin-top: 3px;
-  font-size: 13px;
-  opacity: 0.8;
-}
-
-.airport-metric {
-  min-width: 110px;
+.airport-summary-metric {
+  flex: 1;
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 
-  gap: 4px;
   text-align: center;
 }
 
-.airport-metric .metric-label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.6;
+
+/* Airport name/code can be left aligned */
+
+.airport-summary-location {
+  align-items: flex-start;
+  text-align: left;
 }
 
-.airport-metric span:not(.metric-label) {
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.1;
+
+/* Labels */
+
+.airport-summary-label {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+
+  color: #aaa;
 }
+
+
+/* Main values */
+
+.airport-summary-value {
+  margin-top: 4px;
+
+  font-size: 28px;
+  font-weight: 600;
+
+  color: #fff;
+}
+
+
+/* London etc. */
+
+.airport-summary-subvalue {
+  margin-top: 2px;
+
+  font-size: 18px;
+  font-weight: 400;
+
+  color: #ccc;
+}
+
+
+/* Hidden state */
+
+.airport-summary-bar.hidden {
+  display: none;
+}
+
+
 
 /* =====================================================
    FLIGHT SUMMARY BAR
