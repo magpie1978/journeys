@@ -213,6 +213,8 @@
         <div id="airportSummaryBar" class="airport-summary hidden">
         
           <div class="airport-left">
+            <div class="metric-label">Airport</div>
+        
             <div class="airport-code" id="airportCode">ZRH</div>
             <div class="airport-name" id="airportName">Zurich</div>
           </div>
@@ -220,13 +222,13 @@
           <div class="airport-metrics">
         
             <div class="airport-metric">
-              <span class="metric-arrow">↗</span>
-              <span id="outboundFlights">0 arrivals</span>
+              <span class="metric-label">Departures</span>
+              <span id="outboundFlights">0</span>
             </div>
         
             <div class="airport-metric">
-              <span class="metric-arrow">↘</span>
-              <span id="inboundFlights">0departures</span>
+              <span class="metric-label">Arrivals</span>
+              <span id="inboundFlights">0</span>
             </div>
         
             <div class="airport-metric">
@@ -241,62 +243,69 @@
         
           </div>
         </div>
-
-
-        <!-- ===== FLIGHT SUMMARY BAR (hidden by default) ===== -->
+        
+        
+        <!-- ===== JOURNEY SUMMARY BAR (hidden by default) ===== -->
         <div id="flightSummaryBar" class="flight-summary hidden">
         
-          <!-- LEFT -->
+          <!-- ROUTE -->
           <div class="flight-left">
-          
-            <div
-              id="journeySummaryLabel"
-              class="metric-label journey-summary-label hidden"
-            >
-              Walk
+        
+            <div class="metric-label journey-summary-label">
+              Route
             </div>
-          
+        
             <div class="flight-route">
               <span id="flightOrigin"></span>
               <span id="flightRouteArrow">→</span>
               <span id="flightDestination"></span>
             </div>
-          
-          </div>   
-
-
-          
+        
+          </div>
+        
+        
           <!-- METRICS -->
           <div class="flight-metrics">
-          
+        
             <div class="flight-metric">
               <span class="metric-label">Date</span>
               <span id="flightDate">0</span>
             </div>
-          
-            <div class="flight-metric">
-              <span class="metric-label">Flight</span>
+        
+            <div class="flight-metric" id="journeyTypeMetric">
+              <span
+                class="metric-label"
+                id="journeyTypeLabel"
+              >
+                Flight
+              </span>
+        
               <span id="flightNumber">0</span>
             </div>
-          
-            <div class="flight-metric">
-              <span class="metric-label">Airline</span>
+        
+            <div class="flight-metric" id="operatorMetric">
+              <span
+                class="metric-label"
+                id="operatorLabel"
+              >
+                Airline
+              </span>
+        
               <span id="flightAirline">0</span>
             </div>
-          
-            <div class="flight-metric">
+        
+            <div class="flight-metric" id="journeyDurationMetric">
               <span class="metric-label">Duration</span>
               <span id="flightDuration"></span>
             </div>
-          
+        
             <div class="flight-metric">
               <span class="metric-label">Distance</span>
               <span id="flightDistance"></span>
             </div>
+        
           </div>
         </div>
-                  
-
 
 
         <!-- ===== MAP ===== -->
