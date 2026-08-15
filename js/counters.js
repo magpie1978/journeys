@@ -188,67 +188,48 @@ function formatSecondsToHM(seconds) {
 
 function updateTransportCounter(routes = []) {
 
-  // -----------------------------------------------------
-  // SHOW ONLY WHEN "DRIVE" IS SELECTED
-  // -----------------------------------------------------
-
   const driveSelected =
     typeof selected !== "undefined" &&
     selected.types instanceof Set &&
     [...selected.types].some(
       type =>
-        String(type).toLowerCase() === "drive"
+        String(type).toLowerCase() ===
+        "drive"
     );
 
-
-  // Hide the complete glass container if Drive
-  // has not been explicitly selected.
-  if (transportCounterEl) {
-    transportCounterEl.classList.toggle(
-      "hidden",
-      !driveSelected
-    );
-  }
-
-
-  // Nothing else needs updating while hidden.
-  if (!driveSelected) {
-    return;
-  }
-
-
-  // -----------------------------------------------------
-  // COUNT DRIVE JOURNEYS ONLY
-  // -----------------------------------------------------
-
-  const drives =
+  const driveCount =
     routes.filter(
       route =>
         String(
           route?.journey_type || ""
         ).toLowerCase() === "drive"
+    ).length;
+
+  if (transportCounterEl) {
+    transportCounterEl.classList.toggle(
+      "hidden",
+      !driveSelected ||
+      driveCount === 0
     );
-
-  const driveCount =
-    drives.length;
-
-
-  // -----------------------------------------------------
-  // UPDATE GLASS CONTAINER
-  // -----------------------------------------------------
-
-  if (transportNumberEl) {
-    transportNumberEl.textContent =
-      driveCount.toLocaleString();
   }
 
-  if (transportLabelEl) {
-    transportLabelEl.textContent =
-      driveCount === 1
-        ? "DRIVE"
-        : "DRIVES";
+  if (
+    !driveSelected ||
+    driveCount === 0
+  ) {
+    return;
   }
+
+  transportNumberEl.textContent =
+    driveCount.toLocaleString();
+
+  transportLabelEl.textContent =
+    driveCount === 1
+      ? "DRIVE"
+      : "DRIVES";
 }
+
+  
 
 
 function updateTrainCounter(routes = []) {
@@ -615,11 +596,11 @@ function updateAllCounters(routes = []) {
    * Flight is not selected in the Type dropdown.
    */
   if (journeyCounterEl) {
-    journeyCounterEl.classList.toggle(
-      "hidden",
-      !flightSelected
-    );
-  }
+journeyCounterEl.classList.toggle(
+  "hidden",
+  !flightSelected ||
+  flightCount === 0
+);  }
 
   journeyNumberEl.textContent =
     flightCount.toLocaleString();
