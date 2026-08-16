@@ -138,173 +138,174 @@
       </aside>
 
       <div id="map-wrapper">
+        <div id="summaryBarSlot">
 
-        <!-- ===== GLASS BAR (ABOVE MAP) ===== -->
-        <div id="glassBar">
-
-          <div id="selectedAirlineCounter" class="glass-box hidden airline-name-box">
-            <div class="glass-number airline-name"></div>
-          </div>
-
-          <div id="selectedAirportCounter" class="glass-box hidden airport-name-box">
-            <div class="airport-code-display"></div>
-            <div class="airport-name-display"></div>
-          </div>
-                
-          <div id="journeyCounter" class="glass-box">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Flights</div>
-          </div>
-          
-          <div id="transportCounter" class="glass-box hidden">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Drives</div>
-          </div>   
-
-          <div id="trainCounter" class="glass-box hidden">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Trains</div>
-          </div>
-          
-          
-          <div id="boatCounter" class="glass-box hidden">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Boats</div>
-          </div>
-          
-          
-          <div id="busCounter" class="glass-box hidden">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Buses</div>
-          </div>
-          
-          
-          <div id="walkCounter" class="glass-box hidden">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Walks</div>
-          </div>
-
-          
-          <div id="milesCounter" class="glass-box">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Miles</div>
-          </div>
-      
-          <div id="countriesCounter" class="glass-box">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Countries</div>
-          </div>
-      
-          <div class="glass-box" id="airlinesCounter">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Airlines</div>
-          </div>
-      
-          <div id="durationCounter" class="glass-box">
-            <div class="glass-number">0</div>
-            <div class="glass-label">Duration</div>
-          </div>
-        
-        </div> 
-        <!-- end of glass bar -->
-
-
-        <!-- ===== AIRPORT SUMMARY BAR (hidden by default) ===== -->
-<div id="airportSummaryBar" class="airport-summary-bar hidden">
-
-  <div class="airport-summary-metric airport-summary-location">
-    <div id="airportCode" class="airport-summary-value">—</div>
-    <div id="airportName" class="airport-summary-subvalue">—</div>
-  </div>
-
-  <div class="airport-summary-metric">
-    <div class="airport-summary-label">DEPARTURES</div>
-    <div id="outboundFlights" class="airport-summary-value">—</div>
-  </div>
-
-  <div class="airport-summary-metric">
-    <div class="airport-summary-label">ARRIVALS</div>
-    <div id="inboundFlights" class="airport-summary-value">—</div>
-  </div>
-
-  <div class="airport-summary-metric">
-    <div class="airport-summary-label">AIRLINES</div>
-    <div id="airportAirlines" class="airport-summary-value">—</div>
-  </div>
-
-  <div class="airport-summary-metric">
-    <div class="airport-summary-label">DURATION</div>
-    <div id="airportDuration" class="airport-summary-value">—</div>
-  </div>
-
-</div>
-        
-        
-        <!-- ===== JOURNEY SUMMARY BAR (hidden by default) ===== -->
-        <div id="flightSummaryBar" class="flight-summary hidden">
-        
-          <!-- ROUTE -->
-          <div class="flight-left">
-        
-            <div class="metric-label journey-summary-label">
-              Route
+          <!-- ===== GLASS BAR (ABOVE MAP) ===== -->
+          <div id="glassBar">
+  
+            <div id="selectedAirlineCounter" class="glass-box hidden airline-name-box">
+              <div class="glass-number airline-name"></div>
+            </div>
+  
+            <div id="selectedAirportCounter" class="glass-box hidden airport-name-box">
+              <div class="airport-code-display"></div>
+              <div class="airport-name-display"></div>
+            </div>
+                  
+            <div id="journeyCounter" class="glass-box">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Flights</div>
+            </div>
+            
+            <div id="transportCounter" class="glass-box hidden">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Drives</div>
+            </div>   
+  
+            <div id="trainCounter" class="glass-box hidden">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Trains</div>
+            </div>
+            
+            
+            <div id="boatCounter" class="glass-box hidden">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Boats</div>
+            </div>
+            
+            
+            <div id="busCounter" class="glass-box hidden">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Buses</div>
+            </div>
+            
+            
+            <div id="walkCounter" class="glass-box hidden">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Walks</div>
+            </div>
+  
+            
+            <div id="milesCounter" class="glass-box">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Miles</div>
             </div>
         
-            <div class="flight-route">
-              <span id="flightOrigin"></span>
-              <span id="flightRouteArrow">→</span>
-              <span id="flightDestination"></span>
+            <div id="countriesCounter" class="glass-box">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Countries</div>
             </div>
         
+            <div class="glass-box" id="airlinesCounter">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Airlines</div>
+            </div>
+        
+            <div id="durationCounter" class="glass-box">
+              <div class="glass-number">0</div>
+              <div class="glass-label">Duration</div>
+            </div>
+          
+          </div> 
+          <!-- end of glass bar -->
+  
+  
+          <!-- ===== AIRPORT SUMMARY BAR (hidden by default) ===== -->
+          <div id="airportSummaryBar" class="airport-summary-bar hidden">
+          
+            <div class="airport-summary-metric airport-summary-location">
+              <div id="airportCode" class="airport-summary-value">—</div>
+              <div id="airportName" class="airport-summary-subvalue">—</div>
+            </div>
+          
+            <div class="airport-summary-metric">
+              <div class="airport-summary-label">DEPARTURES</div>
+              <div id="outboundFlights" class="airport-summary-value">—</div>
+            </div>
+          
+            <div class="airport-summary-metric">
+              <div class="airport-summary-label">ARRIVALS</div>
+              <div id="inboundFlights" class="airport-summary-value">—</div>
+            </div>
+          
+            <div class="airport-summary-metric">
+              <div class="airport-summary-label">AIRLINES</div>
+              <div id="airportAirlines" class="airport-summary-value">—</div>
+            </div>
+          
+            <div class="airport-summary-metric">
+              <div class="airport-summary-label">DURATION</div>
+              <div id="airportDuration" class="airport-summary-value">—</div>
+            </div>
+          
           </div>
-        
-        
-          <!-- METRICS -->
-          <div class="flight-metrics">
-        
-            <div class="flight-metric">
-              <span class="metric-label">Date</span>
-              <span id="flightDate">0</span>
+          
+          
+          <!-- ===== JOURNEY SUMMARY BAR (hidden by default) ===== -->
+          <div id="flightSummaryBar" class="flight-summary hidden">
+          
+            <!-- ROUTE -->
+            <div class="flight-left">
+          
+              <div class="metric-label journey-summary-label">
+                Route
+              </div>
+          
+              <div class="flight-route">
+                <span id="flightOrigin"></span>
+                <span id="flightRouteArrow">→</span>
+                <span id="flightDestination"></span>
+              </div>
+          
             </div>
-        
-            <div class="flight-metric" id="journeyTypeMetric">
-              <span
-                class="metric-label"
-                id="journeyTypeLabel"
-              >
-                Flight
-              </span>
-        
-              <span id="flightNumber">0</span>
+          
+          
+            <!-- METRICS -->
+            <div class="flight-metrics">
+          
+              <div class="flight-metric">
+                <span class="metric-label">Date</span>
+                <span id="flightDate">0</span>
+              </div>
+          
+              <div class="flight-metric" id="journeyTypeMetric">
+                <span
+                  class="metric-label"
+                  id="journeyTypeLabel"
+                >
+                  Flight
+                </span>
+          
+                <span id="flightNumber">0</span>
+              </div>
+          
+              <div class="flight-metric" id="operatorMetric">
+                <span
+                  class="metric-label"
+                  id="operatorLabel"
+                >
+                  Airline
+                </span>
+          
+                <span id="flightAirline">0</span>
+              </div>
+          
+              <div class="flight-metric" id="journeyDurationMetric">
+                <span class="metric-label">Duration</span>
+                <span id="flightDuration"></span>
+              </div>
+          
+              <div class="flight-metric">
+                <span class="metric-label">Distance</span>
+                <span id="flightDistance"></span>
+              </div>
+          
             </div>
-        
-            <div class="flight-metric" id="operatorMetric">
-              <span
-                class="metric-label"
-                id="operatorLabel"
-              >
-                Airline
-              </span>
-        
-              <span id="flightAirline">0</span>
-            </div>
-        
-            <div class="flight-metric" id="journeyDurationMetric">
-              <span class="metric-label">Duration</span>
-              <span id="flightDuration"></span>
-            </div>
-        
-            <div class="flight-metric">
-              <span class="metric-label">Distance</span>
-              <span id="flightDistance"></span>
-            </div>
-        
           </div>
         </div>
-
-
-        <!-- ===== MAP ===== -->
-        <div id="map"></div>
+  
+          <!-- ===== MAP ===== -->
+          <div id="map"></div>
 
       </div>  <!-- end of map wrapper -->
     </div>  <!-- end of main layout -->
