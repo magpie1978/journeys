@@ -545,6 +545,16 @@ body {
   margin-bottom: 4px;
 }
 
+.flight-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flight-route {
+  text-align: center;
+}
+
 
 /* =====================================================
    AIRPORT SUMMARY BAR
