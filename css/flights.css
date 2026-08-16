@@ -52,29 +52,83 @@ body {
 }
 
 #summaryBarSlot {
+  position: relative;
+
   flex: 0 0 112px;
   height: 112px;
   width: 100%;
-  padding: 12px 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   box-sizing: border-box;
+
+  background: #111;
 }
+
 
 #glassBar {
   height: 88px;
   box-sizing: border-box;
+
+  width: 100%;
   padding: 0 16px;
+
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
 }
+
 
 .airport-summary-bar {
   height: 88px;
-  margin: 0 auto;
   box-sizing: border-box;
+
+  width: calc(100% - 40px);
+  max-width: 1450px;
+
+  margin: 0;
+
+  padding: 10px 28px;
+
+  display: flex;
+  align-items: center;
+  gap: 32px;
+
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
+
 
 .flight-summary {
   height: 88px;
-  margin: 0 auto;
   box-sizing: border-box;
+
+  width: calc(100% - 40px);
+  max-width: 1450px;
+
+  margin: 0;
+
+  padding: 14px 28px;
+
+  display: flex;
+  align-items: center;
+  gap: 32px;
+
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 
