@@ -51,6 +51,32 @@ body {
   gap: 10px;
 }
 
+#summaryBarSlot {
+  flex: 0 0 112px;
+  height: 112px;
+  width: 100%;
+  padding: 12px 20px;
+  box-sizing: border-box;
+}
+
+#glassBar {
+  height: 88px;
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+.airport-summary-bar {
+  height: 88px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.flight-summary {
+  height: 88px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 
 /* =====================================================
    FILTER DROPDOWNS
