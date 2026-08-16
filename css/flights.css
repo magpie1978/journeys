@@ -545,97 +545,105 @@ body {
   margin-bottom: 4px;
 }
 
+
 /* =====================================================
    AIRPORT SUMMARY BAR
-   ===================================================== */
+===================================================== */
 
 .airport-summary-bar {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: calc(100% - 100px);
-  max-width: 1450px;
-  min-height: 100px;
+  max-width: calc(100% - 40px);
+  margin: 12px auto;
+  padding: 14px 28px;
 
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  gap: 32px;
 
-  padding: 0 32px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
 
-  background: #343434;
-  border-radius: 50px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 
-  box-sizing: border-box;
-  z-index: 20;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 
-/* Each metric */
+/* Airport name/code section */
+
+.airport-summary-location {
+  min-width: 220px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  text-align: left;
+}
+
+
+/* All airport metrics */
 
 .airport-summary-metric {
-  flex: 1;
+  min-width: 110px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 
+  gap: 4px;
   text-align: center;
-}
-
-
-/* Airport name/code can be left aligned */
-
-.airport-summary-location {
-  align-items: flex-start;
-  text-align: left;
 }
 
 
 /* Labels */
 
 .airport-summary-label {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0.06em;
 
-  color: #aaa;
+  text-transform: uppercase;
+  opacity: 0.6;
 }
 
 
 /* Main values */
 
 .airport-summary-value {
-  margin-top: 4px;
-
-  font-size: 28px;
-  font-weight: 600;
-
-  color: #fff;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
 }
 
 
-/* London etc. */
+/* Airport city/name */
 
 .airport-summary-subvalue {
   margin-top: 2px;
 
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 400;
+  line-height: 1.1;
 
-  color: #ccc;
+  opacity: 0.8;
 }
 
 
-/* Hidden state */
+/* Spread metrics across remaining width */
+
+.airport-summary-bar
+.airport-summary-metric:not(.airport-summary-location) {
+  flex: 1;
+}
+
+
+/* Hidden */
 
 .airport-summary-bar.hidden {
-  display: none;
+  display: none !important;
 }
-
 
 
 /* =====================================================
