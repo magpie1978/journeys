@@ -46,6 +46,9 @@ if (!("activeAirport" in window.appState)) {
   window.appState.activeAirport = null;
 }
 
+if (!(window.appState.selectedUids instanceof Set)) {
+  window.appState.selectedUids = new Set();
+}
 
 // =====================================================
 // MAP IDS
@@ -100,6 +103,15 @@ function getCurrentIsolatedUid() {
   );
 }
 
+function getCurrentSelectedUids() {
+  if (
+    window.appState?.selectedUids instanceof Set
+  ) {
+    return window.appState.selectedUids;
+  }
+
+  return new Set();
+}
 
 function findRouteByUid(uid) {
   if (uid == null) {
@@ -945,45 +957,83 @@ function bindRouteHandlers() {
 // ROUTE SELECTION
 // =====================================================
 
-function setIsolatedRoute(uid) {
-  const currentUid =
-    getCurrentIsolatedUid();
-
-  const nextUid =
-    currentUid != null &&
-    uid != null &&
-    String(currentUid) ===
-      String(uid)
-      ? null
-      : uid;
-
-window.appState.isolatedUid =
-  nextUid;
-
-window.appState.activeAirport =
-  null;
-
-/*
- * If a specific journey has just been selected,
- * make sure any Airport Summary Bar is closed.
- */
-if (
-  nextUid &&
-  typeof hideAirportSummary ===
-    "function"
+function setIsolatedRoute(
+  uid,
+  additive = false
 ) {
-  hideAirportSummary();
-}
+  const selectedUids =
+    getCurrentSelectedUids();
 
-  /*
-   * Maintain compatibility with older standalone state.
-   */
-  if (
-    typeof isolatedUid !==
-    "undefined"
-  ) {
-    isolatedUid = nextUid;
+  const uidString =
+    uid != null
+      ? String(uid)
+      : null;
+
+
+  // -------------------------------------------------
+  // CLEAR EVERYTHING
+  // -------------------------------------------------
+
+  if (uidString == null) {
+    selectedUids.clear();
+
+    window.appState.isolatedUid =
+      null;
   }
+
+
+  // -------------------------------------------------
+  // CTRL / CMD CLICK
+  // Add or remove this route from the selection.
+  // -------------------------------------------------
+
+  else if (additive) {
+
+    if (selectedUids.has(uidString)) {
+      selectedUids.delete(uidString);
+    } else {
+      selectedUids.add(uidString);
+    }
+
+    /*
+     * isolatedUid remains useful for the existing
+     * single-route summary behaviour.
+     */
+    window.appState.isolatedUid =
+      selectedUids.size === 1
+        ? [...selectedUids][0]
+        : null;
+  }
+
+
+  // -------------------------------------------------
+  // NORMAL CLICK
+  // Preserve the existing single-selection behaviour.
+  // -------------------------------------------------
+
+  else {
+
+    const alreadyOnlySelected =
+      selectedUids.size === 1 &&
+      selectedUids.has(uidString);
+
+    selectedUids.clear();
+
+    if (alreadyOnlySelected) {
+      window.appState.isolatedUid =
+        null;
+    } else {
+      selectedUids.add(uidString);
+
+      window.appState.isolatedUid =
+        uidString;
+    }
+  }
+
+
+  // Selecting journeys cancels airport selection.
+  window.appState.activeAirport =
+    null;
 
   if (
     typeof window.activeAirportFilter !==
@@ -993,16 +1043,22 @@ if (
       null;
   }
 
-  /*
-   * Selection does not change route data, so there is no
-   * need to rebuild the GeoJSON source or rerender the
-   * complete sidebar.
-   */
+
+  if (
+    selectedUids.size &&
+    typeof hideAirportSummary ===
+      "function"
+  ) {
+    hideAirportSummary();
+  }
+
+
   applyIsolationStyling();
   updateSidebarSelection();
   updateFlightSummaryFromState();
   fitToCurrentRouteView();
 }
+
 
 window.setIsolatedRoute =
   setIsolatedRoute;
