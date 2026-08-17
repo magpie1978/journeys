@@ -232,7 +232,15 @@ textarea {
 }
 
 .filter-options {
+  flex: 1;
+  min-height: 0;
+
   padding: 8px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  overscroll-behavior: contain;
 }
 
 
@@ -275,6 +283,18 @@ textarea {
   accent-color: var(--mj-accent);
 }
 
+.filter-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-options::-webkit-scrollbar-thumb {
+  background: #3A3D45;
+  border-radius: 999px;
+}
+
+.filter-options::-webkit-scrollbar-thumb:hover {
+  background: var(--mj-accent);
+}
 
 .filter-divider {
   height: 1px;
