@@ -459,9 +459,9 @@ function ensureCountriesLayer() {
         "country_boundaries",
 
       paint: {
-        "fill-color": "#C9A24D",
-        "fill-opacity": 0.45
-      },
+  "fill-color": "#CCFF00",
+  "fill-opacity": 0.32
+},
 
       /*
        * Begin with a filter that matches no real
