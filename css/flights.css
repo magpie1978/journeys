@@ -460,8 +460,8 @@ body {
   display: flex;
   flex-direction: column;
 
-  background: linear-gradient(to bottom, #0d0d0d, #141414);
-  border-right: 1px solid #222;
+  background: #0F1114;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   transition: width 0.25s ease;
 }
 
@@ -490,39 +490,121 @@ body {
 }
 
 #sidebar-header {
-  font-size: 12px;
+  height: 52px;
+  padding: 0 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: #0F1114;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  color: #F5F7FA;
+
+  font-size: 11px;
   font-weight: 600;
 
   text-transform: uppercase;
   letter-spacing: 0.10em;
-}
 
+  box-sizing: border-box;
+}
 
 #sidebarToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+
   padding: 0;
 
-  background: none;
-  color: #fff;
-  border: none;
+  background: transparent;
+  color: #A7ABB4;
 
-  font-size: 18px;
+  border: 0;
+  border-radius: 8px;
+
   cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
-#flightList li.active {
-  background: rgba(204, 255, 0, 0.10);
+#sidebarToggle:hover {
+  background: #292C33;
+  color: #CCFF00;
+}
 
-  box-shadow:
-    inset 3px 0 0 var(--mj-accent);
+#flightList {
+  margin: 0;
+  padding: 10px 8px;
+
+  list-style: none;
+}
+
+#flightList li {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  min-height: 82px;
+  margin: 0 0 6px 0;
+  padding: 12px 14px;
+
+  background: #191B22;
+
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+
+  box-sizing: border-box;
+
+  cursor: pointer;
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 #flightList li:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: #202329;
+
+  border-color: rgba(255, 255, 255, 0.09);
+
+  transform: translateY(-1px);
+}
+
+#flightList li.active {
+  background: rgba(204, 255, 0, 0.07);
+
+  border-color: rgba(204, 255, 0, 0.28);
+
+  box-shadow:
+    0 0 18px rgba(204, 255, 0, 0.06),
+    inset 3px 0 0 #CCFF00;
 }
 
 #flightList li.active:hover {
-  background: rgba(204, 255, 0, 0.13);
+  background: rgba(204, 255, 0, 0.09);
+
+  border-color: rgba(204, 255, 0, 0.38);
 }
+
+#flightList li.active .sidebar-route {
+  color: #FFFFFF;
+}
+
+#flightList li.active .sidebar-date {
+  color: #B9BDC5;
+}
+
 
 .sidebar-row {
   width: 100%;
@@ -540,6 +622,7 @@ body {
   justify-content: center;
 }
 
+
 .sidebar-text {
   flex: 0 0 55%;
   max-width: 55%;
@@ -550,30 +633,46 @@ body {
 }
 
 .sidebar-journey-type {
-  font-size: 12px;
+  margin-bottom: 3px;
+
+  color: #A7ABB4;
+
+  font-size: 10px;
   font-weight: 600;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .sidebar-route {
-  font-size: 12px;
+  margin-bottom: 5px;
+
+  color: #F5F7FA;
+
+  font-size: 13px;
   font-weight: 600;
-  opacity: 0.95;
+  line-height: 1.2;
+
+  letter-spacing: -0.01em;
 }
 
 .sidebar-date {
+  color: #9297A1;
+
   font-size: 11px;
   font-weight: 400;
-
-  color: var(--mj-text-muted);
-  opacity: 1;
+  line-height: 1.2;
 }
 
 .airline-logo {
-  width: 100%;
-  height: 100%;
+  width: 58px;
+  height: 48px;
+
+  flex: 0 0 58px;
+
+  margin-right: 14px;
+
   object-fit: contain;
-  object-position: center;
-  transform: scale(1.5);
 }
 
 .journey-logo {
