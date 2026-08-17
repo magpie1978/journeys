@@ -669,10 +669,9 @@ textarea {
 }
 
 .airline-logo {
-  width: 58px;
-  height: 48px;
-
-  flex: 0 0 58px;
+  width: 80px;
+  height: 64px;
+  flex: 0 0 80px;
 
   margin-right: 14px;
 
