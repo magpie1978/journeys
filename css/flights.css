@@ -46,6 +46,12 @@ body {
   display: none !important;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
 /* =====================================================
    TOP BAR
