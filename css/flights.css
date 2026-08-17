@@ -1074,6 +1074,11 @@ textarea {
    MAPBOX OVERRIDES
 ===================================================== */
 
+
+.mapboxgl-popup,
+.mapboxgl-popup-content {
+  font-family: "Manrope", sans-serif;
+}
 .mapboxgl-popup {
   font-size: 12px;
 }
