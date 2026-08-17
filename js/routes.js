@@ -40,6 +40,7 @@ if (!("mode" in window.appState)) {
 
 if (!("isolatedUid" in window.appState)) {
   window.appState.isolatedUid = null;
+  window.appState.selectedUids?.clear();
 }
 
 if (!("activeAirport" in window.appState)) {
