@@ -732,30 +732,87 @@ if (
     return dateB - dateA;
   });
 
-  /*
-   * A top-bar filter change establishes a new complete
-   * base route collection and clears temporary selections.
-   */
-  window.appState.isolatedUid =
-    null;
+// -------------------------------------------------
+// PRESERVE ACTIVE AIRPORT ACROSS TOP-BAR FILTERS
+// -------------------------------------------------
 
-  window.appState.activeAirport =
-    null;
+const activeAirport =
+  window.appState?.activeAirport ||
+  window.activeAirportFilter ||
+  null;
 
-  if (
-    typeof window.activeAirportFilter !==
-    "undefined"
-  ) {
-    window.activeAirportFilter =
-      null;
-  }
+/*
+ * A top-bar filter change should clear a specific
+ * journey selection, but it should NOT clear an
+ * airport selection.
+ */
+window.appState.isolatedUid =
+  null;
 
-  renderRoutes(routes, {
-    updateBaseRoutes: true,
-    fitMap: true
-  });
+
+/*
+ * The newly loaded routes are now the complete base
+ * collection for the selected Year / Airline / Type /
+ * Airport-dropdown / Class filters.
+ */
+window.allRoutes =
+  routes.slice();
+
+
+/*
+ * If an airport is currently selected, update the
+ * collection that airports.js should restore when the
+ * airport is later deselected.
+ */
+if (
+  activeAirport &&
+  typeof window.updateAirportFilterBaseRoutes ===
+    "function"
+) {
+  window.updateAirportFilterBaseRoutes(
+    routes
+  );
 }
 
+
+/*
+ * Reapply the clicked-airport filter to the newly
+ * loaded route collection.
+ */
+if (activeAirport) {
+
+  const airportRoutes =
+    routes.filter(route =>
+      getJourneyType(route) === "flight" &&
+      (
+        route.origin === activeAirport ||
+        route.destination === activeAirport
+      )
+    );
+
+  renderRoutes(
+    airportRoutes,
+    {
+      updateBaseRoutes: false,
+      fitMap: true
+    }
+  );
+
+} else {
+
+  /*
+   * No clicked airport is active, so display the
+   * complete top-bar-filtered route collection.
+   */
+  renderRoutes(
+    routes,
+    {
+      updateBaseRoutes: true,
+      fitMap: true
+    }
+  );
+}
+  
 window.loadRoutes =
   loadRoutes;
 
