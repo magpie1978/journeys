@@ -779,7 +779,9 @@ if (
  * Reapply the clicked-airport filter to the newly
  * loaded route collection.
  */
-if (activeAirport) {
+
+
+  if (activeAirport) {
 
   const airportRoutes =
     routes.filter(route =>
@@ -798,8 +800,34 @@ if (activeAirport) {
     }
   );
 
+
+  // -------------------------------------------------
+  // REFRESH AIRPORT SUMMARY BAR
+  // -------------------------------------------------
+
+  if (
+    typeof window.showAirportSummary ===
+      "function"
+  ) {
+
+    const airportNameEl =
+      document.getElementById(
+        "airportName"
+      );
+
+    window.showAirportSummary({
+      code: activeAirport,
+
+      city:
+        airportNameEl
+          ?.textContent
+          ?.trim() || ""
+    });
+  }
+
 } else {
 
+    
   /*
    * No clicked airport is active, so display the
    * complete top-bar-filtered route collection.
