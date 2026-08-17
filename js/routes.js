@@ -54,6 +54,11 @@ if (!("activeAirport" in window.appState)) {
 const ROUTES_SOURCE_ID =
   "routes";
 
+// ADDED 17 AUG  2026 //
+const ROUTES_GLOW_LAYER_ID =
+  "routes-glow";
+// END
+
 const ROUTES_LINE_LAYER_ID =
   "routes-line";
 
@@ -199,6 +204,58 @@ function ensureRouteLayers() {
     return;
   }
 
+
+  // -------------------------------------------------
+  // ROUTE GLOW - ADDED 17 AUGUST 2026
+  // -------------------------------------------------
+  
+  if (
+    !map.getLayer(
+      ROUTES_GLOW_LAYER_ID
+    )
+  ) {
+    map.addLayer({
+      id:
+        ROUTES_GLOW_LAYER_ID,
+  
+      type: "line",
+  
+      source:
+        ROUTES_SOURCE_ID,
+  
+      paint: {
+        "line-width": 8,
+        "line-opacity": 0.18,
+        "line-blur": 6,
+  
+        "line-color": [
+          "case",
+  
+          [
+            "==",
+            ["get", "journey_type"],
+            "Flight"
+          ],
+          "#CCFF00",
+  
+          [
+            "==",
+            ["get", "journey_type"],
+            "Drive"
+          ],
+          "#1E90FF",
+  
+          "#E53935"
+        ]
+      }
+    });
+  }
+
+
+
+  
+
+  
   if (
     !map.getLayer(
       ROUTES_LINE_LAYER_ID
@@ -225,7 +282,7 @@ function ensureRouteLayers() {
             ["get", "journey_type"],
             "Flight"
           ],
-          "#FFD700",
+          "#CCFF00",  //was #FFD700
 
           [
             "==",
@@ -956,9 +1013,10 @@ window.setMapMode =
 
 
 // =====================================================
-// ISOLATION STYLING
+// ISOLATION STYLING - REPLACE ON 17 AUGUST 2026
 // =====================================================
 
+/*
 function applyIsolationStyling() {
   if (
     !map.getLayer(
@@ -1021,6 +1079,171 @@ function applyIsolationStyling() {
     ]
   );
 }
+*/
+
+
+  function applyIsolationStyling() {
+  
+    if (
+      !map.getLayer(
+        ROUTES_LINE_LAYER_ID
+      )
+    ) {
+      return;
+    }
+  
+    const isolatedRouteUid =
+      getCurrentIsolatedUid();
+  
+  
+    // -------------------------------------------------
+    // NO SELECTED JOURNEY
+    // -------------------------------------------------
+  
+    if (!isolatedRouteUid) {
+  
+      map.setPaintProperty(
+        ROUTES_LINE_LAYER_ID,
+        "line-opacity",
+        0.85
+      );
+  
+      map.setPaintProperty(
+        ROUTES_LINE_LAYER_ID,
+        "line-width",
+        1.4
+      );
+  
+  
+      if (
+        map.getLayer(
+          ROUTES_GLOW_LAYER_ID
+        )
+      ) {
+        map.setPaintProperty(
+          ROUTES_GLOW_LAYER_ID,
+          "line-opacity",
+          0.14
+        );
+  
+        map.setPaintProperty(
+          ROUTES_GLOW_LAYER_ID,
+          "line-width",
+          7
+        );
+  
+        map.setPaintProperty(
+          ROUTES_GLOW_LAYER_ID,
+          "line-blur",
+          6
+        );
+      }
+  
+      return;
+    }
+  
+  
+    // -------------------------------------------------
+    // SELECTED JOURNEY — MAIN LINE
+    // -------------------------------------------------
+  
+    map.setPaintProperty(
+      ROUTES_LINE_LAYER_ID,
+      "line-opacity",
+      [
+        "case",
+  
+        [
+          "==",
+          ["to-string", ["get", "uid"]],
+          String(isolatedRouteUid)
+        ],
+  
+        1,
+        0.12
+      ]
+    );
+  
+    map.setPaintProperty(
+      ROUTES_LINE_LAYER_ID,
+      "line-width",
+      [
+        "case",
+  
+        [
+          "==",
+          ["to-string", ["get", "uid"]],
+          String(isolatedRouteUid)
+        ],
+  
+        2.8,
+        1.2
+      ]
+    );
+  
+  
+    // -------------------------------------------------
+    // SELECTED JOURNEY — GLOW
+    // -------------------------------------------------
+  
+    if (
+      map.getLayer(
+        ROUTES_GLOW_LAYER_ID
+      )
+    ) {
+  
+      map.setPaintProperty(
+        ROUTES_GLOW_LAYER_ID,
+        "line-opacity",
+        [
+          "case",
+  
+          [
+            "==",
+            ["to-string", ["get", "uid"]],
+            String(isolatedRouteUid)
+          ],
+  
+          0.55,
+          0.03
+        ]
+      );
+  
+      map.setPaintProperty(
+        ROUTES_GLOW_LAYER_ID,
+        "line-width",
+        [
+          "case",
+  
+          [
+            "==",
+            ["to-string", ["get", "uid"]],
+            String(isolatedRouteUid)
+          ],
+  
+          12,
+          5
+        ]
+      );
+  
+      map.setPaintProperty(
+        ROUTES_GLOW_LAYER_ID,
+        "line-blur",
+        [
+          "case",
+  
+          [
+            "==",
+            ["to-string", ["get", "uid"]],
+            String(isolatedRouteUid)
+          ],
+  
+          8,
+          5
+        ]
+      );
+    }
+  }
 
 window.applyIsolationStyling =
   applyIsolationStyling;
@@ -1041,6 +1264,7 @@ function applyRouteModeVisibility() {
       : "none";
 
   [
+    ROUTES_GLOW_LAYER_ID, // ADDED 17 AUGUST 2026
     ROUTES_LINE_LAYER_ID,
     ROUTES_HIT_LAYER_ID
   ].forEach(layerId => {
