@@ -150,6 +150,21 @@ function escapePopupHtml(value) {
 
 
 // =====================================================
+// UPDATE AIRPORT FILTER BASE ROUTES
+// =====================================================
+
+function updateAirportFilterBaseRoutes(routes) {
+  routesBeforeAirportFilter =
+    Array.isArray(routes)
+      ? routes.slice()
+      : [];
+}
+
+window.updateAirportFilterBaseRoutes =
+  updateAirportFilterBaseRoutes;
+
+
+// =====================================================
 // SOURCE AND LAYER HELPERS
 // =====================================================
 
