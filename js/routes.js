@@ -1497,13 +1497,49 @@ function updateFlightSummaryFromState() {
 
 function fitToCurrentRouteView() {
   if (
-    getCurrentMapMode() !==
-      "routes" ||
+    getCurrentMapMode() !== "routes" ||
     typeof fitToBoundsFromLineGeoms !==
       "function"
   ) {
     return;
   }
+
+  // -------------------------------------------------
+  // MULTIPLE SELECTED ROUTES
+  // -------------------------------------------------
+
+  const selectedUids =
+    getCurrentSelectedUids();
+
+  if (selectedUids.size > 1) {
+    const routes =
+      Array.isArray(window.currentRoutes)
+        ? window.currentRoutes
+        : [];
+
+    const selectedGeometries =
+      routes
+        .filter(route =>
+          selectedUids.has(
+            String(route.uid)
+          )
+        )
+        .map(route => route?.geom)
+        .filter(Boolean);
+
+    if (selectedGeometries.length) {
+      fitToBoundsFromLineGeoms(
+        selectedGeometries
+      );
+    }
+
+    return;
+  }
+
+
+  // -------------------------------------------------
+  // SINGLE SELECTED ROUTE
+  // -------------------------------------------------
 
   const isolatedRoute =
     findRouteByUid(
@@ -1511,28 +1547,28 @@ function fitToCurrentRouteView() {
     );
 
   if (isolatedRoute?.geom) {
-  
+
     const journeyType =
       String(
         isolatedRoute.journey_type || ""
       ).toLowerCase();
-  
+
     /*
      * Walks are usually geographically small,
      * so fit them much more tightly.
      */
     if (journeyType === "walk") {
-  
+
       const bounds =
         new mapboxgl.LngLatBounds();
-  
+
       const addCoordinates =
         coordinates => {
-  
+
           if (!Array.isArray(coordinates)) {
             return;
           }
-  
+
           if (
             typeof coordinates[0] === "number" &&
             typeof coordinates[1] === "number"
@@ -1540,16 +1576,16 @@ function fitToCurrentRouteView() {
             bounds.extend(coordinates);
             return;
           }
-  
+
           coordinates.forEach(
             addCoordinates
           );
         };
-  
+
       addCoordinates(
         isolatedRoute.geom.coordinates
       );
-  
+
       if (!bounds.isEmpty()) {
         map.fitBounds(bounds, {
           padding: {
@@ -1562,9 +1598,9 @@ function fitToCurrentRouteView() {
                 : 100,
             right: 70
           },
-  
+
           duration: 650,
-  
+
           /*
            * Allows short walks to zoom in
            * much closer than long journeys.
@@ -1572,10 +1608,10 @@ function fitToCurrentRouteView() {
           maxZoom: 16
         });
       }
-  
+
       return;
     }
-  
+
     /*
      * Normal behaviour for Flights, Trains,
      * Drives, Boats, Buses etc.
@@ -1583,13 +1619,23 @@ function fitToCurrentRouteView() {
     fitToBoundsFromLineGeoms([
       isolatedRoute.geom
     ]);
-  
+
     return;
   }
 
-  
+
+  // -------------------------------------------------
+  // NO ROUTE SELECTED
+  // FIT ALL CURRENT ROUTES
+  // -------------------------------------------------
+
+  const routes =
+    Array.isArray(window.currentRoutes)
+      ? window.currentRoutes
+      : [];
+
   const geometries =
-    window.currentRoutes
+    routes
       .map(route => route?.geom)
       .filter(Boolean);
 
