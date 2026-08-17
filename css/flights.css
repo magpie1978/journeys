@@ -160,20 +160,46 @@ body {
 }
 
 .filter-toggle {
-  padding: 6px 12px;
+  padding: 8px 14px;
 
-  background: #fff;
-  color: #000;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  background: var(--mj-panel);
+  color: var(--mj-text);
 
-  font-size: 14px;
+  border: 1px solid var(--mj-border);
+  border-radius: 999px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+
   cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.filter-toggle:hover {
+  border-color: var(--mj-accent);
+}
+
+.filter.open .filter-toggle,
+.filter-toggle.active {
+  background: var(--mj-accent);
+  color: #0F1114;
+
+  border-color: var(--mj-accent);
+
+  box-shadow:
+    0 0 0 1px rgba(204, 255, 0, 0.25),
+    0 0 18px rgba(204, 255, 0, 0.16);
 }
 
 .filter-menu {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
   z-index: 1000;
 
@@ -183,10 +209,16 @@ body {
   min-width: 220px;
   max-height: 300px;
 
-  background: #222;
-  color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: var(--mj-panel);
+  color: var(--mj-text);
+
+  border: 1px solid var(--mj-border);
+  border-radius: 16px;
+
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.38);
+
+  overflow: hidden;
 }
 
 .filter-menu.open {
@@ -213,26 +245,49 @@ body {
 }
 
 .filter-options {
-  padding: 6px 10px;
-  overflow-y: auto;
+  padding: 8px;
 }
+
 
 .filter-options label {
   display: flex;
   align-items: center;
   gap: 8px;
 
-  padding: 4px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
 
-  color: #fff;
+  color: var(--mj-text);
   font-size: 13px;
+  font-weight: 500;
+
   cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
+
+.filter-options label:hover {
+  background: rgba(204, 255, 0, 0.08);
+}
+
 
 .filter-options input {
   /*  accent-color: #ffd700;  REMOVED 17 AUGUST 2026 */
   accent-color: var(--mj-accent);
 }
+
+
+.filter-options label:has(input:checked) {
+  background: var(--mj-accent);
+  color: #0F1114;
+}
+
+.filter-options input {
+  accent-color: var(--mj-accent);
+}
+
 
 .filter-divider {
   height: 1px;
@@ -245,6 +300,18 @@ body {
    TOP ACTIONS AND STATS DROPDOWN
 ===================================================== */
 
+#addJourneyBtn {
+  background: var(--mj-accent);
+  color: #0F1114;
+
+  border-color: var(--mj-accent);
+
+  font-weight: 600;
+}
+
+#addJourneyBtn:hover {
+  background: #D8FF3D;
+}
 .top-actions {
   display: flex;
   align-items: center;
@@ -292,25 +359,30 @@ body {
 
 .top-btn,
 .top-btn:link,
-.top-btn:visited,
-.top-btn:hover,
-.top-btn:active {
-  padding: 6px 12px;
+.top-btn:visited {
+  padding: 8px 14px;
 
-  background: #fff;
-  color: #000;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  background: var(--mj-panel);
+  color: var(--mj-text);
+
+  border: 1px solid var(--mj-border);
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 500;
 
   text-decoration: none;
-  font-size: 14px;
   cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .top-btn:hover {
-  background: #eee;
+  border-color: var(--mj-accent);
 }
-
 
 
 
@@ -437,30 +509,19 @@ body {
   cursor: pointer;
 }
 
-#flightList {
-  flex: 1;
-  margin: 0;
-  padding: 0;
+#flightList li.active {
+  background: rgba(204, 255, 0, 0.10);
 
-  list-style: none;
-  overflow-y: auto;
-}
-
-#flightList li {
-  padding: 10px 14px;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-
-  cursor: pointer;
-  transition: background 0.15s ease;
+  box-shadow:
+    inset 3px 0 0 var(--mj-accent);
 }
 
 #flightList li:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
-#flightList li.active {
-  background: rgba(255, 215, 0, 0.15);
+#flightList li.active:hover {
+  background: rgba(204, 255, 0, 0.13);
 }
 
 .sidebar-row {
