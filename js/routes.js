@@ -815,7 +815,7 @@ if (activeAirport) {
   
 window.loadRoutes =
   loadRoutes;
-
+}
 
 // =====================================================
 // ROUTE EVENT HANDLERS
