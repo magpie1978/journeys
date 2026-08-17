@@ -103,17 +103,16 @@ textarea {
 }
 
 
+.flight-summary,
 .airport-summary-bar {
   height: 88px;
   box-sizing: border-box;
 
   width: fit-content;
+  max-width: calc(100% - 40px);
+
   margin: 12px auto;
   padding: 14px 28px;
-
-  display: flex;
-  align-items: center;
-  gap: 32px;
 
   background: var(--mj-panel);
 
@@ -125,28 +124,17 @@ textarea {
 }
 
 .flight-summary {
-  width: max-content;
-  max-width: calc(100% - 40px);
-
-  height: 88px;
-  box-sizing: border-box;
-
-  margin: 0;
-  padding: 14px 28px;
-
   display: flex;
   align-items: center;
   gap: 32px;
-
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 28px;
-
-  /* REMOVED 17 AUGUST 2026
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
- */
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.30);
 }
+
+.airport-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
 
 /* =====================================================
    FILTER DROPDOWNS
