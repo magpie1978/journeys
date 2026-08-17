@@ -259,26 +259,25 @@ if (
       </div>
     `;
 
-    listItem.addEventListener(
-      "click",
-      () => {
-        /*
-         * setIsolatedRoute() now handles:
-         * - selected-row styling;
-         * - route opacity and width;
-         * - flight summary display;
-         * - camera fitting.
-         */
-        if (
-          typeof setIsolatedRoute ===
-          "function"
-        ) {
-          setIsolatedRoute(
-            route.uid
-          );
-        }
-      }
-    );
+listItem.addEventListener(
+  "click",
+  event => {
+
+    const additiveSelection =
+      event.ctrlKey ||
+      event.metaKey;
+
+    if (
+      typeof setIsolatedRoute ===
+      "function"
+    ) {
+      setIsolatedRoute(
+        route.uid,
+        additiveSelection
+      );
+    }
+  }
+);
 
     flightListElement.appendChild(
       listItem
