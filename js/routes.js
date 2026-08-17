@@ -1223,168 +1223,179 @@ function applyIsolationStyling() {
 */
 
 
-  function applyIsolationStyling() {
-  
-    if (
-      !map.getLayer(
-        ROUTES_LINE_LAYER_ID
-      )
-    ) {
-      return;
-    }
-  
-    const isolatedRouteUid =
-      getCurrentIsolatedUid();
-  
-  
-    // -------------------------------------------------
-    // NO SELECTED JOURNEY
-    // -------------------------------------------------
-  
-    if (!isolatedRouteUid) {
-  
-      map.setPaintProperty(
-        ROUTES_LINE_LAYER_ID,
-        "line-opacity",
-        0.85
-      );
-  
-      map.setPaintProperty(
-        ROUTES_LINE_LAYER_ID,
-        "line-width",
-        1.4
-      );
-  
-  
-      if (
-        map.getLayer(
-          ROUTES_GLOW_LAYER_ID
-        )
-      ) {
-        map.setPaintProperty(
-          ROUTES_GLOW_LAYER_ID,
-          "line-opacity",
-          0.14
-        );
-  
-        map.setPaintProperty(
-          ROUTES_GLOW_LAYER_ID,
-          "line-width",
-          7
-        );
-  
-        map.setPaintProperty(
-          ROUTES_GLOW_LAYER_ID,
-          "line-blur",
-          6
-        );
-      }
-  
-      return;
-    }
-  
-  
-    // -------------------------------------------------
-    // SELECTED JOURNEY — MAIN LINE
-    // -------------------------------------------------
-  
+function applyIsolationStyling() {
+
+  if (
+    !map.getLayer(
+      ROUTES_LINE_LAYER_ID
+    )
+  ) {
+    return;
+  }
+
+
+  // -------------------------------------------------
+  // GET ALL CURRENTLY SELECTED JOURNEYS
+  // -------------------------------------------------
+
+  const selectedUids =
+    [...getCurrentSelectedUids()]
+      .map(String);
+
+
+  // -------------------------------------------------
+  // NO SELECTED JOURNEYS
+  // Restore normal route appearance.
+  // -------------------------------------------------
+
+  if (!selectedUids.length) {
+
     map.setPaintProperty(
       ROUTES_LINE_LAYER_ID,
       "line-opacity",
-      [
-        "case",
-  
-        [
-          "==",
-          ["to-string", ["get", "uid"]],
-          String(isolatedRouteUid)
-        ],
-  
-        1,
-        0.12
-      ]
+      0.85
     );
-  
+
     map.setPaintProperty(
       ROUTES_LINE_LAYER_ID,
       "line-width",
-      [
-        "case",
-  
-        [
-          "==",
-          ["to-string", ["get", "uid"]],
-          String(isolatedRouteUid)
-        ],
-  
-        2.8,
-        1.2
-      ]
+      1.4
     );
-  
-  
-    // -------------------------------------------------
-    // SELECTED JOURNEY — GLOW
-    // -------------------------------------------------
-  
+
+
     if (
       map.getLayer(
         ROUTES_GLOW_LAYER_ID
       )
     ) {
-  
+
       map.setPaintProperty(
         ROUTES_GLOW_LAYER_ID,
         "line-opacity",
-        [
-          "case",
-  
-          [
-            "==",
-            ["to-string", ["get", "uid"]],
-            String(isolatedRouteUid)
-          ],
-  
-          0.55,
-          0.03
-        ]
+        0.14
       );
-  
+
       map.setPaintProperty(
         ROUTES_GLOW_LAYER_ID,
         "line-width",
-        [
-          "case",
-  
-          [
-            "==",
-            ["to-string", ["get", "uid"]],
-            String(isolatedRouteUid)
-          ],
-  
-          12,
-          5
-        ]
+        7
       );
-  
+
       map.setPaintProperty(
         ROUTES_GLOW_LAYER_ID,
         "line-blur",
-        [
-          "case",
-  
-          [
-            "==",
-            ["to-string", ["get", "uid"]],
-            String(isolatedRouteUid)
-          ],
-  
-          8,
-          5
-        ]
+        6
       );
     }
+
+    return;
   }
+
+
+  // -------------------------------------------------
+  // MAPBOX EXPRESSION
+  //
+  // Returns true when the route UID is one of the
+  // currently selected journey UIDs.
+  // -------------------------------------------------
+
+  const selectedExpression = [
+    "match",
+
+    ["to-string", ["get", "uid"]],
+
+    selectedUids,
+
+    true,
+    false
+  ];
+
+
+  // -------------------------------------------------
+  // SELECTED JOURNEYS — MAIN LINE
+  // -------------------------------------------------
+
+  map.setPaintProperty(
+    ROUTES_LINE_LAYER_ID,
+    "line-opacity",
+    [
+      "case",
+
+      selectedExpression,
+
+      1,
+      0.12
+    ]
+  );
+
+
+  map.setPaintProperty(
+    ROUTES_LINE_LAYER_ID,
+    "line-width",
+    [
+      "case",
+
+      selectedExpression,
+
+      2.8,
+      1.2
+    ]
+  );
+
+
+  // -------------------------------------------------
+  // SELECTED JOURNEYS — GLOW
+  // -------------------------------------------------
+
+  if (
+    map.getLayer(
+      ROUTES_GLOW_LAYER_ID
+    )
+  ) {
+
+    map.setPaintProperty(
+      ROUTES_GLOW_LAYER_ID,
+      "line-opacity",
+      [
+        "case",
+
+        selectedExpression,
+
+        0.55,
+        0.03
+      ]
+    );
+
+
+    map.setPaintProperty(
+      ROUTES_GLOW_LAYER_ID,
+      "line-width",
+      [
+        "case",
+
+        selectedExpression,
+
+        12,
+        5
+      ]
+    );
+
+
+    map.setPaintProperty(
+      ROUTES_GLOW_LAYER_ID,
+      "line-blur",
+      [
+        "case",
+
+        selectedExpression,
+
+        8,
+        5
+      ]
+    );
+  }
+}
+
 
 window.applyIsolationStyling =
   applyIsolationStyling;
@@ -1427,18 +1438,19 @@ function applyRouteModeVisibility() {
 // =====================================================
 
 function updateSidebarSelection() {
-  const selectedUid =
-    getCurrentIsolatedUid();
+  const selectedUids =
+    getCurrentSelectedUids();
 
   document
     .querySelectorAll(
       "#flightList li[data-uid]"
     )
     .forEach(item => {
+
       const isActive =
-        selectedUid != null &&
-        item.dataset.uid ===
-          String(selectedUid);
+        selectedUids.has(
+          String(item.dataset.uid)
+        );
 
       item.classList.toggle(
         "active",
