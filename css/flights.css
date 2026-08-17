@@ -879,6 +879,14 @@ textarea {
   text-align: center;
 }
 
+.airport-summary-metric .airport-summary-value {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+
 /* Labels */
 
 .airport-summary-label {
@@ -895,8 +903,10 @@ textarea {
 /* Main values */
 
 .airport-summary-location .airport-summary-value {
-  font-size: 23px;
+  font-size: 22px;
   font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 
@@ -905,13 +915,12 @@ textarea {
 .airport-summary-subvalue {
   margin-top: 4px;
 
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.1;
 
   color: var(--mj-text-muted);
 }
-
 
 /* Hidden */
 
@@ -975,20 +984,64 @@ textarea {
   text-align: center;
 }
 
-.flight-metric .metric-label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
-
 .flight-metric span:not(.metric-label) {
   font-size: 22px;
   font-weight: 600;
   line-height: 1.1;
 
   letter-spacing: -0.02em;
+}
+
+
+
+/* =====================================================
+   SUMMARY BAR TYPOGRAPHY
+   ===================================================== */
+
+/* Labels — Route + Airport */
+.flight-metric .metric-label,
+.journey-summary-label,
+.airport-summary-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.1;
+
+  color: var(--mj-text-muted);
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Main values — Route + Airport */
+.flight-metric span:not(.metric-label),
+.airport-summary-metric .airport-summary-value {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+
+  letter-spacing: -0.02em;
+}
+
+/* Route itself */
+.flight-route {
+  margin-top: 4px;
+
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+
+  letter-spacing: -0.02em;
+}
+
+/* Airport name */
+.airport-summary-subvalue {
+  margin-top: 4px;
+
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.1;
+
+  color: var(--mj-text-muted);
 }
 
 
