@@ -1033,20 +1033,6 @@ function setIsolatedRoute(
     }
   }
 
-
-  // Selecting journeys cancels airport selection.
-  window.appState.activeAirport =
-    null;
-
-  if (
-    typeof window.activeAirportFilter !==
-    "undefined"
-  ) {
-    window.activeAirportFilter =
-      null;
-  }
-
-
   if (
     selectedUids.size &&
     typeof hideAirportSummary ===
