@@ -35,6 +35,9 @@ const flightSummaryElements = {
   destinationCountry:
     document.getElementById("destinationCountry"),
 
+  equipment:
+  document.getElementById("flightEquipment"),
+  
   flightNumber:
     document.getElementById("flightNumber"),
 
@@ -58,6 +61,9 @@ const flightSummaryElements = {
   
   operatorMetric:
     document.getElementById("operatorMetric"),
+
+  equipmentMetric:
+  document.getElementById("equipmentMetric"),
   
   durationMetric:
     document.getElementById("journeyDurationMetric"),
@@ -308,6 +314,29 @@ if (!isWalk) {
     route.airline
   );
 }
+
+
+
+  // -------------------------------------------------
+// EQUIPMENT
+// -------------------------------------------------
+
+if (flightSummaryElements.equipmentMetric) {
+  flightSummaryElements.equipmentMetric.style.display =
+    isWalk
+      ? "none"
+      : "";
+}
+
+if (!isWalk) {
+  setElementText(
+    flightSummaryElements.equipment,
+    route.equipment
+  );
+}
+
+
+  
 
   // -------------------------------------------------
   // DURATION

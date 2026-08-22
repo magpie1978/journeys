@@ -554,6 +554,7 @@ async function loadRoutes() {
       destination,
       destination_country,
       cabin,
+      equipment,
       journey_distance,
       journey_date,
       year,
