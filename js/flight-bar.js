@@ -129,14 +129,25 @@ function showFlightSummary(route) {
     window.appState?.activeAirport ||
     window.activeAirportFilter ||
     null;
-
+  
+  console.log(
+    "[flight-bar] active airport:",
+    activeAirport,
+    window.appState?.activeAirport,
+    window.activeAirportFilter
+  );
+  
   if (flightSummaryElements.backButton) {
-    flightSummaryElements.backButton.classList.toggle(
-      "hidden",
-      !activeAirport
-    );
+    flightSummaryElements.backButton.classList.remove("hidden");
   }
-
+  
+  if (flightSummaryElements.backLabel) {
+    flightSummaryElements.backLabel.textContent =
+      activeAirport
+        ? `Back to ${activeAirport}`
+        : "Back";
+  }
+    
   if (
     activeAirport &&
     flightSummaryElements.backLabel
