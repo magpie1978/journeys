@@ -250,10 +250,20 @@
           </div>
           
                     
+
           <!-- ===== JOURNEY SUMMARY BAR (hidden by default) ===== -->
           <div id="flightSummaryBar" class="flight-summary hidden">
-          
-            <div class="flight-metrics">
+            
+              <button
+                id="flightBackButton"
+                class="summary-back-button hidden"
+                type="button"
+                aria-label="Back to selected airport"
+              >
+                ← <span id="flightBackLabel">Back</span>
+              </button>
+            
+              <div class="flight-metrics">
           
               <!-- ROUTE -->
               <div class="flight-metric">
@@ -265,15 +275,15 @@
                   <span id="flightDestination"></span>
                 </div>
               </div>
-          
-          
+            
+            
               <!-- DATE -->
               <div class="flight-metric">
                 <span class="metric-label">Date</span>
                 <span id="flightDate">0</span>
               </div>
-          
-          
+            
+            
               <!-- JOURNEY TYPE / FLIGHT NUMBER -->
               <div class="flight-metric" id="journeyTypeMetric">
                 <span
@@ -286,7 +296,7 @@
                 <span id="flightNumber">0</span>
               </div>
           
-          
+            
               <!-- AIRLINE / OPERATOR -->
               <div class="flight-metric" id="operatorMetric">
                 <span
@@ -299,39 +309,39 @@
                 <span id="flightAirline">0</span>
               </div>
           
-          
-              <!-- EQUIPMENT / REGISTRATION -->
-              <div class="flight-metric" id="equipmentMetric">
-                <span class="metric-label">Equipment</span>
-              
-                <div class="equipment-value">
-                  <span id="flightEquipment"></span>
-                  <span id="flightRegistration"></span>
-                </div>
+        
+            <!-- EQUIPMENT / REGISTRATION -->
+            <div class="flight-metric" id="equipmentMetric">
+              <span class="metric-label">Equipment</span>
+            
+              <div class="equipment-value">
+                <span id="flightEquipment"></span>
+                <span id="flightRegistration"></span>
               </div>
-          
-          
-              <!-- DURATION -->
-              <div
-                class="flight-metric"
-                id="journeyDurationMetric"
-              >
-                <span class="metric-label">Duration</span>
-                <span id="flightDuration"></span>
-              </div>
-          
-          
-              <!-- DISTANCE -->
-              <div class="flight-metric">
-                <span class="metric-label">Distance</span>
-                <span id="flightDistance"></span>
-              </div>
-          
+            </div>
+        
+        
+            <!-- DURATION -->
+            <div
+              class="flight-metric"
+              id="journeyDurationMetric"
+            >
+              <span class="metric-label">Duration</span>
+              <span id="flightDuration"></span>
+            </div>
+        
+        
+            <!-- DISTANCE -->
+            <div class="flight-metric">
+              <span class="metric-label">Distance</span>
+              <span id="flightDistance"></span>
             </div>
           
           </div>
+          
+        </div>
 
-        </div> <!-- end of summaryBarSlot -->
+      </div> <!-- end of summaryBarSlot -->
 
 
         <!-- ===== MAP ===== -->
