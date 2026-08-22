@@ -37,6 +37,9 @@ const flightSummaryElements = {
 
   equipment:
   document.getElementById("flightEquipment"),
+
+  registration:
+  document.getElementById("flightRegistration"),
   
   flightNumber:
     document.getElementById("flightNumber"),
@@ -318,23 +321,27 @@ if (!isWalk) {
 
 
   // -------------------------------------------------
-// EQUIPMENT
-// -------------------------------------------------
-
-if (flightSummaryElements.equipmentMetric) {
-  flightSummaryElements.equipmentMetric.style.display =
-    isWalk
-      ? "none"
-      : "";
-}
-
-if (!isWalk) {
-  setElementText(
-    flightSummaryElements.equipment,
-    route.equipment
-  );
-}
-
+  // EQUIPMENT / REGISTRATION
+  // -------------------------------------------------
+  
+  if (flightSummaryElements.equipmentMetric) {
+    flightSummaryElements.equipmentMetric.style.display =
+      isWalk
+        ? "none"
+        : "";
+  }
+  
+  if (!isWalk) {
+    setElementText(
+      flightSummaryElements.equipment,
+      route.equipment
+    );
+  
+    setElementText(
+      flightSummaryElements.registration,
+      route.registration
+    );
+  }
 
   
 
