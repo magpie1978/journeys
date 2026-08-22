@@ -178,6 +178,27 @@ function populateFlightSummary(route) {
     journeyTypeLower === "walk";
 
 
+  
+  // -------------------------------------------------
+  // SUMMARY BAR COLUMN COUNT
+  // -------------------------------------------------
+  
+  const summaryColumnCount =
+    isFlight
+      ? 7
+      : isWalk
+        ? 3
+        : 5;
+  
+  if (flightSummaryElements.flightBar) {
+    flightSummaryElements.flightBar.style.setProperty(
+      "--summary-columns",
+      summaryColumnCount
+    );
+  }
+
+
+  
   // -------------------------------------------------
   // DYNAMIC LABELS
   // -------------------------------------------------
