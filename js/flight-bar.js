@@ -300,38 +300,39 @@ if (!isWalk) {
 }
 
 
-// -------------------------------------------------
-// AIRLINE / OPERATOR
-// -------------------------------------------------
+  // -------------------------------------------------
+  // AIRLINE / OPERATOR
+  // Flight only
+  // -------------------------------------------------
+  
+  if (flightSummaryElements.operatorMetric) {
+    flightSummaryElements.operatorMetric.style.display =
+      isFlight
+        ? ""
+        : "none";
+  }
+  
+  if (isFlight) {
+    setElementText(
+      flightSummaryElements.airline,
+      route.airline
+    );
+  }
 
-if (flightSummaryElements.operatorMetric) {
-  flightSummaryElements.operatorMetric.style.display =
-    isWalk
-      ? "none"
-      : "";
-}
-
-if (!isWalk) {
-  setElementText(
-    flightSummaryElements.airline,
-    route.airline
-  );
-}
-
-
-
+  
   // -------------------------------------------------
   // EQUIPMENT / REGISTRATION
+  // Flight only
   // -------------------------------------------------
   
   if (flightSummaryElements.equipmentMetric) {
     flightSummaryElements.equipmentMetric.style.display =
-      isWalk
-        ? "none"
-        : "";
+      isFlight
+        ? ""
+        : "none";
   }
   
-  if (!isWalk) {
+  if (isFlight) {
     setElementText(
       flightSummaryElements.equipment,
       route.equipment
