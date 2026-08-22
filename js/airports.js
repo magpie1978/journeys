@@ -979,14 +979,35 @@ function bindAirportMapClick() {
       return;
     }
 
-    // -------------------------------------------------
-    // NON-AIRPORT MAP AREA CLICKED
-    // -------------------------------------------------
-
-    if (getActiveAirportFilter()) {
-      clearAirportSelection();
+ // -------------------------------------------------
+  // NON-AIRPORT MAP AREA CLICKED
+  // -------------------------------------------------
+  
+  if (getActiveAirportFilter()) {
+  
+    const isolatedUid =
+      window.appState?.isolatedUid || null;
+  
+    /*
+     * If an individual journey is currently selected,
+     * routes.js handles the first map click and returns
+     * us to the airport view.
+     *
+     * Do NOT clear the airport at the same time.
+     */
+    if (isolatedUid) {
+      return;
     }
-  });
+  
+    /*
+     * No individual journey is selected, so this is
+     * the second "back" level: clear the airport and
+     * return to the original top-bar-filtered view.
+     */
+    clearAirportSelection();
+  }
+    
+});
 }
 
 
