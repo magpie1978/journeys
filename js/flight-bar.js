@@ -140,18 +140,36 @@ function hideFlightSummary() {
     flightBar.classList.add("hidden");
   }
 
-  /*
-   * Restore the normal glass bar only when the airport
-   * summary bar is not currently active.
-   */
-  const airportBarIsVisible =
-    airportBar &&
-    !airportBar.classList.contains("hidden");
+  const activeAirport =
+    window.appState?.activeAirport ||
+    window.activeAirportFilter ||
+    null;
 
-  if (
-    glassBar &&
-    !airportBarIsVisible
-  ) {
+  /*
+   * If we arrived here from an airport view,
+   * restore the airport summary bar.
+   */
+  if (activeAirport) {
+
+    if (glassBar) {
+      glassBar.classList.add("hidden");
+    }
+
+    if (airportBar) {
+      airportBar.classList.remove("hidden");
+    }
+
+    return;
+  }
+
+  /*
+   * Otherwise return to the standard summary bar.
+   */
+  if (airportBar) {
+    airportBar.classList.add("hidden");
+  }
+
+  if (glassBar) {
     glassBar.classList.remove("hidden");
   }
 }
