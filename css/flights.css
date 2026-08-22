@@ -1002,6 +1002,18 @@ textarea {
   text-align: center;
 }
 
+/* Equipment + aircraft registration */
+.equipment-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+
+.flight-metric #flightRegistration {
+  font-size: 16.5px;
+}
+
 
 /* =====================================================
    SUMMARY BAR TYPOGRAPHY
