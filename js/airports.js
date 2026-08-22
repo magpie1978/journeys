@@ -110,10 +110,6 @@ function setActiveAirportFilter(airportCode) {
   const nextAirport =
     airportCode || null;
 
-  /*
-   * Retain both state forms until the rest of the
-   * application consistently uses appState.
-   */
   window.activeAirportFilter =
     nextAirport;
 
@@ -121,6 +117,9 @@ function setActiveAirportFilter(airportCode) {
     window.appState.activeAirport =
       nextAirport;
   }
+
+  window.flightNavigationAirport =
+    nextAirport;
 }
 
 
