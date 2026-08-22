@@ -17,6 +17,12 @@ const flightSummaryElements = {
   flightBar:
     document.getElementById("flightSummaryBar"),
 
+  backButton:
+  document.getElementById("flightBackButton"),
+
+  backLabel:
+    document.getElementById("flightBackLabel"),
+
   date:
     document.getElementById("flightDate"),
 
@@ -117,6 +123,26 @@ function showFlightSummary(route) {
 
   if (!flightBar) {
     return;
+  }
+
+  const activeAirport =
+    window.appState?.activeAirport ||
+    window.activeAirportFilter ||
+    null;
+
+  if (flightSummaryElements.backButton) {
+    flightSummaryElements.backButton.classList.toggle(
+      "hidden",
+      !activeAirport
+    );
+  }
+
+  if (
+    activeAirport &&
+    flightSummaryElements.backLabel
+  ) {
+    flightSummaryElements.backLabel.textContent =
+      `Back to ${activeAirport}`;
   }
 
   populateFlightSummary(route);
