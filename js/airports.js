@@ -117,9 +117,6 @@ function setActiveAirportFilter(airportCode) {
     window.appState.activeAirport =
       nextAirport;
   }
-
-  window.flightNavigationAirport =
-    nextAirport;
 }
 
 
@@ -1004,7 +1001,6 @@ function bindAirportMapClick() {
      * return to the original top-bar-filtered view.
      */
     clearAirportSelection();
-    window.flightNavigationAirport = null;
   }
     
 });
