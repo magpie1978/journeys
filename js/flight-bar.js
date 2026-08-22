@@ -128,7 +128,6 @@ function showFlightSummary(route) {
   const activeAirport =
     window.appState?.activeAirport ||
     window.activeAirportFilter ||
-    window.flightNavigationAirport ||
     null;
   
   console.log(
