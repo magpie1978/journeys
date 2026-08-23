@@ -128,13 +128,13 @@ textarea {
   width: 100%;
   box-sizing: border-box;
 
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-
-  gap: 24px;
-  padding: 28px 40px;
-
+  display: flex;
+  justify-content: center;
   align-items: stretch;
+
+  gap: 20px;
+
+  padding: 22px 30px;
 }
 
 
@@ -840,7 +840,10 @@ textarea {
 
 /* Airport cards inherit their visual styling from .glass-box */
 .glass-box.airport-stat-card {
-  min-width: 0;
+  flex: 0 0 auto;
+
+  width: auto;
+  min-width: 150px;
 
   display: flex;
   flex-direction: column;
