@@ -909,17 +909,17 @@ textarea {
 ===================================================== */
 
 /* Labels */
-.flight-metric .metric-label,
-
-/* Main values */
-.flight-metric span:not(.metric-label) {
-  font-size: 22px;
-  font-weight: 600;
+.glass-label,
+.flight-summary .flight-metric .metric-label {
+  font-size: 11px;
+  font-weight: 500;
   line-height: 1.1;
 
-  letter-spacing: -0.02em;
-}
+  color: var(--mj-text-muted);
 
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 
 /* Route */
 .flight-route {
