@@ -408,8 +408,8 @@ function renderAirportMarkers(airports) {
           airport_code:
             airport.airport_code || "",
 
-          city:
-            airport.city || "",
+          airport:
+            airport.airport || "",
 
           country:
             airport.country || ""
