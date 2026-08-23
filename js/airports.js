@@ -966,11 +966,11 @@ function bindAirportMapClick() {
       ) {
         window.onAirportSelected({
           code: airportCode,
-
-          city:
+        
+          airport:
             airportFeature.properties
-              ?.city || ""
-        });
+              ?.airport || ""
+        });      
       }
 
       return;
