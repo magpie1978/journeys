@@ -760,9 +760,9 @@ function bindAirportHover() {
       const properties =
         feature.properties || {};
 
-      const city =
+      const airportName =
         escapePopupHtml(
-          properties.city
+          properties.airport
         );
 
       const country =
