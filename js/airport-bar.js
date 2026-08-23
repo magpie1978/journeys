@@ -144,7 +144,7 @@ function showAirportSummary(airport) {
 
   if (airportNameEl) {
     airportNameEl.textContent =
-      airport.city || "";
+      airport.airport || "";
   }
 
 if (airportDeparturesEl) {
