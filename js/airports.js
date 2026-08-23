@@ -246,6 +246,7 @@ async function getAirportLocations(
       .from("journey_locations")
       .select(`
         airport_code,
+        airport,
         city,
         country,
         longitude,
