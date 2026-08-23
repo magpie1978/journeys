@@ -145,14 +145,12 @@ textarea {
 
 .airport-name {
   display: block;
-
-  margin-top: 10px;
-
+  margin-top: 4px;
   font-size: 16px;
   font-weight: 400;
   line-height: 1;
-
   color: #a9abb4;
+  text-transform: uppercase;
 }
 
 
