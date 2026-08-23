@@ -163,73 +163,80 @@ textarea {
    AIRPORT SUMMARY BAR
    ===================================================== */
 
-   .airport-summary {
-     display: grid;
-     grid-template-columns:
-       minmax(220px, 1fr)
-       repeat(4, minmax(180px, 1fr));
-   
-     gap: 28px;
-   
-     padding: 12px 30px 24px;
-   
-     align-items: stretch;
-   }
-   
-   
-   /* Airport name/card */
-   .airport-identity,
-     box-sizing: border-box;
-   
-     min-height: 126px;
-   
-     padding: 22px 28px;
-   
-     background: #1b1d23;
-   
-     border: 1px solid #30333b;
-     border-radius: 32px;
-   
-     display: flex;
-     flex-direction: column;
-     justify-content: center;
-   
-     /* left aligned, as requested */
-     align-items: flex-start;
-     text-align: left;
-   }
-   
-   
-   /* BRS */
-   .airport-code {
-     display: block;
-   
-     font-size: 42px;
-     font-weight: 700;
-     line-height: 1;
-   
-     color: #ffffff;
-   }
-   
-   
-   /* Bristol */
-   .airport-name {
-     display: block;
-   
-     margin-top: 10px;
-   
-     font-size: 23px;
-     font-weight: 400;
-     line-height: 1.1;
-   
-     color: #a9abb4;
-   }
-      
-   
-   /* Existing hidden utility */
-   .airport-summary.hidden {
-     display: none;
-   }
+.airport-summary {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+
+  gap: 24px;
+
+  padding: 28px 40px;
+
+  align-items: stretch;
+}
+
+
+/* Individual airport statistic boxes */
+.airport-stat-card {
+  box-sizing: border-box;
+
+  min-width: 0;
+  min-height: 110px;
+
+  padding: 20px 24px;
+
+  background: #1b1d23;
+
+  border: 1px solid #30333b;
+  border-radius: 28px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: flex-start;
+
+  text-align: left;
+}
+
+
+/* Remove any inherited centring/margins */
+.airport-stat-card .glass-number,
+.airport-stat-card .glass-label {
+  text-align: left;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+
+/* =====================================================
+   AIRPORT IDENTITY
+   ===================================================== */
+
+.airport-code {
+  display: block;
+
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+
+  color: #ffffff;
+}
+
+
+.airport-name {
+  display: block;
+
+  margin-top: 10px;
+
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+
+  color: #a9abb4;
+}
 
 
 /* =====================================================
