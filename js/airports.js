@@ -1184,6 +1184,14 @@ function filterRoutesByAirport(
     return "unchanged";
   }
 
+  // No individual journey should be selected when
+  // first entering an airport view.
+  clearIsolatedRoute();
+
+if (typeof hideFlightSummary === "function") {
+  hideFlightSummary();
+}
+
   renderRoutes(
     filteredRoutes,
     {
