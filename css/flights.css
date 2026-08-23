@@ -974,6 +974,38 @@ textarea {
    AIRPORT SUMMARY BAR
 ===================================================== */
 
+/* Airport cards inherit their visual styling from .glass-box */
+.glass-box.airport-stat-card {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: flex-start;
+
+  text-align: left;
+}
+
+
+/* Value */
+.glass-box.airport-stat-card .glass-number {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+
+/* Label beneath value */
+.glass-box.airport-stat-card .glass-label {
+  display: block;
+  width: 100%;
+
+  margin-top: 6px;
+
+  text-align: left;
+}
+
 
 .airport-summary-location {
   min-width: 180px;
