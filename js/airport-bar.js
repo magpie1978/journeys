@@ -126,11 +126,11 @@ function showAirportSummary(airport) {
   const airportNameEl =
     document.getElementById("airportName");
 
-  const outboundFlightsEl =
-    document.getElementById("outboundFlights");
-
-  const inboundFlightsEl =
-    document.getElementById("inboundFlights");
+   const airportDeparturesEl =
+     document.getElementById("airportDepartures");
+   
+   const airportArrivalsEl =
+     document.getElementById("airportArrivals");
 
   const airportAirlinesEl =
     document.getElementById("airportAirlines");
@@ -147,13 +147,13 @@ function showAirportSummary(airport) {
       airport.city || "";
   }
 
-if (outboundFlightsEl) {
-  outboundFlightsEl.textContent =
+if (airportDeparturesEl) {
+  airportDeparturesEl.textContent =
     departures.length.toLocaleString();
 }
 
-if (inboundFlightsEl) {
-  inboundFlightsEl.textContent =
+if (airportArrivalsEl) {
+  airportArrivalsEl.textContent =
     arrivals.length.toLocaleString();
 }
 
