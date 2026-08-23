@@ -179,7 +179,6 @@ textarea {
    
    /* Airport name/card */
    .airport-identity,
-   .airport-stat-card {
      box-sizing: border-box;
    
      min-height: 126px;
@@ -225,35 +224,7 @@ textarea {
    
      color: #a9abb4;
    }
-   
-   
-   /* 4 / 3 / 2 / 11h 44m */
-   .airport-stat-value {
-     display: block;
-   
-     font-size: 54px;
-     font-weight: 700;
-     line-height: 1;
-   
-     color: #ffffff;
-   }
-   
-   
-   /* DEPARTURES / ARRIVALS / etc */
-   .airport-stat-label {
-     display: block;
-   
-     margin-top: 10px;
-   
-     font-size: 22px;
-     font-weight: 500;
-     line-height: 1;
-   
-     text-transform: uppercase;
-   
-     color: #a9abb4;
-   }
-   
+      
    
    /* Existing hidden utility */
    .airport-summary.hidden {
