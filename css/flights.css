@@ -2,7 +2,6 @@
    GLOBAL
 ===================================================== */
 
-/* ADDED 17 AUGUST 2026 */
 :root {
   --mj-bg: #0F1114;
   --mj-panel: #191B22;
@@ -13,8 +12,6 @@
 
   --mj-accent: #CCFF00;
 }
-/* END */
-
 
 * {
   box-sizing: border-box;
@@ -85,34 +82,21 @@ textarea {
   justify-content: center;
 
   box-sizing: border-box;
-  /* background: #111;  REMOVED 17 AUGUST 2026 */
   background: var(--mj-bg);
 }
 
-#glassBar {
-  height: 88px;
-  box-sizing: border-box;
-
+.flight-summary {
   width: 100%;
-  padding: 0 16px;
-
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  gap: 14px;
-}
-
-
-.flight-summary,
-.airport-summary-bar {
+  max-width: calc(100% - 40px);
   height: 88px;
   box-sizing: border-box;
-
-  width: max-content;
-  max-width: calc(100% - 40px);
 
   margin: 0;
   padding: 14px 28px;
+
+  display: flex;
+  align-items: center;
+  gap: 32px;
 
   background: var(--mj-panel);
   color: var(--mj-text);
@@ -127,37 +111,14 @@ textarea {
 
 /* =====================================================
    JOURNEY SUMMARY BAR
-   ===================================================== */
+===================================================== */
 
-   .flight-summary {
-     display: flex;
-     align-items: stretch;
-     width: 100%;
-   }
-
-   
-   .flight-metrics {
-     display: grid;
-     grid-template-columns: repeat(var(--summary-columns, 7), minmax(0, 1fr));
-   
-     align-items: stretch;
-   
-     width: 100%;
-   }
-
-
-
-   .flight-metric {
-     display: flex;
-     flex-direction: column;
-   
-     align-items: center;
-     justify-content: center;
-   
-     min-width: 0;
-   
-     text-align: center;
-   }
+.flight-metrics {
+  display: grid;
+  grid-template-columns: repeat(var(--summary-columns, 7), minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+}
 
 /* =====================================================
    AIRPORT SUMMARY BAR
@@ -175,7 +136,6 @@ textarea {
 
   align-items: stretch;
 }
-
 
 
 /* =====================================================
@@ -331,7 +291,6 @@ textarea {
 
 
 .filter-options input {
-  /*  accent-color: #ffd700;  REMOVED 17 AUGUST 2026 */
   accent-color: var(--mj-accent);
 }
 
@@ -339,10 +298,6 @@ textarea {
 .filter-options label:has(input:checked) {
   background: var(--mj-accent);
   color: #0F1114;
-}
-
-.filter-options input {
-  accent-color: var(--mj-accent);
 }
 
 .filter-options::-webkit-scrollbar {
@@ -452,7 +407,6 @@ textarea {
 .top-btn:hover {
   border-color: var(--mj-accent);
 }
-
 
 
 /* =====================================================
@@ -795,23 +749,7 @@ textarea {
   min-width: 140px;
 }
 
-/*
-.glass-box {
-  min-width: 100px;
-  padding: 10px 14px;
 
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border-radius: 12px;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  pointer-events: auto;
-} */
-
-/* NEW VERSION 17 AUGUST 2026 */
 .glass-box {
   min-width: 100px;
   padding: 10px 14px;
@@ -828,28 +766,12 @@ textarea {
   pointer-events: auto;
 }
 
-/* REPLACED 17 AUGUST 2026 
-.glass-number {
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.1;
-}
-*/
-
 .glass-number {
   font-size: 26px;
   font-weight: 600;
   line-height: 1.05;
   letter-spacing: -0.02em;
 }
-
-/* REPLACED 17 AUGUST 2026 
-.glass-label {
-  font-size: 12px;
-  opacity: 0.85;
-  text-transform: uppercase;
-}
-*/
 
 .glass-label {
   margin-top: 3px;
@@ -914,14 +836,6 @@ textarea {
   white-space: nowrap;
 }
 
-.journey-summary-label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
-
 
 .flight-route {
   text-align: center;
@@ -965,90 +879,6 @@ textarea {
 }
 
 
-.airport-summary-location {
-  min-width: 180px;
-  flex: 0 0 auto;
-
-  align-items: flex-start;
-  text-align: left;
-}
-
-
-/* All airport metrics */
-
-.airport-summary-metric {
-  min-width: 110px;
-  flex: 0 0 auto;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  text-align: center;
-}
-
-.airport-summary-metric .airport-summary-value {
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-
-/* Labels */
-
-.airport-summary-label {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.1;
-
-  color: var(--mj-text-muted);
-
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Main values */
-
-.airport-summary-location .airport-summary-value {
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-
-/* Airport city/name */
-
-.airport-summary-subvalue {
-  margin-top: 4px;
-
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.1;
-
-  color: var(--mj-text-muted);
-}
-
-/* Hidden */
-
-.airport-summary-bar.hidden {
-  display: none !important;
-}
-
-
-/* =====================================================
-   FLIGHT SUMMARY BAR
-===================================================== */
-
-.flight-summary {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-}
-
-
 .flight-metric {
   min-width: 110px;
 
@@ -1080,22 +910,9 @@ textarea {
 
 /* Labels */
 .flight-metric .metric-label,
-.journey-summary-label,
-.airport-summary-label {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.1;
-
-  color: var(--mj-text-muted);
-
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 
 /* Main values */
-.flight-metric span:not(.metric-label),
-.airport-summary-metric .airport-summary-value {
+.flight-metric span:not(.metric-label) {
   font-size: 22px;
   font-weight: 600;
   line-height: 1.1;
@@ -1113,18 +930,6 @@ textarea {
   line-height: 1.1;
 
   letter-spacing: -0.02em;
-}
-
-
-/* Airport name */
-.airport-summary-subvalue {
-  margin-top: 4px;
-
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.1;
-
-  color: var(--mj-text-muted);
 }
 
 
@@ -1263,17 +1068,18 @@ textarea {
     overflow-x: auto;
   }
 
-  .airport-summary,
   .flight-summary {
     align-items: flex-start;
-    flex-direction: column;
-    gap: 16px;
   }
 
-  .flight-metrics,
-  .airport-metrics {
+  .flight-metrics {
     width: 100%;
     justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .airport-summary {
+    grid-template-columns: repeat(5, minmax(180px, 1fr));
     overflow-x: auto;
   }
 }
