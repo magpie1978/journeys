@@ -882,14 +882,37 @@ function bindRouteHandlers() {
     "click",
     ROUTES_HIT_LAYER_ID,
     event => {
+  
+      /*
+       * If the user actually clicked an airport marker,
+       * do not also treat the underlying route as clicked.
+       */
+      if (
+        map.getLayer("airports-circle")
+      ) {
+        const airportHits =
+          map.queryRenderedFeatures(
+            event.point,
+            {
+              layers: [
+                "airports-circle"
+              ]
+            }
+          );
+  
+        if (airportHits.length) {
+          return;
+        }
+      }
+  
       const uid =
         event.features?.[0]
           ?.properties?.uid;
-
+  
       if (uid == null) {
         return;
       }
-
+  
       setIsolatedRoute(uid);
     }
   );
