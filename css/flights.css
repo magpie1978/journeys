@@ -178,51 +178,9 @@ textarea {
 
 
 
-
-
-
-
 /* =====================================================
    AIRPORT IDENTITY
    ===================================================== */
-
-.airport-code {
-  display: block;
-
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
-
-  color: #ffffff;
-}
-
-
-.airport-name {
-  display: block;
-
-  margin-top: 10px;
-
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1;
-
-  color: #a9abb4;
-}
-
-
-/* =====================================================
-   AIRPORT IDENTITY
-   ===================================================== */
-
-.airport-code {
-  display: block;
-
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
-
-  color: #ffffff;
-}
 
 
 .airport-name {
