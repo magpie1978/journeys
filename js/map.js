@@ -46,49 +46,36 @@ window.map = map;
 // STATE HELPERS
 // =====================================================
 
+/**
+ * Returns the application's current map display mode.
+ *
+ * @returns {"routes"|"countries"}
+ */
 function getCurrentMapMode() {
-  if (window.appState?.mode) {
-    return window.appState.mode;
-  }
-
-  if (typeof mapMode !== "undefined") {
-    return mapMode;
-  }
-
-  return "routes";
+  return window.appState?.mode || "routes";
 }
 
 
+/**
+ * Returns the UID of the currently isolated journey,
+ * or null when no journey is isolated.
+ *
+ * @returns {string|null}
+ */
 function getCurrentIsolatedUid() {
-  if (window.appState?.isolatedUid) {
-    return window.appState.isolatedUid;
-  }
-
-  if (typeof isolatedUid !== "undefined") {
-    return isolatedUid;
-  }
-
-  return null;
+  return window.appState?.isolatedUid || null;
 }
 
 
+/**
+ * Returns the routes currently displayed on the map.
+ *
+ * @returns {Array}
+ */
 function getCurrentRoutes() {
-  if (Array.isArray(window.currentRoutes)) {
-    return window.currentRoutes;
-  }
-
-  /*
-   * Compatibility with files that still expose
-   * currentRoutes as a standalone global variable.
-   */
-  if (
-    typeof currentRoutes !== "undefined" &&
-    Array.isArray(currentRoutes)
-  ) {
-    return currentRoutes;
-  }
-
-  return [];
+  return Array.isArray(window.currentRoutes)
+    ? window.currentRoutes
+    : [];
 }
 
 
@@ -487,11 +474,14 @@ async function setCountriesFilterFromRoutes(
 ) {
   ensureCountriesLayer();
 
-  const uids =
-    routes
-      .map(route => route?.uid)
-      .filter(Boolean)
-      .map(String);
+  const uids = [
+    ...new Set(
+      routes
+        .map(route => route?.uid)
+        .filter(Boolean)
+        .map(String)
+    )
+  ];
 
   /*
    * No journeys = no highlighted countries.
@@ -508,7 +498,7 @@ async function setCountriesFilterFromRoutes(
 
     return;
   }
-
+  
   const {
     data,
     error
@@ -546,10 +536,6 @@ async function setCountriesFilterFromRoutes(
       )
     ];
 
-  console.log(
-    "[map] Countries to highlight:",
-    countryCodes
-  );
 
   map.setFilter(
     "countries-fill",
@@ -745,24 +731,14 @@ function applyMapMode() {
      */
     map.once("idle", () => {
       restoreLastRoutesViewOrBoundsOrAllRoutes();
-
-      const isolatedRouteUid =
-        getCurrentIsolatedUid();
-
+    
       /*
-       * Compatibility with older route-highlighting code.
+       * Restore the current route-selection styling after
+       * returning from Countries mode.
        */
       if (
-        isolatedRouteUid &&
-        typeof highlightIsolatedRoute ===
-          "function"
-      ) {
-        highlightIsolatedRoute(
-          isolatedRouteUid
-        );
-      } else if (
         typeof applyIsolationStyling ===
-          "function"
+        "function"
       ) {
         applyIsolationStyling();
       }
