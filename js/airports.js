@@ -956,7 +956,11 @@ function bindAirportMapClick() {
       ) {
         window.onAirportSelected({
           code: airportCode,
-
+        
+          airport:
+            airportFeature.properties
+              ?.airport || "",
+        
           city:
             airportFeature.properties
               ?.city || ""
