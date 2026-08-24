@@ -964,7 +964,7 @@ function bindAirportMapClick() {
           city:
             airportFeature.properties
               ?.city || ""
-        });
+        });      
       }
 
       return;
