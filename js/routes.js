@@ -348,17 +348,6 @@ function clearRouteDisplay({
     window.allRoutes = [];
   }
 
-  /*
-   * Keep compatibility with older code that accesses
-   * currentRoutes as a standalone global variable.
-   */
-  if (
-    typeof currentRoutes !==
-    "undefined"
-  ) {
-    currentRoutes = [];
-  }
-
   if (
     typeof updateAllCounters ===
     "function"
@@ -447,17 +436,6 @@ function renderRoutes(
   window.currentRoutes =
     safeRoutes.slice();
 
-  /*
-   * Compatibility with older files that still access
-   * currentRoutes directly.
-   */
-  if (
-    typeof currentRoutes !==
-    "undefined"
-  ) {
-    currentRoutes =
-      window.currentRoutes;
-  }
 
   // -------------------------------------------------
   // UPDATE PAGE UI
@@ -758,9 +736,7 @@ async function loadRoutes() {
   // ---------------------------------------------------
 
   const activeAirport =
-    window.appState?.activeAirport ||
-    window.activeAirportFilter ||
-    null;
+    window.appState.activeAirport;
 
   /*
    * Changing a top-bar filter clears individual journey
@@ -1118,16 +1094,6 @@ function setMapMode(mode) {
   window.appState.mode =
     mode;
 
-  /*
-   * Compatibility with map.js versions that still use
-   * the standalone mapMode variable.
-   */
-  if (
-    typeof mapMode !==
-    "undefined"
-  ) {
-    mapMode = mode;
-  }
 
   /*
    * Use the central controller in map.js when available.
