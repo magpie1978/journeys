@@ -479,20 +479,72 @@ function ensureCountriesLayer() {
 
 // =====================================================
 // COUNTRY FILTER FROM ROUTES
+// Uses journey_countries_mv via Supabase RPC
 // =====================================================
 
-function setCountriesFilterFromRoutes(routes) {
+async function setCountriesFilterFromRoutes(
+  routes = []
+) {
   ensureCountriesLayer();
 
-  const countryNames = [
-    ...new Set(
-      (routes || [])
-        .map(route =>
-          route?.destination_country
-        )
-        .filter(Boolean)
-    )
-  ];
+  const uids =
+    routes
+      .map(route => route?.uid)
+      .filter(Boolean)
+      .map(String);
+
+  /*
+   * No visible journeys = no highlighted countries.
+   */
+  if (!uids.length) {
+    map.setFilter(
+      "countries-fill",
+      [
+        "in",
+        "name_en",
+        ""
+      ]
+    );
+
+    return;
+  }
+
+  const {
+    data,
+    error
+  } = await sb.rpc(
+    "get_countries_for_journeys",
+    {
+      journey_uids: uids
+    }
+  );
+
+  if (error) {
+    console.error(
+      "[map] Country lookup failed:",
+      error
+    );
+
+    map.setFilter(
+      "countries-fill",
+      [
+        "in",
+        "name_en",
+        ""
+      ]
+    );
+
+    return;
+  }
+
+  const countryNames =
+    [
+      ...new Set(
+        (data || [])
+          .map(row => row.country)
+          .filter(Boolean)
+      )
+    ];
 
   map.setFilter(
     "countries-fill",
@@ -503,6 +555,7 @@ function setCountriesFilterFromRoutes(routes) {
     ]
   );
 }
+
 
 window.setCountriesFilterFromRoutes =
   setCountriesFilterFromRoutes;
@@ -625,23 +678,31 @@ function applyMapMode() {
           )
         : currentRoutes;
 
-    setCountriesFilterFromRoutes(
-      visibleRoutes
-    );
-
-    setMapLayerVisibility(
-      "countries-fill",
-      "visible"
-    );
-
-    /*
-     * Wait for Mapbox to render the country features
-     * before calculating their bounds.
-     */
-    map.once(
-      "idle",
-      fitToVisibleCountries
-    );
+      setCountriesFilterFromRoutes(
+        visibleRoutes
+      ).then(() => {
+      
+        /*
+         * The user may have switched back to Routes
+         * while the Supabase request was running.
+         */
+        if (
+          getCurrentMapMode() !==
+          "countries"
+        ) {
+          return;
+        }
+      
+        setMapLayerVisibility(
+          "countries-fill",
+          "visible"
+        );
+      
+        map.once(
+          "idle",
+          fitToVisibleCountries
+        );
+      });
   }
 
   // -------------------------------------------------
