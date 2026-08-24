@@ -467,11 +467,22 @@ function ensureCountriesLayer() {
        * Begin with a filter that matches no real
        * country until route countries are supplied.
        */
-      filter: [
-        "in",
-       "iso_3166_1_alpha_3",
-        ""
-      ]
+        filter: [
+          "all",
+        
+          [
+            "in",
+            "iso_3166_1_alpha_3",
+            ""
+          ],
+        
+          [
+            "in",
+            "worldview",
+            "all",
+            "GB"
+          ]
+        ]
     });
   }
 }
@@ -543,14 +554,25 @@ async function setCountriesFilterFromRoutes(
       )
     ];
 
-  map.setFilter(
-    "countries-fill",
-    [
-      "in",
-      "iso_3166_1_alpha_3",
-      ...countryCodes
-    ]
-  );
+    map.setFilter(
+      "countries-fill",
+      [
+        "all",
+    
+        [
+          "in",
+          "iso_3166_1_alpha_3",
+          ...countryCodes
+        ],
+    
+        [
+          "in",
+          "worldview",
+          "all",
+          "GB"
+        ]
+      ]
+    );
 }
 
 window.setCountriesFilterFromRoutes =
