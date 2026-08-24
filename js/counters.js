@@ -553,6 +553,67 @@ function updateWalkCounter(routes = []) {
   }
 }
 
+
+
+
+// =====================================================
+// COUNTRY COUNTER
+// Countries visited by currently displayed journeys
+// =====================================================
+
+async function updateCountriesCounter(
+  routes = []
+) {
+
+  if (!countriesNumberEl) {
+    return;
+  }
+
+  const uids =
+    routes
+      .map(route => route?.uid)
+      .filter(Boolean)
+      .map(String);
+
+  if (!uids.length) {
+    countriesNumberEl.textContent = "0";
+    return;
+  }
+
+  const {
+    data,
+    error
+  } = await sb.rpc(
+    "get_countries_for_journeys",
+    {
+      journey_uids: uids
+    }
+  );
+
+  if (error) {
+    console.error(
+      "[counters] Country lookup failed:",
+      error
+    );
+
+    countriesNumberEl.textContent = "0";
+    return;
+  }
+
+  const countries =
+    new Set(
+      (data || [])
+        .map(row => row.country)
+        .filter(Boolean)
+    );
+
+  countriesNumberEl.textContent =
+    countries.size.toLocaleString();
+}
+
+  
+
+
 // -----------------------------------------------------
 // MASTER COUNTERS
 // -----------------------------------------------------
@@ -643,21 +704,28 @@ milesNumberEl.textContent = walkOnly
   : Math.round(miles).toLocaleString();
 
   // -----------------------------------------------------
-  // COUNTRIES
+  // OLD COUNTRIES COUNTER
   // -----------------------------------------------------
 
-  const countries =
-    new Set(
-      routes
-        .map(
-          route =>
-            route.destination_country
-        )
-        .filter(Boolean)
-    );
+  // const countries =
+  //  new Set(
+  //    routes
+  //      .map(
+  //        route =>
+  //          route.destination_country
+  //      )
+  //      .filter(Boolean)
+  //  );
 
-  countriesNumberEl.textContent =
-    countries.size;
+  //countriesNumberEl.textContent =
+  //  countries.size;
+
+
+// -----------------------------------------------------
+  // COUNTRIES COUNTER
+  // -----------------------------------------------------
+
+  updateCountriesCounter(routes);
 
 
   // -----------------------------------------------------
