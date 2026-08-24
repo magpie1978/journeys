@@ -508,9 +508,20 @@ async function setCountriesFilterFromRoutes(
     map.setFilter(
       "countries-fill",
       [
-        "in",
-        "iso_3166_1_alpha_3",
-        ""
+        "all",
+    
+        [
+          "in",
+          "iso_3166_1_alpha_3",
+          ""
+        ],
+    
+        [
+          "in",
+          "worldview",
+          "all",
+          "GB"
+        ]
       ]
     );
 
