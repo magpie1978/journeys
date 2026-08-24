@@ -1,5 +1,33 @@
+/* global window */
+
 // =====================================================
-// FLIGHT SUMMARY BAR
+// FLIGHT / JOURNEY SUMMARY BAR
+// =====================================================
+//
+// Controls the detailed summary bar shown when an
+// individual journey is selected.
+//
+// Despite the historical "flight" naming of its DOM IDs,
+// the bar supports all journey types.
+//
+// Display rules:
+//   • Flight: 7 columns.
+//   • Walk:   3 columns.
+//   • Other:  5 columns.
+//
+// Flights additionally show:
+//   • Airline.
+//   • Equipment.
+//   • Aircraft registration.
+//
+// Walks hide:
+//   • Journey identifier.
+//   • Duration.
+//
+// Public API:
+//   window.showFlightSummary(route)
+//   window.hideFlightSummary()
+//
 // =====================================================
 
 
@@ -12,74 +40,120 @@ const flightSummaryElements = {
     document.getElementById("glassBar"),
 
   airportBar:
-    document.getElementById("airportSummaryBar"),
+    document.getElementById(
+      "airportSummaryBar"
+    ),
 
   flightBar:
-    document.getElementById("flightSummaryBar"),
+    document.getElementById(
+      "flightSummaryBar"
+    ),
 
   date:
     document.getElementById("flightDate"),
 
   origin:
-    document.getElementById("flightOrigin"),
+    document.getElementById(
+      "flightOrigin"
+    ),
 
   routeArrow:
-  document.getElementById("flightRouteArrow"),
+    document.getElementById(
+      "flightRouteArrow"
+    ),
 
   destination:
-    document.getElementById("flightDestination"),
+    document.getElementById(
+      "flightDestination"
+    ),
 
   originCountry:
-    document.getElementById("originCountry"),
+    document.getElementById(
+      "originCountry"
+    ),
 
   destinationCountry:
-    document.getElementById("destinationCountry"),
+    document.getElementById(
+      "destinationCountry"
+    ),
 
   equipment:
-  document.getElementById("flightEquipment"),
+    document.getElementById(
+      "flightEquipment"
+    ),
 
   registration:
-  document.getElementById("flightRegistration"),
-  
+    document.getElementById(
+      "flightRegistration"
+    ),
+
   flightNumber:
-    document.getElementById("flightNumber"),
+    document.getElementById(
+      "flightNumber"
+    ),
 
   airline:
-    document.getElementById("flightAirline"),
+    document.getElementById(
+      "flightAirline"
+    ),
 
   duration:
-    document.getElementById("flightDuration"),
+    document.getElementById(
+      "flightDuration"
+    ),
 
   distance:
-    document.getElementById("flightDistance"),
+    document.getElementById(
+      "flightDistance"
+    ),
 
   journeyTypeLabel:
-  document.getElementById("journeyTypeLabel"),
+    document.getElementById(
+      "journeyTypeLabel"
+    ),
 
   operatorLabel:
-    document.getElementById("operatorLabel"),
-  
+    document.getElementById(
+      "operatorLabel"
+    ),
+
   journeyTypeMetric:
-    document.getElementById("journeyTypeMetric"),
-  
+    document.getElementById(
+      "journeyTypeMetric"
+    ),
+
   operatorMetric:
-    document.getElementById("operatorMetric"),
+    document.getElementById(
+      "operatorMetric"
+    ),
 
   equipmentMetric:
-  document.getElementById("equipmentMetric"),
-  
-  durationMetric:
-    document.getElementById("journeyDurationMetric"),
+    document.getElementById(
+      "equipmentMetric"
+    ),
 
+  durationMetric:
+    document.getElementById(
+      "journeyDurationMetric"
+    )
 };
 
 
 // =====================================================
-// BASIC DOM HELPER
+// DOM HELPERS
 // =====================================================
 
+/**
+ * Sets an element's text, displaying an em dash when the
+ * supplied value is null, undefined or empty.
+ *
+ * @param {HTMLElement|null} element
+ * @param {*} value
+ */
 function setElementText(element, value) {
-  if (!element) return;
+  if (!element) {
+    return;
+  }
 
   element.textContent =
     value == null || value === ""
@@ -88,10 +162,59 @@ function setElementText(element, value) {
 }
 
 
+/**
+ * Shows or hides an element by toggling its hidden class.
+ *
+ * @param {HTMLElement|null} element
+ * @param {boolean} visible
+ */
+function setElementVisible(
+  element,
+  visible
+) {
+  if (!element) {
+    return;
+  }
+
+  element.classList.toggle(
+    "hidden",
+    !visible
+  );
+}
+
+
+/**
+ * Shows or hides a summary metric that participates in
+ * the flight-bar grid.
+ *
+ * This uses display rather than the hidden class because
+ * hidden metrics must be removed from the grid layout.
+ *
+ * @param {HTMLElement|null} element
+ * @param {boolean} visible
+ */
+function setMetricVisible(
+  element,
+  visible
+) {
+  if (!element) {
+    return;
+  }
+
+  element.style.display =
+    visible ? "" : "none";
+}
+
+
 // =====================================================
-// SHOW FLIGHT SUMMARY
+// SHOW JOURNEY SUMMARY
 // =====================================================
 
+/**
+ * Displays the detailed summary for a selected journey.
+ *
+ * @param {Object} route
+ */
 function showFlightSummary(route) {
   if (!route) {
     console.warn(
@@ -107,40 +230,31 @@ function showFlightSummary(route) {
     flightBar
   } = flightSummaryElements;
 
-  if (glassBar) {
-    glassBar.classList.add("hidden");
-  }
-
-  if (airportBar) {
-    airportBar.classList.add("hidden");
-  }
+  setElementVisible(glassBar, false);
+  setElementVisible(airportBar, false);
 
   if (!flightBar) {
     return;
   }
 
-  const activeAirport =
-    window.appState?.activeAirport ||
-    window.activeAirportFilter ||
-    null;
-  
-  console.log(
-    "[flight-bar] active airport:",
-    activeAirport,
-    window.appState?.activeAirport,
-    window.activeAirportFilter
-  ); 
-  
   populateFlightSummary(route);
 
-  flightBar.classList.remove("hidden");
+  setElementVisible(flightBar, true);
 }
 
 
 // =====================================================
-// HIDE FLIGHT SUMMARY
+// HIDE JOURNEY SUMMARY
 // =====================================================
 
+/**
+ * Hides the journey summary and restores whichever
+ * summary bar should be visible underneath it.
+ *
+ * If an airport remains selected, the Airport Summary
+ * Bar is restored. Otherwise the standard statistics
+ * bar is shown.
+ */
 function hideFlightSummary() {
   const {
     glassBar,
@@ -148,51 +262,33 @@ function hideFlightSummary() {
     flightBar
   } = flightSummaryElements;
 
-  if (flightBar) {
-    flightBar.classList.add("hidden");
-  }
+  setElementVisible(flightBar, false);
 
   const activeAirport =
-    window.appState?.activeAirport ||
-    window.activeAirportFilter ||
-    null;
+    window.appState?.activeAirport || null;
 
-  /*
-   * If we arrived here from an airport view,
-   * restore the airport summary bar.
-   */
   if (activeAirport) {
-
-    if (glassBar) {
-      glassBar.classList.add("hidden");
-    }
-
-    if (airportBar) {
-      airportBar.classList.remove("hidden");
-    }
+    setElementVisible(glassBar, false);
+    setElementVisible(airportBar, true);
 
     return;
   }
 
-  /*
-   * Otherwise return to the standard summary bar.
-   */
-  if (airportBar) {
-    airportBar.classList.add("hidden");
-  }
-
-  if (glassBar) {
-    glassBar.classList.remove("hidden");
-  }
+  setElementVisible(airportBar, false);
+  setElementVisible(glassBar, true);
 }
 
 
 // =====================================================
-// POPULATE FLIGHT SUMMARY
+// POPULATE JOURNEY SUMMARY
 // =====================================================
 
+/**
+ * Populates the summary bar using a route record.
+ *
+ * @param {Object} route
+ */
 function populateFlightSummary(route) {
-
   const journeyType =
     String(
       route?.journey_type || ""
@@ -208,47 +304,48 @@ function populateFlightSummary(route) {
     journeyTypeLower === "walk";
 
 
-  
-  // -------------------------------------------------
-  // SUMMARY BAR COLUMN COUNT
-  // -------------------------------------------------
-  
+  // ---------------------------------------------------
+  // COLUMN COUNT
+  // ---------------------------------------------------
+
+  /*
+   * The CSS grid uses this custom property to determine
+   * how many summary cards should be displayed.
+   */
   const summaryColumnCount =
     isFlight
       ? 7
       : isWalk
         ? 3
         : 5;
-  
-  if (flightSummaryElements.flightBar) {
-    flightSummaryElements.flightBar.style.setProperty(
+
+  flightSummaryElements.flightBar
+    ?.style.setProperty(
       "--summary-columns",
       summaryColumnCount
     );
-  }
 
 
-  
-  // -------------------------------------------------
+  // ---------------------------------------------------
   // DYNAMIC LABELS
-  // -------------------------------------------------
+  // ---------------------------------------------------
 
-  if (flightSummaryElements.journeyTypeLabel) {
-    flightSummaryElements.journeyTypeLabel.textContent =
-      journeyType || "Journey";
-  }
+  setElementText(
+    flightSummaryElements.journeyTypeLabel,
+    journeyType || "Journey"
+  );
 
-  if (flightSummaryElements.operatorLabel) {
-    flightSummaryElements.operatorLabel.textContent =
-      isFlight
-        ? "Airline"
-        : "Operator";
-  }
+  setElementText(
+    flightSummaryElements.operatorLabel,
+    isFlight
+      ? "Airline"
+      : "Operator"
+  );
 
 
-  // -------------------------------------------------
+  // ---------------------------------------------------
   // DATE
-  // -------------------------------------------------
+  // ---------------------------------------------------
 
   setElementText(
     flightSummaryElements.date,
@@ -258,10 +355,15 @@ function populateFlightSummary(route) {
   );
 
 
-  // -------------------------------------------------
+  // ---------------------------------------------------
   // ROUTE
-  // -------------------------------------------------
+  // ---------------------------------------------------
 
+  /*
+   * display_origin/display_destination allow manually
+   * supplied journey labels to override the underlying
+   * route endpoints where appropriate.
+   */
   const displayOrigin =
     String(
       route.display_origin ||
@@ -276,7 +378,6 @@ function populateFlightSummary(route) {
       ""
     ).trim();
 
-
   const samePlace =
     displayOrigin &&
     displayOrigin === displayDestination;
@@ -284,85 +385,74 @@ function populateFlightSummary(route) {
   const noDestination =
     !displayDestination;
 
-
-  if (
-    isWalk &&
-    (
-      samePlace ||
-      noDestination
-    )
-  ) {
-
-    setElementText(
-      flightSummaryElements.origin,
-      displayOrigin
+  /*
+   * A Walk may represent a circular or single-location
+   * journey. In that case only the origin is displayed.
+   */
+  const showDestination =
+    !(
+      isWalk &&
+      (
+        samePlace ||
+        noDestination
+      )
     );
 
-    if (flightSummaryElements.routeArrow) {
-      flightSummaryElements.routeArrow.style.display =
-        "none";
-    }
+  setElementText(
+    flightSummaryElements.origin,
+    displayOrigin
+  );
 
-    if (flightSummaryElements.destination) {
-      flightSummaryElements.destination.style.display =
-        "none";
-    }
-
-  } else {
-
-    setElementText(
-      flightSummaryElements.origin,
-      displayOrigin
-    );
-
+  if (showDestination) {
     setElementText(
       flightSummaryElements.destination,
       displayDestination
     );
+  }
 
-    if (flightSummaryElements.routeArrow) {
-      flightSummaryElements.routeArrow.style.display =
-        "";
-    }
+  if (flightSummaryElements.routeArrow) {
+    flightSummaryElements.routeArrow.style.display =
+      showDestination ? "" : "none";
+  }
 
-    if (flightSummaryElements.destination) {
-      flightSummaryElements.destination.style.display =
-        "";
-    }
+  if (flightSummaryElements.destination) {
+    flightSummaryElements.destination.style.display =
+      showDestination ? "" : "none";
   }
 
 
-// -------------------------------------------------
-// JOURNEY IDENTIFIER
-// -------------------------------------------------
+  // ---------------------------------------------------
+  // JOURNEY IDENTIFIER
+  // ---------------------------------------------------
 
-if (flightSummaryElements.journeyTypeMetric) {
-  flightSummaryElements.journeyTypeMetric.style.display =
-    isWalk
-      ? "none"
-      : "";
-}
-
-if (!isWalk) {
-  setElementText(
-    flightSummaryElements.flightNumber,
-    getFlightNumber(route)
+  /*
+   * Flights normally display their flight number/callsign.
+   * Other non-Walk journey types may use the same field
+   * for their journey identifier.
+   */
+  setMetricVisible(
+    flightSummaryElements.journeyTypeMetric,
+    !isWalk
   );
-}
 
-
-  // -------------------------------------------------
-  // AIRLINE / OPERATOR
-  // Flight only
-  // -------------------------------------------------
-  
-  if (flightSummaryElements.operatorMetric) {
-    flightSummaryElements.operatorMetric.style.display =
-      isFlight
-        ? ""
-        : "none";
+  if (!isWalk) {
+    setElementText(
+      flightSummaryElements.flightNumber,
+      getFlightNumber(route)
+    );
   }
-  
+
+
+  // ---------------------------------------------------
+  // AIRLINE
+  // Flight only
+  // ---------------------------------------------------
+
+  setMetricVisible(
+    flightSummaryElements.operatorMetric,
+    isFlight
+  );
+
   if (isFlight) {
     setElementText(
       flightSummaryElements.airline,
@@ -370,46 +460,39 @@ if (!isWalk) {
     );
   }
 
-  
-  // -------------------------------------------------
+
+  // ---------------------------------------------------
   // EQUIPMENT / REGISTRATION
   // Flight only
-  // -------------------------------------------------
-  
-  if (flightSummaryElements.equipmentMetric) {
-    flightSummaryElements.equipmentMetric.style.display =
-      isFlight
-        ? ""
-        : "none";
-  }
-  
+  // ---------------------------------------------------
+
+  setMetricVisible(
+    flightSummaryElements.equipmentMetric,
+    isFlight
+  );
+
   if (isFlight) {
     setElementText(
       flightSummaryElements.equipment,
       route.equipment
     );
-  
+
     setElementText(
       flightSummaryElements.registration,
       route.registration
     );
   }
 
-  
 
-  // -------------------------------------------------
+  // ---------------------------------------------------
   // DURATION
-  //
-  // Preserve your existing Walk-specific rule:
-  // do not show Duration for Walks.
-  // -------------------------------------------------
+  // Walks deliberately do not display duration.
+  // ---------------------------------------------------
 
-  if (flightSummaryElements.durationMetric) {
-    flightSummaryElements.durationMetric.style.display =
-      isWalk
-        ? "none"
-        : "";
-  }
+  setMetricVisible(
+    flightSummaryElements.durationMetric,
+    !isWalk
+  );
 
   if (!isWalk) {
     setElementText(
@@ -421,10 +504,14 @@ if (!isWalk) {
   }
 
 
-  // -------------------------------------------------
+  // ---------------------------------------------------
   // DISTANCE
-  // -------------------------------------------------
+  // ---------------------------------------------------
 
+  /*
+   * Walking distances are displayed to three decimal
+   * places; other journey types use whole miles.
+   */
   setElementText(
     flightSummaryElements.distance,
     formatJourneyDistance(
@@ -435,12 +522,18 @@ if (!isWalk) {
 }
 
 
-
-
 // =====================================================
 // DATE FORMATTER
 // =====================================================
 
+/**
+ * Formats a journey date for display, for example:
+ *
+ *   24 Aug 2026
+ *
+ * @param {*} dateValue
+ * @returns {string}
+ */
 function formatJourneyDate(dateValue) {
   if (!dateValue) {
     return "—";
@@ -449,9 +542,7 @@ function formatJourneyDate(dateValue) {
   const date =
     new Date(dateValue);
 
-  if (
-    Number.isNaN(date.getTime())
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return String(dateValue)
       .slice(0, 10);
   }
@@ -471,6 +562,13 @@ function formatJourneyDate(dateValue) {
 // DURATION FORMATTER
 // =====================================================
 
+/**
+ * Converts journey duration from seconds to the summary
+ * bar's hours/minutes display.
+ *
+ * @param {*} seconds
+ * @returns {string}
+ */
 function formatDurationFromSeconds(
   seconds
 ) {
@@ -504,11 +602,17 @@ function formatDurationFromSeconds(
 // DISTANCE FORMATTER
 // =====================================================
 
+/**
+ * Formats a distance in miles.
+ *
+ * @param {*} distance
+ * @param {number} decimalPlaces
+ * @returns {string}
+ */
 function formatJourneyDistance(
   distance,
   decimalPlaces = 0
 ) {
-
   const numericDistance =
     Number(distance);
 
@@ -536,9 +640,19 @@ function formatJourneyDistance(
 
 
 // =====================================================
-// FLIGHT IDENTIFIER
+// JOURNEY IDENTIFIER
 // =====================================================
 
+/**
+ * Returns the best available identifier for a journey.
+ *
+ * The current route feed normally supplies callsign, but
+ * the flight-number variants are retained for compatibility
+ * with route objects that contain those fields.
+ *
+ * @param {Object} route
+ * @returns {string}
+ */
 function getFlightNumber(route) {
   return (
     route?.flight_number ||
@@ -550,7 +664,7 @@ function getFlightNumber(route) {
 
 
 // =====================================================
-// GLOBAL API
+// PUBLIC API
 // =====================================================
 
 window.showFlightSummary =
