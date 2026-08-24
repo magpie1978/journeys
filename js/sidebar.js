@@ -164,9 +164,6 @@ function getJourneyIcon(route) {
   return placeholderIcons?.[journeyType] || null;
 }
 
-window.getJourneyIcon =
-  getJourneyIcon;
-
 
 // =====================================================
 // RENDER SIDEBAR
@@ -460,8 +457,6 @@ function renderAirlinesPanel(routes) {
   });
 }
 
-window.renderAirlinesPanel =
-  renderAirlinesPanel;
 
 
 // =====================================================
