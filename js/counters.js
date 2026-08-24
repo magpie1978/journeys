@@ -1,4 +1,4 @@
-/* global sb, selected, AIRPORT_GROUPS */
+/* global sb, selected */
 
 // =====================================================
 // COUNTERS
@@ -14,8 +14,6 @@
 //   • Countries visited.
 //   • Airlines used.
 //   • Total journey duration.
-//   • Selected-airline information.
-//   • Selected-airport information.
 //
 // Public API:
 //   window.updateAllCounters(routes)
@@ -175,40 +173,6 @@ const transportCounters = {
 };
 
 
-// =====================================================
-// SELECTED AIRLINE COUNTER
-// =====================================================
-
-const selectedAirlineCounterEl =
-  document.getElementById(
-    "selectedAirlineCounter"
-  );
-
-const selectedAirlineNameEl =
-  document.querySelector(
-    "#selectedAirlineCounter .airline-name"
-  );
-
-
-// =====================================================
-// SELECTED AIRPORT COUNTER
-// =====================================================
-
-const selectedAirportCounterEl =
-  document.getElementById(
-    "selectedAirportCounter"
-  );
-
-const selectedAirportCodeEl =
-  document.querySelector(
-    "#selectedAirportCounter .airport-code-display"
-  );
-
-const selectedAirportNameEl =
-  document.querySelector(
-    "#selectedAirportCounter .airport-name-display"
-  );
-
 
 // =====================================================
 // GENERAL HELPERS
@@ -355,134 +319,6 @@ function updateTransportCounters(
     }
   );
 }
-
-
-// =====================================================
-// SELECTED AIRLINE
-// =====================================================
-
-/**
- * Shows the selected-airline card when exactly one
- * airline is selected.
- */
-function updateSelectedAirlineCounter() {
-  if (
-    typeof selected === "undefined" ||
-    !(selected.airlines instanceof Set)
-  ) {
-    return;
-  }
-
-  const selectedAirlines =
-    [...selected.airlines];
-
-  const showAirline =
-    selectedAirlines.length === 1;
-
-  if (selectedAirlineCounterEl) {
-    selectedAirlineCounterEl.classList.toggle(
-      "hidden",
-      !showAirline
-    );
-  }
-
-  if (
-    showAirline &&
-    selectedAirlineNameEl
-  ) {
-    selectedAirlineNameEl.textContent =
-      selectedAirlines[0];
-  }
-}
-
-
-// =====================================================
-// SELECTED AIRPORT
-// =====================================================
-
-/**
- * Shows the selected-airport card when exactly one real
- * airport is selected.
- *
- * Metropolitan airport groups such as London and Paris
- * are deliberately excluded because they do not represent
- * one physical airport.
- */
-async function updateSelectedAirportCounter() {
-  if (
-    typeof selected === "undefined" ||
-    !(selected.airports instanceof Set)
-  ) {
-    return;
-  }
-
-  const selectedAirports =
-    [...selected.airports];
-
-  if (selectedAirports.length !== 1) {
-    selectedAirportCounterEl?.classList.add(
-      "hidden"
-    );
-
-    return;
-  }
-
-  const airportCode =
-    selectedAirports[0];
-
-  if (
-    typeof AIRPORT_GROUPS !== "undefined" &&
-    AIRPORT_GROUPS[airportCode]
-  ) {
-    selectedAirportCounterEl?.classList.add(
-      "hidden"
-    );
-
-    return;
-  }
-
-  const { data, error } = await sb
-    .from("journey_locations")
-    .select("airport_code, airport")
-    .eq("airport_code", airportCode)
-    .maybeSingle();
-
-  if (error) {
-    console.error(
-      "[counters] Airport lookup failed:",
-      error
-    );
-
-    selectedAirportCounterEl?.classList.add(
-      "hidden"
-    );
-
-    return;
-  }
-
-  if (!data) {
-    selectedAirportCounterEl?.classList.add(
-      "hidden"
-    );
-
-    return;
-  }
-
-  if (selectedAirportCodeEl) {
-    selectedAirportCodeEl.textContent =
-      data.airport_code;
-  }
-
-  if (selectedAirportNameEl) {
-    selectedAirportNameEl.textContent =
-      data.airport;
-  }
-
-  selectedAirportCounterEl?.classList.remove(
-    "hidden"
-  );
-}
-
 
 // =====================================================
 // COUNTRY COUNTER
