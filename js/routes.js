@@ -219,7 +219,7 @@ function ensureRouteLayers() {
 
 
   // -------------------------------------------------
-  // ROUTE GLOW - ADDED 17 AUGUST 2026
+  // ROUTE GLOW
   // -------------------------------------------------
   
   if (
@@ -295,7 +295,7 @@ function ensureRouteLayers() {
             ["get", "journey_type"],
             "Flight"
           ],
-          "#CCFF00",  //was #FFD700
+          "#CCFF00",
 
           [
             "==",
@@ -525,7 +525,29 @@ window.renderRoutes =
 // =====================================================
 // LOAD ROUTES FROM SUPABASE
 // =====================================================
+//
+// Loads all routes matching the current top-bar filters.
+//
+// Supabase results are requested in MAX_ROUTES-sized
+// batches so the application is not dependent on the
+// API's per-request row limit.
+//
+// Server-side filters:
+//   • Year
+//   • Airline
+//   • Journey type
+//
+// Client-side filters:
+//   • Cabin
+//   • Airport / airport group
+//
+// If a map airport is already selected, that selection is
+// reapplied after the new route collection has loaded.
+// =====================================================
 
+/**
+ * Loads and displays routes matching the current filters.
+ */
 async function loadRoutes() {
   if (
     typeof selected === "undefined" ||
@@ -543,34 +565,9 @@ async function loadRoutes() {
     return;
   }
 
-  let query = sb
-    .from("journeys_routes_2")
-    .select(`
-      uid,
-      callsign,
-      airline,
-      journey_type,
-      origin,
-      destination,
-      cabin,
-      equipment,
-      registration,
-      journey_distance,
-      journey_date,
-      year,
-      journey_duration_seconds,
-      geom
-    `);
-
-
-  // -------------------------------------------------
-  // YEAR FILTER
-  // -------------------------------------------------
-
-  const years =
-    [...selected.years]
-      .map(Number)
-      .filter(Number.isFinite);
+  const years = [...selected.years]
+    .map(Number)
+    .filter(Number.isFinite);
 
   if (!years.length) {
     console.warn(
@@ -584,149 +581,270 @@ async function loadRoutes() {
     return;
   }
 
-  const yearClauses =
-    years.map(year =>
+  const yearClauses = years.map(
+    year =>
       `and(` +
-        `journey_date.gte.${year}-01-01,` +
-        `journey_date.lt.${year + 1}-01-01` +
+      `journey_date.gte.${year}-01-01,` +
+      `journey_date.lt.${year + 1}-01-01` +
       `)`
-    );
-
-  query = query.or(
-    yearClauses.join(",")
   );
 
-  // -------------------------------------------------
-  // AIRLINE FILTER
-  // -------------------------------------------------
 
-  if (
-    selected.airlines?.size
-  ) {
-    query = query.in(
-      "airline",
-      [...selected.airlines]
-    );
-  }
+  // ---------------------------------------------------
+  // LOAD ALL MATCHING ROUTES IN BATCHES
+  // ---------------------------------------------------
 
-  // -------------------------------------------------
-  // JOURNEY-TYPE FILTER
-  // -------------------------------------------------
+  const loadedRoutes = [];
 
-  if (
-    selected.types?.size
-  ) {
-    query = query.in(
-      "journey_type",
-      [...selected.types]
-    );
-  }
+  let offset = 0;
 
-const {
-  data,
-  error
-} = await query;
+  while (true) {
+    let query = sb
+      .from("journeys_routes_2")
+      .select(`
+        uid,
+        callsign,
+        airline,
+        journey_type,
+        origin,
+        destination,
+        display_origin,
+        display_destination,
+        cabin,
+        equipment,
+        registration,
+        journey_distance,
+        journey_date,
+        year,
+        journey_duration_seconds,
+        geom
+      `)
+      .or(yearClauses.join(","))
+      .range(
+        offset,
+        offset + MAX_ROUTES - 1
+      );
 
-if (error) {
-  console.error(
-    "[routes] Route load failed:",
-    error
-  );
-
-  clearRouteDisplay({
-    updateBaseRoutes: true
-  });
-
-  return;
-}
-
-
-let routes =
-  (data || [])
-    .filter(route => route?.geom);
-
-// -------------------------------------------------
-// CABIN / CLASS FILTER
-// Applies only to Flight journeys
-// -------------------------------------------------
-
-if (
-  selected.cabins instanceof Set &&
-  selected.cabins.size > 0
-) {
-
-  routes = routes.filter(route => {
-
-    const journeyType =
-      String(
-        route?.journey_type || ""
-      ).toLowerCase();
-
-    // Cabin does not apply to Drive, Train,
-    // Boat, Bus or Walk journeys.
-    if (journeyType !== "flight") {
-      return true;
+    // Airline filtering is performed by Supabase.
+    if (selected.airlines?.size) {
+      query = query.in(
+        "airline",
+        [...selected.airlines]
+      );
     }
 
-    return selected.cabins.has(
-      route.cabin
-    );
-  });
-}
+    // Journey-type filtering is performed by Supabase.
+    if (selected.types?.size) {
+      query = query.in(
+        "journey_type",
+        [...selected.types]
+      );
+    }
+
+    const {
+      data,
+      error
+    } = await query;
+
+    if (error) {
+      console.error(
+        "[routes] Route load failed:",
+        error
+      );
+
+      clearRouteDisplay({
+        updateBaseRoutes: true
+      });
+
+      return;
+    }
+
+    const batch = data || [];
+
+    loadedRoutes.push(...batch);
+
+    /*
+     * A short batch means Supabase has returned the final
+     * page of matching routes.
+     */
+    if (batch.length < MAX_ROUTES) {
+      break;
+    }
+
+    offset += MAX_ROUTES;
+  }
 
 
-  // -------------------------------------------------
-  // AIRPORT DROPDOWN FILTER
-  // -------------------------------------------------
+  let routes = loadedRoutes.filter(
+    route => route?.geom
+  );
+
+
+  // ---------------------------------------------------
+  // CABIN / CLASS FILTER
+  // Applies only to flights.
+  // ---------------------------------------------------
 
   if (
-    selected.airports?.size
+    selected.cabins instanceof Set &&
+    selected.cabins.size > 0
   ) {
-    /*
-     * Expand selected city groups once, rather than
-     * recalculating them once for every route.
-     */
-    const expandedAirportCodes =
-      new Set(
-        [...selected.airports]
-          .flatMap(value => {
-            const groupMembers =
-              typeof AIRPORT_GROUPS !==
-                "undefined"
-                ? AIRPORT_GROUPS[value]
-                : null;
+    routes = routes.filter(route => {
+      if (getJourneyType(route) !== "flight") {
+        return true;
+      }
 
-            return Array.isArray(
-              groupMembers
-            )
-              ? groupMembers
-              : [value];
-          })
-      );
+      return selected.cabins.has(route.cabin);
+    });
+  }
+
+
+  // ---------------------------------------------------
+  // AIRPORT DROPDOWN FILTER
+  // ---------------------------------------------------
+
+  if (selected.airports?.size) {
+    /*
+     * Expand metropolitan airport groups once rather than
+     * recalculating them for every route.
+     */
+    const expandedAirportCodes = new Set(
+      [...selected.airports].flatMap(value => {
+        const groupMembers =
+          typeof AIRPORT_GROUPS !== "undefined"
+            ? AIRPORT_GROUPS[value]
+            : null;
+
+        return Array.isArray(groupMembers)
+          ? groupMembers
+          : [value];
+      })
+    );
 
     routes = routes.filter(route => {
       /*
        * Airport filtering applies only to flights.
-       * Non-flight journeys remain visible.
+       * Non-flight routes remain visible.
        */
-      if (
-        getJourneyType(route) !==
-        "flight"
-      ) {
+      if (getJourneyType(route) !== "flight") {
         return true;
       }
 
       return (
-        expandedAirportCodes.has(
-          route.origin
-        ) ||
-
-        expandedAirportCodes.has(
-          route.destination
-        )
+        expandedAirportCodes.has(route.origin) ||
+        expandedAirportCodes.has(route.destination)
       );
     });
   }
+
+
+  // ---------------------------------------------------
+  // NEWEST JOURNEY FIRST
+  // ---------------------------------------------------
+
+  routes.sort((routeA, routeB) => {
+    const dateA =
+      new Date(routeA.journey_date).getTime();
+
+    const dateB =
+      new Date(routeB.journey_date).getTime();
+
+    return dateB - dateA;
+  });
+
+
+  // ---------------------------------------------------
+  // PRESERVE CLICKED AIRPORT ACROSS FILTER CHANGES
+  // ---------------------------------------------------
+
+  const activeAirport =
+    window.appState?.activeAirport ||
+    window.activeAirportFilter ||
+    null;
+
+  /*
+   * Changing a top-bar filter clears individual journey
+   * selections but preserves an active airport selection.
+   */
+  window.appState.isolatedUid = null;
+
+  const selectedUids =
+    getCurrentSelectedUids();
+
+  selectedUids.clear();
+
+  /*
+   * This is the complete collection produced by the
+   * current Year / Airline / Type / Airport / Cabin filters.
+   */
+  window.allRoutes = routes.slice();
+
+  /*
+   * airports.js needs this updated base collection so it
+   * can correctly restore routes if the clicked airport
+   * is subsequently deselected.
+   */
+  if (
+    activeAirport &&
+    typeof window.updateAirportFilterBaseRoutes ===
+      "function"
+  ) {
+    window.updateAirportFilterBaseRoutes(routes);
+  }
+
+
+  // ---------------------------------------------------
+  // REAPPLY CLICKED AIRPORT FILTER
+  // ---------------------------------------------------
+
+  if (activeAirport) {
+    const airportRoutes = routes.filter(
+      route =>
+        getJourneyType(route) === "flight" &&
+        (
+          route.origin === activeAirport ||
+          route.destination === activeAirport
+        )
+    );
+
+    renderRoutes(airportRoutes, {
+      updateBaseRoutes: false,
+      fitMap: true
+    });
+
+    /*
+     * Refresh the Airport Summary Bar using the newly
+     * filtered route collection.
+     */
+    if (
+      typeof window.showAirportSummary ===
+        "function"
+    ) {
+      const airportName =
+        document
+          .getElementById("airportName")
+          ?.textContent
+          ?.trim() || "";
+
+      window.showAirportSummary({
+        code: activeAirport,
+        airport: airportName
+      });
+    }
+
+    return;
+  }
+
+
+  // No clicked airport is active, so display the complete
+  // top-bar-filtered route collection.
+  renderRoutes(routes, {
+    updateBaseRoutes: true,
+    fitMap: true
+  });
+}
+
+window.loadRoutes = loadRoutes;
 
   // -------------------------------------------------
   // NEWEST JOURNEY FIRST
@@ -1164,74 +1282,6 @@ window.setMapMode =
   setMapMode;
 
 
-// =====================================================
-// ISOLATION STYLING - REPLACE ON 17 AUGUST 2026
-// =====================================================
-
-/*
-function applyIsolationStyling() {
-  if (
-    !map.getLayer(
-      ROUTES_LINE_LAYER_ID
-    )
-  ) {
-    return;
-  }
-
-  const isolatedRouteUid =
-    getCurrentIsolatedUid();
-
-  if (!isolatedRouteUid) {
-    map.setPaintProperty(
-      ROUTES_LINE_LAYER_ID,
-      "line-opacity",
-      0.85
-    );
-
-    map.setPaintProperty(
-      ROUTES_LINE_LAYER_ID,
-      "line-width",
-      1.4
-    );
-
-    return;
-  }
-
-  map.setPaintProperty(
-    ROUTES_LINE_LAYER_ID,
-    "line-opacity",
-    [
-      "case",
-
-      [
-        "==",
-        ["to-string", ["get", "uid"]],
-        String(isolatedRouteUid)
-      ],
-
-      1,
-      0.15
-    ]
-  );
-
-  map.setPaintProperty(
-    ROUTES_LINE_LAYER_ID,
-    "line-width",
-    [
-      "case",
-
-      [
-        "==",
-        ["to-string", ["get", "uid"]],
-        String(isolatedRouteUid)
-      ],
-
-      3,
-      1.4
-    ]
-  );
-}
-*/
 
 
 function applyIsolationStyling() {
@@ -1427,7 +1477,7 @@ function applyRouteModeVisibility() {
       : "none";
 
   [
-    ROUTES_GLOW_LAYER_ID, // ADDED 17 AUGUST 2026
+    ROUTES_GLOW_LAYER_ID,
     ROUTES_LINE_LAYER_ID,
     ROUTES_HIT_LAYER_ID
   ].forEach(layerId => {
