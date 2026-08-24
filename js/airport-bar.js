@@ -143,9 +143,20 @@ function showAirportSummary(airport) {
   }
 
   if (airportNameEl) {
-    airportNameEl.textContent =
-      airport.airport || "";
-  }
+
+  /*
+   * Airport objects used by different parts of the
+   * application may expose the airport name under
+   * slightly different properties.
+   */
+  const airportName =
+    airport.airport ||
+    airport.name ||
+    airport.city ||
+    "";
+
+  airportNameEl.textContent = airportName;
+}
 
 if (airportDeparturesEl) {
   airportDeparturesEl.textContent =
