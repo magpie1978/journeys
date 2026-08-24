@@ -110,6 +110,10 @@ function setActiveAirportFilter(airportCode) {
   const nextAirport =
     airportCode || null;
 
+  /*
+   * Retain both state forms until the rest of the
+   * application consistently uses appState.
+   */
   window.activeAirportFilter =
     nextAirport;
 
@@ -407,10 +411,13 @@ function renderAirportMarkers(airports) {
         properties: {
           airport_code:
             airport.airport_code || "",
-
+        
           airport:
             airport.airport || "",
-
+        
+          city:
+            airport.city || "",
+        
           country:
             airport.country || ""
         }
@@ -747,6 +754,7 @@ function bindAirportHover() {
     "mouseenter",
     AIRPORT_CIRCLE_LAYER_ID,
     event => {
+
       map.getCanvas().style.cursor =
         "pointer";
 
@@ -765,31 +773,14 @@ function bindAirportHover() {
           properties.airport
         );
 
-      const country =
-        escapePopupHtml(
-          properties.country
-        );
-
-      const locationText =
-        city && country
-          ? `${city}, ${country}`
-          : city || country;
-
       airportPopup
         .setLngLat(
           feature.geometry.coordinates
         )
         .setHTML(`
-          <strong>
-            ${escapePopupHtml(
-              properties.airport_code
-            )}
-          </strong>
-          ${
-            locationText
-              ? `<br>${locationText}`
-              : ""
-          }
+          <div class="journey-tooltip-content">
+            ${airportName}
+          </div>
         `)
         .addTo(map);
     }
@@ -804,7 +795,6 @@ function bindAirportHover() {
     }
   );
 }
-
 
 // =====================================================
 // NON-FLIGHT ENDPOINT HOVER
@@ -966,45 +956,24 @@ function bindAirportMapClick() {
       ) {
         window.onAirportSelected({
           code: airportCode,
-        
-          airport:
+
+          city:
             airportFeature.properties
-              ?.airport || ""
-        });      
+              ?.city || ""
+        });
       }
 
       return;
     }
 
- // -------------------------------------------------
-  // NON-AIRPORT MAP AREA CLICKED
-  // -------------------------------------------------
-  
-  if (getActiveAirportFilter()) {
-  
-    const isolatedUid =
-      window.appState?.isolatedUid || null;
-  
-    /*
-     * If an individual journey is currently selected,
-     * routes.js handles the first map click and returns
-     * us to the airport view.
-     *
-     * Do NOT clear the airport at the same time.
-     */
-    if (isolatedUid) {
-      return;
+    // -------------------------------------------------
+    // NON-AIRPORT MAP AREA CLICKED
+    // -------------------------------------------------
+
+    if (getActiveAirportFilter()) {
+      clearAirportSelection();
     }
-  
-    /*
-     * No individual journey is selected, so this is
-     * the second "back" level: clear the airport and
-     * return to the original top-bar-filtered view.
-     */
-    clearAirportSelection();
-  }
-    
-});
+  });
 }
 
 
@@ -1183,14 +1152,6 @@ function filterRoutesByAirport(
 
     return "unchanged";
   }
-
-  // No individual journey should be selected when
-  // first entering an airport view.
-  clearIsolatedRoute();
-
-if (typeof hideFlightSummary === "function") {
-  hideFlightSummary();
-}
 
   renderRoutes(
     filteredRoutes,
