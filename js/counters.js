@@ -1,49 +1,185 @@
+/* global sb, selected, AIRPORT_GROUPS */
+
 // =====================================================
 // COUNTERS
+// =====================================================
 //
-// This file controls the six summary counters shown above the map:
-//    total journeys;
-//    land journeys;
-//    total miles;
-//    visited countries;
-//    airlines;
-//    total duration.
+// Controls the summary statistic cards displayed above
+// the map.
 //
-// Its overall flow is:
-//    File loads
-//   ↓
-// Check whether it has already been initialised
-//   ↓
-// Find and store references to the  elements
-//   ↓
-// Define formatting and calculation helpers
-//   ↓
-// Expose updateAlls() globally
-//   ↓
-// Other files call updateAlls(routes)
-//   ↓
-// The s are recalculated from the supplied route array
+// Provides:
+//   • Flight count.
+//   • Conditional Drive/Train/Boat/Bus/Walk counts.
+//   • Total distance.
+//   • Countries visited.
+//   • Airlines used.
+//   • Total journey duration.
+//   • Selected-airline information.
+//   • Selected-airport information.
+//
+// Public API:
+//   window.updateAllCounters(routes)
+//
 // =====================================================
 
 
-
-// Prevent duplicate initialisation
+// Prevent accidental duplicate initialisation if this
+// script is loaded more than once.
 if (!window.__S3__) {
   window.__S3__ = true;
 
 
-// -----------------------------------------------------
-// DOM REFS
-// -----------------------------------------------------
+// =====================================================
+// DOM REFERENCES
+// =====================================================
 
+const journeyCounterEl =
+  document.getElementById("journeyCounter");
+
+const journeyNumberEl =
+  document.querySelector(
+    "#journeyCounter .glass-number"
+  );
+
+const journeyLabelEl =
+  document.querySelector(
+    "#journeyCounter .glass-label"
+  );
+
+const milesNumberEl =
+  document.querySelector(
+    "#milesCounter .glass-number"
+  );
+
+const countriesNumberEl =
+  document.querySelector(
+    "#countriesCounter .glass-number"
+  );
 
 const airlinesCounterEl =
   document.getElementById("airlinesCounter");
 
+const airlinesNumberEl =
+  document.querySelector(
+    "#airlinesCounter .glass-number"
+  );
+
 const durationCounterEl =
   document.getElementById("durationCounter");
-  
-  const selectedAirlineCounterEl =
+
+const durationNumberEl =
+  document.querySelector(
+    "#durationCounter .glass-number"
+  );
+
+
+// =====================================================
+// TRANSPORT COUNTER CONFIGURATION
+// =====================================================
+
+/*
+ * Drive, Train, Boat, Bus and Walk counters all behave
+ * identically. Defining them here avoids maintaining five
+ * separate copies of the same counter logic.
+ */
+const transportCounters = {
+  drive: {
+    container:
+      document.getElementById("transportCounter"),
+
+    number:
+      document.querySelector(
+        "#transportCounter .glass-number"
+      ),
+
+    label:
+      document.querySelector(
+        "#transportCounter .glass-label"
+      ),
+
+    singular: "DRIVE",
+    plural: "DRIVES"
+  },
+
+  train: {
+    container:
+      document.getElementById("trainCounter"),
+
+    number:
+      document.querySelector(
+        "#trainCounter .glass-number"
+      ),
+
+    label:
+      document.querySelector(
+        "#trainCounter .glass-label"
+      ),
+
+    singular: "TRAIN",
+    plural: "TRAINS"
+  },
+
+  boat: {
+    container:
+      document.getElementById("boatCounter"),
+
+    number:
+      document.querySelector(
+        "#boatCounter .glass-number"
+      ),
+
+    label:
+      document.querySelector(
+        "#boatCounter .glass-label"
+      ),
+
+    singular: "BOAT",
+    plural: "BOATS"
+  },
+
+  bus: {
+    container:
+      document.getElementById("busCounter"),
+
+    number:
+      document.querySelector(
+        "#busCounter .glass-number"
+      ),
+
+    label:
+      document.querySelector(
+        "#busCounter .glass-label"
+      ),
+
+    singular: "BUS",
+    plural: "BUSES"
+  },
+
+  walk: {
+    container:
+      document.getElementById("walkCounter"),
+
+    number:
+      document.querySelector(
+        "#walkCounter .glass-number"
+      ),
+
+    label:
+      document.querySelector(
+        "#walkCounter .glass-label"
+      ),
+
+    singular: "WALK",
+    plural: "WALKS"
+  }
+};
+
+
+// =====================================================
+// SELECTED AIRLINE COUNTER
+// =====================================================
+
+const selectedAirlineCounterEl =
   document.getElementById(
     "selectedAirlineCounter"
   );
@@ -52,6 +188,11 @@ const selectedAirlineNameEl =
   document.querySelector(
     "#selectedAirlineCounter .airline-name"
   );
+
+
+// =====================================================
+// SELECTED AIRPORT COUNTER
+// =====================================================
 
 const selectedAirportCounterEl =
   document.getElementById(
@@ -68,273 +209,163 @@ const selectedAirportNameEl =
     "#selectedAirportCounter .airport-name-display"
   );
 
-  
-const journeyCounterEl =
-  document.querySelector("#journeyCounter");
 
-const journeyNumberEl =
-  document.querySelector("#journeyCounter .glass-number");
+// =====================================================
+// GENERAL HELPERS
+// =====================================================
 
-const journeyLabelEl =
-  document.querySelector("#journeyCounter .glass-label");
+/**
+ * Returns a route's journey type in normalized lowercase
+ * form.
+ *
+ * @param {Object} route
+ * @returns {string}
+ */
+function getCounterJourneyType(route) {
+  return String(
+    route?.journey_type || ""
+  ).toLowerCase();
+}
 
-const transportCounterEl =
-  document.getElementById("transportCounter");
 
-const transportNumberEl =
-  document.querySelector(
-    "#transportCounter .glass-number"
+/**
+ * Returns the currently selected journey types in
+ * normalized lowercase form.
+ *
+ * @returns {Array<string>}
+ */
+function getSelectedTypes() {
+  if (
+    typeof selected === "undefined" ||
+    !(selected.types instanceof Set)
+  ) {
+    return [];
+  }
+
+  return [...selected.types].map(
+    type => String(type).toLowerCase()
   );
-
-const transportLabelEl =
-  document.querySelector(
-    "#transportCounter .glass-label"
-  );
-
-const trainCounterEl =
-  document.getElementById("trainCounter");
-
-const trainNumberEl =
-  document.querySelector(
-    "#trainCounter .glass-number"
-  );
-
-const trainLabelEl =
-  document.querySelector(
-    "#trainCounter .glass-label"
-  );
-
-  const boatCounterEl =
-  document.getElementById("boatCounter");
-
-const boatNumberEl =
-  document.querySelector(
-    "#boatCounter .glass-number"
-  );
-
-const boatLabelEl =
-  document.querySelector(
-    "#boatCounter .glass-label"
-  );
+}
 
 
-const busCounterEl =
-  document.getElementById("busCounter");
-
-const busNumberEl =
-  document.querySelector(
-    "#busCounter .glass-number"
-  );
-
-const busLabelEl =
-  document.querySelector(
-    "#busCounter .glass-label"
-  );
-
-
-const walkCounterEl =
-  document.getElementById("walkCounter");
-
-const walkNumberEl =
-  document.querySelector(
-    "#walkCounter .glass-number"
-  );
-
-const walkLabelEl =
-  document.querySelector(
-    "#walkCounter .glass-label"
-  );
-
-const milesNumberEl =
-  document.querySelector("#milesCounter .glass-number");
-
-const countriesNumberEl =
-  document.querySelector("#countriesCounter .glass-number");
-
-const airlinesNumberEl =
-  document.querySelector("#airlinesCounter .glass-number");
-
-const durationNumberEl =
-  document.querySelector("#durationCounter .glass-number");
-
-
-// -----------------------------------------------------
-// HELPERS
-// -----------------------------------------------------
-
+/**
+ * Converts a duration in seconds to an hours/minutes
+ * display string.
+ *
+ * @param {*} seconds
+ * @returns {string}
+ */
 function formatSecondsToHM(seconds) {
   const totalSeconds = Number(seconds) || 0;
+
   if (totalSeconds <= 0) {
     return "0h 00min";
   }
-  
+
   const hours =
     Math.floor(totalSeconds / 3600);
 
   const minutes =
-    Math.floor((totalSeconds % 3600) / 60);
+    Math.floor(
+      (totalSeconds % 3600) / 60
+    );
 
-  return `${hours}h ${String(minutes).padStart(2,"0")}`;
+  return (
+    `${hours}h ` +
+    `${String(minutes).padStart(2, "0")}min`
+  );
 }
 
 
-function updateTransportCounter(routes = []) {
+// =====================================================
+// TRANSPORT COUNTERS
+// =====================================================
 
-  const driveSelected =
-    typeof selected !== "undefined" &&
-    selected.types instanceof Set &&
-    [...selected.types].some(
-      type =>
-        String(type).toLowerCase() ===
-        "drive"
-    );
+/**
+ * Updates one of the conditional transport counters.
+ *
+ * The counter is shown only when that journey type is
+ * explicitly selected in the Type filter.
+ *
+ * @param {string} type
+ * @param {Array} routes
+ * @param {Array<string>} selectedTypes
+ */
+function updateTransportCounter(
+  type,
+  routes,
+  selectedTypes
+) {
+  const config = transportCounters[type];
 
-  const driveCount =
-    routes.filter(
-      route =>
-        String(
-          route?.journey_type || ""
-        ).toLowerCase() === "drive"
-    ).length;
-
-  if (transportCounterEl) {
-    transportCounterEl.classList.toggle(
-      "hidden",
-      !driveSelected ||
-      driveCount === 0
-    );
-  }
-
-  if (
-    !driveSelected ||
-    driveCount === 0
-  ) {
+  if (!config) {
     return;
   }
 
-  transportNumberEl.textContent =
-    driveCount.toLocaleString();
+  const typeSelected =
+    selectedTypes.includes(type);
 
-  transportLabelEl.textContent =
-    driveCount === 1
-      ? "DRIVE"
-      : "DRIVES";
-}
+  const count = routes.filter(
+    route =>
+      getCounterJourneyType(route) === type
+  ).length;
 
-  
-
-
-function updateTrainCounter(routes = []) {
-
-  // -----------------------------------------------------
-  // SHOW ONLY WHEN "TRAIN" IS SELECTED
-  // -----------------------------------------------------
-
-  const trainSelected =
-    typeof selected !== "undefined" &&
-    selected.types instanceof Set &&
-    [...selected.types].some(
-      type =>
-        String(type).toLowerCase() === "train"
-    );
-
-
-  if (trainCounterEl) {
-    trainCounterEl.classList.toggle(
+  if (config.container) {
+    config.container.classList.toggle(
       "hidden",
-      !trainSelected
+      !typeSelected || count === 0
     );
   }
 
-
-  if (!trainSelected) {
+  if (!typeSelected || count === 0) {
     return;
   }
 
-
-  // -----------------------------------------------------
-  // COUNT TRAIN JOURNEYS ONLY
-  // -----------------------------------------------------
-
-  const trains =
-    routes.filter(
-      route =>
-        String(
-          route?.journey_type || ""
-        ).toLowerCase() === "train"
-    );
-
-  const trainCount =
-    trains.length;
-
-
-  // -----------------------------------------------------
-  // UPDATE GLASS CONTAINER
-  // -----------------------------------------------------
-
-  if (trainNumberEl) {
-    trainNumberEl.textContent =
-      trainCount.toLocaleString();
+  if (config.number) {
+    config.number.textContent =
+      count.toLocaleString();
   }
 
-  if (trainLabelEl) {
-    trainLabelEl.textContent =
-      trainCount === 1
-        ? "TRAIN"
-        : "TRAINS";
+  if (config.label) {
+    config.label.textContent =
+      count === 1
+        ? config.singular
+        : config.plural;
   }
 }
 
 
-function updateBoatCounter(routes = []) {
-
-  const boatSelected =
-    typeof selected !== "undefined" &&
-    selected.types instanceof Set &&
-    [...selected.types].some(
-      type =>
-        String(type).toLowerCase() === "boat"
-    );
-
-  if (boatCounterEl) {
-    boatCounterEl.classList.toggle(
-      "hidden",
-      !boatSelected
-    );
-  }
-
-  if (!boatSelected) {
-    return;
-  }
-
-  const boats =
-    routes.filter(
-      route =>
-        String(
-          route?.journey_type || ""
-        ).toLowerCase() === "boat"
-    );
-
-  const boatCount =
-    boats.length;
-
-  if (boatNumberEl) {
-    boatNumberEl.textContent =
-      boatCount.toLocaleString();
-  }
-
-  if (boatLabelEl) {
-    boatLabelEl.textContent =
-      boatCount === 1
-        ? "BOAT"
-        : "BOATS";
-  }
+/**
+ * Updates all conditional non-flight transport counters.
+ *
+ * @param {Array} routes
+ * @param {Array<string>} selectedTypes
+ */
+function updateTransportCounters(
+  routes,
+  selectedTypes
+) {
+  Object.keys(transportCounters).forEach(
+    type => {
+      updateTransportCounter(
+        type,
+        routes,
+        selectedTypes
+      );
+    }
+  );
 }
 
 
+// =====================================================
+// SELECTED AIRLINE
+// =====================================================
 
+/**
+ * Shows the selected-airline card when exactly one
+ * airline is selected.
+ */
 function updateSelectedAirlineCounter() {
-
   if (
     typeof selected === "undefined" ||
     !(selected.airlines instanceof Set)
@@ -345,8 +376,6 @@ function updateSelectedAirlineCounter() {
   const selectedAirlines =
     [...selected.airlines];
 
-  // Show only when exactly one airline
-  // has been explicitly selected.
   const showAirline =
     selectedAirlines.length === 1;
 
@@ -367,8 +396,19 @@ function updateSelectedAirlineCounter() {
 }
 
 
-async function updateSelectedAirportCounter() {
+// =====================================================
+// SELECTED AIRPORT
+// =====================================================
 
+/**
+ * Shows the selected-airport card when exactly one real
+ * airport is selected.
+ *
+ * Metropolitan airport groups such as London and Paris
+ * are deliberately excluded because they do not represent
+ * one physical airport.
+ */
+async function updateSelectedAirportCounter() {
   if (
     typeof selected === "undefined" ||
     !(selected.airports instanceof Set)
@@ -379,13 +419,10 @@ async function updateSelectedAirportCounter() {
   const selectedAirports =
     [...selected.airports];
 
-  // Only show when exactly one airport is selected
   if (selectedAirports.length !== 1) {
-    if (selectedAirportCounterEl) {
-      selectedAirportCounterEl.classList.add(
-        "hidden"
-      );
-    }
+    selectedAirportCounterEl?.classList.add(
+      "hidden"
+    );
 
     return;
   }
@@ -393,25 +430,18 @@ async function updateSelectedAirportCounter() {
   const airportCode =
     selectedAirports[0];
 
-  // Ignore virtual airport groups such as London,
-  // Paris, New York etc.
   if (
     typeof AIRPORT_GROUPS !== "undefined" &&
     AIRPORT_GROUPS[airportCode]
   ) {
-    if (selectedAirportCounterEl) {
-      selectedAirportCounterEl.classList.add(
-        "hidden"
-      );
-    }
+    selectedAirportCounterEl?.classList.add(
+      "hidden"
+    );
 
     return;
   }
 
-  const {
-    data,
-    error
-  } = await sb
+  const { data, error } = await sb
     .from("journey_locations")
     .select("airport_code, airport")
     .eq("airport_code", airportCode)
@@ -423,15 +453,17 @@ async function updateSelectedAirportCounter() {
       error
     );
 
+    selectedAirportCounterEl?.classList.add(
+      "hidden"
+    );
+
     return;
   }
 
   if (!data) {
-    if (selectedAirportCounterEl) {
-      selectedAirportCounterEl.classList.add(
-        "hidden"
-      );
-    }
+    selectedAirportCounterEl?.classList.add(
+      "hidden"
+    );
 
     return;
   }
@@ -446,136 +478,48 @@ async function updateSelectedAirportCounter() {
       data.airport;
   }
 
-  if (selectedAirportCounterEl) {
-    selectedAirportCounterEl.classList.remove(
-      "hidden"
-    );
-  }
+  selectedAirportCounterEl?.classList.remove(
+    "hidden"
+  );
 }
-
-  
-function updateBusCounter(routes = []) {
-
-  const busSelected =
-    typeof selected !== "undefined" &&
-    selected.types instanceof Set &&
-    [...selected.types].some(
-      type =>
-        String(type).toLowerCase() === "bus"
-    );
-
-  if (busCounterEl) {
-    busCounterEl.classList.toggle(
-      "hidden",
-      !busSelected
-    );
-  }
-
-  if (!busSelected) {
-    return;
-  }
-
-  const buses =
-    routes.filter(
-      route =>
-        String(
-          route?.journey_type || ""
-        ).toLowerCase() === "bus"
-    );
-
-  const busCount =
-    buses.length;
-
-  if (busNumberEl) {
-    busNumberEl.textContent =
-      busCount.toLocaleString();
-  }
-
-  if (busLabelEl) {
-    busLabelEl.textContent =
-      busCount === 1
-        ? "BUS"
-        : "BUSES";
-  }
-}
-
-
-function updateWalkCounter(routes = []) {
-
-  const walkSelected =
-    typeof selected !== "undefined" &&
-    selected.types instanceof Set &&
-    [...selected.types].some(
-      type =>
-        String(type).toLowerCase() === "walk"
-    );
-
-  if (walkCounterEl) {
-    walkCounterEl.classList.toggle(
-      "hidden",
-      !walkSelected
-    );
-  }
-
-  if (!walkSelected) {
-    return;
-  }
-
-  const walks =
-    routes.filter(
-      route =>
-        String(
-          route?.journey_type || ""
-        ).toLowerCase() === "walk"
-    );
-
-  const walkCount =
-    walks.length;
-
-  if (walkNumberEl) {
-    walkNumberEl.textContent =
-      walkCount.toLocaleString();
-  }
-
-  if (walkLabelEl) {
-    walkLabelEl.textContent =
-      walkCount === 1
-        ? "WALK"
-        : "WALKS";
-  }
-}
-
-
 
 
 // =====================================================
 // COUNTRY COUNTER
-// Countries visited by currently displayed journeys
 // =====================================================
 
+/**
+ * Updates the number of unique countries visited by the
+ * currently displayed journeys.
+ *
+ * Country membership is resolved by the database function
+ * get_countries_for_journeys(), which uses the canonical
+ * journey-country mapping rather than route text fields.
+ *
+ * @param {Array} routes
+ */
 async function updateCountriesCounter(
   routes = []
 ) {
-
   if (!countriesNumberEl) {
     return;
   }
 
-  const uids =
-    routes
-      .map(route => route?.uid)
-      .filter(Boolean)
-      .map(String);
+  const uids = [
+    ...new Set(
+      routes
+        .map(route => route?.uid)
+        .filter(Boolean)
+        .map(String)
+    )
+  ];
 
   if (!uids.length) {
     countriesNumberEl.textContent = "0";
     return;
   }
 
-  const {
-    data,
-    error
-  } = await sb.rpc(
+  const { data, error } = await sb.rpc(
     "get_countries_for_journeys",
     {
       journey_uids: uids
@@ -592,37 +536,35 @@ async function updateCountriesCounter(
     return;
   }
 
-  const countries =
-    new Set(
-      (data || [])
-        .map(row => row.country)
-        .filter(Boolean)
-    );
+  const countries = new Set(
+    (data || [])
+      .map(row => row.country)
+      .filter(Boolean)
+  );
 
   countriesNumberEl.textContent =
     countries.size.toLocaleString();
 }
 
-  
 
+// =====================================================
+// MASTER COUNTER UPDATE
+// =====================================================
 
-// -----------------------------------------------------
-// MASTER COUNTERS
-// -----------------------------------------------------
+/**
+ * Recalculates all summary counters from the supplied
+ * route collection.
+ *
+ * @param {Array} routes
+ */
 function updateAllCounters(routes = []) {
-
-  // -----------------------------------------------------
-  // CURRENT TYPE SELECTIONS
-  // -----------------------------------------------------
+  const safeRoutes =
+    Array.isArray(routes)
+      ? routes
+      : [];
 
   const selectedTypes =
-    typeof selected !== "undefined" &&
-    selected.types instanceof Set
-      ? [...selected.types].map(
-          type =>
-            String(type).toLowerCase()
-        )
-      : [];
+    getSelectedTypes();
 
   const flightSelected =
     selectedTypes.includes("flight");
@@ -632,118 +574,105 @@ function updateAllCounters(routes = []) {
     selectedTypes.includes("walk");
 
 
-  // -----------------------------------------------------
+  // ---------------------------------------------------
   // FLIGHTS
-  // -----------------------------------------------------
+  // ---------------------------------------------------
+
+  const flightRoutes = safeRoutes.filter(
+    route =>
+      getCounterJourneyType(route) === "flight"
+  );
 
   const flightCount =
-    routes.filter(
-      route =>
-        String(
-          route?.journey_type || ""
-        ).toLowerCase() === "flight"
-    ).length;
+    flightRoutes.length;
 
-  /*
-   * Hide the complete Flights glass box whenever
-   * Flight is not selected in the Type dropdown.
-   */
   if (journeyCounterEl) {
-journeyCounterEl.classList.toggle(
-  "hidden",
-  !flightSelected ||
-  flightCount === 0
-);  }
-
-  journeyNumberEl.textContent =
-    flightCount.toLocaleString();
-
-  journeyLabelEl.textContent =
-    flightCount === 1
-      ? "FLIGHT"
-      : "FLIGHTS";
-
-
-  // -----------------------------------------------------
-  // TRANSPORT COUNTERS
-  // -----------------------------------------------------
-
-  updateTransportCounter(routes);
-  updateTrainCounter(routes);
-  updateBoatCounter(routes);
-  updateBusCounter(routes);
-  updateWalkCounter(routes);
-
-
-  // -----------------------------------------------------
-  // MILES — RESTORE ORIGINAL BEHAVIOUR
-  // -----------------------------------------------------
-
-  const miles =
-    routes.reduce(
-      (sum, route) =>
-        sum +
-        (
-          Number(
-            route.journey_distance
-          ) || 0
-        ),
-      0
+    journeyCounterEl.classList.toggle(
+      "hidden",
+      !flightSelected || flightCount === 0
     );
+  }
 
-milesNumberEl.textContent = walkOnly
-  ? miles.toFixed(3)
-  : Math.round(miles).toLocaleString();
+  if (journeyNumberEl) {
+    journeyNumberEl.textContent =
+      flightCount.toLocaleString();
+  }
+
+  if (journeyLabelEl) {
+    journeyLabelEl.textContent =
+      flightCount === 1
+        ? "FLIGHT"
+        : "FLIGHTS";
+  }
 
 
+  // ---------------------------------------------------
+  // NON-FLIGHT TRANSPORT TYPES
+  // ---------------------------------------------------
 
-  // -----------------------------------------------------
-  // COUNTRIES COUNTER
-  // -----------------------------------------------------
-
-  updateCountriesCounter(routes);
-
-
-
-// -----------------------------------------------------
-// AIRLINES
-// Show only when Flight is selected
-// -----------------------------------------------------
-
-if (airlinesCounterEl) {
-  airlinesCounterEl.classList.toggle(
-    "hidden",
-    !flightSelected
+  updateTransportCounters(
+    safeRoutes,
+    selectedTypes
   );
-}
 
-if (flightSelected) {
 
-  const airlines =
-    new Set(
-      routes
-        .filter(
-          route =>
-            String(
-              route?.journey_type || ""
-            ).toLowerCase() === "flight"
-        )
-        .map(
-          route =>
-            route.airline
-        )
+  // ---------------------------------------------------
+  // DISTANCE
+  // ---------------------------------------------------
+
+  const miles = safeRoutes.reduce(
+    (sum, route) =>
+      sum +
+      (
+        Number(route?.journey_distance) || 0
+      ),
+    0
+  );
+
+  if (milesNumberEl) {
+    milesNumberEl.textContent =
+      walkOnly
+        ? miles.toFixed(3)
+        : Math.round(miles).toLocaleString();
+  }
+
+
+  // ---------------------------------------------------
+  // COUNTRIES
+  // ---------------------------------------------------
+
+  updateCountriesCounter(safeRoutes);
+
+
+  // ---------------------------------------------------
+  // AIRLINES
+  // ---------------------------------------------------
+
+  if (airlinesCounterEl) {
+    airlinesCounterEl.classList.toggle(
+      "hidden",
+      !flightSelected
+    );
+  }
+
+  if (
+    flightSelected &&
+    airlinesNumberEl
+  ) {
+    const airlines = new Set(
+      flightRoutes
+        .map(route => route.airline)
         .filter(Boolean)
     );
 
-  airlinesNumberEl.textContent =
-    airlines.size;
-}
+    airlinesNumberEl.textContent =
+      airlines.size.toLocaleString();
+  }
 
 
-  // -----------------------------------------------------
+  // ---------------------------------------------------
   // DURATION
-  // Hide ONLY when Walk is the sole selected Type.
-  // -----------------------------------------------------
+  // ---------------------------------------------------
 
   if (durationCounterEl) {
     durationCounterEl.classList.toggle(
@@ -752,25 +681,29 @@ if (flightSelected) {
     );
   }
 
-  const seconds =
-    routes.reduce(
-      (sum, route) =>
-        sum +
-        (
-          Number(
-            route.journey_duration_seconds
-          ) || 0
-        ),
-      0
-    );
+  const seconds = safeRoutes.reduce(
+    (sum, route) =>
+      sum +
+      (
+        Number(
+          route?.journey_duration_seconds
+        ) || 0
+      ),
+    0
+  );
 
-  durationNumberEl.textContent =
-    formatSecondsToHM(seconds);
+  if (durationNumberEl) {
+    durationNumberEl.textContent =
+      formatSecondsToHM(seconds);
+  }
 }
 
-// -----------------------------------------------------
-// GLOBAL EXPORT
-// -----------------------------------------------------
-window.updateAllCounters = updateAllCounters;
+
+// =====================================================
+// PUBLIC API
+// =====================================================
+
+window.updateAllCounters =
+  updateAllCounters;
 
 }
