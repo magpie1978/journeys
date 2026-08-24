@@ -5,7 +5,7 @@
 //    total journeys;
 //    land journeys;
 //    total miles;
-//    destination countries;
+//    visited countries;
 //    airlines;
 //    total duration.
 //
@@ -161,21 +161,13 @@ const durationNumberEl =
 // -----------------------------------------------------
 // HELPERS
 // -----------------------------------------------------
-function formatSecondsToHM(seconds) {
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hrs}h ${mins.toString().padStart(2,"0")}min`;
-}
-
 
 function formatSecondsToHM(seconds) {
-
   const totalSeconds = Number(seconds) || 0;
-
   if (totalSeconds <= 0) {
     return "0h 00min";
   }
-
+  
   const hours =
     Math.floor(totalSeconds / 3600);
 
@@ -703,34 +695,15 @@ milesNumberEl.textContent = walkOnly
   ? miles.toFixed(3)
   : Math.round(miles).toLocaleString();
 
+
+
   // -----------------------------------------------------
-  // OLD COUNTRIES COUNTER
-  // -----------------------------------------------------
-
-  // const countries =
-  //  new Set(
-  //    routes
-  //      .map(
-  //        route =>
-  //          route.destination_country
-  //      )
-  //      .filter(Boolean)
-  //  );
-
-  //countriesNumberEl.textContent =
-  //  countries.size;
-
-
-// -----------------------------------------------------
   // COUNTRIES COUNTER
   // -----------------------------------------------------
 
   updateCountriesCounter(routes);
 
 
-  // -----------------------------------------------------
-  // AIRLINES — RESTORED TO PREVIOUS BEHAVIOUR
-  // -----------------------------------------------------
 
 // -----------------------------------------------------
 // AIRLINES
