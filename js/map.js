@@ -459,30 +459,43 @@ function ensureCountriesLayer() {
         "country_boundaries",
 
       paint: {
-  "fill-color": "#CCFF00",
-  "fill-opacity": 0.32
-},
+        "fill-color": "#CCFF00",
+        "fill-opacity": 0.32
+      },
 
       /*
        * Begin with a filter that matches no real
        * country until route countries are supplied.
        */
-        filter: [
-          "all",
-        
+      filter: [
+        "all",
+
+        [
+          "in",
+          "iso_3166_1_alpha_3",
+          ""
+        ],
+
+        [
+          "==",
+          ["get", "disputed"],
+          "false"
+        ],
+
+        [
+          "any",
           [
-            "in",
-            "iso_3166_1_alpha_3",
-            ""
-          ],
-        
-          [
-            "in",
-            "worldview",
+            "==",
             "all",
-            "GB"
+            ["get", "worldview"]
+          ],
+          [
+            "in",
+            "US",
+            ["get", "worldview"]
           ]
         ]
+      ]
     });
   }
 }
@@ -504,25 +517,49 @@ async function setCountriesFilterFromRoutes(
       .filter(Boolean)
       .map(String);
 
+  /*
+   * Helper for building the Mapbox country filter.
+   * Uses one consistent worldview and excludes
+   * disputed overlay polygons.
+   */
+  const buildCountryFilter =
+    countryCodes => [
+      "all",
+
+      [
+        "in",
+        "iso_3166_1_alpha_3",
+        ...countryCodes
+      ],
+
+      [
+        "==",
+        ["get", "disputed"],
+        "false"
+      ],
+
+      [
+        "any",
+        [
+          "==",
+          "all",
+          ["get", "worldview"]
+        ],
+        [
+          "in",
+          "US",
+          ["get", "worldview"]
+        ]
+      ]
+    ];
+
+  /*
+   * No visible journeys = no highlighted countries.
+   */
   if (!uids.length) {
     map.setFilter(
       "countries-fill",
-      [
-        "all",
-    
-        [
-          "in",
-          "iso_3166_1_alpha_3",
-          ""
-        ],
-    
-        [
-          "in",
-          "worldview",
-          "all",
-          "GB"
-        ]
-      ]
+      buildCountryFilter([""])
     );
 
     return;
@@ -546,11 +583,7 @@ async function setCountriesFilterFromRoutes(
 
     map.setFilter(
       "countries-fill",
-      [
-        "in",
-        "iso_3166_1_alpha_3",
-        ""
-      ]
+      buildCountryFilter([""])
     );
 
     return;
@@ -565,29 +598,15 @@ async function setCountriesFilterFromRoutes(
       )
     ];
 
-    map.setFilter(
-      "countries-fill",
-      [
-        "all",
-    
-        [
-          "in",
-          "iso_3166_1_alpha_3",
-          ...countryCodes
-        ],
-    
-        [
-          "in",
-          "worldview",
-          "all",
-          "GB"
-        ]
-      ]
-    );
+  map.setFilter(
+    "countries-fill",
+    buildCountryFilter(countryCodes)
+  );
 }
 
 window.setCountriesFilterFromRoutes =
   setCountriesFilterFromRoutes;
+
 
 
 // =====================================================
