@@ -1,4 +1,4 @@
-/* global map, mapboxgl, sb, mapMode, isolatedUid */
+/* global map, mapboxgl, sb */
 /* global clearSource, renderRoutes, fitToBoundsFromLineGeoms */
 
 // =====================================================
@@ -29,11 +29,6 @@
 // =====================================================
 // STATE
 // =====================================================
-
-// Retained for compatibility with code that still reads
-// the airport filter directly from window.
-window.activeAirportFilter =
-  window.activeAirportFilter || null;
 
 // loadAirports() can run repeatedly. These flags prevent
 // duplicate Mapbox event handlers from being registered.
@@ -97,22 +92,10 @@ function getJourneyType(route) {
 /**
  * Returns the application's current map mode.
  *
- * appState is preferred. The standalone mapMode variable
- * remains as a compatibility fallback while older modules
- * are still being audited.
- *
- * @returns {string}
+ * @returns {"routes"|"countries"}
  */
 function getCurrentMapMode() {
-  if (window.appState?.mode) {
-    return window.appState.mode;
-  }
-
-  if (typeof mapMode !== "undefined") {
-    return mapMode;
-  }
-
-  return "routes";
+  return window.appState?.mode || "routes";
 }
 
 
@@ -122,28 +105,21 @@ function getCurrentMapMode() {
  * @returns {string|null}
  */
 function getActiveAirportFilter() {
-  return (
-    window.appState?.activeAirport ||
-    window.activeAirportFilter ||
-    null
-  );
+  return window.appState?.activeAirport || null;
 }
 
 
 /**
- * Updates the active airport in both current and legacy
- * application state.
+ * Updates the active airport in application state.
  *
  * @param {string|null} airportCode
  */
 function setActiveAirportFilter(airportCode) {
-  const nextAirport = airportCode || null;
+  const nextAirport =
+    airportCode || null;
 
-  window.activeAirportFilter = nextAirport;
-
-  if (window.appState) {
-    window.appState.activeAirport = nextAirport;
-  }
+  window.appState.activeAirport =
+    nextAirport;
 }
 
 
@@ -153,12 +129,6 @@ function setActiveAirportFilter(airportCode) {
 function clearIsolatedRoute() {
   if (window.appState) {
     window.appState.isolatedUid = null;
-  }
-
-  // Compatibility with older modules that still use the
-  // standalone isolatedUid variable.
-  if (typeof isolatedUid !== "undefined") {
-    isolatedUid = null;
   }
 }
 
