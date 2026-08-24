@@ -437,6 +437,7 @@ window.restoreLastRoutesViewOrBoundsOrAllRoutes =
   restoreLastRoutesViewOrBoundsOrAllRoutes;
 
 
+
 // =====================================================
 // COUNTRIES LAYER
 // =====================================================
@@ -464,37 +465,12 @@ function ensureCountriesLayer() {
       },
 
       /*
-       * Begin with a filter that matches no real
-       * country until route countries are supplied.
+       * Initially show no countries.
        */
       filter: [
-        "all",
-
-        [
-          "in",
-          "iso_3166_1_alpha_3",
-          ""
-        ],
-
-        [
-          "==",
-          ["get", "disputed"],
-          "false"
-        ],
-
-        [
-          "any",
-          [
-            "==",
-            "all",
-            ["get", "worldview"]
-          ],
-          [
-            "in",
-            "US",
-            ["get", "worldview"]
-          ]
-        ]
+        "in",
+        "iso_3166_1_alpha_3",
+        ""
       ]
     });
   }
@@ -518,48 +494,16 @@ async function setCountriesFilterFromRoutes(
       .map(String);
 
   /*
-   * Helper for building the Mapbox country filter.
-   * Uses one consistent worldview and excludes
-   * disputed overlay polygons.
-   */
-  const buildCountryFilter =
-    countryCodes => [
-      "all",
-
-      [
-        "in",
-        "iso_3166_1_alpha_3",
-        ...countryCodes
-      ],
-
-      [
-        "==",
-        ["get", "disputed"],
-        "false"
-      ],
-
-      [
-        "any",
-        [
-          "==",
-          "all",
-          ["get", "worldview"]
-        ],
-        [
-          "in",
-          "US",
-          ["get", "worldview"]
-        ]
-      ]
-    ];
-
-  /*
-   * No visible journeys = no highlighted countries.
+   * No journeys = no highlighted countries.
    */
   if (!uids.length) {
     map.setFilter(
       "countries-fill",
-      buildCountryFilter([""])
+      [
+        "in",
+        "iso_3166_1_alpha_3",
+        ""
+      ]
     );
 
     return;
@@ -583,7 +527,11 @@ async function setCountriesFilterFromRoutes(
 
     map.setFilter(
       "countries-fill",
-      buildCountryFilter([""])
+      [
+        "in",
+        "iso_3166_1_alpha_3",
+        ""
+      ]
     );
 
     return;
@@ -598,15 +546,23 @@ async function setCountriesFilterFromRoutes(
       )
     ];
 
+  console.log(
+    "[map] Countries to highlight:",
+    countryCodes
+  );
+
   map.setFilter(
     "countries-fill",
-    buildCountryFilter(countryCodes)
+    [
+      "in",
+      "iso_3166_1_alpha_3",
+      ...countryCodes
+    ]
   );
 }
 
 window.setCountriesFilterFromRoutes =
   setCountriesFilterFromRoutes;
-
 
 
 // =====================================================
