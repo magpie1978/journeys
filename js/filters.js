@@ -1,142 +1,210 @@
+/* global sb, selected, AIRPORT_GROUPS, loadRoutes */
+
 // =====================================================
-// FILTER UI (checkbox dropdowns)
+// FILTERS
+// =====================================================
 //
-// This file has two responsibilities:
-//    Build and control the four checkbox dropdowns:
-//    Year
-//    Airline
-//    Journey type
-//    Airport
-//    Load the available filter values from Supabase and establish the initial selections.
+// Builds and manages the application's five checkbox
+// dropdown filters:
 //
-// Its overall sequence is:
-//    loadFilters()
-//    ↓
-//    Read available route metadata from Supabase
-//    ↓
-//    Create unique lists of years, airlines, journey types and airports
-//    ↓
-//    Look up airport display names
-//    ↓
-//    Add virtual city groups such as London and Paris
-//    ↓
-//    Set default selections
-//    ↓
-//    Build the four dropdown menus
-//    ↓
-//    Call loadRoutes()
+//   • Year
+//   • Airline
+//   • Journey type
+//   • Airport
+//   • Cabin / class
+//
+// Airline and Airport filters also provide text search.
+//
+// Filter values are derived from the available journey
+// data in Supabase. Existing valid selections are
+// preserved whenever the menus are rebuilt.
+//
+// Airport groups such as London and Paris are defined
+// centrally in config.js.
+//
+// Public API:
+//   loadFilters()
+//
 // =====================================================
 
-function buildFilterMenu(containerId, values, targetSet) {
 
-  const container = document.getElementById(containerId);
-  if (!container) return;
+// =====================================================
+// FILTER MENU
+// =====================================================
 
-  const list = container.querySelector(".filter-options");
-  const toggle = container.querySelector(".filter-toggle");
-  const menu = container.querySelector(".filter-menu");
-  const selectAll = container.querySelector(".select-all");
-  const clear = container.querySelector(".clear");
+/**
+ * Builds one checkbox dropdown filter.
+ *
+ * Values may be strings or objects in the form:
+ *
+ *   {
+ *     value: "LHR",
+ *     label: "London Heathrow (LHR)"
+ *   }
+ *
+ * Divider objects use:
+ *
+ *   {
+ *     divider: true
+ *   }
+ *
+ * @param {string} containerId
+ * @param {Array} values
+ * @param {Set} targetSet
+ */
+function buildFilterMenu(
+  containerId,
+  values,
+  targetSet
+) {
+  const container =
+    document.getElementById(containerId);
 
-  if (!list || !toggle || !menu || !selectAll || !clear) return;
+  if (!container) {
+    return;
+  }
+
+  const list =
+    container.querySelector(".filter-options");
+
+  const toggle =
+    container.querySelector(".filter-toggle");
+
+  const menu =
+    container.querySelector(".filter-menu");
+
+  const selectAll =
+    container.querySelector(".select-all");
+
+  const clear =
+    container.querySelector(".clear");
+
+  if (
+    !list ||
+    !toggle ||
+    !menu ||
+    !selectAll ||
+    !clear
+  ) {
+    return;
+  }
 
   list.innerHTML = "";
 
-  // =====================================================
-  // AIRPORT SEARCH
-  // =====================================================
-  // Only add the search box to the Airport dropdown.
+
+  // ---------------------------------------------------
+  // SEARCH
+  // ---------------------------------------------------
+
+  /*
+   * Airline and Airport contain potentially long option
+   * lists, so these two filters include text search.
+   */
+  const searchable =
+    containerId === "filter-airline" ||
+    containerId === "filter-airport";
+
   let searchInput = null;
 
-  if (
-    containerId === "filter-airport" ||
-    containerId === "filter-airline"
-  ) {
+  if (searchable) {
+    const searchWrapper =
+      document.createElement("div");
 
-    const searchWrapper = document.createElement("div");
-    //searchWrapper.className = "airport-search-wrapper";
-    searchWrapper.className = "filter-search-wrapper";
-    
-    searchInput = document.createElement("input");
+    searchWrapper.className =
+      "filter-search-wrapper";
+
+    searchInput =
+      document.createElement("input");
+
     searchInput.type = "search";
-    
     searchInput.className = "filter-search";
-    
+    searchInput.autocomplete = "off";
+
     if (containerId === "filter-airport") {
-      searchInput.placeholder = "Search airports...";
+      searchInput.placeholder =
+        "Search airports...";
+
       searchInput.setAttribute(
         "aria-label",
         "Search airports"
       );
-    }
-    
-    if (containerId === "filter-airline") {
-      searchInput.placeholder = "Search airlines...";
+    } else {
+      searchInput.placeholder =
+        "Search airlines...";
+
       searchInput.setAttribute(
         "aria-label",
         "Search airlines"
       );
     }
 
-    searchInput.autocomplete = "off";
     searchWrapper.appendChild(searchInput);
-
-    // Put the search box above the airport options.
     list.appendChild(searchWrapper);
   }
 
 
-  // =====================================================
-  // BUILD OPTIONS
-  // =====================================================
+  // ---------------------------------------------------
+  // OPTIONS
+  // ---------------------------------------------------
 
-  values.forEach(v => {
+  values.forEach(item => {
+    if (item?.divider) {
+      const divider =
+        document.createElement("div");
 
-    // Divider row
-    if (v.divider) {
-      const hr = document.createElement("div");
-      hr.className = "filter-divider";
+      divider.className = "filter-divider";
 
-      // Mark it so the search logic can identify it.
-      hr.dataset.filterDivider = "true";
+      /*
+       * Search uses this attribute to temporarily hide
+       * dividers while displaying matching results.
+       */
+      divider.dataset.filterDivider = "true";
 
-      list.appendChild(hr);
+      list.appendChild(divider);
+
       return;
     }
 
     const value =
-      typeof v === "object"
-        ? v.value
-        : v;
+      typeof item === "object"
+        ? item.value
+        : item;
 
     const labelText =
-      typeof v === "object"
-        ? v.label
-        : v;
+      typeof item === "object"
+        ? item.label
+        : item;
 
     const label =
       document.createElement("label");
 
-    label.innerHTML =
-      `<input type="checkbox" value="${value}"> ${labelText}`;
+    const checkbox =
+      document.createElement("input");
 
-    // Store searchable text on the row.
+    checkbox.type = "checkbox";
+    checkbox.value = value;
+    checkbox.checked = targetSet.has(value);
+
+    /*
+     * Store normalized search text on the option row so
+     * searches do not need to reconstruct it repeatedly.
+     */
     label.dataset.searchText =
       `${value} ${labelText}`.toLowerCase();
 
-    const cb =
-      label.querySelector("input");
+    label.appendChild(checkbox);
+    label.append(
+      document.createTextNode(` ${labelText}`)
+    );
 
-    cb.checked =
-      targetSet.has(value);
-
-    cb.addEventListener(
+    checkbox.addEventListener(
       "change",
       () => {
-
-        cb.checked
-          ? targetSet.add(value)
-          : targetSet.delete(value);
+        if (checkbox.checked) {
+          targetSet.add(value);
+        } else {
+          targetSet.delete(value);
+        }
 
         loadRoutes();
       }
@@ -146,16 +214,14 @@ function buildFilterMenu(containerId, values, targetSet) {
   });
 
 
-  // =====================================================
-  // AIRPORT SEARCH FILTERING
-  // =====================================================
+  // ---------------------------------------------------
+  // SEARCH FILTERING
+  // ---------------------------------------------------
 
   if (searchInput) {
-
     searchInput.addEventListener(
       "input",
       () => {
-
         const query =
           searchInput.value
             .trim()
@@ -167,7 +233,6 @@ function buildFilterMenu(containerId, values, targetSet) {
           );
 
         optionLabels.forEach(label => {
-
           const searchText =
             label.dataset.searchText || "";
 
@@ -176,31 +241,28 @@ function buildFilterMenu(containerId, values, targetSet) {
             searchText.includes(query);
 
           label.style.display =
-            matches
-              ? ""
-              : "none";
+            matches ? "" : "none";
         });
 
-
-        // Hide dividers while searching.
-        // This keeps the filtered results tidy.
+        /*
+         * Dividers are useful in the complete Airport
+         * list but unnecessary in filtered search results.
+         */
         list
           .querySelectorAll(
             '[data-filter-divider="true"]'
           )
           .forEach(divider => {
-
             divider.style.display =
-              query
-                ? "none"
-                : "";
+              query ? "none" : "";
           });
       }
     );
 
-
-    // Prevent clicks inside the search field from
-    // bubbling up and affecting the dropdown.
+    /*
+     * Keep clicks inside the search field from affecting
+     * the surrounding dropdown controls.
+     */
     searchInput.addEventListener(
       "click",
       event => {
@@ -210,22 +272,22 @@ function buildFilterMenu(containerId, values, targetSet) {
   }
 
 
-  // =====================================================
+  // ---------------------------------------------------
   // SELECT ALL
-  // =====================================================
+  // ---------------------------------------------------
 
   selectAll.onclick = () => {
-
     targetSet.clear();
 
-    values.forEach(v => {
-
-      if (v.divider) return;
+    values.forEach(item => {
+      if (item?.divider) {
+        return;
+      }
 
       const value =
-        typeof v === "object"
-          ? v.value
-          : v;
+        typeof item === "object"
+          ? item.value
+          : item;
 
       targetSet.add(value);
     });
@@ -234,78 +296,66 @@ function buildFilterMenu(containerId, values, targetSet) {
       .querySelectorAll(
         'input[type="checkbox"]'
       )
-      .forEach(cb => {
-        cb.checked = true;
+      .forEach(checkbox => {
+        checkbox.checked = true;
       });
 
     loadRoutes();
   };
 
 
-  // =====================================================
+  // ---------------------------------------------------
   // CLEAR
-  // =====================================================
+  // ---------------------------------------------------
 
   clear.onclick = () => {
-
     targetSet.clear();
 
     list
       .querySelectorAll(
         'input[type="checkbox"]'
       )
-      .forEach(cb => {
-        cb.checked = false;
+      .forEach(checkbox => {
+        checkbox.checked = false;
       });
 
     loadRoutes();
   };
 
 
-  // =====================================================
-  // TOGGLE DROPDOWN
-  // Only one filter menu can be open at a time
-  // =====================================================
+  // ---------------------------------------------------
+  // OPEN / CLOSE DROPDOWN
+  // ---------------------------------------------------
 
-  toggle.onclick = e => {
-
-    e.preventDefault();
-    e.stopPropagation();
+  toggle.onclick = event => {
+    event.preventDefault();
+    event.stopPropagation();
 
     const wasOpen =
       menu.classList.contains("open");
 
-    // Close every other open filter menu
+    /*
+     * Only one filter dropdown should be open at a time.
+     */
     document
-      .querySelectorAll(
-        ".filter-menu.open"
-      )
+      .querySelectorAll(".filter-menu.open")
       .forEach(openMenu => {
-
         if (openMenu !== menu) {
-          openMenu.classList.remove(
-            "open"
-          );
+          openMenu.classList.remove("open");
         }
       });
 
-    // Toggle the menu that was clicked
     menu.classList.toggle(
       "open",
       !wasOpen
     );
 
-
-    // If opening the Airport dropdown,
-    // put the cursor straight into Search.
-    if (
-      !wasOpen &&
-      (
-        containerId === "filter-airport" ||
-        containerId === "filter-airline"
-      ) &&
-      searchInput
-    ) {      requestAnimationFrame(() => {
+    /*
+     * When a searchable dropdown opens, place the cursor
+     * directly in its search field.
+     */
+    if (!wasOpen && searchInput) {
+      requestAnimationFrame(() => {
         searchInput.focus();
       });
     }
@@ -316,311 +366,425 @@ function buildFilterMenu(containerId, values, targetSet) {
 // =====================================================
 // CLOSE DROPDOWNS ON OUTSIDE CLICK
 // =====================================================
-document.addEventListener("click", e => {
-  if (e.target.closest(".filter")) return;
 
-  document
-    .querySelectorAll(".filter-menu.open")
-    .forEach(m => m.classList.remove("open"));
-});
+document.addEventListener(
+  "click",
+  event => {
+    if (event.target.closest(".filter")) {
+      return;
+    }
 
+    document
+      .querySelectorAll(".filter-menu.open")
+      .forEach(menu => {
+        menu.classList.remove("open");
+      });
+  }
+);
 
 
 // =====================================================
-// LOAD FILTERS
+// SELECTION HELPERS
 // =====================================================
+
+/**
+ * Restores values from a previous Set when those values
+ * still exist in the newly available filter options.
+ *
+ * @param {Set} previousValues
+ * @param {Array|Set} validValues
+ * @param {Set} targetSet
+ */
+function restoreValidSelections(
+  previousValues,
+  validValues,
+  targetSet
+) {
+  const validSet =
+    validValues instanceof Set
+      ? validValues
+      : new Set(validValues);
+
+  previousValues.forEach(value => {
+    if (validSet.has(value)) {
+      targetSet.add(value);
+    }
+  });
+}
+
+
+// =====================================================
+// LOAD FILTER VALUES
+// =====================================================
+
+/**
+ * Loads available filter metadata from Supabase, rebuilds
+ * the five filter menus and performs the initial route load.
+ *
+ * Existing selections are retained where they remain valid.
+ */
 async function loadFilters() {
+  // Preserve current selections before rebuilding menus.
+  const previousSelections = {
+    years: new Set(selected.years),
+    airlines: new Set(selected.airlines),
+    types: new Set(selected.types),
+    airports: new Set(selected.airports),
+    cabins: new Set(selected.cabins)
+  };
 
-const previousSelections = {
-  years: new Set(selected.years || []),
-  airlines: new Set(selected.airlines || []),
-  types: new Set(selected.types || []),
-  airports: new Set(selected.airports || []),
-  cabins: new Set(selected.cabins || [])
-};
-
-  
   const { data, error } = await sb
     .from("journeys_routes_core_3_mv")
-    .select("year, airline, journey_type, origin, destination, cabin");
+    .select(`
+      year,
+      airline,
+      journey_type,
+      origin,
+      destination,
+      cabin
+    `);
 
   if (error) {
-    console.error("[filters] failed:", error);
+    console.error(
+      "[filters] Filter metadata load failed:",
+      error
+    );
+
     return;
   }
 
-  // =====================================================
+  const rows = data || [];
+
+
+  // ---------------------------------------------------
   // YEARS
-  // =====================================================
-  const years = [...new Set(
-    (data || [])
-      .map(d => d.year && String(d.year).slice(0,4))
-      .filter(Boolean)
-  )].sort((a,b) => b.localeCompare(a));
+  // ---------------------------------------------------
 
-  // =====================================================
+  const years = [
+    ...new Set(
+      rows
+        .map(row =>
+          row.year
+            ? String(row.year).slice(0, 4)
+            : null
+        )
+        .filter(Boolean)
+    )
+  ].sort(
+    (yearA, yearB) =>
+      yearB.localeCompare(yearA)
+  );
+
+
+  // ---------------------------------------------------
   // AIRLINES
-  // =====================================================
-  const airlines = [...new Set(
-    (data || [])
-      .map(d => d.airline)
-      .filter(Boolean)
-  )].sort();
+  // ---------------------------------------------------
 
- 
-
-  // =====================================================
-  // TYPES
-  // =====================================================
-  const types = [...new Set(
-    (data || [])
-      .map(d => d.journey_type)
-      .filter(Boolean)
-  )].sort();
+  const airlines = [
+    ...new Set(
+      rows
+        .map(row => row.airline)
+        .filter(Boolean)
+    )
+  ].sort(
+    (airlineA, airlineB) =>
+      airlineA.localeCompare(airlineB)
+  );
 
 
+  // ---------------------------------------------------
+  // JOURNEY TYPES
+  // ---------------------------------------------------
 
-// =====================================================
-// CABIN / CLASS OF FLIGHT
-// =====================================================
+  const types = [
+    ...new Set(
+      rows
+        .map(row => row.journey_type)
+        .filter(Boolean)
+    )
+  ].sort(
+    (typeA, typeB) =>
+      typeA.localeCompare(typeB)
+  );
 
+
+  // ---------------------------------------------------
+  // CABIN / CLASS
+  // ---------------------------------------------------
+
+  /*
+   * Cabin options use a fixed display order rather than
+   * alphabetical ordering.
+   */
   const cabinOrder = [
     "First",
     "Business",
     "Premium Economy",
     "Economy"
   ];
-  
+
   const availableCabins = new Set(
-    (data || [])
+    rows
       .map(row => row.cabin)
       .filter(Boolean)
   );
-  
+
   const cabins = cabinOrder.filter(
     cabin => availableCabins.has(cabin)
   );
 
-  
-  // =====================================================
-  // AIRPORT CODES USED IN ROUTES
-  // =====================================================
+
+  // ---------------------------------------------------
+  // AIRPORT CODES USED BY FLIGHTS
+  // ---------------------------------------------------
+
   const airportSet = new Set();
 
-  (data || []).forEach(d => {
-    if (d.journey_type === "Flight") {
-      if (d.origin) airportSet.add(d.origin);
-      if (d.destination) airportSet.add(d.destination);
+  rows.forEach(row => {
+    if (row.journey_type !== "Flight") {
+      return;
+    }
+
+    if (row.origin) {
+      airportSet.add(row.origin);
+    }
+
+    if (row.destination) {
+      airportSet.add(row.destination);
     }
   });
 
-  //let airportCodes = [...airportSet].sort();
-  const airportCodes = [...airportSet].sort();
+  const airportCodes = [
+    ...airportSet
+  ].sort();
 
-  // =====================================================
-  // FETCH DISPLAY NAMES
-  // =====================================================
-  let airportMap = {};
+
+  // ---------------------------------------------------
+  // AIRPORT DISPLAY NAMES
+  // ---------------------------------------------------
+
+  const airportMap = {};
 
   if (airportCodes.length) {
-    const { data: airportData, error: airportError } =
-      await sb
-        .from("journey_locations")
-        .select("airport_code, airport")
-        .in("airport_code", airportCodes);
+    const {
+      data: airportData,
+      error: airportError
+    } = await sb
+      .from("journey_locations")
+      .select("airport_code, airport")
+      .in("airport_code", airportCodes);
 
     if (airportError) {
-      console.error("[filters] airport lookup failed:", airportError);
+      console.error(
+        "[filters] Airport lookup failed:",
+        airportError
+      );
     } else {
-      airportData.forEach(a => {
-        airportMap[a.airport_code] =
-          `${a.airport} (${a.airport_code})`;
+      (airportData || []).forEach(airport => {
+        airportMap[airport.airport_code] =
+          `${airport.airport} ` +
+          `(${airport.airport_code})`;
       });
     }
   }
 
-  // =====================================================
-  // VIRTUAL CITY GROUPS
-  // =====================================================
-  //const AIRPORT_GROUPS = {
-  //  London: ["LHR","LGW","LCY","SEN","LTN","STN"],
-  //  Berlin: ["BER","SXF","TXL"],
-  //  Milan: ["MXP","LIN","BGY"],
-  //  Bangkok: ["BKK","DMK"],
-  //  'New York': ["JFK","EWR","LGA"],
-  //  Washington: ["DCA","BWI","IAD"],
-  //  Rome: ["FCO","CIA"],
-  //  Paris: ["CDG","BVA","ORY"]
-  //};
 
+  // ---------------------------------------------------
+  // AIRPORT GROUPS
+  // ---------------------------------------------------
+
+  /*
+   * AIRPORT_GROUPS is defined in config.js.
+   *
+   * A group is offered only when at least one of its
+   * member airports occurs in the available flight data.
+   */
   const groupItems = [];
-  const airportItems = [];
 
-  Object.entries(AIRPORT_GROUPS).forEach(([group, members]) => {
-    if (airportCodes.some(code => members.includes(code))) {
+  Object.entries(AIRPORT_GROUPS).forEach(
+    ([group, members]) => {
+      const groupUsed =
+        airportCodes.some(
+          code => members.includes(code)
+        );
+
+      if (!groupUsed) {
+        return;
+      }
+
       groupItems.push({
         value: group,
         label: `${group} (All Airports)`
       });
     }
-  });
+  );
 
-  airportCodes.forEach(code => {
-    airportItems.push({
+
+  // ---------------------------------------------------
+  // INDIVIDUAL AIRPORTS
+  // ---------------------------------------------------
+
+  const airportItems =
+    airportCodes.map(code => ({
       value: code,
       label: airportMap[code] || code
-    });
-  });
+    }));
 
-  // ✅ Sort alphabetically by airport name (label)
-  airportItems.sort((a, b) =>
-    a.label.localeCompare(b.label)
+  /*
+   * Individual airports are sorted by their display name,
+   * not by IATA code.
+   */
+  airportItems.sort(
+    (airportA, airportB) =>
+      airportA.label.localeCompare(
+        airportB.label
+      )
   );
-  
-  // Divider between groups + singles
-  let airports;
-  if (groupItems.length && airportItems.length) {
-    airports = [
-      ...groupItems,
-      { divider: true },
-      ...airportItems
-    ];
-  } else {
-    airports = [...groupItems, ...airportItems];
+
+
+  // ---------------------------------------------------
+  // COMPLETE AIRPORT MENU
+  // ---------------------------------------------------
+
+  const airports =
+    groupItems.length && airportItems.length
+      ? [
+          ...groupItems,
+          { divider: true },
+          ...airportItems
+        ]
+      : [
+          ...groupItems,
+          ...airportItems
+        ];
+
+
+  // ---------------------------------------------------
+  // RESET AND RESTORE VALID SELECTIONS
+  // ---------------------------------------------------
+
+  selected.years.clear();
+  selected.airlines.clear();
+  selected.types.clear();
+  selected.airports.clear();
+  selected.cabins.clear();
+
+  restoreValidSelections(
+    previousSelections.years,
+    years,
+    selected.years
+  );
+
+  restoreValidSelections(
+    previousSelections.airlines,
+    airlines,
+    selected.airlines
+  );
+
+  restoreValidSelections(
+    previousSelections.types,
+    types,
+    selected.types
+  );
+
+  /*
+   * Airport options contain both objects and a divider,
+   * so first construct the set of actual selectable values.
+   */
+  const validAirportValues = new Set(
+    airports
+      .filter(item => !item.divider)
+      .map(item =>
+        typeof item === "object"
+          ? item.value
+          : item
+      )
+  );
+
+  restoreValidSelections(
+    previousSelections.airports,
+    validAirportValues,
+    selected.airports
+  );
+
+  restoreValidSelections(
+    previousSelections.cabins,
+    cabins,
+    selected.cabins
+  );
+
+
+  // ---------------------------------------------------
+  // DEFAULT SELECTIONS
+  // ---------------------------------------------------
+
+  /*
+   * Defaults are applied only when no valid previous
+   * selection remains.
+   */
+
+  const currentYear =
+    String(new Date().getFullYear());
+
+  if (selected.years.size === 0) {
+    if (years.includes(currentYear)) {
+      selected.years.add(currentYear);
+    } else if (years.length) {
+      selected.years.add(years[0]);
+    }
   }
 
-// =====================================================
-// PRESERVE AND RESTORE SELECTIONS
-// =====================================================
-
-selected.years =
-  selected.years || new Set();
-
-selected.airlines =
-  selected.airlines || new Set();
-
-selected.types =
-  selected.types || new Set();
-
-selected.airports =
-  selected.airports || new Set();
-
-selected.cabins =
-  selected.cabins || new Set();
-
-selected.years.clear();
-selected.airlines.clear();
-selected.types.clear();
-selected.airports.clear();
-selected.cabins.clear();
-
-  
-// -------------------------------------------------
-// RESTORE VALID YEAR SELECTIONS
-// -------------------------------------------------
-
-previousSelections.years.forEach(year => {
-  if (years.includes(year)) {
-    selected.years.add(year);
+  if (
+    selected.types.size === 0 &&
+    types.includes("Flight")
+  ) {
+    selected.types.add("Flight");
   }
-});
+
+  /*
+   * Empty Airline and Airport Sets deliberately mean
+   * "do not restrict by this filter".
+   */
 
 
-// -------------------------------------------------
-// RESTORE VALID AIRLINE SELECTIONS
-// -------------------------------------------------
+  // ---------------------------------------------------
+  // BUILD FILTER MENUS
+  // ---------------------------------------------------
 
-previousSelections.airlines.forEach(airline => {
-  if (airlines.includes(airline)) {
-    selected.airlines.add(airline);
-  }
-});
+  buildFilterMenu(
+    "filter-year",
+    years,
+    selected.years
+  );
 
+  buildFilterMenu(
+    "filter-airline",
+    airlines,
+    selected.airlines
+  );
 
-// -------------------------------------------------
-// RESTORE VALID JOURNEY-TYPE SELECTIONS
-// -------------------------------------------------
+  buildFilterMenu(
+    "filter-type",
+    types,
+    selected.types
+  );
 
-previousSelections.types.forEach(type => {
-  if (types.includes(type)) {
-    selected.types.add(type);
-  }
-});
+  buildFilterMenu(
+    "filter-airport",
+    airports,
+    selected.airports
+  );
 
-
-// -------------------------------------------------
-// RESTORE VALID AIRPORT SELECTIONS
-// -------------------------------------------------
-
-const validAirportValues = new Set(
-  airports
-    .filter(item => !item.divider)
-    .map(item =>
-      typeof item === "object"
-        ? item.value
-        : item
-    )
-);
-
-selected.airports.size === 0
+  buildFilterMenu(
+    "filter-cabin",
+    cabins,
+    selected.cabins
+  );
 
 
+  // ---------------------------------------------------
+  // INITIAL ROUTE LOAD
+  // ---------------------------------------------------
 
-// -------------------------------------------------
-// RESTORE VALID CABIN SELECTIONS
-// -------------------------------------------------
-
-previousSelections.cabins.forEach(cabin => {
-  if (cabins.includes(cabin)) {
-    selected.cabins.add(cabin);
-  }
-});
-
-
-// =====================================================
-// DEFAULTS
-// Only apply when no valid saved selection remains
-// =====================================================
-
-const currentYear =
-  String(new Date().getFullYear());
-
-if (selected.years.size === 0) {
-  if (years.includes(currentYear)) {
-    selected.years.add(currentYear);
-  } else if (years.length) {
-    selected.years.add(years[0]);
-  }
-}
-
-if (
-  selected.types.size === 0 &&
-  types.includes("Flight")
-) {
-  selected.types.add("Flight");
-}
-
-/*
- * Leave airlines empty to mean:
- * "Do not restrict by airline."
- */
-
-/*
- * Leave airports empty to mean:
- * "Do not restrict by airport."
- */
-
-  // =====================================================
-  // BUILD MENUS
-  // =====================================================
-  buildFilterMenu("filter-year", years, selected.years);
-  buildFilterMenu("filter-airline", airlines, selected.airlines);
-  buildFilterMenu("filter-type", types, selected.types);
-  buildFilterMenu("filter-airport", airports, selected.airports);
-  buildFilterMenu("filter-cabin",cabins,selected.cabins);
-
-  // =====================================================
-  // INITIAL LOAD
-  // =====================================================
-  loadRoutes();
+  await loadRoutes();
 }
