@@ -586,47 +586,71 @@ function renderNonFlightEndpoints(routes) {
       return;
     }
 
-    const properties = {
-      type:
-        route.journey_type ||
-        "Journey",
+const commonProperties = {
+  type:
+    route.journey_type ||
+    "Journey",
 
-      from:
-        route.origin || "",
+  from:
+    route.origin || "",
 
-      to:
-        route.destination || "",
+  to:
+    route.destination || "",
 
-      date:
-        route.journey_date || ""
-    };
+  date:
+    route.journey_date || ""
+};
 
-    features.push(
-      {
-        type: "Feature",
 
-        geometry: {
-          type: "Point",
+features.push(
+  {
+    type: "Feature",
 
-          coordinates:
-            endpoints.start
-        },
+    geometry: {
+      type: "Point",
 
-        properties
-      },
-      {
-        type: "Feature",
+      coordinates:
+        endpoints.start
+    },
 
-        geometry: {
-          type: "Point",
+    properties: {
+      ...commonProperties,
 
-          coordinates:
-            endpoints.end
-        },
+      endpoint:
+        "origin",
 
-        properties
-      }
-    );
+      label:
+        route.display_origin ||
+        route.origin ||
+        ""
+    }
+  },
+
+
+  {
+    type: "Feature",
+
+    geometry: {
+      type: "Point",
+
+      coordinates:
+        endpoints.end
+    },
+
+    properties: {
+      ...commonProperties,
+
+      endpoint:
+        "destination",
+
+      label:
+        route.display_destination ||
+        route.destination ||
+        ""
+    }
+  }
+);
+  
   });
 
   /*
@@ -836,7 +860,7 @@ function bindNonFlightHover() {
         .setHTML(`
           <div class="journey-tooltip-content">
             ${escapePopupHtml(
-              properties.from || ""
+              properties.label || ""
             )}
           </div>
         `)
