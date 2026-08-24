@@ -469,7 +469,7 @@ function ensureCountriesLayer() {
        */
       filter: [
         "in",
-        "name_en",
+       "iso_3166_1_alpha_3",
         ""
       ]
     });
@@ -479,7 +479,7 @@ function ensureCountriesLayer() {
 
 // =====================================================
 // COUNTRY FILTER FROM ROUTES
-// Uses journey_countries_mv via Supabase RPC
+// Uses ISO-3 codes from journey_countries_mv
 // =====================================================
 
 async function setCountriesFilterFromRoutes(
@@ -493,15 +493,12 @@ async function setCountriesFilterFromRoutes(
       .filter(Boolean)
       .map(String);
 
-  /*
-   * No visible journeys = no highlighted countries.
-   */
   if (!uids.length) {
     map.setFilter(
       "countries-fill",
       [
         "in",
-        "name_en",
+        "iso_3166_1_alpha_3",
         ""
       ]
     );
@@ -529,7 +526,7 @@ async function setCountriesFilterFromRoutes(
       "countries-fill",
       [
         "in",
-        "name_en",
+        "iso_3166_1_alpha_3",
         ""
       ]
     );
@@ -537,11 +534,11 @@ async function setCountriesFilterFromRoutes(
     return;
   }
 
-  const countryNames =
+  const countryCodes =
     [
       ...new Set(
         (data || [])
-          .map(row => row.country)
+          .map(row => row.iso3)
           .filter(Boolean)
       )
     ];
@@ -550,12 +547,11 @@ async function setCountriesFilterFromRoutes(
     "countries-fill",
     [
       "in",
-      "name_en",
-      ...countryNames
+      "iso_3166_1_alpha_3",
+      ...countryCodes
     ]
   );
 }
-
 
 window.setCountriesFilterFromRoutes =
   setCountriesFilterFromRoutes;
