@@ -460,10 +460,10 @@ function ensureCountriesLayer() {
         "country_boundaries",
 
       paint: {
-        "fill-color": "#CCFF00",
-        "fill-opacity": 0.32
+        "fill-color": "#667F00",
+        "fill-opacity": 1
       },
-
+      
       /*
        * Initially show no countries.
        */
