@@ -12,7 +12,7 @@ async function loadStatsBaseDataOnce() {
 
   const { data, error } = await sb
     .from("journeys_routes_core_3_mv")
-    .select("year, journey_type, journey_distance, airline, destination_country, cabin");
+    .select("year, journey_type, journey_distance, airline, cabin");
 
   if (error) {
     console.error("[stats] load failed", error);
