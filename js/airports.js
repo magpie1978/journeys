@@ -796,6 +796,7 @@ function bindAirportHover() {
   );
 }
 
+
 // =====================================================
 // NON-FLIGHT ENDPOINT HOVER
 // =====================================================
@@ -834,33 +835,9 @@ function bindNonFlightHover() {
         )
         .setHTML(`
           <div class="journey-tooltip-content">
-            <strong>
-              ${escapePopupHtml(
-                properties.type ||
-                "Journey"
-              )}
-            </strong>
-
-            <br>
-
             ${escapePopupHtml(
-              properties.from
+              properties.from || ""
             )}
-            →
-            ${escapePopupHtml(
-              properties.to
-            )}
-
-            ${
-              properties.date
-                ? `
-                  <br>
-                  ${escapePopupHtml(
-                    properties.date
-                  )}
-                `
-                : ""
-            }
           </div>
         `)
         .addTo(map);
@@ -876,7 +853,6 @@ function bindNonFlightHover() {
     }
   );
 }
-
 
 // =====================================================
 // MAP CLICK CONTROLLER
