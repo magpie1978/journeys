@@ -196,7 +196,7 @@ function renderSidebar(routes) {
             const timeB =
               new Date(b.journey_start).getTime() || 0;
   
-            return timeB - timeA;
+            return timeA - timeB;
           })
       : [];
     
