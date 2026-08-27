@@ -187,9 +187,16 @@ function renderSidebar(routes) {
 
   const safeRoutes =
     Array.isArray(routes)
-      ? routes.filter(Boolean)
+      ? routes
+          .filter(Boolean)
+          .sort((a, b) => {
+            const timeA = new Date(a.journey_date).getTime();
+            const timeB = new Date(b.journey_date).getTime();
+  
+            return timeB - timeA;
+          })
       : [];
-
+  
   const isolatedUid =
     window.appState?.isolatedUid;
 
