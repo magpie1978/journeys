@@ -116,7 +116,7 @@ const airlineLogoMap = {
   "Wizz Air": "WizzAir.webp",
   "Vueling": "Vueling.webp",
 
-  // Buses
+  /// Buses
   "FlixBus": "Flix.webp",
 
   // Trains
