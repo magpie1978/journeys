@@ -187,17 +187,6 @@ function renderSidebar(routes) {
 
 
 
-  console.log(
-  safeRoutes
-    .filter(r => r.journey_date?.startsWith("2007-10-04"))
-    .map(r => ({
-      uid: r.uid,
-      route: `${r.origin}-${r.destination}`,
-      journey_date: r.journey_date
-    }))
-);
-
-  
   const safeRoutes =
     Array.isArray(routes)
       ? routes
@@ -211,11 +200,21 @@ function renderSidebar(routes) {
   
             return timeB - timeA;
           })
-      : [];  
+      : [];
   
-  const isolatedUid =
-    window.appState?.isolatedUid;
+  console.log(
+    safeRoutes
+      .filter(r => r.journey_date?.startsWith("2007-10-04"))
+      .map(r => ({
+        uid: r.uid,
+        route: `${r.origin}-${r.destination}`,
+        journey_date: r.journey_date
+      }))
+  );  
+    const isolatedUid =
+      window.appState?.isolatedUid;
 
+  
   safeRoutes.forEach(route => {
     const listItem =
       document.createElement("li");
