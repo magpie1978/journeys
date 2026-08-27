@@ -717,10 +717,10 @@ textarea {
   object-fit: contain;
 }
 
-.airline-logo img[src*="Thompson"] {
-  transform: scale(0.42);
+.airline-logo img[src*="Thompson.webp"] {
+  transform: scale(0.72);
+  transform-origin: center;
 }
-
 
 .journey-logo {
   width: 75px;
