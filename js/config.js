@@ -101,6 +101,7 @@ const airlineLogoMap = {
   "Swiss": "Swiss.webp",
   "TUI": "TUI.webp",
   "Turkish Airlines": "TurkishAirlines.webp",
+  "Unknown": "unknown.webp",
   "Virgin Atlantic": "VirginAtlantic.webp",
   "Virgin Australia": "VirginAustralia.webp",
   "Virgin Blue": "VirginAustralia.webp",
