@@ -723,7 +723,7 @@ img.airline-logo[src*="Thompson.webp"] {
 }
 
 img.airline-logo[src*="FlyBe.webp"] {
-  transform: scale(0.58);
+  transform: scale(0.50);
   transform-origin: center;
 }
 
