@@ -717,6 +717,11 @@ textarea {
   object-fit: contain;
 }
 
+.airline-logo img[src*="Thomson"] {
+  transform: scale(0.72);
+}
+
+
 .journey-logo {
   width: 75px;
   height: 50px;
