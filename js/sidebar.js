@@ -186,7 +186,6 @@ function renderSidebar(routes) {
   flightListElement.innerHTML = "";
 
 
-
   const safeRoutes =
     Array.isArray(routes)
       ? routes
@@ -201,6 +200,12 @@ function renderSidebar(routes) {
             return timeB - timeA;
           })
       : [];
+  
+  const isolatedUid =
+    window.appState?.isolatedUid;
+  
+
+safeRoutes.forEach(route => {
 
   
   safeRoutes.forEach(route => {
