@@ -190,12 +190,15 @@ function renderSidebar(routes) {
       ? routes
           .filter(Boolean)
           .sort((a, b) => {
-            const timeA = new Date(a.journey_date).getTime();
-            const timeB = new Date(b.journey_date).getTime();
+            const timeA =
+              new Date(a.journey_date).getTime() || 0;
+  
+            const timeB =
+              new Date(b.journey_date).getTime() || 0;
   
             return timeB - timeA;
           })
-      : [];
+      : [];  
   
   const isolatedUid =
     window.appState?.isolatedUid;
