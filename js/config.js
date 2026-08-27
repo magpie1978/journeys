@@ -94,6 +94,7 @@ const airlineLogoMap = {
   "Lufthansa": "Lufthansa.webp",
   "Malaysia Airlines": "Malaysian.webp",
   "Norwegian": "Norwegian.webp",
+  "Olympic": "Olympic.webp",
   "Qantas": "Qantas.webp",
   "Qatar Airways": "QatarAirways.webp",
   "SAS": "SAS.webp",
