@@ -718,7 +718,7 @@ textarea {
 }
 
 img.airline-logo[src*="Thompson.webp"] {
-  transform: scale(0.72);
+  transform: scale(0.65);
   transform-origin: center;
 }
 
