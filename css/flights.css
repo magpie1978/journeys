@@ -727,6 +727,11 @@ img.airline-logo[src*="FlyBe.webp"] {
   transform-origin: center;
 }
 
+img.airline-logo[src*="Monarch.webp"] {
+  transform: scale(0.50);
+  transform-origin: center;
+}
+
 .journey-logo {
   width: 75px;
   height: 50px;
