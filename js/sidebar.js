@@ -185,6 +185,19 @@ function renderSidebar(routes) {
 
   flightListElement.innerHTML = "";
 
+
+
+  console.log(
+  safeRoutes
+    .filter(r => r.journey_date?.startsWith("2007-10-04"))
+    .map(r => ({
+      uid: r.uid,
+      route: `${r.origin}-${r.destination}`,
+      journey_date: r.journey_date
+    }))
+);
+
+  
   const safeRoutes =
     Array.isArray(routes)
       ? routes
