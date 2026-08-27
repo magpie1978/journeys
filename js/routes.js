@@ -593,6 +593,7 @@ async function loadRoutes() {
         registration,
         journey_distance,
         journey_date,
+        journey_start,
         year,
         journey_duration_seconds,
         geom
@@ -719,14 +720,14 @@ async function loadRoutes() {
   // ---------------------------------------------------
   // NEWEST JOURNEY FIRST
   // ---------------------------------------------------
-
+  
   routes.sort((routeA, routeB) => {
     const dateA =
-      new Date(routeA.journey_date).getTime();
-
+      new Date(routeA.journey_start).getTime();
+  
     const dateB =
-      new Date(routeB.journey_date).getTime();
-
+      new Date(routeB.journey_start).getTime();
+  
     return dateB - dateA;
   });
 
