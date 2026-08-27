@@ -185,7 +185,6 @@ function renderSidebar(routes) {
 
   flightListElement.innerHTML = "";
 
-
   const safeRoutes =
     Array.isArray(routes)
       ? routes
@@ -193,25 +192,22 @@ function renderSidebar(routes) {
           .sort((a, b) => {
             const timeA =
               new Date(a.journey_start).getTime() || 0;
-  
+
             const timeB =
               new Date(b.journey_start).getTime() || 0;
-  
+
             return timeB - timeA;
           })
       : [];
-  
+
   const isolatedUid =
     window.appState?.isolatedUid;
-  
 
-safeRoutes.forEach(route => {
-
-  
   safeRoutes.forEach(route => {
     const listItem =
       document.createElement("li");
 
+    
     const routeUid =
       route.uid != null
         ? String(route.uid)
