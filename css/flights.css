@@ -717,7 +717,7 @@ textarea {
   object-fit: contain;
 }
 
-.airline-logo img[src*="Thomson"] {
+.airline-logo img[src*="Thompson"] {
   transform: scale(0.72);
 }
 
