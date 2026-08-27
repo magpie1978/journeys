@@ -100,6 +100,7 @@ const airlineLogoMap = {
   "SAS": "SAS.webp",
   "Singapore Airlines": "SingaporeAirlines.webp",
   "Swiss": "Swiss.webp",
+  "Thompson": "Thompson.webp",
   "TUI": "TUI.webp",
   "Turkish Airlines": "TurkishAirlines.webp",
   "Unknown": "unknown.webp",
