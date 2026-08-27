@@ -193,26 +193,14 @@ function renderSidebar(routes) {
           .filter(Boolean)
           .sort((a, b) => {
             const timeA =
-              new Date(a.journey_date).getTime() || 0;
+              new Date(a.journey_start).getTime() || 0;
   
             const timeB =
-              new Date(b.journey_date).getTime() || 0;
+              new Date(b.journey_start).getTime() || 0;
   
             return timeB - timeA;
           })
       : [];
-  
-  console.log(
-    safeRoutes
-      .filter(r => r.journey_date?.startsWith("2007-10-04"))
-      .map(r => ({
-        uid: r.uid,
-        route: `${r.origin}-${r.destination}`,
-        journey_date: r.journey_date
-      }))
-  );  
-    const isolatedUid =
-      window.appState?.isolatedUid;
 
   
   safeRoutes.forEach(route => {
