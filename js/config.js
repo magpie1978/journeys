@@ -97,6 +97,7 @@ const airlineLogoMap = {
   "Monarch": "Monarch.webp",
   "Norwegian": "Norwegian.webp",
   "Olympic": "Olympic.webp",
+  "Open Skies": "BritishAirways.webp",
   "Qantas": "Qantas.webp",
   "Qatar Airways": "QatarAirways.webp",
   "SAS": "SAS.webp",
