@@ -438,7 +438,9 @@ function populateFlightSummary(route) {
   if (!isWalk) {
     setElementText(
       flightSummaryElements.flightNumber,
-      getFlightNumber(route)
+      journeyTypeLower === "boat"
+        ? route.airline
+        : getFlightNumber(route)
     );
   }
 
