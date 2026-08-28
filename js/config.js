@@ -103,6 +103,7 @@ const airlineLogoMap = {
   "Ryanair": "Ryanair.webp",
   "SAS": "SAS.webp",
   "Singapore Airlines": "SingaporeAirlines.webp",
+  "Stobart Air": "AerLingus.webp",
   "Swiss": "Swiss.webp",
   "Thompson": "Thompson.webp",
   "TUI": "TUI.webp",
