@@ -737,6 +737,16 @@ img.airline-logo[src*="VolarisCostaRica.webp"] {
   transform-origin: center;
 }
 
+img.airline-logo[src*="JetSmart.webp"] {
+  transform: scale(0.50);
+  transform-origin: center;
+}
+
+img.airline-logo[src*="AerolineasArgentinas.webp"] {
+  transform: scale(0.50);
+  transform-origin: center;
+}
+
 .journey-logo {
   width: 75px;
   height: 50px;
