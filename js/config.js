@@ -96,7 +96,7 @@ const airlineLogoMap = {
   "Jet2.com": "Jet2.webp",
   "Jetstar": "Jetstar.webp",
   "JetSmart": "JetSmart.webp",
-  "Lao Airlines:" "LaoAirlines.webp",
+  "Lao Airlines": "LaoAirlines.webp",
   "Lufthansa": "Lufthansa.webp",
   "Malaysia Airlines": "Malaysian.webp",
   "Monarch": "Monarch.webp",
