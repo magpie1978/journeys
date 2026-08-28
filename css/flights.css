@@ -747,6 +747,16 @@ img.airline-logo[src*="AerolineasArgentinas.webp"] {
   transform-origin: center;
 }
 
+img.airline-logo[src*="LaoAirlines.webp"] {
+  transform: scale(0.50);
+  transform-origin: center;
+}
+
+img.airline-logo[src*="BambooAirlines.webp"] {
+  transform: scale(0.50);
+  transform-origin: center;
+}
+
 .journey-logo {
   width: 75px;
   height: 50px;
