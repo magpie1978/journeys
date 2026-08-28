@@ -752,7 +752,7 @@ img.airline-logo[src*="LaoAirlines.webp"] {
   transform-origin: center;
 }
 
-img.airline-logo[src*="BambooAirlines.webp"] {
+img.airline-logo[src*="BambooAirways.webp"] {
   transform: scale(0.50);
   transform-origin: center;
 }
