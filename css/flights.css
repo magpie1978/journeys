@@ -762,6 +762,11 @@ img.airline-logo[src*="AirSerbia.webp"] {
   transform-origin: center;
 }
 
+img.airline-logo[src*="PacificAirlines.webp"] {
+  transform: scale(0.65);
+  transform-origin: center;
+}
+
 .journey-logo {
   width: 75px;
   height: 50px;
