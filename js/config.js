@@ -115,6 +115,7 @@ const airlineLogoMap = {
   "Volotea": "Volotea.webp",
   "WestJet": "WestJet.webp",
   "Wizz Air": "WizzAir.webp",
+  "Volaris Coata Rica": "VolarisCostaRica.webp",
   "Vueling": "Vueling.webp",
 
   /// Buses
