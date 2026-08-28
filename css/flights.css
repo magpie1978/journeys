@@ -758,12 +758,12 @@ img.airline-logo[src*="BambooAirways.webp"] {
 }
 
 img.airline-logo[src*="AirSerbia.webp"] {
-  transform: scale(0.65);
+  transform: scale(0.50);
   transform-origin: center;
 }
 
 img.airline-logo[src*="PacificAirlines.webp"] {
-  transform: scale(0.65);
+  transform: scale(0.50);
   transform-origin: center;
 }
 
