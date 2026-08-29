@@ -1037,10 +1037,18 @@ function setIsolatedRoute(
   }
 
 
-  applyIsolationStyling();
-  updateSidebarSelection();
-  updateFlightSummaryFromState();
-  fitToCurrentRouteView();
+applyIsolationStyling();
+updateSidebarSelection();
+updateFlightSummaryFromState();
+
+if (
+  typeof window.loadJourneyStopsForSelection ===
+  "function"
+) {
+  window.loadJourneyStopsForSelection();
+}
+
+fitToCurrentRouteView();
 }
 
 
