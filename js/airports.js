@@ -1287,16 +1287,19 @@ window.filterRoutesByAirport =
 function hideAirportLayers() {
   clearGeoJsonSource(AIRPORT_SOURCE_ID);
   clearGeoJsonSource(ENDPOINT_SOURCE_ID);
+  clearGeoJsonSource(JOURNEY_STOPS_SOURCE_ID);
 
   [
     AIRPORT_CIRCLE_LAYER_ID,
-    ENDPOINT_CIRCLE_LAYER_ID
+    ENDPOINT_CIRCLE_LAYER_ID,
+    JOURNEY_STOPS_CIRCLE_LAYER_ID
   ].forEach(layerId => {
     setLayerVisibility(layerId, "none");
   });
 
   airportPopup.remove();
   nonFlightPopup.remove();
+  journeyStopPopup.remove();
 
   if (typeof map !== "undefined" && map) {
     map.getCanvas().style.cursor = "";
