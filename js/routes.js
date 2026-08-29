@@ -482,7 +482,15 @@ function renderRoutes(
   applyRouteModeVisibility();
   updateSidebarSelection();
   updateFlightSummaryFromState();
+  
+  if (
+    typeof window.loadJourneyStopsForSelection ===
+    "function"
+  ) {
+    window.loadJourneyStopsForSelection();
+  }
 
+  
   // -------------------------------------------------
   // CAMERA FITTING
   // -------------------------------------------------
