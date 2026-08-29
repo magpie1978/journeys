@@ -434,11 +434,11 @@ function populateFlightSummary(route) {
     flightSummaryElements.journeyTypeMetric,
     !isWalk
   );
-
+  
   if (!isWalk) {
     setElementText(
       flightSummaryElements.flightNumber,
-      journeyTypeLower === "boat"
+      journeyTypeLower === "boat" || journeyTypeLower === "bus"
         ? route.airline
         : getFlightNumber(route)
     );
