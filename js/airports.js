@@ -35,7 +35,8 @@
 const airportHandlerState = {
   airportHoverBound: false,
   mapClickBound: false,
-  nonFlightHoverBound: false
+  nonFlightHoverBound: false,
+  journeyStopHoverBound: false
 };
 
 // Complete route collection visible immediately before
@@ -55,8 +56,10 @@ const AIRPORT_SOURCE_ID = "airports";
 const AIRPORT_CIRCLE_LAYER_ID = "airports-circle";
 
 const ENDPOINT_SOURCE_ID = "journey-endpoints";
-const ENDPOINT_CIRCLE_LAYER_ID =
-  "journey-endpoints-circle";
+const ENDPOINT_CIRCLE_LAYER_ID = "journey-endpoints-circle";
+
+const JOURNEY_STOPS_SOURCE_ID = "journey-stops";
+const JOURNEY_STOPS_CIRCLE_LAYER_ID = "journey-stops-circle";
 
 
 // =====================================================
@@ -359,6 +362,211 @@ async function loadAirports(routes) {
 window.loadAirports = loadAirports;
 
 
+
+
+// =====================================================
+// JOURNEY STOPS
+// Intermediate stops for selected journeys
+// =====================================================
+
+async function loadJourneyStopsForSelection() {
+  const selectedUids =
+    window.appState?.selectedUids instanceof Set
+      ? [...window.appState.selectedUids]
+      : [];
+
+  /*
+   * No selected journey:
+   * clear any existing intermediate-stop markers.
+   */
+  if (!selectedUids.length) {
+    clearGeoJsonSource(
+      JOURNEY_STOPS_SOURCE_ID
+    );
+
+    setLayerVisibility(
+      JOURNEY_STOPS_CIRCLE_LAYER_ID,
+      "none"
+    );
+
+    return;
+  }
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("journey_stops")
+    .select(`
+      uid,
+      stop_order,
+      stop_name,
+      latitude,
+      longitude
+    `)
+    .in(
+      "uid",
+      selectedUids
+    )
+    .order(
+      "uid",
+      { ascending: true }
+    )
+    .order(
+      "stop_order",
+      { ascending: true }
+    );
+
+  if (error) {
+    console.error(
+      "[journey-stops] Failed to load stops:",
+      error
+    );
+
+    clearGeoJsonSource(
+      JOURNEY_STOPS_SOURCE_ID
+    );
+
+    setLayerVisibility(
+      JOURNEY_STOPS_CIRCLE_LAYER_ID,
+      "none"
+    );
+
+    return;
+  }
+
+  renderJourneyStops(
+    data || []
+  );
+}
+
+
+function renderJourneyStops(stops) {
+  const features =
+    (stops || [])
+      .filter(stop =>
+        Number.isFinite(
+          Number(stop?.latitude)
+        ) &&
+        Number.isFinite(
+          Number(stop?.longitude)
+        )
+      )
+      .map(stop => ({
+        type: "Feature",
+
+        geometry: {
+          type: "Point",
+
+          coordinates: [
+            Number(stop.longitude),
+            Number(stop.latitude)
+          ]
+        },
+
+        properties: {
+          uid:
+            stop.uid || "",
+
+          stop_name:
+            stop.stop_name || "",
+
+          stop_order:
+            stop.stop_order ?? ""
+        }
+      }));
+
+
+  if (!features.length) {
+    clearGeoJsonSource(
+      JOURNEY_STOPS_SOURCE_ID
+    );
+
+    setLayerVisibility(
+      JOURNEY_STOPS_CIRCLE_LAYER_ID,
+      "none"
+    );
+
+    return;
+  }
+
+
+  const featureCollection = {
+    type: "FeatureCollection",
+    features
+  };
+
+
+  const existingSource =
+    map.getSource(
+      JOURNEY_STOPS_SOURCE_ID
+    );
+
+
+  if (existingSource) {
+    existingSource.setData(
+      featureCollection
+    );
+  } else {
+    map.addSource(
+      JOURNEY_STOPS_SOURCE_ID,
+      {
+        type: "geojson",
+        data: featureCollection
+      }
+    );
+  }
+
+
+  /*
+   * Intermediate stops are deliberately a little
+   * smaller than the start/end markers.
+   */
+  if (
+    !map.getLayer(
+      JOURNEY_STOPS_CIRCLE_LAYER_ID
+    )
+  ) {
+    map.addLayer({
+      id:
+        JOURNEY_STOPS_CIRCLE_LAYER_ID,
+
+      type: "circle",
+
+      source:
+        JOURNEY_STOPS_SOURCE_ID,
+
+      paint: {
+        "circle-radius": 4,
+        "circle-color": "#ffffff",
+        "circle-stroke-width": 1.5,
+        "circle-stroke-color": "#000000"
+      }
+    });
+
+    /*
+     * Keep the markers above route lines.
+     */
+    map.moveLayer(
+      JOURNEY_STOPS_CIRCLE_LAYER_ID
+    );
+  }
+
+
+  setLayerVisibility(
+    JOURNEY_STOPS_CIRCLE_LAYER_ID,
+    "visible"
+  );
+
+  bindJourneyStopHover();
+}
+
+
+window.loadJourneyStopsForSelection =
+  loadJourneyStopsForSelection;
+
+
+
 // =====================================================
 // FLIGHT AIRPORT MARKERS
 // =====================================================
@@ -645,6 +853,16 @@ const nonFlightPopup = new mapboxgl.Popup({
   className: "journey-tooltip"
 });
 
+const journeyStopPopup =
+  new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    offset: 10,
+
+    className:
+      "journey-stop-tooltip"
+  });
+
 
 // =====================================================
 // AIRPORT HOVER
@@ -748,6 +966,84 @@ function bindNonFlightHover() {
   );
 }
 
+
+// =====================================================
+// JOURNEY STOP HOVER
+// =====================================================
+
+function bindJourneyStopHover() {
+  if (
+    airportHandlerState
+      .journeyStopHoverBound
+  ) {
+    return;
+  }
+
+  airportHandlerState
+    .journeyStopHoverBound = true;
+
+
+  map.on(
+    "mouseenter",
+    JOURNEY_STOPS_CIRCLE_LAYER_ID,
+    event => {
+
+      map.getCanvas().style.cursor =
+        "pointer";
+
+      const feature =
+        event.features?.[0];
+
+      if (!feature) {
+        return;
+      }
+
+      const properties =
+        feature.properties || {};
+
+
+      journeyStopPopup
+        .setLngLat(
+          feature.geometry.coordinates
+        )
+        .setHTML(`
+          <div class="journey-stop-tooltip-content">
+
+            <div class="journey-stop-name">
+              ${escapePopupHtml(
+                properties.stop_name || ""
+              )}
+            </div>
+
+            ${
+              properties.stop_order !== ""
+                ? `
+                  <div class="journey-stop-number">
+                    Stop ${escapePopupHtml(
+                      properties.stop_order
+                    )}
+                  </div>
+                `
+                : ""
+            }
+
+          </div>
+        `)
+        .addTo(map);
+    }
+  );
+
+
+  map.on(
+    "mouseleave",
+    JOURNEY_STOPS_CIRCLE_LAYER_ID,
+    () => {
+      map.getCanvas().style.cursor = "";
+
+      journeyStopPopup.remove();
+    }
+  );
+}
 
 // =====================================================
 // MAP CLICK CONTROLLER
