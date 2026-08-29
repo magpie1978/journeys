@@ -1029,6 +1029,38 @@ img.airline-logo[src*="PacificAirlines.webp"] {
   top: 10px;
 }
 
+/* =====================================================
+   JOURNEY STOP TOOLTIP
+   ===================================================== */
+
+.journey-stop-tooltip .mapboxgl-popup-content {
+  padding: 8px 11px;
+}
+
+.journey-stop-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  white-space: nowrap;
+}
+
+.journey-stop-name {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+
+  color: #111;
+}
+
+.journey-stop-number {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+
+  color: #666;
+}
+
 
 /* =====================================================
    ADD-JOURNEY MODALS
