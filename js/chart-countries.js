@@ -2,57 +2,304 @@
 
 let chart;
 
-async function loadData() {
-  const { data } = await sb
-    .from("journeys_routes_core_mv")
-    .select("journey_type, origin_country, destination_country");
+const YELLOW = "rgba(201,162,77,0.7)";
+const YELLOW_BORDER = "rgba(201,162,77,0.9)";
+const GRID = "rgba(255,255,255,0.08)";
 
-  return data || [];
+
+// =====================================================
+// LOAD DATA
+// =====================================================
+
+async function loadData() {
+
+  // Load journeys
+  const { data: journeys, error: journeysError } = await sb
+    .from("journeys_routes_core_3_mv")
+    .select("journey_type, origin, destination");
+
+  if (journeysError) {
+    console.error(
+      "[country stats] journey load failed:",
+      journeysError
+    );
+
+    return [];
+  }
+
+
+  // Load location → country mapping
+  const { data: locations, error: locationsError } = await sb
+    .from("journey_locations")
+    .select("airport_code, country");
+
+  if (locationsError) {
+    console.error(
+      "[country stats] location load failed:",
+      locationsError
+    );
+
+    return [];
+  }
+
+
+  // Build fast lookup:
+  // AMS → Netherlands
+  // ORK → Ireland
+  // etc.
+
+  const countryByLocation = {};
+
+  (locations || []).forEach(location => {
+
+    if (!location.airport_code) return;
+    if (!location.country) return;
+
+    countryByLocation[
+      String(location.airport_code).trim()
+    ] = String(location.country).trim();
+
+  });
+
+
+  // Add country information to each journey
+
+  return (journeys || []).map(journey => ({
+
+    ...journey,
+
+    origin_country:
+      countryByLocation[
+        String(journey.origin || "").trim()
+      ] || null,
+
+    destination_country:
+      countryByLocation[
+        String(journey.destination || "").trim()
+      ] || null
+
+  }));
 }
 
+
+// =====================================================
+// VISITS PER COUNTRY
+// =====================================================
+
 function visitsPerCountry(data) {
+
   const map = {};
 
   data.forEach(r => {
-    if (!["Flight", "Drive"].includes(r.journey_type)) return;
+
+    const journeyType =
+      String(r.journey_type || "")
+        .trim()
+        .toLowerCase();
+
+
+    // Preserve original behaviour:
+    // only Flights and Drives
+
+    if (
+      journeyType !== "flight" &&
+      journeyType !== "drive"
+    ) return;
+
+
+    // Destination must have a country
+
     if (!r.destination_country) return;
-    if (r.destination_country === r.origin_country) return;
+
+
+    // Don't count domestic journeys as
+    // a new visit to the same country
+
+    if (
+      r.destination_country ===
+      r.origin_country
+    ) return;
+
 
     map[r.destination_country] =
       (map[r.destination_country] || 0) + 1;
+
   });
 
-  const countries = Object.keys(map).sort((a, b) => map[b] - map[a]);
+
+  // Most visited first
+
+  const countries =
+    Object.keys(map).sort(
+      (a, b) => map[b] - map[a]
+    );
+
 
   return {
+
     labels: countries,
-    values: countries.map(c => map[c])
+
+    values: countries.map(
+      country => map[country]
+    )
+
   };
 }
 
-function render({ labels, values }) {
-  const ctx = document.getElementById("countriesChart");
 
-  if (chart) chart.destroy();
+// =====================================================
+// RENDER CHART
+// =====================================================
+
+function render({ labels, values }) {
+
+  const ctx =
+    document.getElementById(
+      "visitsPerCountryChart"
+    );
+
+
+  if (!ctx) {
+
+    console.error(
+      "[country stats] visitsPerCountryChart not found"
+    );
+
+    return;
+  }
+
+
+  if (chart) {
+    chart.destroy();
+  }
+
 
   chart = new Chart(ctx, {
+
     type: "bar",
+
     data: {
+
       labels,
+
       datasets: [{
-        data: values
+
+        data: values,
+
+        backgroundColor: YELLOW,
+        borderColor: YELLOW_BORDER,
+
+        borderWidth: 1,
+        borderRadius: 6
+
       }]
     },
+
+
     options: {
+
       indexAxis: "y",
+
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
+
+
+      plugins: {
+
+        legend: {
+          display: false
+        },
+
+
+        tooltip: {
+
+          callbacks: {
+
+            label(context) {
+
+              const value =
+                Number(context.raw) || 0;
+
+              return (
+                `${value.toLocaleString()} visits`
+              );
+
+            }
+
+          }
+
+        }
+
+      },
+
+
+      scales: {
+
+        x: {
+
+          beginAtZero: true,
+
+          ticks: {
+
+            precision: 0,
+
+            callback(value) {
+              return Number(value)
+                .toLocaleString();
+            }
+
+          },
+
+          grid: {
+            color: GRID
+          }
+
+        },
+
+
+        y: {
+
+          grid: {
+            display: false
+          }
+
+        }
+
+      }
+
     }
+
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const data = await loadData();
-  render(visitsPerCountry(data));
-});
+
+// =====================================================
+// INITIALISE
+// =====================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    const data =
+      await loadData();
+
+
+    console.log(
+      `[country stats] loaded ${data.length} journeys`
+    );
+
+
+    const stats =
+      visitsPerCountry(data);
+
+
+    console.log(
+      `[country stats] ${stats.labels.length} countries`
+    );
+
+
+    render(stats);
+
+  }
+);
