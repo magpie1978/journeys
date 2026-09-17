@@ -2,6 +2,7 @@
 
 let flightsChart;
 let flightData = [];
+let timeMode = "year";
 
 const YELLOW = "rgba(201,162,77,0.7)";
 const YELLOW_BORDER = "rgba(201,162,77,0.9)";
@@ -159,10 +160,51 @@ function updateChart() {
   const metric =
     metricSelector?.value || "flights";
 
-  const stats =
-    flightsPerYear(flightData, metric);
 
-  renderChart(stats, metric);
+  // ==========================================
+  // YEAR MODE
+  // ==========================================
+
+  if (timeMode === "year") {
+
+    const stats =
+      flightsPerYear(flightData, metric);
+
+    renderChart(stats, metric);
+
+    return;
+  }
+
+
+  // ==========================================
+  // ALL-TIME MODE
+  // ==========================================
+
+  let total = 0;
+
+  flightData.forEach(r => {
+
+    if (
+      String(r.journey_type || "").toLowerCase()
+      !== "flight"
+    ) return;
+
+    if (metric === "miles") {
+      total += Number(r.journey_distance) || 0;
+    } else {
+      total += 1;
+    }
+
+  });
+
+
+  renderChart(
+    {
+      labels: ["All Time"],
+      values: [Math.round(total)]
+    },
+    metric
+  );
 }
 
 
@@ -170,24 +212,61 @@ function updateChart() {
 // INITIALISE
 // =====================================================
 
-document.addEventListener(
-  "DOMContentLoaded",
-  async () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-    flightData = await loadData();
+  flightData = await loadData();
 
-    console.log(
-      `[flight stats] loaded ${flightData.length} rows`
-    );
+  console.log(
+    `[flight stats] loaded ${flightData.length} rows`
+  );
+
+  // Initial chart
+  updateChart();
+
+
+  // =====================================================
+  // FLIGHTS / MILES
+  // =====================================================
+
+  const metricSelector =
+    document.getElementById("metricSelector");
+
+  metricSelector?.addEventListener(
+    "change",
+    updateChart
+  );
+
+
+  // =====================================================
+  // YEAR / ALL TIME
+  // =====================================================
+
+  const btnYear =
+    document.getElementById("btnYear");
+
+  const btnAllTime =
+    document.getElementById("btnAllTime");
+
+
+  btnYear?.addEventListener("click", () => {
+
+    timeMode = "year";
+
+    btnYear.classList.add("active");
+    btnAllTime?.classList.remove("active");
 
     updateChart();
+  });
 
-    const metricSelector =
-      document.getElementById("metricSelector");
 
-    metricSelector?.addEventListener(
-      "change",
-      updateChart
-    );
-  }
-);
+  btnAllTime?.addEventListener("click", () => {
+
+    timeMode = "all";
+
+    btnAllTime.classList.add("active");
+    btnYear?.classList.remove("active");
+
+    updateChart();
+  });
+
+});
