@@ -40,6 +40,7 @@ function flightsPerYear(data, metric = "flights") {
   const map = {};
 
   data.forEach(r => {
+
     if (
       String(r.journey_type || "").toLowerCase()
       !== "flight"
@@ -61,9 +62,7 @@ function flightsPerYear(data, metric = "flights") {
 
   return {
     labels: years,
-    values: years.map(y =>
-      Math.round(map[y])
-    )
+    values: years.map(y => map[y])
   };
 }
 
@@ -73,6 +72,7 @@ function flightsPerYear(data, metric = "flights") {
 // =====================================================
 
 function renderChart({ labels, values }, metric) {
+
   const ctx =
     document.getElementById("flightsByYearChart");
 
@@ -109,6 +109,7 @@ function renderChart({ labels, values }, metric) {
         tooltip: {
           callbacks: {
             label(context) {
+
               const value =
                 Number(context.raw) || 0;
 
@@ -138,8 +139,7 @@ function renderChart({ labels, values }, metric) {
 
           ticks: {
             callback(value) {
-              return Number(value)
-                .toLocaleString();
+              return Number(value).toLocaleString();
             }
           }
         }
@@ -154,6 +154,7 @@ function renderChart({ labels, values }, metric) {
 // =====================================================
 
 function updateChart() {
+
   const metricSelector =
     document.getElementById("metricSelector");
 
@@ -161,47 +162,54 @@ function updateChart() {
     metricSelector?.value || "flights";
 
 
-  // ==========================================
+  // Calculate annual figures first
+
+  const stats =
+    flightsPerYear(flightData, metric);
+
+
+  // =====================================================
   // YEAR MODE
-  // ==========================================
+  // Individual value for each year
+  // =====================================================
 
   if (timeMode === "year") {
 
-    const stats =
-      flightsPerYear(flightData, metric);
+    renderChart(
+      {
+        labels: stats.labels,
 
-    renderChart(stats, metric);
+        values: stats.values.map(value =>
+          Math.round(value)
+        )
+      },
+      metric
+    );
 
     return;
   }
 
 
-  // ==========================================
-  // ALL-TIME MODE
-  // ==========================================
+  // =====================================================
+  // ALL TIME MODE
+  // Running cumulative total
+  // =====================================================
 
-  let total = 0;
+  let runningTotal = 0;
 
-  flightData.forEach(r => {
+  const cumulativeValues =
+    stats.values.map(value => {
 
-    if (
-      String(r.journey_type || "").toLowerCase()
-      !== "flight"
-    ) return;
+      runningTotal += value;
 
-    if (metric === "miles") {
-      total += Number(r.journey_distance) || 0;
-    } else {
-      total += 1;
-    }
-
-  });
+      return Math.round(runningTotal);
+    });
 
 
   renderChart(
     {
-      labels: ["All Time"],
-      values: [Math.round(total)]
+      labels: stats.labels,
+      values: cumulativeValues
     },
     metric
   );
@@ -220,7 +228,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     `[flight stats] loaded ${flightData.length} rows`
   );
 
+
   // Initial chart
+
   updateChart();
 
 
