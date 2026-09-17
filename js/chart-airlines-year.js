@@ -2,98 +2,366 @@
 
 let chart;
 
+const YELLOW = "rgba(201,162,77,0.7)";
+const YELLOW_BORDER = "rgba(201,162,77,0.9)";
+const GRID = "rgba(255,255,255,0.08)";
+
+
+// =====================================================
+// HELPERS
+// =====================================================
+
 function year4(v) {
   return String(v).slice(0, 4);
 }
 
+
+function isFlight(r) {
+  return (
+    String(r.journey_type || "")
+      .trim()
+      .toLowerCase() === "flight"
+  );
+}
+
+
+// =====================================================
+// LOAD DATA
+// =====================================================
+
 async function loadData() {
-  const { data } = await sb
-    .from("journeys_routes_core_mv")
-    .select("year, airline, journey_type, journey_distance");
+
+  const { data, error } = await sb
+    .from("journeys_routes_core_3_mv")
+    .select(
+      "year, airline, journey_type, journey_distance"
+    );
+
+  if (error) {
+    console.error(
+      "[airlines by year] load failed:",
+      error
+    );
+
+    return [];
+  }
 
   return data || [];
 }
 
-// ===== Airlines per year =====
+
+// =====================================================
+// NUMBER OF DISTINCT AIRLINES PER YEAR
+// =====================================================
+
 function airlinesPerYear(data) {
+
   const map = {};
 
   data.forEach(r => {
-    if (r.journey_type !== "Flight") return;
+
+    if (!isFlight(r)) return;
     if (!r.airline) return;
 
-    const y = year4(r.year);
-    map[y] ??= new Set();
-    map[y].add(r.airline);
+    const year = year4(r.year);
+
+    if (!/^\d{4}$/.test(year)) return;
+
+    if (!map[year]) {
+      map[year] = new Set();
+    }
+
+    map[year].add(
+      String(r.airline).trim()
+    );
   });
 
-  const years = Object.keys(map).sort();
+
+  const years =
+    Object.keys(map).sort();
+
 
   return {
     labels: years,
-    values: years.map(y => map[y].size)
+
+    values: years.map(
+      year => map[year].size
+    )
   };
 }
 
-// ===== Flights / Miles per airline =====
+
+// =====================================================
+// FLIGHTS / MILES PER AIRLINE
+// =====================================================
+
 function metricPerAirline(data, metric) {
+
   const map = {};
 
   data.forEach(r => {
-    if (r.journey_type !== "Flight") return;
+
+    if (!isFlight(r)) return;
     if (!r.airline) return;
 
-    const val = metric === "miles"
-      ? Number(r.journey_distance) || 0
-      : 1;
+    const airline =
+      String(r.airline).trim();
 
-    map[r.airline] = (map[r.airline] || 0) + val;
+    const value =
+      metric === "miles"
+        ? Number(r.journey_distance) || 0
+        : 1;
+
+    map[airline] =
+      (map[airline] || 0) + value;
   });
 
-  const airlines = Object.keys(map).sort((a, b) => map[b] - map[a]);
+
+  const airlines =
+    Object.keys(map).sort(
+      (a, b) => map[b] - map[a]
+    );
+
 
   return {
     labels: airlines,
-    values: airlines.map(a => map[a])
+
+    values: airlines.map(airline =>
+      metric === "miles"
+        ? Math.round(map[airline])
+        : map[airline]
+    )
   };
 }
 
-function render({ labels, values }, horizontal = true) {
-  const ctx = document.getElementById("flightsPerAirlineYearChart");
 
-  if (chart) chart.destroy();
+// =====================================================
+// RENDER
+// =====================================================
+
+function render(
+  { labels, values },
+  metric,
+  horizontal = true
+) {
+
+  const ctx =
+    document.getElementById(
+      "flightsPerAirlineYearChart"
+    );
+
+  if (!ctx) {
+    console.error(
+      "[airlines by year] chart canvas not found"
+    );
+
+    return;
+  }
+
+
+  if (chart) {
+    chart.destroy();
+  }
+
 
   chart = new Chart(ctx, {
+
     type: "bar",
+
     data: {
+
       labels,
+
       datasets: [{
-        data: values
+        data: values,
+        backgroundColor: YELLOW,
+        borderColor: YELLOW_BORDER,
+        borderWidth: 1,
+        borderRadius: 6
       }]
     },
+
+
     options: {
-      indexAxis: horizontal ? "y" : "x",
+
+      indexAxis:
+        horizontal ? "y" : "x",
+
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
+
+
+      plugins: {
+
+        legend: {
+          display: false
+        },
+
+
+        tooltip: {
+
+          callbacks: {
+
+            label(context) {
+
+              const value =
+                Number(context.raw) || 0;
+
+
+              if (metric === "miles") {
+
+                return (
+                  `${value.toLocaleString()} miles`
+                );
+              }
+
+
+              if (metric === "airlines") {
+
+                return (
+                  `${value.toLocaleString()} airlines`
+                );
+              }
+
+
+              return (
+                `${value.toLocaleString()} flights`
+              );
+            }
+          }
+        }
+      },
+
+
+      scales: {
+
+        x: {
+
+          beginAtZero: true,
+
+          grid: {
+            color: horizontal
+              ? GRID
+              : "transparent"
+          },
+
+          ticks: {
+
+            callback(value) {
+
+              return Number(value)
+                .toLocaleString();
+            }
+          }
+        },
+
+
+        y: {
+
+          beginAtZero: true,
+
+          grid: {
+            color: horizontal
+              ? "transparent"
+              : GRID
+          },
+
+          ticks: {
+
+            callback(value) {
+
+              /*
+               * For horizontal charts the Y axis
+               * contains airline names, so return
+               * Chart.js's original label.
+               */
+
+              if (horizontal) {
+                return this.getLabelForValue(value);
+              }
+
+              return Number(value)
+                .toLocaleString();
+            }
+          }
+        }
+      }
     }
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const data = await loadData();
-  const select = document.getElementById("airlineMetricSelect");
 
-  function update() {
-    const metric = select.value;
+// =====================================================
+// INITIALISE
+// =====================================================
 
-    if (metric === "airlines") {
-      render(airlinesPerYear(data), false);
-    } else {
-      render(metricPerAirline(data, metric), true);
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    const data =
+      await loadData();
+
+    console.log(
+      `[airlines by year] loaded ${data.length} rows`
+    );
+
+
+    const select =
+      document.getElementById(
+        "airlineMetricSelect"
+      );
+
+
+    if (!select) {
+
+      console.error(
+        "[airlines by year] airlineMetricSelect not found"
+      );
+
+      return;
     }
-  }
 
-  update();
-  select.addEventListener("change", update);
-});
+
+    function update() {
+
+      const metric =
+        select.value;
+
+
+      // Airlines used per year
+
+      if (metric === "airlines") {
+
+        render(
+          airlinesPerYear(data),
+          metric,
+          false
+        );
+
+        return;
+      }
+
+
+      // Flights or miles per airline
+
+      render(
+        metricPerAirline(
+          data,
+          metric
+        ),
+        metric,
+        true
+      );
+    }
+
+
+    update();
+
+    select.addEventListener(
+      "change",
+      update
+    );
+
+  }
+);
