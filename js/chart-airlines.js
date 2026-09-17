@@ -2,59 +2,233 @@
 
 let chart;
 
+const YELLOW = "rgba(201,162,77,0.7)";
+const YELLOW_BORDER = "rgba(201,162,77,0.9)";
+const GRID = "rgba(255,255,255,0.08)";
+
+
+// =====================================================
+// HELPERS
+// =====================================================
+
 function year4(v) {
   return String(v).slice(0, 4);
 }
 
+
+// =====================================================
+// LOAD DATA
+// =====================================================
+
 async function loadData() {
-  const { data } = await sb
-    .from("journeys_routes_core_mv")
-    .select("journey_type, airline");
+
+  const { data, error } = await sb
+    .from("journeys_routes_core_3_mv")
+    .select("year, journey_type, airline");
+
+  if (error) {
+    console.error("[airline stats] load failed:", error);
+    return [];
+  }
 
   return data || [];
 }
 
+
+// =====================================================
+// AGGREGATE FLIGHTS BY YEAR / AIRLINE
+// =====================================================
+
 function aggregate(data) {
+
   const map = {};
+  const airlinesSet = new Set();
 
   data.forEach(r => {
-    if (r.journey_type !== "Flight") return;
+
+    if (
+      String(r.journey_type || "").toLowerCase()
+      !== "flight"
+    ) return;
+
     if (!r.airline) return;
 
-    map[r.airline] = (map[r.airline] || 0) + 1;
+    const year = year4(r.year);
+
+    if (!/^\d{4}$/.test(year)) return;
+
+    const airline = r.airline.trim();
+
+    airlinesSet.add(airline);
+
+    if (!map[year]) {
+      map[year] = {};
+    }
+
+    map[year][airline] =
+      (map[year][airline] || 0) + 1;
   });
 
-  const airlines = Object.keys(map).sort((a, b) => map[b] - map[a]);
+
+  const years =
+    Object.keys(map).sort();
+
+
+  // Order airlines by total number of flights
+
+  const airlineTotals = {};
+
+  airlinesSet.forEach(airline => {
+
+    airlineTotals[airline] = 0;
+
+    years.forEach(year => {
+      airlineTotals[airline] +=
+        map[year]?.[airline] || 0;
+    });
+
+  });
+
+
+  const airlines =
+    [...airlinesSet].sort(
+      (a, b) =>
+        airlineTotals[b] - airlineTotals[a]
+    );
+
 
   return {
-    labels: airlines,
-    values: airlines.map(a => map[a])
+    years,
+    airlines,
+    map
   };
 }
 
-function render({ labels, values }) {
-  const ctx = document.getElementById("airlinesChart");
 
-  if (chart) chart.destroy();
+// =====================================================
+// RENDER
+// =====================================================
+
+function render({ years, airlines, map }) {
+
+  const ctx =
+    document.getElementById(
+      "flightsPerYearAirlineChart"
+    );
+
+  if (!ctx) {
+    console.error(
+      "[airline stats] chart canvas not found"
+    );
+    return;
+  }
+
+  if (chart) {
+    chart.destroy();
+  }
+
+
+  const datasets =
+    airlines.map(airline => ({
+
+      label: airline,
+
+      data: years.map(year =>
+        map[year]?.[airline] || 0
+      ),
+
+      borderWidth: 1
+    }));
+
 
   chart = new Chart(ctx, {
+
     type: "bar",
+
     data: {
-      labels,
-      datasets: [{
-        data: values
-      }]
+      labels: years,
+      datasets
     },
+
     options: {
-      indexAxis: "y",
+
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
+
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+
+      plugins: {
+
+        legend: {
+          display: true,
+          position: "bottom"
+        },
+
+        tooltip: {
+          callbacks: {
+
+            label(context) {
+
+              const value =
+                Number(context.raw) || 0;
+
+              if (!value) return null;
+
+              return `${context.dataset.label}: ${value} flights`;
+            }
+          }
+        }
+      },
+
+      scales: {
+
+        x: {
+          stacked: true,
+
+          grid: {
+            display: false
+          }
+        },
+
+        y: {
+          stacked: true,
+          beginAtZero: true,
+
+          ticks: {
+            precision: 0
+          },
+
+          grid: {
+            color: GRID
+          }
+        }
+      }
     }
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const data = await loadData();
-  render(aggregate(data));
-});
+
+// =====================================================
+// INITIALISE
+// =====================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    const data =
+      await loadData();
+
+    console.log(
+      `[airline stats] loaded ${data.length} rows`
+    );
+
+    render(
+      aggregate(data)
+    );
+
+  }
+);
