@@ -639,10 +639,58 @@ if (error) {
   return;
 }
 
+// -------------------------------------------------
+// DESTINATION COUNTRY LOOKUP
+// -------------------------------------------------
+
+const destinationCodes =
+  [...new Set(
+    (data || [])
+      .map(route => route?.destination)
+      .filter(Boolean)
+  )];
+
+let destinationCountryMap =
+  new Map();
+
+if (destinationCodes.length) {
+
+  const {
+    data: locationRows,
+    error: locationError
+  } = await sb
+    .from("journey_locations")
+    .select("airport_code,country")
+    .in("airport_code", destinationCodes);
+
+  if (locationError) {
+    console.error(
+      "[routes] Destination country lookup failed:",
+      locationError
+    );
+  } else {
+
+    destinationCountryMap =
+      new Map(
+        (locationRows || []).map(location => [
+          location.airport_code,
+          location.country
+        ])
+      );
+  }
+}
+  
 
 let routes =
   (data || [])
-    .filter(route => route?.geom);
+    .filter(route => route?.geom)
+    .map(route => ({
+      ...route,
+      destination_country:
+        destinationCountryMap.get(
+          route.destination
+        ) || null
+    }));
 
 // -------------------------------------------------
 // CABIN / CLASS FILTER
