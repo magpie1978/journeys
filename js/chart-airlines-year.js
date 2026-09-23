@@ -425,6 +425,58 @@ if (horizontal) {
 
       plugins: {
 
+        title: {
+          display: true,
+        
+          text:
+            metric === "miles"
+              ? "Miles per Airline"
+              : metric === "airlines"
+                ? "Airlines per Year"
+                : "Flights per Airline",
+        
+          color: "#ffffff",
+        
+          font: {
+            size: 20,
+            weight: "600"
+          },
+        
+          padding: {
+            top: 14,
+            bottom: 4
+          }
+        },
+        
+        
+        subtitle: {
+          display: true,
+        
+          text:
+            metric === "miles"
+              ? "Total miles travelled with each airline"
+              : metric === "airlines"
+                ? "Number of distinct airlines used each year"
+                : "Number of flights with each airline",
+        
+          color: "rgba(255,255,255,0.55)",
+        
+          font: {
+            size: 13,
+            weight: "400"
+          },
+        
+          padding: {
+            top: 0,
+            bottom: 18
+          }
+        },
+        
+        
+        legend: {
+          display: false
+        },
+
         legend: {
           display: false
         },
