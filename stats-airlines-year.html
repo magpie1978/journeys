@@ -96,11 +96,27 @@
 
         <!-- SCROLLABLE CHART -->
         <div class="chart-card">
-          <div class="chart-container scroll-y">
-            <canvas id="flightsPerAirlineYearChart"></canvas>
-          </div>
-        </div>
         
+          <!--
+            This outer container stays at a fixed height.
+            If the chart inside is taller, this container
+            provides the vertical scrollbar.
+          -->
+          <div class="chart-container scroll-y">
+        
+            <!--
+              JavaScript changes the height of THIS element
+              depending on how many airlines are displayed.
+            -->
+            <div id="airlineChartInner">
+        
+              <canvas id="flightsPerAirlineYearChart"></canvas>
+        
+            </div>
+        
+          </div>
+        
+        </div>        
       </section>
 
     </div>
