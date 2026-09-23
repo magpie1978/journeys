@@ -6,6 +6,88 @@ const YELLOW = "rgba(201,162,77,0.7)";
 const YELLOW_BORDER = "rgba(201,162,77,0.9)";
 const GRID = "rgba(255,255,255,0.08)";
 
+/*
+ * =====================================================
+ * BAR VALUE LABELS
+ * =====================================================
+ *
+ * Displays the number of visits at the right-hand
+ * end of each country's bar.
+ *
+ * Example:
+ *
+ * Spain        █████████████████  18
+ * Ireland      █████████████      14
+ * France       ██████████         11
+ */
+
+const barValueLabels = {
+
+  id: "barValueLabels",
+
+  afterDatasetsDraw(chart) {
+
+    const {
+      ctx,
+      data
+    } = chart;
+
+    const dataset =
+      chart.getDatasetMeta(0);
+
+    ctx.save();
+
+    /*
+     * Match the colour and size of the
+     * existing Chart.js axis labels.
+     */
+    ctx.fillStyle =
+      "rgba(255,255,255,0.55)";
+
+    ctx.font =
+      "12px sans-serif";
+
+    ctx.textAlign =
+      "left";
+
+    ctx.textBaseline =
+      "middle";
+
+
+    dataset.data.forEach(
+      (bar, index) => {
+
+        const value =
+          Number(
+            data.datasets[0].data[index]
+          ) || 0;
+
+        if (!value) return;
+
+        const label =
+          value.toLocaleString();
+
+        /*
+         * bar.x is the right-hand end of the
+         * horizontal bar.
+         *
+         * Add 7px so the value doesn't touch
+         * the end of the bar.
+         */
+        ctx.fillText(
+          label,
+          bar.x + 7,
+          bar.y
+        );
+
+      }
+    );
+
+    ctx.restore();
+  }
+
+};
+
 
 // =====================================================
 // LOAD DATA
@@ -252,13 +334,17 @@ function render({ labels, values }) {
       chart.destroy();
     }
   
-  
+      
     chart = new Chart(ctx, {
-
-    type: "bar",
-
-    data: {
-
+    
+      type: "bar",
+    
+      plugins: [
+        barValueLabels
+      ],
+    
+      data: {
+        
       labels,
 
 datasets: [{
@@ -319,28 +405,33 @@ datasets: [{
 
 
       scales: {
-
+        
         x: {
-
+        
           beginAtZero: true,
-
+        
+          /*
+           * Leave a little room beyond the longest
+           * bar for its value label.
+           */
+          grace: "8%",
+        
           ticks: {
-
+        
             precision: 0,
-
+        
             callback(value) {
               return Number(value)
                 .toLocaleString();
             }
-
+        
           },
-
+        
           grid: {
             color: GRID
           }
-
+        
         },
-
 
         y: {
 
