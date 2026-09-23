@@ -385,3 +385,7 @@ body {
 
   margin-bottom: 6px;
 }
+
+.stats-top-controls .stats-select {
+  margin-left: auto;
+}
