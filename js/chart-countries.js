@@ -377,6 +377,46 @@ datasets: [{
 
       plugins: {
 
+      title: {
+        display: true,
+        text: "Visits per Country",
+      
+        color: "#ffffff",
+      
+        font: {
+          size: 20,
+          weight: "600"
+        },
+      
+        padding: {
+          top: 14,
+          bottom: 4
+        }
+      },
+      
+      
+      subtitle: {
+        display: true,
+        text: "Number of journeys to each country",
+      
+        color: "rgba(255,255,255,0.55)",
+      
+        font: {
+          size: 13,
+          weight: "400"
+        },
+      
+        padding: {
+          top: 0,
+          bottom: 18
+        }
+      },
+      
+      
+      legend: {
+        display: false
+      },
+
         legend: {
           display: false
         },
