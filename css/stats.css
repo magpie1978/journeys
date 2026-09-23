@@ -226,11 +226,16 @@ body {
   gap: 4px;
 
   margin: 0;
-  padding-left: 4px;
+
+  /* Start first tab exactly at the chart's left edge */
+  padding-left: 0;
 
   border-bottom: 1px solid #2a2d3a;
 }
 
+.stats-nav a:first-child {
+  margin-left: 0;
+}
 
 /*
  * Individual tab.
