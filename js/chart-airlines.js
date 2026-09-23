@@ -2,8 +2,8 @@
 
 let chart;
 
-const YELLOW = "rgba(201,162,77,0.7)";
-const YELLOW_BORDER = "rgba(201,162,77,0.9)";
+const YELLOW = "rgba(201,162,77,0.85)";
+const YELLOW_BORDER = "rgba(255,235,170,1)";
 const GRID = "rgba(255,255,255,0.08)";
 
 
@@ -128,18 +128,7 @@ function render({ years, airlines, map }) {
   }
 
 
-  const datasets =
-    airlines.map(airline => ({
-
-      label: airline,
-
-      data: years.map(year =>
-        map[year]?.[airline] || 0
-      ),
-
-      borderWidth: 1
-    }));
-
+const datasets =
 
   chart = new Chart(ctx, {
 
@@ -163,8 +152,7 @@ function render({ years, airlines, map }) {
       plugins: {
 
         legend: {
-          display: true,
-          position: "bottom"
+          display: false
         },
 
         tooltip: {
