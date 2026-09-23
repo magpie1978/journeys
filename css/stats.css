@@ -372,9 +372,16 @@ body {
 .stats-top-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+
+  /*
+   * Move the entire control group to the
+   * right-hand side of the page.
+   */
+  justify-content: flex-end;
 
   width: 100%;
+
+  gap: 10px;
 
   margin-bottom: 6px;
 }
