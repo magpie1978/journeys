@@ -14,6 +14,106 @@ function year4(v) {
 }
 
 
+const YELLOW = "rgba(201,162,77,0.7)";
+const YELLOW_BORDER = "rgba(201,162,77,0.9)";
+const GRID = "rgba(255,255,255,0.08)";
+
+
+/*
+ * =====================================================
+ * BAR VALUE LABELS
+ * =====================================================
+ *
+ * Displays the value of each bar directly above it.
+ *
+ * Examples:
+ *
+ *     44
+ *     ██
+ *     ██
+ *    2017
+ *
+ * For miles, thousands separators are added:
+ *
+ *     12,450
+ *     █████
+ *      2017
+ */
+
+const barValueLabels = {
+
+  id: "barValueLabels",
+
+  afterDatasetsDraw(chart) {
+
+    const {
+      ctx,
+      data
+    } = chart;
+
+
+    ctx.save();
+
+    ctx.fillStyle =
+      "rgba(255,255,255,0.82)";
+
+    ctx.font =
+      "600 11px sans-serif";
+
+    ctx.textAlign =
+      "center";
+
+    ctx.textBaseline =
+      "bottom";
+
+
+    const dataset =
+      chart.getDatasetMeta(0);
+
+
+    dataset.data.forEach(
+      (bar, index) => {
+
+        const value =
+          Number(
+            data.datasets[0].data[index]
+          ) || 0;
+
+
+        /*
+         * Don't display a label for zero-value bars.
+         */
+        if (!value) return;
+
+
+        const label =
+          value.toLocaleString();
+
+
+        /*
+         * bar.x = horizontal centre of column
+         * bar.y = top of column
+         *
+         * Subtract 5px so the number sits slightly
+         * above the yellow bar.
+         */
+        ctx.fillText(
+          label,
+          bar.x,
+          bar.y - 5
+        );
+
+      }
+    );
+
+
+    ctx.restore();
+  }
+
+};
+
+
+
 // =====================================================
 // LOAD DATA
 // =====================================================
@@ -83,8 +183,13 @@ function renderChart({ labels, values }, metric) {
   }
 
   flightsChart = new Chart(ctx, {
+  
     type: "bar",
-
+  
+    plugins: [
+      barValueLabels
+    ],
+    
     data: {
       labels,
 
@@ -206,11 +311,17 @@ plugins: {
 
         y: {
           beginAtZero: true,
-
+        
+          /*
+           * Leave some space above the tallest bar
+           * for its value label.
+           */
+          grace: "10%",
+        
           grid: {
             color: GRID
           },
-
+          
           ticks: {
             callback(value) {
               return Number(value).toLocaleString();
