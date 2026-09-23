@@ -439,16 +439,9 @@ function render(
           }
         },
 
-        
+                
         y: {
         
-          /*
-           * For the vertical "Airlines" chart,
-           * explicitly start the Y axis at zero.
-           *
-           * Horizontal Flights/Miles charts use the Y axis
-           * for airline names, so no numeric minimum is needed.
-           */
           min:
             horizontal
               ? undefined
@@ -456,16 +449,10 @@ function render(
         
           beginAtZero: true,
         
-        
-          /*
-           * Leave room above the tallest column for
-           * the value label drawn by barValueLabels.
-           */
           grace:
             horizontal
               ? 0
               : "10%",
-        
         
           grid: {
             color: horizontal
@@ -473,38 +460,26 @@ function render(
               : GRID
           },
         
-        
           ticks: {
         
-            /*
-             * On the vertical Airlines chart, use whole
-             * numbers and explicitly include zero.
-             */
-            precision:
+            stepSize:
               horizontal
                 ? undefined
-                : 0,
+                : 2,
+        
+            precision: 0,
         
             callback(value) {
         
-              /*
-               * Horizontal chart:
-               * Y axis contains airline names.
-               */
               if (horizontal) {
                 return this.getLabelForValue(value);
               }
         
-              /*
-               * Vertical Airlines chart:
-               * Y axis contains number of airlines.
-               */
               return Number(value)
                 .toLocaleString();
             }
           }
-        }
-      }
+        }      }
     }
   });
 }
