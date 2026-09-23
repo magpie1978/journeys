@@ -365,18 +365,13 @@ body {
  * STATISTICS TOP CONTROLS
  * =====================================================
  *
- * Year / All Time sit on the left.
- * Flights / Miles sits on the right.
+ * Year / All Time and the metric dropdown form one
+ * group aligned to the right-hand edge of the chart.
  */
 
 .stats-top-controls {
   display: flex;
   align-items: center;
-
-  /*
-   * Move the entire control group to the
-   * right-hand side of the page.
-   */
   justify-content: flex-end;
 
   width: 100%;
@@ -386,8 +381,12 @@ body {
   margin-bottom: 6px;
 }
 
+/*
+ * Do NOT use margin-left: auto here.
+ * That would push the dropdown away from the buttons.
+ */
 .stats-top-controls .stats-select {
-  margin-left: auto;
+  margin-left: 0;
 }
 
 
