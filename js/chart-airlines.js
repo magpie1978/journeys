@@ -163,8 +163,8 @@ chart = new Chart(ctx, {
       maintainAspectRatio: false,
 
       interaction: {
-        mode: "index",
-        intersect: false
+        mode: "nearest",
+        intersect: true
       },
 
       plugins: {
