@@ -208,20 +208,123 @@ body {
   flex-direction: column;
 }
 
+/* =====================================================
+   STATISTICS NAVIGATION TABS
+===================================================== */
+
+/*
+ * The statistics pages behave like different tabs
+ * within the same section of the website.
+ *
+ * The bottom border creates the browser-style tab bar.
+ */
 .stats-nav {
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
+  align-items: flex-end;
+  gap: 4px;
+
+  margin-bottom: 14px;
+  padding-left: 4px;
+
+  border-bottom: 1px solid #2a2d3a;
 }
 
+
+/*
+ * Individual inactive tab.
+ */
 .stats-nav a {
-  color: #ccc;
+  position: relative;
+  display: block;
+
+  padding: 9px 18px 10px;
+
+  color: rgba(255,255,255,0.62);
   text-decoration: none;
+
   font-size: 14px;
+  font-weight: 500;
+
+  background: #111;
+
+  border: 1px solid #2a2d3a;
+  border-bottom: none;
+
+  border-radius: 9px 9px 0 0;
+
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
+
+/*
+ * Hovered tab.
+ */
 .stats-nav a:hover {
   color: #fff;
+  background: #181818;
+}
+
+
+/*
+ * Active/current page.
+ *
+ * The gold top edge makes it obvious which statistics
+ * page is currently selected.
+ */
+.stats-nav a.active {
+  color: #fff;
+  background: #14161f;
+
+  border-color: #2a2d3a;
+
+  /*
+   * Cover the navigation bar's bottom border so the
+   * selected tab appears connected to the page below.
+   */
+  margin-bottom: -1px;
+
+  border-top: 2px solid rgba(201,162,77,0.9);
+
+  padding-top: 8px;
+  padding-bottom: 11px;
+
+  z-index: 2;
+}
+
+
+/*
+ * Slightly brighten the active tab on hover without
+ * losing its selected appearance.
+ */
+.stats-nav a.active:hover {
+  background: #14161f;
+  color: #fff;
+}
+
+
+/* =====================================================
+   MOBILE STATISTICS TABS
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .stats-nav {
+    gap: 2px;
+    padding-left: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .stats-nav a {
+    flex: 0 0 auto;
+    padding-left: 12px;
+    padding-right: 12px;
+    white-space: nowrap;
+  }
+
 }
 
 .chart-container canvas {
