@@ -21,21 +21,40 @@
 
   <!-- Page-specific styling -->
   <style>
-
-    canvas {
+  
+    /*
+     * The chart card itself remains a sensible height.
+     * If the chart is taller than this, the user scrolls
+     * vertically inside the chart area.
+     */
+    .chart-container.scroll-y {
+      height: 680px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  
+    /*
+     * Chart.js will control the actual canvas height from
+     * JavaScript, based on how many bars need to be shown.
+     */
+    #flightsPerAirlineYearChart {
       width: 100% !important;
     }
-
+  
+  
     .stats-nav {
       display: flex;
       gap: 16px;
       margin-bottom: 12px;
     }
-
+  
+  
     .stats-nav a:hover {
       color: #fff;
     }
+  
   </style>
+
 </head>
 
 <body>
