@@ -167,12 +167,62 @@ chart = new Chart(ctx, {
         intersect: true
       },
 
-      plugins: {
+plugins: {
 
-        legend: {
-          display: false
-        },
+  /*
+   * ---------------------------------------------------
+   * CHART TITLE
+   * ---------------------------------------------------
+   */
 
+  title: {
+    display: true,
+    text: "Flights per Year per Airline",
+
+    color: "#ffffff",
+
+    font: {
+      size: 20,
+      weight: "600"
+    },
+
+    padding: {
+      top: 14,
+      bottom: 4
+    }
+  },
+
+
+  /*
+   * ---------------------------------------------------
+   * CHART SUBTITLE
+   * ---------------------------------------------------
+   */
+
+  subtitle: {
+    display: true,
+    text: "Number of flights by airline each year",
+
+    color: "rgba(255,255,255,0.55)",
+
+    font: {
+      size: 13,
+      weight: "400"
+    },
+
+    padding: {
+      top: 0,
+      bottom: 18
+    }
+  },
+
+
+  legend: {
+    display: false
+  },
+
+
+ 
       tooltip: {
       
         // IMPORTANT:
