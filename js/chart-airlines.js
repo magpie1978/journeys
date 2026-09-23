@@ -129,8 +129,26 @@ function render({ years, airlines, map }) {
 
 
 const datasets =
+  airlines.map(airline => ({
 
-  chart = new Chart(ctx, {
+    // Keep the airline name for the hover tooltip
+    label: airline,
+
+    data: years.map(year =>
+      map[year]?.[airline] || 0
+    ),
+
+    // All stacked sections use the same yellow
+    backgroundColor: YELLOW,
+
+    // Contrasting border separates each airline
+    borderColor: YELLOW_BORDER,
+
+    borderWidth: 1
+  }));
+
+
+chart = new Chart(ctx, {
 
     type: "bar",
 
