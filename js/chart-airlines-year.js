@@ -145,87 +145,89 @@ function render(
   horizontal = true
 ) {
 
-/*
- * -----------------------------------------------------
- * DYNAMIC CHART HEIGHT
- * -----------------------------------------------------
- *
- * For horizontal airline charts we want every airline
- * to have plenty of vertical space.
- *
- * Instead of squeezing all airlines into the visible
- * panel, make the canvas taller as more airlines are
- * displayed. The surrounding HTML container then
- * provides the vertical scrollbar.
- *
- * 32px per airline gives us substantially thicker bars
- * and enough room for every airline label.
- */
+  /*
+   * -----------------------------------------------------
+   * FIND THE CHART CANVAS
+   * -----------------------------------------------------
+   */
 
-/*
- * -----------------------------------------------------
- * DYNAMIC CHART HEIGHT
- * -----------------------------------------------------
- *
- * Chart.js works best when the size is controlled by
- * the canvas's parent rather than by changing the
- * canvas itself.
- *
- * For the horizontal airline chart we give every
- * airline 34px of vertical space.
- *
- * The outer container remains 680px tall, so when
- * the chart becomes taller than that a scrollbar
- * appears.
- */
-  
+  const ctx =
+    document.getElementById(
+      "flightsPerAirlineYearChart"
+    );
+
+
+  if (!ctx) {
+
+    console.error(
+      "[airlines by year] chart canvas not found"
+    );
+
+    return;
+  }
+
+
+  /*
+   * -----------------------------------------------------
+   * DYNAMIC CHART HEIGHT
+   * -----------------------------------------------------
+   *
+   * Chart.js sizes itself from the height of its parent.
+   *
+   * For horizontal charts, each airline gets 34px of
+   * vertical space. If the complete chart is taller
+   * than 680px, the outer container provides scrolling.
+   */
+
   const chartInner =
     document.getElementById(
       "airlineChartInner"
     );
-  
-  
+
+
   if (!chartInner) {
-  
+
     console.error(
       "[airlines by year] airlineChartInner not found"
     );
-  
+
     return;
   }
-  
-  
+
+
   if (horizontal) {
-  
+
     const ROW_HEIGHT = 34;
     const MIN_HEIGHT = 680;
-  
+
     const requiredHeight =
       Math.max(
         MIN_HEIGHT,
         labels.length * ROW_HEIGHT
       );
-  
+
     chartInner.style.height =
       `${requiredHeight}px`;
-  
+
   } else {
-  
-    /*
-     * The "Airlines used per year" chart doesn't need
-     * the extra vertical scrolling space.
-     */
-  
+
     chartInner.style.height =
       "680px";
   }
+
+
+  /*
+   * Destroy the previous chart before drawing
+   * the replacement.
+   */
+
   if (chart) {
     chart.destroy();
   }
 
 
   chart = new Chart(ctx, {
-
+    
     type: "bar",
 
     data: {
