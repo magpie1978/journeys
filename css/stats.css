@@ -364,3 +364,23 @@ body {
   width: 100% !important;
   height: 100% !important;
 }
+
+
+
+/* =====================================================
+   STATISTICS TOP CONTROLS
+===================================================== */
+
+/*
+ * Row above the statistics tabs.
+ *
+ * The metric selector sits on the right-hand side,
+ * above the tab line.
+ */
+.stats-top-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  margin-bottom: 8px;
+}
