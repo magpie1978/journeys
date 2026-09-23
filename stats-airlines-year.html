@@ -33,6 +33,31 @@
       overflow-x: hidden;
     }
 
+    /*
+     * =====================================================
+     * AIRLINES-PER-YEAR CHART
+     * =====================================================
+     *
+     * The Airlines view is a vertical chart and all years
+     * fit comfortably within the available chart area.
+     *
+     * Disable the internal scrollbar for this view only.
+     */
+    
+    .chart-container.scroll-y.no-scroll {
+      overflow-y: hidden;
+    }
+    
+    
+    /*
+     * Make the inner chart fill the available 680px
+     * container when displaying Airlines per Year.
+     */
+    
+    .chart-container.scroll-y.no-scroll #airlineChartInner {
+      height: 100% !important;
+    }
+
     #airlineChartInner {
       position: relative;
       width: 100%;
