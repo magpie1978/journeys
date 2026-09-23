@@ -367,20 +367,21 @@ body {
 
 
 
-/* =====================================================
-   STATISTICS TOP CONTROLS
-===================================================== */
-
 /*
- * Row above the statistics tabs.
+ * =====================================================
+ * STATISTICS TOP CONTROLS
+ * =====================================================
  *
- * The metric selector sits on the right-hand side,
- * above the tab line.
+ * Year / All Time sit on the left.
+ * Flights / Miles sits on the right.
  */
+
 .stats-top-controls {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  justify-content: space-between;
 
-  margin-bottom: 8px;
+  width: 100%;
+
+  margin-bottom: 6px;
 }
