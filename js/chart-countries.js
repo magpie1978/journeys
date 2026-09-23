@@ -153,28 +153,93 @@ function visitsPerCountry(data) {
 
 function render({ labels, values }) {
 
+  /*
+   * -----------------------------------------------------
+   * FIND THE CHART CANVAS
+   * -----------------------------------------------------
+   */
+
   const ctx =
     document.getElementById(
       "visitsPerCountryChart"
     );
 
-
-  if (!ctx) {
-
-    console.error(
-      "[country stats] visitsPerCountryChart not found"
-    );
-
-    return;
-  }
-
-
-  if (chart) {
-    chart.destroy();
-  }
-
-
-  chart = new Chart(ctx, {
+  
+    if (!ctx) {
+  
+      console.error(
+        "[country stats] visitsPerCountryChart not found"
+      );
+  
+      return;
+    }
+  
+  
+    /*
+     * -----------------------------------------------------
+     * DYNAMIC CHART HEIGHT
+     * -----------------------------------------------------
+     *
+     * Give every country enough vertical room for its
+     * label and horizontal bar.
+     *
+     * The outer chart window stays 680px high.
+     * The inner chart can become considerably taller,
+     * producing a vertical scrollbar.
+     */
+  
+    const chartInner =
+      document.getElementById(
+        "countryChartInner"
+      );
+  
+  
+    if (!chartInner) {
+  
+      console.error(
+        "[country stats] countryChartInner not found"
+      );
+  
+      return;
+    }
+  
+  
+    /*
+     * Give each country a 34px row.
+     *
+     * For example:
+     *
+     *     30 countries × 34px = 1,020px
+     *     50 countries × 34px = 1,700px
+     *
+     * Only 680px is visible at once, so the remainder
+     * can be reached by scrolling.
+     */
+  
+    const ROW_HEIGHT = 34;
+    const MIN_HEIGHT = 680;
+  
+    const requiredHeight =
+      Math.max(
+        MIN_HEIGHT,
+        labels.length * ROW_HEIGHT
+      );
+  
+  
+    chartInner.style.height =
+      `${requiredHeight}px`;
+  
+  
+    /*
+     * Destroy the previous chart before drawing another.
+     */
+  
+    if (chart) {
+      chart.destroy();
+    }
+  
+  
+    chart = new Chart(ctx, {
 
     type: "bar",
 
@@ -182,17 +247,23 @@ function render({ labels, values }) {
 
       labels,
 
-      datasets: [{
+datasets: [{
 
-        data: values,
+  data: values,
 
-        backgroundColor: YELLOW,
-        borderColor: YELLOW_BORDER,
+  backgroundColor: YELLOW,
+  borderColor: YELLOW_BORDER,
 
-        borderWidth: 1,
-        borderRadius: 6
+  borderWidth: 1,
+  borderRadius: 6,
 
-      }]
+  /*
+   * Make each bar use most of its allocated 34px row.
+   */
+  categoryPercentage: 0.82,
+  barPercentage: 0.90
+
+}]
     },
 
 
