@@ -388,31 +388,3 @@ body {
 .stats-top-controls .stats-select {
   margin-left: 0;
 }
-
-
-/*
- * =====================================================
- * TOP CONTROL ROW
- * =====================================================
- *
- * Year / All Time on the left.
- * Flights / Miles on the far right.
- */
-.stats-top-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  width: 100%;
-
-  margin-bottom: 6px;
-}
-
-
-/*
- * Explicitly push the metric dropdown to the
- * right-hand edge.
- */
-.stats-top-controls .stats-select {
-  margin-left: auto;
-}
