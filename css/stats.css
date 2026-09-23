@@ -227,3 +227,35 @@ body {
 .chart-container canvas {
   width: 100% !important;
 }
+
+
+/*
+ * Visible chart window.
+ *
+ * The complete chart can be taller than this,
+ * in which case a vertical scrollbar appears.
+ */
+.chart-container.scroll-y {
+  height: 680px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+/*
+ * Chart.js sizes its canvas from this element.
+ *
+ * JavaScript will change this height according
+ * to the number of airlines being displayed.
+ */
+#airlineChartInner {
+  position: relative;
+  width: 100%;
+  height: 680px;
+}
+
+
+#flightsPerAirlineYearChart {
+  width: 100% !important;
+  height: 100% !important;
+}
