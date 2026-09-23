@@ -442,37 +442,63 @@ function render(
         
         y: {
         
+          /*
+           * For the vertical "Airlines" chart,
+           * explicitly start the Y axis at zero.
+           *
+           * Horizontal Flights/Miles charts use the Y axis
+           * for airline names, so no numeric minimum is needed.
+           */
+          min:
+            horizontal
+              ? undefined
+              : 0,
+        
           beginAtZero: true,
         
+        
           /*
-           * When this is a vertical chart, leave
-           * room above the columns for their values.
+           * Leave room above the tallest column for
+           * the value label drawn by barValueLabels.
            */
           grace:
             horizontal
               ? 0
               : "10%",
         
+        
           grid: {
             color: horizontal
               ? "transparent"
               : GRID
           },
-          
+        
+        
           ticks: {
-
+        
+            /*
+             * On the vertical Airlines chart, use whole
+             * numbers and explicitly include zero.
+             */
+            precision:
+              horizontal
+                ? undefined
+                : 0,
+        
             callback(value) {
-
+        
               /*
-               * For horizontal charts the Y axis
-               * contains airline names, so return
-               * Chart.js's original label.
+               * Horizontal chart:
+               * Y axis contains airline names.
                */
-
               if (horizontal) {
                 return this.getLabelForValue(value);
               }
-
+        
+              /*
+               * Vertical Airlines chart:
+               * Y axis contains number of airlines.
+               */
               return Number(value)
                 .toLocaleString();
             }
