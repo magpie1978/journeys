@@ -101,12 +101,86 @@ function renderChart({ labels, values }, metric) {
       responsive: true,
       maintainAspectRatio: false,
 
-      plugins: {
-        legend: {
-          display: false
-        },
+plugins: {
 
-        tooltip: {
+  /*
+   * ---------------------------------------------------
+   * CHART TITLE
+   * ---------------------------------------------------
+   *
+   * Display a centred description inside the chart
+   * itself.
+   */
+
+  title: {
+    display: true,
+
+    text:
+      metric === "miles"
+        ? (
+            timeMode === "all"
+              ? "Miles Over Time"
+              : "Miles per Year"
+          )
+        : (
+            timeMode === "all"
+              ? "Flights Over Time"
+              : "Flights per Year"
+          ),
+
+    color: "#ffffff",
+
+    font: {
+      size: 20,
+      weight: "600"
+    },
+
+    padding: {
+      top: 8,
+      bottom: 4
+    }
+  },
+
+
+  /*
+   * Smaller explanatory line underneath the title.
+   */
+
+  subtitle: {
+    display: true,
+
+    text:
+      metric === "miles"
+        ? (
+            timeMode === "all"
+              ? "Cumulative miles travelled"
+              : "Miles travelled by year"
+          )
+        : (
+            timeMode === "all"
+              ? "Cumulative number of flights"
+              : "Number of flights by year"
+          ),
+
+    color: "rgba(255,255,255,0.55)",
+
+    font: {
+      size: 13,
+      weight: "400"
+    },
+
+    padding: {
+      bottom: 18
+    }
+  },
+
+
+  legend: {
+    display: false
+  },
+
+
+  tooltip: {
           callbacks: {
             label(context) {
 
