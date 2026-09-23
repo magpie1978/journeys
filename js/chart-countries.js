@@ -108,18 +108,32 @@ function visitsPerCountry(data) {
 
 
     // Destination must have a country
-
+    
     if (!r.destination_country) return;
-
-
+    
+    
+    /*
+     * Exclude the United Kingdom from this chart.
+     *
+     * The UK is the home country and would otherwise
+     * dominate the chart, making the differences between
+     * the other countries much harder to see.
+     */
+    
+    if (
+      String(r.destination_country)
+        .trim()
+        .toLowerCase() === "united kingdom"
+    ) return;
+    
+    
     // Don't count domestic journeys as
     // a new visit to the same country
-
+    
     if (
       r.destination_country ===
       r.origin_country
     ) return;
-
 
     map[r.destination_country] =
       (map[r.destination_country] || 0) + 1;
