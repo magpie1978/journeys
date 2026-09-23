@@ -79,13 +79,6 @@ body {
   color: #fff;
 }
 
-.panel-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex: 0 0 auto;
-}
 
 /* =====================================================
    GRID PLACEMENT
@@ -386,6 +379,34 @@ body {
   margin-bottom: 6px;
 }
 
+.stats-top-controls .stats-select {
+  margin-left: auto;
+}
+
+
+/*
+ * =====================================================
+ * TOP CONTROL ROW
+ * =====================================================
+ *
+ * Year / All Time on the left.
+ * Flights / Miles on the far right.
+ */
+.stats-top-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  margin-bottom: 6px;
+}
+
+
+/*
+ * Explicitly push the metric dropdown to the
+ * right-hand edge.
+ */
 .stats-top-controls .stats-select {
   margin-left: auto;
 }
