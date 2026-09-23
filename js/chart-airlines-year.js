@@ -300,27 +300,84 @@ function render(
     return;
   }
 
+  /*
+ * Find the outer scrollable chart container.
+ *
+ * Flights and Miles may need vertical scrolling because
+ * there can be many airlines.
+ *
+ * The Airlines view is a vertical year chart, so it
+ * should simply fit inside the available chart area.
+ */
 
-  if (horizontal) {
+const chartContainer =
+  chartInner.closest(
+    ".chart-container"
+  );
 
-    const ROW_HEIGHT = 34;
-    const MIN_HEIGHT = 680;
 
-    const requiredHeight =
-      Math.max(
-        MIN_HEIGHT,
-        labels.length * ROW_HEIGHT
-      );
+if (horizontal) {
 
-    chartInner.style.height =
-      `${requiredHeight}px`;
+  /*
+   * Flights / Miles:
+   * allow scrolling when the list is taller than
+   * the visible chart area.
+   */
 
-  } else {
+  chartContainer?.classList.remove(
+    "no-scroll"
+  );
 
-    chartInner.style.height =
-      "680px";
-  }
+} else {
 
+  /*
+   * Airlines per Year:
+   * everything fits in the chart container, so remove
+   * the internal scrollbar.
+   */
+
+  chartContainer?.classList.add(
+    "no-scroll"
+  );
+
+}
+
+
+if (horizontal) {
+
+  /*
+   * Flights / Miles.
+   *
+   * Give every airline enough vertical room.
+   * If this exceeds 680px, the outer container
+   * becomes scrollable.
+   */
+
+  const ROW_HEIGHT = 34;
+  const MIN_HEIGHT = 680;
+
+  const requiredHeight =
+    Math.max(
+      MIN_HEIGHT,
+      labels.length * ROW_HEIGHT
+    );
+
+  chartInner.style.height =
+    `${requiredHeight}px`;
+
+} else {
+
+  /*
+   * Airlines per Year.
+   *
+   * Fit the complete vertical chart into the
+   * fixed-height chart container.
+   */
+
+  chartInner.style.height =
+    "100%";
+}
+  
 
   /*
    * Destroy the previous chart before drawing
