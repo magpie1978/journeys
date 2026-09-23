@@ -162,11 +162,43 @@ function render(
  * and enough room for every airline label.
  */
 
+/*
+ * -----------------------------------------------------
+ * DYNAMIC CHART HEIGHT
+ * -----------------------------------------------------
+ *
+ * Chart.js works best when the size is controlled by
+ * the canvas's parent rather than by changing the
+ * canvas itself.
+ *
+ * For the horizontal airline chart we give every
+ * airline 34px of vertical space.
+ *
+ * The outer container remains 680px tall, so when
+ * the chart becomes taller than that a scrollbar
+ * appears.
+ */
+  
+  const chartInner =
+    document.getElementById(
+      "airlineChartInner"
+    );
+  
+  
+  if (!chartInner) {
+  
+    console.error(
+      "[airlines by year] airlineChartInner not found"
+    );
+  
+    return;
+  }
+  
+  
   if (horizontal) {
   
-    const ROW_HEIGHT = 32;
-  
-    const MIN_HEIGHT = 650;
+    const ROW_HEIGHT = 34;
+    const MIN_HEIGHT = 680;
   
     const requiredHeight =
       Math.max(
@@ -174,24 +206,19 @@ function render(
         labels.length * ROW_HEIGHT
       );
   
-    ctx.style.height =
+    chartInner.style.height =
       `${requiredHeight}px`;
-  
-    ctx.height =
-      requiredHeight;
   
   } else {
   
     /*
-     * The "Airlines per Year" view is a normal vertical
-     * chart, so it doesn't need the extra scrolling height.
+     * The "Airlines used per year" chart doesn't need
+     * the extra vertical scrolling space.
      */
   
-    ctx.style.height = "650px";
-  
-    ctx.height = 650;
+    chartInner.style.height =
+      "680px";
   }
-
   if (chart) {
     chart.destroy();
   }
