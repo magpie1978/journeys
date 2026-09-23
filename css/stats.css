@@ -127,14 +127,21 @@ body {
 
 .chart-card {
   flex: 1;
-  min-height: 500px;   /* 🔥 key fix */
-  max-height: 70vh;    /* 🔥 keeps consistency */
+  min-height: 500px;
+  max-height: 70vh;
 
   display: flex;
   flex-direction: column;
 
   padding: 16px;
-  border-radius: 16px;
+
+  /*
+   * Top is square because the tabs sit directly
+   * against this edge.
+   *
+   * Keep rounded corners at the bottom.
+   */
+  border-radius: 0 0 16px 16px;
 
   background: #14161f;
   border: 1px solid #2a2d3a;
@@ -192,12 +199,6 @@ body {
 }
 
 
-.chart-card {
-  height: 65vh;
-}
-
-
-
 /* =====================================================
    SHARED STATISTICS PAGE LAYOUT
 ===================================================== */
@@ -218,44 +219,52 @@ body {
  *
  * The bottom border creates the browser-style tab bar.
  */
+
 .stats-nav {
   display: flex;
   align-items: flex-end;
   gap: 4px;
 
-  margin-bottom: 14px;
+  /*
+   * No gap below the tabs.
+   * They sit directly against the chart container.
+   */
+  margin: 0;
   padding-left: 4px;
 
+  /*
+   * This becomes the continuation of the chart's
+   * top border between/after the tabs.
+   */
   border-bottom: 1px solid #2a2d3a;
 }
-
 
 /*
  * Individual inactive tab.
  */
-.stats-nav a {
-  position: relative;
-  display: block;
+.stats-nav a.active {
+  color: #fff;
 
-  padding: 9px 18px 10px;
+  /*
+   * Same background as the chart card so the
+   * selected tab visually becomes part of it.
+   */
+  background: #14161f;
 
-  color: rgba(255,255,255,0.62);
-  text-decoration: none;
+  border-color: #2a2d3a;
 
-  font-size: 14px;
-  font-weight: 500;
+  /*
+   * Pull the active tab down over the shared
+   * border by one pixel.
+   */
+  margin-bottom: -1px;
 
-  background: #111;
+  border-top: 2px solid rgba(201,162,77,0.9);
 
-  border: 1px solid #2a2d3a;
-  border-bottom: none;
+  padding-top: 8px;
+  padding-bottom: 11px;
 
-  border-radius: 9px 9px 0 0;
-
-  transition:
-    color 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
+  z-index: 2;
 }
 
 
