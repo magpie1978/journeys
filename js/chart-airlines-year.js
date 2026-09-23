@@ -145,19 +145,52 @@ function render(
   horizontal = true
 ) {
 
-  const ctx =
-    document.getElementById(
-      "flightsPerAirlineYearChart"
-    );
+/*
+ * -----------------------------------------------------
+ * DYNAMIC CHART HEIGHT
+ * -----------------------------------------------------
+ *
+ * For horizontal airline charts we want every airline
+ * to have plenty of vertical space.
+ *
+ * Instead of squeezing all airlines into the visible
+ * panel, make the canvas taller as more airlines are
+ * displayed. The surrounding HTML container then
+ * provides the vertical scrollbar.
+ *
+ * 32px per airline gives us substantially thicker bars
+ * and enough room for every airline label.
+ */
 
-  if (!ctx) {
-    console.error(
-      "[airlines by year] chart canvas not found"
-    );
-
-    return;
+  if (horizontal) {
+  
+    const ROW_HEIGHT = 32;
+  
+    const MIN_HEIGHT = 650;
+  
+    const requiredHeight =
+      Math.max(
+        MIN_HEIGHT,
+        labels.length * ROW_HEIGHT
+      );
+  
+    ctx.style.height =
+      `${requiredHeight}px`;
+  
+    ctx.height =
+      requiredHeight;
+  
+  } else {
+  
+    /*
+     * The "Airlines per Year" view is a normal vertical
+     * chart, so it doesn't need the extra scrolling height.
+     */
+  
+    ctx.style.height = "650px";
+  
+    ctx.height = 650;
   }
-
 
   if (chart) {
     chart.destroy();
@@ -171,14 +204,18 @@ function render(
     data: {
 
       labels,
-
-      datasets: [{
-        data: values,
-        backgroundColor: YELLOW,
-        borderColor: YELLOW_BORDER,
-        borderWidth: 1,
-        borderRadius: 6
-      }]
+    
+    datasets: [{
+      data: values,
+      backgroundColor: YELLOW,
+      borderColor: YELLOW_BORDER,
+      borderWidth: 1,
+      borderRadius: 6,
+    
+      // Use more of the available space for each bar.
+      categoryPercentage: 0.82,
+      barPercentage: 0.90
+    }]    
     },
 
 
