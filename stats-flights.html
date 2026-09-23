@@ -203,29 +203,42 @@
     <div class="table-aligned-container">
 
       <!-- NAV BETWEEN CHART PAGES -->
+      <!-- TOP CONTROLS -->
+      <div class="stats-top-controls">
+      
+        <select id="metricSelector" class="stats-select">
+          <option value="flights">Flights</option>
+          <option value="miles">Miles</option>
+        </select>
+      
+      </div>
+      
+      
+      <!-- NAV BETWEEN CHART PAGES -->
       <div class="stats-nav">
-        <a href="stats-flights.html">Flights</a>
+        <a href="stats-flights.html" class="active">Flights</a>
         <a href="stats-airlines.html">Airlines</a>
         <a href="stats-airlines-year.html">Airlines by Year</a>
         <a href="stats-countries.html">Countries</a>
       </div>
-
-
-      <!-- CHART PANEL -->
+      
+      
       <section class="stats-panel full-page">
-
+      
         <div class="panel-head">
+      
           <div class="toggle-group">
-            <button id="btnYear" class="toggle-btn active">Year</button>
-            <button id="btnAllTime" class="toggle-btn">All Time</button>
+            <button id="btnYear" class="toggle-btn active">
+              Year
+            </button>
+      
+            <button id="btnAllTime" class="toggle-btn">
+              All Time
+            </button>
           </div>
-
-          <select id="metricSelector" class="stats-select">
-            <option value="flights">Flights</option>
-            <option value="miles">Miles</option>
-          </select>
+      
         </div>
-
+        
         <div class="chart-card">
           <div class="chart-container scroll-y">
             <canvas id="flightsByYearChart"></canvas>
