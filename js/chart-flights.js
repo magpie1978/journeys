@@ -48,16 +48,19 @@ const barValueLabels = {
 
 
     ctx.save();
-
+    
+    /*
+     * Match the bar-top labels to the Chart.js
+     * axis label styling.
+     */
     ctx.fillStyle =
-      "rgba(255,255,255,0.82)";
-
+      "rgba(255,255,255,0.55)";
+    
     ctx.font =
-      "600 11px sans-serif";
-
-    ctx.textAlign =
-      "center";
-
+      "12px sans-serif";
+        ctx.textAlign =
+          "center";
+    
     ctx.textBaseline =
       "bottom";
 
