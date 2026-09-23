@@ -7,6 +7,112 @@ const YELLOW_BORDER = "rgba(201,162,77,0.9)";
 const GRID = "rgba(255,255,255,0.08)";
 
 
+/*
+ * =====================================================
+ * BAR VALUE LABELS
+ * =====================================================
+ *
+ * Displays the value at the end of each bar.
+ *
+ * Horizontal:
+ *
+ * Ryanair    ███████████████  123
+ *
+ * Vertical:
+ *
+ *                  12
+ *                  ██
+ *                  ██
+ *                 2024
+ */
+
+const barValueLabels = {
+
+  id: "barValueLabels",
+
+  afterDatasetsDraw(chart) {
+
+    const {
+      ctx,
+      data
+    } = chart;
+
+    const horizontal =
+      chart.options.indexAxis === "y";
+
+    const dataset =
+      chart.getDatasetMeta(0);
+
+    ctx.save();
+
+    /*
+     * Match the axis-label appearance.
+     */
+    ctx.fillStyle =
+      "rgba(255,255,255,0.55)";
+
+    ctx.font =
+      "12px sans-serif";
+
+
+    dataset.data.forEach(
+      (bar, index) => {
+
+        const value =
+          Number(
+            data.datasets[0].data[index]
+          ) || 0;
+
+        if (!value) return;
+
+        const label =
+          value.toLocaleString();
+
+
+        /*
+         * Horizontal chart:
+         *
+         * Put the value just beyond the right-hand
+         * end of the bar.
+         */
+        if (horizontal) {
+
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+
+          ctx.fillText(
+            label,
+            bar.x + 7,
+            bar.y
+          );
+
+          return;
+        }
+
+
+        /*
+         * Vertical chart:
+         *
+         * Put the value above the column.
+         */
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+
+        ctx.fillText(
+          label,
+          bar.x,
+          bar.y - 5
+        );
+
+      }
+    );
+
+    ctx.restore();
+  }
+
+};
+
+
 // =====================================================
 // HELPERS
 // =====================================================
@@ -227,11 +333,14 @@ function render(
 
 
   chart = new Chart(ctx, {
-    
+      
     type: "bar",
-
+  
+    plugins: [
+      barValueLabels
+    ],
+  
     data: {
-
       labels,
     
     datasets: [{
@@ -300,11 +409,20 @@ function render(
 
 
       scales: {
-
+        
         x: {
-
+        
           beginAtZero: true,
-
+        
+          /*
+           * Horizontal charts need some extra room
+           * beyond the longest bar for its value.
+           */
+          grace:
+            horizontal
+              ? "8%"
+              : 0,
+        
           grid: {
             color: horizontal
               ? GRID
@@ -321,17 +439,26 @@ function render(
           }
         },
 
-
+        
         y: {
-
+        
           beginAtZero: true,
-
+        
+          /*
+           * When this is a vertical chart, leave
+           * room above the columns for their values.
+           */
+          grace:
+            horizontal
+              ? 0
+              : "10%",
+        
           grid: {
             color: horizontal
               ? "transparent"
               : GRID
           },
-
+          
           ticks: {
 
             callback(value) {
