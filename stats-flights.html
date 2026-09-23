@@ -7,7 +7,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Journey Statistics – Flights</title>
+
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,255 +17,341 @@
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
   <!-- Existing styles -->
   <link rel="stylesheet" href="css/flights.css" />
   <link rel="stylesheet" href="css/stats.css" />
 
-    <!-- OPTIONAL: page-specific tweak -->
+
+  <!-- Page-specific styling -->
   <style>
-  
+
     /*
      * =====================================================
      * CHART
      * =====================================================
      */
-  
+
     canvas {
       width: 100% !important;
       height: 100% !important;
     }
-  
-  
+
+
     /*
      * =====================================================
-     * YEAR / ALL TIME + METRIC CONTROLS
+     * TOP CONTROLS
      * =====================================================
      *
-     * The panel-head already contains:
+     * Year / All Time sit on the left.
      *
-     *     Year / All Time              Flights ▼
+     * Flights / Miles sits on the far right.
      *
-     * We add some space underneath so the controls don't
-     * sit directly against the top edge of the chart.
+     * Because this container has the same width as the
+     * chart below, the right-hand edge of the dropdown
+     * lines up with the right-hand edge of the chart.
      */
-  
-    .panel-head {
+
+    .stats-top-controls {
       display: flex;
       align-items: center;
       justify-content: space-between;
-  
-      gap: 16px;
-  
-      margin-bottom: 14px;
+
+      width: 100%;
+
+      margin-bottom: 6px;
     }
-  
-  
+
+
     /*
-     * YEAR / ALL TIME BUTTON GROUP
+     * Explicitly push the metric selector to the
+     * right-hand side of the row.
      */
-  
+
+    .stats-top-controls .stats-select {
+      margin-left: auto;
+    }
+
+
+    /*
+     * =====================================================
+     * YEAR / ALL TIME BUTTON GROUP
+     * =====================================================
+     */
+
     .toggle-group {
       display: flex;
       align-items: center;
       gap: 6px;
     }
-  
-  
+
+
     /*
-     * Default/inactive button.
+     * Default / inactive button.
      */
-  
+
     .toggle-btn {
       appearance: none;
-  
+
       padding: 8px 18px;
-  
-      border: 1px solid rgba(255,255,255,0.14);
+
+      border:
+        1px solid rgba(255,255,255,0.14);
+
       border-radius: 8px;
-  
-      background: rgba(255,255,255,0.045);
-  
-      color: rgba(255,255,255,0.82);
-  
+
+      background:
+        rgba(255,255,255,0.045);
+
+      color:
+        rgba(255,255,255,0.82);
+
       font: inherit;
       font-size: 14px;
       font-weight: 600;
-  
+
       cursor: pointer;
-  
+
       transition:
         background 0.15s ease,
         border-color 0.15s ease,
         color 0.15s ease,
         transform 0.15s ease;
     }
-  
-  
+
+
     /*
-     * Slight highlight when the mouse is over a button.
+     * Button hover.
      */
-  
+
     .toggle-btn:hover {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.22);
+      background:
+        rgba(255,255,255,0.08);
+
+      border-color:
+        rgba(255,255,255,0.22);
+
       color: #fff;
     }
-  
-  
+
+
     /*
      * Selected button.
-     *
-     * Uses the same gold/yellow family as the chart bars.
      */
-  
+
     .toggle-btn.active {
-      background: rgba(201,162,77,0.95);
-      border-color: rgba(225,190,105,1);
-  
+      background:
+        rgba(201,162,77,0.95);
+
+      border-color:
+        rgba(225,190,105,1);
+
       color: #111;
-  
+
       box-shadow:
-        0 0 0 1px rgba(201,162,77,0.10);
+        0 0 0 1px
+        rgba(201,162,77,0.10);
     }
-  
-  
+
+
     /*
+     * =====================================================
      * FLIGHTS / MILES DROPDOWN
+     * =====================================================
      */
-  
+
     #metricSelector {
       min-width: 100px;
-  
-      padding: 8px 34px 8px 14px;
-  
-      border: 1px solid rgba(255,255,255,0.14);
+
+      padding:
+        8px 34px
+        8px 14px;
+
+      border:
+        1px solid rgba(255,255,255,0.14);
+
       border-radius: 10px;
-  
-      background-color: rgba(255,255,255,0.045);
-  
+
+      background-color:
+        rgba(255,255,255,0.045);
+
       color: #fff;
-  
+
       font: inherit;
       font-size: 14px;
-  
+
       cursor: pointer;
     }
-  
-  
-    /*
-     * =====================================================
-     * NAVIGATION
-     * =====================================================
-     */
-  
-    .stats-nav a {
-      color: #ccc;
-      text-decoration: none;
-      font-size: 14px;
-    }
-  
-  
-    .stats-nav a:hover {
-      color: #fff;
-    }
-  
-  
+
+
     /*
      * =====================================================
      * MOBILE
      * =====================================================
      */
-  
+
     @media (max-width: 600px) {
-  
-      .panel-head {
+
+      .stats-top-controls {
         gap: 10px;
       }
-  
+
       .toggle-btn {
         padding-left: 14px;
         padding-right: 14px;
       }
-  
+
     }
-  
+
   </style>
 </head>
 
+
 <body>
 
-  <!-- HEADER -->
+
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
+
   <header id="statsHeader">
-    <a href="index.html" class="back-link">← Back to map</a>
-    <div class="stats-header-title">Journey Statistics</div>
+
+    <a
+      href="index.html"
+      class="back-link"
+    >
+      ← Back to map
+    </a>
+
+    <div class="stats-header-title">
+      Journey Statistics
+    </div>
+
   </header>
 
-  <!-- MAIN -->
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+
   <main id="statsPage">
+
     <div class="table-aligned-container">
 
-      <!-- NAV BETWEEN CHART PAGES -->
-      <!-- TOP CONTROLS -->
+
+      <!-- =================================================
+           TOP CONTROLS
+           =================================================
+
+           Year / All Time                    Flights ▼
+      -->
+
       <div class="stats-top-controls">
-      
-        <select id="metricSelector" class="stats-select">
-          <option value="flights">Flights</option>
-          <option value="miles">Miles</option>
+
+
+        <!-- YEAR / ALL TIME -->
+
+        <div class="toggle-group">
+
+          <button
+            id="btnYear"
+            class="toggle-btn active"
+          >
+            Year
+          </button>
+
+          <button
+            id="btnAllTime"
+            class="toggle-btn"
+          >
+            All Time
+          </button>
+
+        </div>
+
+
+        <!-- FLIGHTS / MILES -->
+
+        <select
+          id="metricSelector"
+          class="stats-select"
+        >
+
+          <option value="flights">
+            Flights
+          </option>
+
+          <option value="miles">
+            Miles
+          </option>
+
         </select>
-      
-      </div>
-      
-      
-      <!-- NAV BETWEEN CHART PAGES -->
-      <div class="stats-nav">
-        <a href="stats-flights.html" class="active">Flights</a>
-        <a href="stats-airlines.html">Airlines</a>
-        <a href="stats-airlines-year.html">Airlines by Year</a>
-        <a href="stats-countries.html">Countries</a>
+
+
       </div>
 
-      <!-- CHART PANEL -->
+
+      <!-- =================================================
+           NAVIGATION TABS
+           ================================================= -->
+
+      <div class="stats-nav">
+
+        <a
+          href="stats-flights.html"
+          class="active"
+        >
+          Flights
+        </a>
+
+        <a href="stats-airlines.html">
+          Airlines
+        </a>
+
+        <a href="stats-airlines-year.html">
+          Airlines by Year
+        </a>
+
+        <a href="stats-countries.html">
+          Countries
+        </a>
+
+      </div>
+
+
+      <!-- =================================================
+           CHART PANEL
+           ================================================= -->
+
       <section class="stats-panel full-page">
-      
+
         <div class="chart-card">
+
           <div class="chart-container scroll-y">
-            <canvas id="flightsByYearChart"></canvas>
+
+            <canvas
+              id="flightsByYearChart"
+            ></canvas>
+
           </div>
+
         </div>
-      
+
       </section>
-      
-      
-      <section class="stats-panel full-page">
-      
-        <div class="panel-head">
-      
-          <div class="toggle-group">
-            <button id="btnYear" class="toggle-btn active">
-              Year
-            </button>
-      
-            <button id="btnAllTime" class="toggle-btn">
-              All Time
-            </button>
-          </div>
-      
-        </div>
-        
-        <div class="chart-card">
-          <div class="chart-container scroll-y">
-            <canvas id="flightsByYearChart"></canvas>
-          </div>
-        </div>
-        
-      </section>
+
 
     </div>
+
   </main>
 
-  <!-- CONFIG + CHART LOGIC -->
+
+  <!-- =====================================================
+       CONFIG + CHART LOGIC
+       ===================================================== -->
+
   <script src="js/supabase.js"></script>
   <script src="js/chart-flights.js"></script>
+
 
 </body>
 </html>
