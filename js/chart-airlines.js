@@ -173,20 +173,32 @@ chart = new Chart(ctx, {
           display: false
         },
 
-        tooltip: {
-          callbacks: {
-
-            label(context) {
-
-              const value =
-                Number(context.raw) || 0;
-
-              if (!value) return null;
-
-              return `${context.dataset.label}: ${value} flights`;
-            }
+      tooltip: {
+      
+        // IMPORTANT:
+        // Only show the individual stacked segment
+        // that the mouse is actually hovering over.
+        mode: "nearest",
+        intersect: true,
+      
+        callbacks: {
+      
+          title(context) {
+            // Keep the year as the tooltip heading
+            return context[0]?.label || "";
+          },
+      
+          label(context) {
+      
+            const value =
+              Number(context.raw) || 0;
+      
+            if (!value) return null;
+      
+            return `${context.dataset.label}: ${value} flights`;
           }
         }
+      }      
       },
 
       scales: {
