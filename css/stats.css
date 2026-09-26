@@ -396,3 +396,25 @@ body {
 .stats-top-controls .stats-select {
   margin-left: 0;
 }
+
+
+/* =====================================================
+   AIRLINES / COUNTRY SCROLLABLE CHART CLEANUP
+   ===================================================== */
+
+/*
+ * The chart-card is the one and only visible panel.
+ *
+ * The scrolling chart-container inside it must not
+ * create a second bordered / rounded container.
+ */
+.chart-card > .chart-container {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  margin: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
+}
