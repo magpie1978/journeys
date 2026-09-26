@@ -119,7 +119,7 @@ const barValueLabels = {
 async function loadData() {
   const { data, error } = await sb
     .from("journeys_routes_core_3_mv")
-    .select("year, journey_type, journey_distance");
+    .select("year, journey_type, journey_distance, cabin");
 
   if (error) {
     console.error("[flight stats] load failed:", error);
@@ -129,6 +129,315 @@ async function loadData() {
   return data || [];
 }
 
+
+// =====================================================
+// CABIN HELPER
+// =====================================================
+
+function cabinFlightsPerYear(data) {
+
+  const byYear = {};
+  const cabinSet = new Set();
+
+  data.forEach(row => {
+
+    if (
+      String(row.journey_type || "").toLowerCase()
+      !== "flight"
+    ) {
+      return;
+    }
+
+    const year =
+      String(row.year || "").slice(0, 4);
+
+    if (!/^\d{4}$/.test(year)) {
+      return;
+    }
+
+    const cabin =
+      String(row.cabin || "").trim() ||
+      "Unknown";
+
+    cabinSet.add(cabin);
+
+    if (!byYear[year]) {
+      byYear[year] = {};
+    }
+
+    byYear[year][cabin] =
+      (byYear[year][cabin] || 0) + 1;
+
+  });
+
+  const years =
+    Object.keys(byYear).sort();
+
+  const cabins =
+    [...cabinSet].sort();
+
+  return {
+    years,
+    cabins,
+    byYear
+  };
+}
+
+
+// =====================================================
+// CABIN CHART RENDERER
+// =====================================================
+function renderCabinChart(data) {
+
+  const {
+    years,
+    cabins,
+    byYear
+  } = cabinFlightsPerYear(data);
+
+
+  /*
+   * One stable colour for each cabin.
+   *
+   * Add/change cabin names here to match the values
+   * actually stored in your database.
+   */
+  const cabinColours = {
+    Economy: "#C9A24D",
+    "Premium Economy": "#4DA6C9",
+    Business: "#8B6CC9",
+    First: "#C96C6C",
+    Unknown: "#777777"
+  };
+
+
+  /*
+   * YEAR
+   *
+   * Each year is an independent stacked bar.
+   */
+  let datasets;
+
+  if (timeMode === "year") {
+
+    datasets = cabins.map(cabin => ({
+      label: cabin,
+
+      data: years.map(year =>
+        byYear[year]?.[cabin] || 0
+      ),
+
+      backgroundColor:
+        cabinColours[cabin] || "#999999",
+
+      borderWidth: 0,
+
+      stack: "cabins"
+    }));
+
+  }
+
+
+  /*
+   * ALL TIME
+   *
+   * Maintain a running cumulative count for
+   * each individual cabin.
+   */
+  else {
+
+    const running = {};
+
+    cabins.forEach(cabin => {
+      running[cabin] = 0;
+    });
+
+
+    const cumulative =
+      years.map(year => {
+
+        const result = {};
+
+        cabins.forEach(cabin => {
+
+          running[cabin] +=
+            byYear[year]?.[cabin] || 0;
+
+          result[cabin] =
+            running[cabin];
+
+        });
+
+        return result;
+      });
+
+
+    datasets = cabins.map(cabin => ({
+      label: cabin,
+
+      data: cumulative.map(row =>
+        row[cabin]
+      ),
+
+      backgroundColor:
+        cabinColours[cabin] || "#999999",
+
+      borderWidth: 0,
+
+      stack: "cabins"
+    }));
+
+  }
+
+
+  if (flightsChart) {
+    flightsChart.destroy();
+  }
+
+
+  const ctx =
+    document.getElementById(
+      "flightsByYearChart"
+    );
+
+
+  flightsChart = new Chart(ctx, {
+
+    type: "bar",
+
+    data: {
+      labels: years,
+      datasets
+    },
+
+    options: {
+
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+
+        title: {
+          display: true,
+
+          text:
+            timeMode === "year"
+              ? "Flights per Year by Cabin"
+              : "Cumulative Flights by Cabin",
+
+          color: "#ffffff",
+
+          font: {
+            size: 20,
+            weight: "600"
+          },
+
+          padding: {
+            top: 14,
+            bottom: 4
+          }
+        },
+
+
+        subtitle: {
+          display: true,
+
+          text:
+            timeMode === "year"
+              ? "Number of flights by cabin each year"
+              : "Cumulative number of flights by cabin",
+
+          color:
+            "rgba(255,255,255,0.55)",
+
+          font: {
+            size: 13,
+            weight: "400"
+          },
+
+          padding: {
+            top: 0,
+            bottom: 18
+          }
+        },
+
+
+        /*
+         * Unlike Flights/Miles, show the legend
+         * so the cabin colours can be identified.
+         */
+        legend: {
+          display: true,
+
+          labels: {
+            color:
+              "rgba(255,255,255,0.75)",
+            usePointStyle: true,
+            boxWidth: 10
+          }
+        },
+
+
+        tooltip: {
+
+          callbacks: {
+
+            label(context) {
+
+              const value =
+                Number(context.raw) || 0;
+
+              return (
+                `${context.dataset.label}: ` +
+                `${value} flight` +
+                `${value === 1 ? "" : "s"}`
+              );
+            },
+
+            footer(items) {
+
+              const total =
+                items.reduce(
+                  (sum, item) =>
+                    sum +
+                    (Number(item.raw) || 0),
+                  0
+                );
+
+              return `Total: ${total} flights`;
+            }
+          }
+        }
+      },
+
+
+      scales: {
+
+        x: {
+          stacked: true,
+
+          grid: {
+            display: false
+          }
+        },
+
+        y: {
+          stacked: true,
+          beginAtZero: true,
+
+          ticks: {
+            precision: 0
+          },
+
+          grid: {
+            color:
+              "rgba(255,255,255,0.08)"
+          }
+        }
+      }
+    }
+  });
+}
 
 // =====================================================
 // CALCULATE FLIGHTS / MILES PER YEAR
@@ -336,6 +645,10 @@ plugins: {
 // UPDATE CHART
 // =====================================================
 
+// =====================================================
+// UPDATE CHART
+// =====================================================
+
 function updateChart() {
 
   const metricSelector =
@@ -343,6 +656,18 @@ function updateChart() {
 
   const metric =
     metricSelector?.value || "flights";
+
+
+  // =====================================================
+  // CABIN MODE
+  // =====================================================
+
+  if (metric === "cabin") {
+
+    renderCabinChart(flightData);
+
+    return;
+  }
 
 
   // Calculate annual figures first
