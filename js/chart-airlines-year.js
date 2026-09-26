@@ -521,11 +521,14 @@ if (horizontal) {
         
         x: {
         
-          beginAtZero: true,
+          beginAtZero: horizontal,
         
           /*
-           * Horizontal charts need some extra room
-           * beyond the longest bar for its value.
+           * Horizontal charts:
+           * X axis contains the numeric values.
+           *
+           * Vertical Airlines-per-Year chart:
+           * X axis contains the year labels.
            */
           grace:
             horizontal
@@ -533,21 +536,34 @@ if (horizontal) {
               : 0,
         
           grid: {
-            color: horizontal
-              ? GRID
-              : "transparent"
+            color:
+              horizontal
+                ? GRID
+                : "transparent"
           },
-
+        
           ticks: {
-
+        
             callback(value) {
-
-              return Number(value)
-                .toLocaleString();
+        
+              /*
+               * Horizontal Flights / Miles charts:
+               * format the numeric X-axis.
+               */
+              if (horizontal) {
+                return Number(value)
+                  .toLocaleString();
+              }
+        
+              /*
+               * Vertical Airlines-per-Year chart:
+               * value is the category index, so retrieve
+               * the actual year label.
+               */
+              return this.getLabelForValue(value);
             }
           }
         },
-
                 
         y: {
         
