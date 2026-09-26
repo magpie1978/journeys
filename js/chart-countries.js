@@ -32,15 +32,31 @@ const barValueLabels = {
       data
     } = chart;
 
-    const dataset =
-      chart.getDatasetMeta(0);
+
+    if (!data.datasets.length) {
+      return;
+    }
+
+
+    /*
+     * Use the final dataset's bar position.
+     *
+     * Because all datasets are stacked, its x
+     * position is the right-hand edge of the
+     * complete country bar.
+     */
+
+    const lastDatasetIndex =
+      data.datasets.length - 1;
+
+    const meta =
+      chart.getDatasetMeta(
+        lastDatasetIndex
+      );
+
 
     ctx.save();
 
-    /*
-     * Match the colour and size of the
-     * existing Chart.js axis labels.
-     */
     ctx.fillStyle =
       "rgba(255,255,255,0.55)";
 
@@ -54,28 +70,78 @@ const barValueLabels = {
       "middle";
 
 
-    dataset.data.forEach(
-      (bar, index) => {
+    data.labels.forEach(
+      (country, index) => {
 
-        const value =
-          Number(
-            data.datasets[0].data[index]
-          ) || 0;
+        let total = 0;
 
-        if (!value) return;
 
-        const label =
-          value.toLocaleString();
+        data.datasets.forEach(dataset => {
+
+          total +=
+            Number(
+              dataset.data[index]
+            ) || 0;
+
+        });
+
+
+        if (!total) {
+          return;
+        }
+
 
         /*
-         * bar.x is the right-hand end of the
-         * horizontal bar.
-         *
-         * Add 7px so the value doesn't touch
-         * the end of the bar.
+         * Find the right-most visible segment,
+         * because the final year may be zero for
+         * this particular country.
          */
+
+        let bar = null;
+
+
+        for (
+          let datasetIndex =
+            data.datasets.length - 1;
+
+          datasetIndex >= 0;
+
+          datasetIndex--
+        ) {
+
+          const value =
+            Number(
+              data.datasets[
+                datasetIndex
+              ].data[index]
+            ) || 0;
+
+
+          if (!value) {
+            continue;
+          }
+
+
+          const datasetMeta =
+            chart.getDatasetMeta(
+              datasetIndex
+            );
+
+
+          bar =
+            datasetMeta.data[index];
+
+          break;
+        }
+
+
+        if (!bar) {
+          return;
+        }
+
+
         ctx.fillText(
-          label,
+          total.toLocaleString(),
           bar.x + 7,
           bar.y
         );
@@ -83,11 +149,11 @@ const barValueLabels = {
       }
     );
 
+
     ctx.restore();
   }
 
 };
-
 
 // =====================================================
 // LOAD DATA
@@ -98,7 +164,7 @@ async function loadData() {
   // Load journeys
   const { data: journeys, error: journeysError } = await sb
     .from("journeys_routes_core_3_mv")
-    .select("journey_type, origin, destination");
+    .select("year, journey_type, origin, destination");
 
   if (journeysError) {
     console.error(
@@ -171,6 +237,8 @@ async function loadData() {
 function visitsPerCountry(data) {
 
   const map = {};
+  const yearsSet = new Set();
+
 
   data.forEach(r => {
 
@@ -180,65 +248,96 @@ function visitsPerCountry(data) {
         .toLowerCase();
 
 
-    // Preserve original behaviour:
+    // Preserve existing behaviour:
     // only Flights and Drives
 
     if (
       journeyType !== "flight" &&
       journeyType !== "drive"
-    ) return;
+    ) {
+      return;
+    }
 
 
-    // Destination must have a country
-    
-    if (!r.destination_country) return;
-    
-    
-    /*
-     * Exclude the United Kingdom from this chart.
-     *
-     * The UK is the home country and would otherwise
-     * dominate the chart, making the differences between
-     * the other countries much harder to see.
-     */
-    
+    if (!r.destination_country) {
+      return;
+    }
+
+
+    // Exclude United Kingdom
+
     if (
       String(r.destination_country)
         .trim()
         .toLowerCase() === "united kingdom"
-    ) return;
-    
-    
-    // Don't count domestic journeys as
-    // a new visit to the same country
-    
+    ) {
+      return;
+    }
+
+
+    // Don't count domestic journeys
+
     if (
       r.destination_country ===
       r.origin_country
-    ) return;
+    ) {
+      return;
+    }
 
-    map[r.destination_country] =
-      (map[r.destination_country] || 0) + 1;
+
+    const year =
+      String(r.year || "").slice(0, 4);
+
+
+    if (!/^\d{4}$/.test(year)) {
+      return;
+    }
+
+
+    const country =
+      r.destination_country;
+
+
+    yearsSet.add(year);
+
+
+    if (!map[country]) {
+      map[country] = {};
+    }
+
+
+    map[country][year] =
+      (map[country][year] || 0) + 1;
 
   });
 
 
-  // Most visited first
+  const years =
+    [...yearsSet].sort();
+
+
+  // Sort countries by TOTAL visits
 
   const countries =
-    Object.keys(map).sort(
-      (a, b) => map[b] - map[a]
-    );
+    Object.keys(map).sort((a, b) => {
+
+      const totalA =
+        Object.values(map[a])
+          .reduce((sum, n) => sum + n, 0);
+
+      const totalB =
+        Object.values(map[b])
+          .reduce((sum, n) => sum + n, 0);
+
+      return totalB - totalA;
+
+    });
 
 
   return {
-
     labels: countries,
-
-    values: countries.map(
-      country => map[country]
-    )
-
+    years,
+    byCountry: map
   };
 }
 
@@ -247,7 +346,11 @@ function visitsPerCountry(data) {
 // RENDER CHART
 // =====================================================
 
-function render({ labels, values }) {
+function render({
+  labels,
+  years,
+  byCountry
+}) {
 
   /*
    * -----------------------------------------------------
@@ -334,6 +437,33 @@ function render({ labels, values }) {
       chart.destroy();
     }
   
+    const datasets =
+    years.map(year => ({
+  
+      label: year,
+  
+      data: labels.map(country =>
+        byCountry[country]?.[year] || 0
+      ),
+  
+      /*
+       * Deliberately use the SAME colour
+       * for every year.
+       */
+      backgroundColor: YELLOW,
+      borderColor: YELLOW_BORDER,
+  
+      borderWidth: 1,
+  
+      /*
+       * All years belong to the same stack.
+       */
+      stack: "visits",
+  
+      categoryPercentage: 0.82,
+      barPercentage: 0.90
+  
+    }));
       
     chart = new Chart(ctx, {
     
@@ -342,30 +472,14 @@ function render({ labels, values }) {
       plugins: [
         barValueLabels
       ],
-    
-      data: {
         
+    data: {
+    
       labels,
-
-datasets: [{
-
-  data: values,
-
-  backgroundColor: YELLOW,
-  borderColor: YELLOW_BORDER,
-
-  borderWidth: 1,
-  borderRadius: 6,
-
-  /*
-   * Make each bar use most of its allocated 34px row.
-   */
-  categoryPercentage: 0.82,
-  barPercentage: 0.90
-
-}]
+    
+      datasets
+    
     },
-
 
     options: {
 
@@ -445,15 +559,13 @@ datasets: [{
 
 
       scales: {
-        
+                
         x: {
+        
+          stacked: true,
         
           beginAtZero: true,
         
-          /*
-           * Leave a little room beyond the longest
-           * bar for its value label.
-           */
           grace: "8%",
         
           ticks: {
@@ -472,15 +584,16 @@ datasets: [{
           }
         
         },
-
+        
         y: {
-
+        
+          stacked: true,
+        
           grid: {
             display: false
           }
-
+        
         }
-
       }
 
     }
