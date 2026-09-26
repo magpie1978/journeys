@@ -598,9 +598,9 @@ textarea {
   display: flex;
   align-items: center;
 
-  min-height: 82px;
+  min-height: 100px;
   margin: 0 0 6px 0;
-  padding: 12px 14px;
+  padding: 4px 14px;
 
   background: #191B22;
 
@@ -660,13 +660,12 @@ textarea {
 .sidebar-logo {
   flex: 0 0 45%;
   max-width: 45%;
-  height: 100px;
+  height: 90px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 
 .sidebar-text {
   flex: 0 0 55%;
