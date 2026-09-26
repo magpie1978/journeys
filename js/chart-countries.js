@@ -536,24 +536,73 @@ function render({
         },
 
 
-        tooltip: {
+tooltip: {
 
-          callbacks: {
+  callbacks: {
 
-            label(context) {
+    /*
+     * Show the YEAR as the tooltip heading,
+     * rather than the country.
+     */
+    title(items) {
 
-              const value =
-                Number(context.raw) || 0;
+      if (!items.length) {
+        return "";
+      }
 
-              return (
-                `${value.toLocaleString()} visits`
-              );
+      return items[0].dataset.label;
+    },
 
-            }
 
-          }
+    /*
+     * Then show the number of visits underneath.
+     */
+    label(context) {
 
-        }
+      const value =
+        Number(context.raw) || 0;
+
+      return (
+        `${value.toLocaleString()} ` +
+        `visit${value === 1 ? "" : "s"}`
+      );
+    },
+
+
+    /*
+     * Show the country's all-time total at
+     * the bottom of the tooltip.
+     */
+    footer(items) {
+
+      if (!items.length) {
+        return "";
+      }
+
+      const index =
+        items[0].dataIndex;
+
+      const total =
+        items[0].chart.data.datasets
+          .reduce(
+            (sum, dataset) =>
+              sum +
+              (
+                Number(
+                  dataset.data[index]
+                ) || 0
+              ),
+            0
+          );
+
+      return (
+        `Total: ${total.toLocaleString()} visits`
+      );
+    }
+
+  }
+
+}
 
       },
 
