@@ -527,22 +527,17 @@ function render({
       },
       
       
-      legend: {
-        display: false
-      },
-
-        legend: {
-          display: false
-        },
-
+legend: {
+  display: false
+},
 
 tooltip: {
 
   callbacks: {
 
     /*
-     * Show the YEAR as the tooltip heading,
-     * rather than the country.
+     * Use the dataset label (year)
+     * as the tooltip heading.
      */
     title(items) {
 
@@ -550,12 +545,14 @@ tooltip: {
         return "";
       }
 
-      return items[0].dataset.label;
+      return String(
+        items[0].dataset.label
+      );
     },
 
 
     /*
-     * Then show the number of visits underneath.
+     * Number of visits in that year.
      */
     label(context) {
 
@@ -570,8 +567,7 @@ tooltip: {
 
 
     /*
-     * Show the country's all-time total at
-     * the bottom of the tooltip.
+     * Country's total visits across all years.
      */
     footer(items) {
 
@@ -603,6 +599,7 @@ tooltip: {
   }
 
 }
+
 
       },
 
