@@ -365,8 +365,11 @@ body {
  * STATISTICS TOP CONTROLS
  * =====================================================
  *
- * Year / All Time and the metric dropdown form one
- * group aligned to the right-hand edge of the chart.
+ * Every statistics page gets this row, even when there
+ * are no controls to display.
+ *
+ * This keeps the navigation tabs and chart card at the
+ * exact same vertical position on every page.
  */
 
 .stats-top-controls {
@@ -376,14 +379,19 @@ body {
 
   width: 100%;
 
+  /*
+   * Fixed reserved control area.
+   */
+  min-height: 38px;
+
   gap: 10px;
 
   margin-bottom: 6px;
 }
 
+
 /*
  * Do NOT use margin-left: auto here.
- * That would push the dropdown away from the buttons.
  */
 .stats-top-controls .stats-select {
   margin-left: 0;
