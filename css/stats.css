@@ -1,3 +1,14 @@
+:root {
+  --mj-bg: #0F1114;
+  --mj-panel: #191B22;
+  --mj-border: #292C33;
+
+  --mj-text: #FFFFFF;
+  --mj-text-muted: #9A9DA5;
+
+  --mj-accent: #CCFF00;
+}
+
 /* =====================================================
    BASE
 ===================================================== */
@@ -280,7 +291,7 @@ body {
   background: #14161f;
 
   border-color: #2a2d3a;
-  border-top: 2px solid rgba(201,162,77,0.9);
+  border-top: 2px solid var(--mj-accent);
 
   /*
    * Pull the active tab over the navigation
