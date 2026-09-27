@@ -553,43 +553,6 @@ plugins: {
   },
 
 
-  /*
-   * Smaller explanatory line underneath the title.
-   */
-
-  subtitle: {
-    display: true,
-
-    text:
-      metric === "miles"
-        ? (
-            timeMode === "all"
-              ? "Cumulative miles travelled"
-              : "Miles travelled by year"
-          )
-        : (
-            timeMode === "all"
-              ? "Cumulative number of flights"
-              : "Number of flights by year"
-          ),
-
-    color: "rgba(255,255,255,0.55)",
-
-    font: {
-      size: 13,
-      weight: "400"
-    },
-
-    padding: {
-      bottom: 18
-    }
-  },
-
-
-  legend: {
-    display: false
-  },
-
 
   tooltip: {
           callbacks: {
