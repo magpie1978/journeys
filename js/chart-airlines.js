@@ -6,6 +6,9 @@ const YELLOW = "rgba(204,255,0,0.70)";
 const YELLOW_BORDER = "rgba(204,255,0,0.90)";
 const GRID = "rgba(255,255,255,0.08)";
 
+let airlineStats = null;
+let selectedAirlines = new Set();
+
 
 // =====================================================
 // HELPERS
@@ -27,7 +30,11 @@ async function loadData() {
     .select("year, journey_type, airline");
 
   if (error) {
-    console.error("[airline stats] load failed:", error);
+    console.error(
+      "[airline stats] load failed:",
+      error
+    );
+
     return [];
   }
 
@@ -47,17 +54,22 @@ function aggregate(data) {
   data.forEach(r => {
 
     if (
-      String(r.journey_type || "").toLowerCase()
-      !== "flight"
-    ) return;
+      String(r.journey_type || "")
+        .toLowerCase() !== "flight"
+    ) {
+      return;
+    }
 
     if (!r.airline) return;
 
     const year = year4(r.year);
 
-    if (!/^\d{4}$/.test(year)) return;
+    if (!/^\d{4}$/.test(year)) {
+      return;
+    }
 
-    const airline = r.airline.trim();
+    const airline =
+      String(r.airline).trim();
 
     airlinesSet.add(airline);
 
@@ -83,8 +95,10 @@ function aggregate(data) {
     airlineTotals[airline] = 0;
 
     years.forEach(year => {
+
       airlineTotals[airline] +=
         map[year]?.[airline] || 0;
+
     });
 
   });
@@ -93,7 +107,8 @@ function aggregate(data) {
   const airlines =
     [...airlinesSet].sort(
       (a, b) =>
-        airlineTotals[b] - airlineTotals[a]
+        airlineTotals[b] -
+        airlineTotals[a]
     );
 
 
@@ -106,49 +121,344 @@ function aggregate(data) {
 
 
 // =====================================================
+// FILTERED AIRLINES
+// =====================================================
+
+function getVisibleAirlines() {
+
+  if (!airlineStats) {
+    return [];
+  }
+
+  /*
+   * No individual selections means:
+   * show every airline.
+   */
+
+  if (selectedAirlines.size === 0) {
+    return airlineStats.airlines;
+  }
+
+  return airlineStats.airlines.filter(
+    airline =>
+      selectedAirlines.has(airline)
+  );
+}
+
+
+// =====================================================
+// UPDATE FILTER LABEL
+// =====================================================
+
+function updateFilterLabel() {
+
+  const label =
+    document.getElementById(
+      "airlineFilterLabel"
+    );
+
+  const all =
+    document.getElementById(
+      "airlineFilterAll"
+    );
+
+  if (!label) return;
+
+
+  if (selectedAirlines.size === 0) {
+
+    label.textContent =
+      "All Airlines";
+
+    if (all) {
+      all.checked = true;
+    }
+
+    return;
+  }
+
+
+  if (all) {
+    all.checked = false;
+  }
+
+
+  if (selectedAirlines.size === 1) {
+
+    label.textContent =
+      [...selectedAirlines][0];
+
+    return;
+  }
+
+
+  label.textContent =
+    `${selectedAirlines.size} Airlines`;
+}
+
+
+// =====================================================
+// RENDER FILTER OPTIONS
+// =====================================================
+
+function buildAirlineFilter() {
+
+  if (!airlineStats) return;
+
+
+  const filter =
+    document.getElementById(
+      "airlineFilter"
+    );
+
+  const button =
+    document.getElementById(
+      "airlineFilterButton"
+    );
+
+  const menu =
+    document.getElementById(
+      "airlineFilterMenu"
+    );
+
+  const list =
+    document.getElementById(
+      "airlineFilterList"
+    );
+
+  const all =
+    document.getElementById(
+      "airlineFilterAll"
+    );
+
+
+  if (
+    !filter ||
+    !button ||
+    !menu ||
+    !list ||
+    !all
+  ) {
+    return;
+  }
+
+
+  list.innerHTML = "";
+
+
+  airlineStats.airlines.forEach(
+    airline => {
+
+      const option =
+        document.createElement("label");
+
+      option.className =
+        "airline-filter-option";
+
+
+      const checkbox =
+        document.createElement("input");
+
+      checkbox.type = "checkbox";
+      checkbox.value = airline;
+      checkbox.checked = false;
+
+
+      const text =
+        document.createElement("span");
+
+      text.textContent = airline;
+
+
+      checkbox.addEventListener(
+        "change",
+        () => {
+
+          if (checkbox.checked) {
+
+            selectedAirlines.add(
+              airline
+            );
+
+          } else {
+
+            selectedAirlines.delete(
+              airline
+            );
+
+          }
+
+
+          updateFilterLabel();
+          renderCurrentChart();
+        }
+      );
+
+
+      option.appendChild(checkbox);
+      option.appendChild(text);
+
+      list.appendChild(option);
+
+    }
+  );
+
+
+  // -----------------------------------------------------
+  // ALL AIRLINES
+  // -----------------------------------------------------
+
+  all.addEventListener(
+    "change",
+    () => {
+
+      if (!all.checked) {
+        all.checked = true;
+        return;
+      }
+
+
+      selectedAirlines.clear();
+
+
+      list
+        .querySelectorAll(
+          'input[type="checkbox"]'
+        )
+        .forEach(
+          checkbox => {
+            checkbox.checked = false;
+          }
+        );
+
+
+      updateFilterLabel();
+      renderCurrentChart();
+
+    }
+  );
+
+
+  // -----------------------------------------------------
+  // OPEN / CLOSE DROPDOWN
+  // -----------------------------------------------------
+
+  button.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      filter.classList.toggle(
+        "open"
+      );
+
+    }
+  );
+
+
+  menu.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+    }
+  );
+
+
+  document.addEventListener(
+    "click",
+    () => {
+
+      filter.classList.remove(
+        "open"
+      );
+
+    }
+  );
+
+
+  updateFilterLabel();
+}
+
+
+// =====================================================
+// RENDER CURRENT FILTERED CHART
+// =====================================================
+
+function renderCurrentChart() {
+
+  if (!airlineStats) return;
+
+
+  render({
+
+    years:
+      airlineStats.years,
+
+    airlines:
+      getVisibleAirlines(),
+
+    map:
+      airlineStats.map
+
+  });
+}
+
+
+// =====================================================
 // RENDER
 // =====================================================
 
-function render({ years, airlines, map }) {
+function render({
+  years,
+  airlines,
+  map
+}) {
 
   const ctx =
     document.getElementById(
       "flightsPerYearAirlineChart"
     );
 
+
   if (!ctx) {
+
     console.error(
       "[airline stats] chart canvas not found"
     );
+
     return;
   }
+
 
   if (chart) {
     chart.destroy();
   }
 
 
-const datasets =
-  airlines.map(airline => ({
+  const datasets =
+    airlines.map(airline => ({
 
-    // Keep the airline name for the hover tooltip
-    label: airline,
+      // Keep airline name for tooltip
+      label: airline,
 
-    data: years.map(year =>
-      map[year]?.[airline] || 0
-    ),
+      data: years.map(
+        year =>
+          map[year]?.[airline] || 0
+      ),
 
-    // All stacked sections use the same yellow
-    backgroundColor: YELLOW,
+      // KEEP EXISTING COLOURS
+      backgroundColor: YELLOW,
+      borderColor: YELLOW_BORDER,
 
-    // Contrasting border separates each airline
-    borderColor: YELLOW_BORDER,
+      borderWidth: 1
 
-    borderWidth: 1
-  }));
+    }));
 
 
-chart = new Chart(ctx, {
+  chart = new Chart(ctx, {
 
     type: "bar",
 
@@ -157,91 +467,118 @@ chart = new Chart(ctx, {
       datasets
     },
 
+
     options: {
 
       responsive: true,
       maintainAspectRatio: false,
+
 
       interaction: {
         mode: "nearest",
         intersect: true
       },
 
-plugins: {
 
-  /*
-   * ---------------------------------------------------
-   * CHART TITLE
-   * ---------------------------------------------------
-   */
+      plugins: {
 
-  title: {
-    display: true,
-    text: "Flights per Year per Airline",
+        // -------------------------------------------------
+        // TITLE
+        // -------------------------------------------------
 
-    color: "#ffffff",
+        title: {
 
-    font: {
-      size: 20,
-      weight: "600"
-    },
+          display: true,
 
-    padding: {
-      top: 14,
-      bottom: 14
-    }
-  },
+          text:
+            "Flights per Year per Airline",
 
-  legend: {
-    display: false
-  },
+          color: "#ffffff",
 
-
-  /*
-   * ---------------------------------------------------
-   * CHART SUBTITLE
-   * ---------------------------------------------------
-   */
-
-      tooltip: {
-      
-        // IMPORTANT:
-        // Only show the individual stacked segment
-        // that the mouse is actually hovering over.
-        mode: "nearest",
-        intersect: true,
-      
-        callbacks: {
-      
-          title(context) {
-            // Keep the year as the tooltip heading
-            return context[0]?.label || "";
+          font: {
+            size: 20,
+            weight: "600"
           },
-      
-          label(context) {
-      
-            const value =
-              Number(context.raw) || 0;
-      
-            if (!value) return null;
-      
-            return `${context.dataset.label}: ${value} flights`;
+
+          padding: {
+            top: 14,
+            bottom: 14
           }
+
+        },
+
+
+        // -------------------------------------------------
+        // LEGEND
+        // -------------------------------------------------
+
+        legend: {
+          display: false
+        },
+
+
+        // -------------------------------------------------
+        // TOOLTIP
+        // -------------------------------------------------
+
+        tooltip: {
+
+          mode: "nearest",
+          intersect: true,
+
+          callbacks: {
+
+            title(context) {
+
+              return (
+                context[0]?.label || ""
+              );
+
+            },
+
+
+            label(context) {
+
+              const value =
+                Number(
+                  context.raw
+                ) || 0;
+
+
+              if (!value) {
+                return null;
+              }
+
+
+              return (
+                `${context.dataset.label}: ` +
+                `${value} flights`
+              );
+
+            }
+
+          }
+
         }
-      }      
+
       },
+
 
       scales: {
 
         x: {
+
           stacked: true,
 
           grid: {
             display: false
           }
+
         },
 
+
         y: {
+
           stacked: true,
           beginAtZero: true,
 
@@ -252,10 +589,15 @@ plugins: {
           grid: {
             color: GRID
           }
+
         }
+
       }
+
     }
+
   });
+
 }
 
 
@@ -270,13 +612,20 @@ document.addEventListener(
     const data =
       await loadData();
 
+
     console.log(
-      `[airline stats] loaded ${data.length} rows`
+      `[airline stats] loaded ` +
+      `${data.length} rows`
     );
 
-    render(
-      aggregate(data)
-    );
+
+    airlineStats =
+      aggregate(data);
+
+
+    buildAirlineFilter();
+
+    renderCurrentChart();
 
   }
 );
