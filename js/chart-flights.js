@@ -333,7 +333,7 @@ function renderCabinChart(data) {
 
           padding: {
             top: 14,
-            bottom: 4
+            bottom: 14
           }
         },
 
