@@ -159,7 +159,146 @@
       cursor: pointer;
     }
 
-
+    
+        /*
+     * =====================================================
+     * RIGHT-HAND CONTROLS
+     * =====================================================
+     */
+    
+    .stats-control-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    
+    /*
+     * =====================================================
+     * AIRLINE FILTER
+     * =====================================================
+     */
+    
+    .airline-filter {
+      position: relative;
+      min-width: 190px;
+      font-size: 14px;
+    }
+    
+    
+    .airline-filter-button {
+      width: 100%;
+      min-height: 38px;
+    
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    
+      padding: 8px 14px;
+    
+      background:
+        rgba(255,255,255,0.045);
+    
+      color: #fff;
+    
+      border:
+        1px solid rgba(255,255,255,0.14);
+    
+      border-radius: 10px;
+    
+      font: inherit;
+      font-size: 14px;
+    
+      cursor: pointer;
+    }
+    
+    
+    .airline-filter-button:hover {
+      background:
+        rgba(255,255,255,0.08);
+    
+      border-color:
+        rgba(255,255,255,0.22);
+    }
+    
+    
+    .airline-filter-arrow {
+      color:
+        rgba(255,255,255,0.65);
+    
+      font-size: 16px;
+    }
+    
+    
+    .airline-filter-menu {
+      display: none;
+    
+      position: absolute;
+    
+      top: calc(100% + 6px);
+      right: 0;
+    
+      width: 260px;
+      max-height: 420px;
+    
+      overflow-y: auto;
+    
+      background: #15171d;
+    
+      border:
+        1px solid #353843;
+    
+      border-radius: 10px;
+    
+      box-shadow:
+        0 12px 30px
+        rgba(0,0,0,0.45);
+    
+      z-index: 1000;
+    }
+    
+    
+    .airline-filter.open
+    .airline-filter-menu {
+      display: block;
+    }
+    
+    
+    .airline-filter-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    
+      padding: 9px 12px;
+    
+      color:
+        rgba(255,255,255,0.75);
+    
+      cursor: pointer;
+    }
+    
+    
+    .airline-filter-option:hover {
+      background:
+        rgba(255,255,255,0.05);
+    
+      color: #fff;
+    }
+    
+    
+    .airline-filter-option input {
+      accent-color: #CCFF00;
+    }
+    
+    
+    .airline-filter-all {
+      color: #fff;
+    
+      border-bottom:
+        1px solid
+        rgba(255,255,255,0.08);
+    }
     /*
      * =====================================================
      * MOBILE
@@ -233,13 +372,62 @@
             All Time
           </button>
         </div>
-      
-        <select id="metricSelector" class="stats-select">
-          <option value="flights">Flights</option>
-          <option value="miles">Miles</option>
-          <option value="cabin">Cabin</option>
-        </select>
-      
+              
+        <div class="stats-control-right">
+        
+          <div class="airline-filter" id="airlineFilter">
+        
+            <button
+              type="button"
+              class="airline-filter-button"
+              id="airlineFilterButton"
+            >
+              <span id="airlineFilterLabel">
+                All Airlines
+              </span>
+        
+              <span class="airline-filter-arrow">
+                ⌄
+              </span>
+            </button>
+        
+            <div
+              class="airline-filter-menu"
+              id="airlineFilterMenu"
+            >
+        
+              <label
+                class="airline-filter-option airline-filter-all"
+              >
+                <input
+                  type="checkbox"
+                  id="airlineFilterAll"
+                  checked
+                >
+        
+                <span>All Airlines</span>
+              </label>
+        
+              <div
+                class="airline-filter-list"
+                id="airlineFilterList"
+              ></div>
+        
+            </div>
+        
+          </div>
+        
+        
+          <select
+            id="metricSelector"
+            class="stats-select"
+          >
+            <option value="flights">Flights</option>
+            <option value="miles">Miles</option>
+            <option value="cabin">Cabin</option>
+          </select>
+        
+        </div>      
       </div>
 
       <!-- =================================================
