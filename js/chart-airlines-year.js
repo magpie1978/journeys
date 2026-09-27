@@ -458,7 +458,7 @@ if (horizontal) {
                 ? "Number of distinct airlines used each year"
                 : "Number of flights with each airline",
         
-          color: "rgba(255,255,255,0.55)",
+          color: "rgba(255,255,255,0.70)",
         
           font: {
             size: 13,
