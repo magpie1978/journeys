@@ -517,12 +517,12 @@ plugins: {
       metric === "miles"
         ? (
             timeMode === "all"
-              ? "Miles Over Time"
+              ? "Cumulative Miles"
               : "Miles per Year"
           )
         : (
             timeMode === "all"
-              ? "Flights Over Time"
+              ? "Cumulative Flights"
               : "Flights per Year"
           ),
 
