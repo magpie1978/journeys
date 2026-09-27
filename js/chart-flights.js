@@ -4,14 +4,10 @@ let flightsChart;
 let flightData = [];
 let timeMode = "year";
 
-const MJ_ACCENT =
-  getComputedStyle(document.documentElement)
-    .getPropertyValue("--mj-accent")
-    .trim() || "#CCFF00";
-
-const MJ_ACCENT_FILL = `${MJ_ACCENT}B3`; // ~70% opacity
-
+const MJ_ACCENT = "rgba(204,255,0,0.70)";
+const MJ_ACCENT_BORDER = "rgba(204,255,0,0.90)";
 const GRID = "rgba(255,255,255,0.08)";
+
 
 function year4(v) {
   return String(v).slice(0, 4);
@@ -207,7 +203,7 @@ function renderCabinChart(data) {
    * actually stored in your database.
    */
   const cabinColours = {
-    Economy: MJ_ACCENT,
+    Economy: "#CCFF00",
     "Premium Economy": "#4DA6C9",
     Business: "#8B6CC9",
     First: "#C96C6C",
@@ -505,8 +501,8 @@ function renderChart({ labels, values }, metric) {
 
     datasets: [{
       data: values,
-      backgroundColor: MJ_ACCENT_FILL,
-      borderColor: MJ_ACCENT,
+      backgroundColor: MJ_ACCENT,
+      borderColor: MJ_ACCENT_BORDER,
       borderWidth: 1,
       borderRadius: 6
     }]    
