@@ -6,6 +6,143 @@ const YELLOW = "rgba(204,255,0,0.70)";
 const YELLOW_BORDER = "rgba(204,255,0,0.90)";
 const GRID = "rgba(255,255,255,0.08)";
 
+
+// =====================================================
+// STACK TOTAL LABELS
+// =====================================================
+
+const stackTotalLabels = {
+
+  id: "stackTotalLabels",
+
+  afterDatasetsDraw(chart) {
+
+    const {
+      ctx,
+      data
+    } = chart;
+
+
+    if (!data.datasets.length) {
+      return;
+    }
+
+
+    ctx.save();
+
+    ctx.fillStyle =
+      "rgba(255,255,255,0.70)";
+
+    ctx.font =
+      "12px sans-serif";
+
+    ctx.textAlign =
+      "center";
+
+    ctx.textBaseline =
+      "bottom";
+
+
+    data.labels.forEach(
+      (label, index) => {
+
+        /*
+         * Total all currently displayed airline
+         * datasets for this year.
+         *
+         * Because filtered-out airlines are not
+         * present in data.datasets, the total
+         * automatically follows the dropdown.
+         */
+
+        const total =
+          data.datasets.reduce(
+            (sum, dataset) =>
+              sum +
+              (Number(dataset.data[index]) || 0),
+            0
+          );
+
+
+        if (!total) {
+          return;
+        }
+
+
+        /*
+         * Find the highest visible segment in
+         * this year's stacked bar.
+         */
+
+        let topY = null;
+        let centreX = null;
+
+
+        data.datasets.forEach(
+          (dataset, datasetIndex) => {
+
+            const value =
+              Number(
+                dataset.data[index]
+              ) || 0;
+
+            if (!value) {
+              return;
+            }
+
+
+            const meta =
+              chart.getDatasetMeta(
+                datasetIndex
+              );
+
+            const bar =
+              meta.data[index];
+
+
+            if (!bar) {
+              return;
+            }
+
+
+            centreX = bar.x;
+
+            if (
+              topY === null ||
+              bar.y < topY
+            ) {
+              topY = bar.y;
+            }
+
+          }
+        );
+
+
+        if (
+          centreX === null ||
+          topY === null
+        ) {
+          return;
+        }
+
+
+        ctx.fillText(
+          total.toLocaleString(),
+          centreX,
+          topY - 6
+        );
+
+      }
+    );
+
+
+    ctx.restore();
+
+  }
+
+};
+
+
 let airlineStats = null;
 let selectedAirlines = new Set();
 
@@ -462,18 +599,20 @@ function render({
     }));
 
 
-  chart = new Chart(ctx, {
+chart = new Chart(ctx, {
 
-    type: "bar",
+  type: "bar",
 
-    data: {
-      labels: years,
-      datasets
-    },
+  plugins: [
+    stackTotalLabels
+  ],
 
+  data: {
+    labels: years,
+    datasets
+  },
 
-    options: {
-
+  options: {
       responsive: true,
       maintainAspectRatio: false,
 
@@ -580,16 +719,18 @@ function render({
 
         },
 
-
+        
         y: {
-
+        
           stacked: true,
           beginAtZero: true,
-
+        
+          grace: "10%",
+        
           ticks: {
             precision: 0
           },
-
+          
           grid: {
             color: GRID
           }
