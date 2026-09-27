@@ -316,6 +316,10 @@ function renderCabinChart(data) {
 
       plugins: {
 
+        legend: {
+          display: false
+        },
+
         title: {
           display: true,
 
