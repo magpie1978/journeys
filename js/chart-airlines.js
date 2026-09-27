@@ -14,7 +14,7 @@ const GRID = "rgba(255,255,255,0.08)";
 function year4(v) {
   return String(v).slice(0, 4);
 }
-
+ƒ
 
 // =====================================================
 // LOAD DATA
@@ -188,7 +188,7 @@ plugins: {
 
     padding: {
       top: 14,
-      bottom: 4
+      bottom: 14
     }
   },
 
