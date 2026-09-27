@@ -592,7 +592,11 @@ if (horizontal) {
                 : 2,
         
             precision: 0,
-        
+
+            color: "rgba(255,255,255,0.55)",
+
+            font: {size: 13},
+                    
             callback(value) {
         
               if (horizontal) {
