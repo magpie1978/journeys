@@ -429,3 +429,16 @@ body {
   padding-left: 0;
   padding-right: 0;
 }
+
+
+
+/* =====================================================
+   ACTIVE STATS CONTROL BUTTONS
+===================================================== */
+
+.stats-top-controls button.active,
+.stats-top-controls .active {
+  background: var(--mj-accent);
+  color: #0F1114;
+  border-color: var(--mj-accent);
+}
