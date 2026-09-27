@@ -246,9 +246,13 @@ function buildAirlineFilter() {
   list.innerHTML = "";
 
 
-  airlineStats.airlines.forEach(
-    airline => {
-
+  [...airlineStats.airlines]
+    .sort((a, b) =>
+      a.localeCompare(b)
+    )
+    .forEach(
+      airline => {
+      
       const option =
         document.createElement("label");
 
