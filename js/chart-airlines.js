@@ -199,30 +199,6 @@ plugins: {
    * ---------------------------------------------------
    */
 
-  subtitle: {
-    display: true,
-    text: "Number of flights by airline each year",
-
-    color: "rgba(255,255,255,0.55)",
-
-    font: {
-      size: 13,
-      weight: "400"
-    },
-
-    padding: {
-      top: 0,
-      bottom: 18
-    }
-  },
-
-
-  legend: {
-    display: false
-  },
-
-
- 
       tooltip: {
       
         // IMPORTANT:
