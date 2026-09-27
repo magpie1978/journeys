@@ -316,10 +316,6 @@ function renderCabinChart(data) {
 
       plugins: {
 
-        legend: {
-          display: false
-        },
-
         title: {
           display: true,
 
@@ -500,6 +496,10 @@ function renderChart({ labels, values }, metric) {
       maintainAspectRatio: false,
 
 plugins: {
+
+  legend: {
+    display: false
+  },
 
   /*
    * ---------------------------------------------------
