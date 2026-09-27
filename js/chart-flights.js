@@ -337,29 +337,6 @@ function renderCabinChart(data) {
           }
         },
 
-
-        subtitle: {
-          display: true,
-
-          text:
-            timeMode === "year"
-              ? "Number of flights by cabin each year"
-              : "Cumulative number of flights by cabin",
-
-          color:
-            "rgba(255,255,255,0.55)",
-
-          font: {
-            size: 13,
-            weight: "400"
-          },
-
-          padding: {
-            top: 0,
-            bottom: 18
-          }
-        },
-
         tooltip: {
 
           callbacks: {
