@@ -2,8 +2,8 @@
 
 let chart;
 
-const YELLOW = "rgba(201,162,77,0.85)";
-const YELLOW_BORDER = "rgba(255,235,170,1)";
+const YELLOW = "rgba(204,255,0,0.70)";
+const YELLOW_BORDER = "rgba(204,255,0,0.90)";
 const GRID = "rgba(255,255,255,0.08)";
 
 
