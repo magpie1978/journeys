@@ -360,23 +360,6 @@ function renderCabinChart(data) {
           }
         },
 
-
-        /*
-         * Unlike Flights/Miles, show the legend
-         * so the cabin colours can be identified.
-         */
-        legend: {
-          display: true,
-
-          labels: {
-            color:
-              "rgba(255,255,255,0.75)",
-            usePointStyle: true,
-            boxWidth: 10
-          }
-        },
-
-
         tooltip: {
 
           callbacks: {
