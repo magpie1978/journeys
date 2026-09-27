@@ -939,10 +939,22 @@ function buildAirlineFilter() {
 function updateChart() {
 
   const metricSelector =
-    document.getElementById("metricSelector");
+    document.getElementById(
+      "metricSelector"
+    );
 
   const metric =
-    metricSelector?.value || "flights";
+    metricSelector?.value ||
+    "flights";
+
+
+  /*
+   * Apply the selected airline(s) first.
+   *
+   * Everything below — Flights, Miles
+   * and Cabin — therefore uses the
+   * filtered dataset.
+   */
 
   const filteredData =
     getFilteredFlightData();
@@ -954,17 +966,23 @@ function updateChart() {
 
   if (metric === "cabin") {
 
-    const stats =
-      flightsPerYear(flightData, metric);
+    renderCabinChart(
+      filteredData
+    );
 
     return;
   }
 
 
-  // Calculate annual figures first
+  // =====================================================
+  // FLIGHTS / MILES
+  // =====================================================
 
   const stats =
-    flightsPerYear(flightData, metric);
+    flightsPerYear(
+      filteredData,
+      metric
+    );
 
 
   // =====================================================
@@ -976,11 +994,14 @@ function updateChart() {
 
     renderChart(
       {
-        labels: stats.labels,
+        labels:
+          stats.labels,
 
-        values: stats.values.map(value =>
-          Math.round(value)
-        )
+        values:
+          stats.values.map(
+            value =>
+              Math.round(value)
+          )
       },
       metric
     );
@@ -996,24 +1017,30 @@ function updateChart() {
 
   let runningTotal = 0;
 
+
   const cumulativeValues =
     stats.values.map(value => {
 
       runningTotal += value;
 
-      return Math.round(runningTotal);
+      return Math.round(
+        runningTotal
+      );
+
     });
 
 
   renderChart(
     {
-      labels: stats.labels,
-      values: cumulativeValues
+      labels:
+        stats.labels,
+
+      values:
+        cumulativeValues
     },
     metric
   );
 }
-
 
 // =====================================================
 // INITIALISE
