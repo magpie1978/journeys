@@ -10,9 +10,7 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>
-    GPX Journey Converter
-  </title>
+  <title>GPX Journey Converter</title>
 
 
   <style>
@@ -24,31 +22,21 @@
 
     body {
       margin: 0;
-
       min-height: 100vh;
 
       display: flex;
-
       align-items: center;
-
       justify-content: center;
 
       background: #f4f5f7;
 
-      font-family:
-        Arial,
-        sans-serif;
-
+      font-family: Arial, sans-serif;
       color: #222;
     }
 
 
     .container {
-      width:
-        min(
-          1000px,
-          92vw
-        );
+      width: min(1000px, 92vw);
 
       background: white;
 
@@ -57,22 +45,12 @@
       padding: 32px;
 
       box-shadow:
-        0 4px 20px
-        rgba(
-          0,
-          0,
-          0,
-          0.08
-        );
+        0 4px 20px rgba(0,0,0,0.08);
     }
 
 
     h1 {
-      margin:
-        0
-        0
-        8px;
-
+      margin: 0 0 8px;
       font-size: 26px;
     }
 
@@ -95,10 +73,7 @@
       display: grid;
 
       grid-template-columns:
-        repeat(
-          4,
-          1fr
-        );
+        repeat(4, 1fr);
 
       gap: 14px;
 
@@ -127,13 +102,9 @@
     .field input {
       width: 100%;
 
-      padding:
-        10px
-        12px;
+      padding: 10px 12px;
 
-      border:
-        1px solid
-        #ccc;
+      border: 1px solid #ccc;
 
       border-radius: 7px;
 
@@ -151,13 +122,7 @@
       border-color: #555;
 
       box-shadow:
-        0 0 0 2px
-        rgba(
-          0,
-          0,
-          0,
-          0.05
-        );
+        0 0 0 2px rgba(0,0,0,0.05);
     }
 
 
@@ -167,15 +132,11 @@
 
 
     .drop-zone {
-      border:
-        2px dashed
-        #aaa;
+      border: 2px dashed #aaa;
 
       border-radius: 10px;
 
-      padding:
-        40px
-        20px;
+      padding: 40px 20px;
 
       text-align: center;
 
@@ -235,14 +196,11 @@
 
       padding: 14px;
 
-      border:
-        1px solid
-        #ccc;
+      border: 1px solid #ccc;
 
       border-radius: 8px;
 
-      font-family:
-        monospace;
+      font-family: monospace;
 
       font-size: 13px;
 
@@ -286,9 +244,7 @@
 
       border-radius: 7px;
 
-      padding:
-        11px
-        18px;
+      padding: 11px 18px;
 
       cursor: pointer;
 
@@ -312,7 +268,7 @@
     }
 
 
-    button.secondary:hover {
+    button.secondary:hover:not(:disabled) {
       background: #d7d7d7;
     }
 
@@ -329,28 +285,20 @@
     ========================================= */
 
 
-    @media (
-      max-width: 800px
-    ) {
+    @media (max-width: 800px) {
 
       .journey-fields {
         grid-template-columns:
-          repeat(
-            2,
-            1fr
-          );
+          repeat(2, 1fr);
       }
 
     }
 
 
-    @media (
-      max-width: 500px
-    ) {
+    @media (max-width: 500px) {
 
       .journey-fields {
-        grid-template-columns:
-          1fr;
+        grid-template-columns: 1fr;
       }
 
 
@@ -378,12 +326,10 @@
 
   <div class="description">
 
-    Enter the journey date,
-    start time, end time and callsign,
+    Enter the journey date, start time, end time and callsign,
     then drop a GPX file below.
 
-    The GPX points will be assigned
-    evenly spaced UTC timestamps
+    The GPX points will be assigned evenly spaced UTC timestamps
     across the journey.
 
   </div>
@@ -531,6 +477,15 @@
 
     <button
       class="secondary"
+      id="reverseButton"
+      disabled
+    >
+      Reverse Data
+    </button>
+
+
+    <button
+      class="secondary"
       id="clearButton"
     >
       Clear
@@ -617,6 +572,12 @@ const downloadButton =
   );
 
 
+const reverseButton =
+  document.getElementById(
+    "reverseButton"
+  );
+
+
 const clearButton =
   document.getElementById(
     "clearButton"
@@ -634,6 +595,10 @@ let currentFilename =
 
 let storedCoordinates =
   [];
+
+
+let isReversed =
+  false;
 
 
 /* =============================================
@@ -819,8 +784,8 @@ function processFile(
         ) {
 
           coordinates.push({
-            lon,
-            lat
+            lat,
+            lon
           });
 
         }
@@ -831,7 +796,8 @@ function processFile(
       /* -------------------------------------
          ROUTE POINTS
 
-         Used only if no track points exist.
+         Use these only if there are no
+         track points in the GPX file.
       ------------------------------------- */
 
 
@@ -871,8 +837,8 @@ function processFile(
           ) {
 
             coordinates.push({
-              lon,
-              lat
+              lat,
+              lon
             });
 
           }
@@ -916,6 +882,10 @@ function processFile(
           true;
 
 
+        reverseButton.disabled =
+          true;
+
+
         return;
 
       }
@@ -928,6 +898,18 @@ function processFile(
 
       storedCoordinates =
         coordinates;
+
+
+      isReversed =
+        false;
+
+
+      reverseButton.textContent =
+        "Reverse Data";
+
+
+      reverseButton.disabled =
+        false;
 
 
       fileInfo.textContent =
@@ -1069,9 +1051,9 @@ function generateOutput() {
   /* -----------------------------------------
      MIDNIGHT CROSSING
 
-     If the end time is earlier than the
-     start time, the journey is assumed to
-     finish the following day.
+     If the end time is before the start
+     time, assume that the journey finishes
+     on the following day.
   ----------------------------------------- */
 
 
@@ -1098,14 +1080,14 @@ function generateOutput() {
 
 
   /* -----------------------------------------
-     TIME BETWEEN GPX POINTS
+     CALCULATE INTERVAL
 
-     There are N-1 intervals between N points.
+     N points have N-1 intervals.
 
      Therefore:
 
      first point = exact start time
-     last point  = exact end time
+     final point = exact end time
   ----------------------------------------- */
 
 
@@ -1128,7 +1110,7 @@ function generateOutput() {
 
 
   /* -----------------------------------------
-     OUTPUT
+     OUTPUT ROWS
   ----------------------------------------- */
 
 
@@ -1149,7 +1131,7 @@ function generateOutput() {
 
 
       /* -------------------------------------
-         TIME FOR THIS GPX POINT
+         TIME FOR THIS POINT
       ------------------------------------- */
 
 
@@ -1168,7 +1150,10 @@ function generateOutput() {
 
 
       /* -------------------------------------
-         NUMBER OF DAYS AFTER START DATE
+         DAY OFFSET
+
+         Required for journeys crossing
+         midnight.
       ------------------------------------- */
 
 
@@ -1195,7 +1180,7 @@ function generateOutput() {
 
 
       /* -------------------------------------
-         CALCULATE DATE
+         DATE
       ------------------------------------- */
 
 
@@ -1253,9 +1238,9 @@ function generateOutput() {
       /* =====================================
          UTC
 
-         PostgreSQL-compatible format:
+         Example:
 
-         2026-09-07 09:50:00+00
+         2026-09-16 15:22:53+00
       ===================================== */
 
 
@@ -1269,19 +1254,11 @@ function generateOutput() {
       /* =====================================
          TIMESTAMP
 
-         Convert UTC into a Unix timestamp
-         measured in seconds.
+         Derive Unix timestamp in seconds
+         directly from the UTC value.
 
-         Example:
-
-         UTC:
-         2026-09-07 09:50:00+00
-
-         timestamp:
-         1788774600
-
-         This is an integer suitable for a
-         PostgreSQL bigint column.
+         This produces an integer suitable
+         for the bigint timestamp column.
       ===================================== */
 
 
@@ -1305,49 +1282,69 @@ function generateOutput() {
         );
 
 
-      /* -------------------------------------
+      /* =====================================
          POSITION
 
-         Keep the original converter's
-         longitude,latitude order.
-      ------------------------------------- */
+         IMPORTANT:
 
-      
+         latitude,longitude
+
+         Example:
+
+         51.123456,-2.123456
+      ===================================== */
+
+
       const position =
         coordinate.lat +
         "," +
         coordinate.lon;
 
+
       /* -------------------------------------
          CREATE ROW
 
-         altitude = empty
-         speed = empty
+         altitude  = empty
+         speed     = empty
          direction = empty
       ------------------------------------- */
 
 
       rows.push(
 
-        timestamp +
+        timestamp
 
-        "," +
+        +
+
+        ","
+
+        +
 
         escapeField(
           utc
-        ) +
+        )
 
-        "," +
+        +
+
+        ","
+
+        +
 
         escapeField(
           callsign
-        ) +
+        )
 
-        "," +
+        +
+
+        ","
+
+        +
 
         escapeField(
           position
-        ) +
+        )
+
+        +
 
         ",,,"
 
@@ -1368,7 +1365,7 @@ function generateOutput() {
     );
 
 
-  count.textContent =
+  let statusText =
 
     numberOfPoints.toLocaleString()
 
@@ -1385,6 +1382,20 @@ function generateOutput() {
     +
 
     " journey duration";
+
+
+  if (
+    isReversed
+  ) {
+
+    statusText +=
+      " • reversed";
+
+  }
+
+
+  count.textContent =
+    statusText;
 
 
   copyButton.disabled =
@@ -1473,7 +1484,7 @@ function secondsToTime(
 
 
   /* -----------------------------------------
-     Wrap values after midnight
+     Wrap around after midnight
   ----------------------------------------- */
 
 
@@ -1487,7 +1498,6 @@ function secondsToTime(
       +
 
       secondsInDay
-
     )
 
     %
@@ -1709,6 +1719,82 @@ callsignInput.addEventListener(
 
 
 /* =============================================
+   REVERSE DATA
+============================================= */
+
+
+reverseButton.addEventListener(
+  "click",
+  () => {
+
+
+    if (
+      storedCoordinates.length === 0
+    ) {
+
+      return;
+
+    }
+
+
+    /* -----------------------------------------
+       Reverse the GPX coordinate order.
+
+       We reverse ONLY the coordinates.
+
+       generateOutput() then recalculates all
+       UTC values and timestamps.
+
+       Therefore the newly reversed first
+       coordinate receives the original
+       journey start time and the newly
+       reversed final coordinate receives
+       the original journey end time.
+    ----------------------------------------- */
+
+
+    storedCoordinates.reverse();
+
+
+    isReversed =
+      !isReversed;
+
+
+    generateOutput();
+
+
+    /* -----------------------------------------
+       BUTTON FEEDBACK
+    ----------------------------------------- */
+
+
+    const normalText =
+      isReversed
+        ? "Restore Original Order"
+        : "Reverse Data";
+
+
+    reverseButton.textContent =
+      isReversed
+        ? "Reversed!"
+        : "Restored!";
+
+
+    setTimeout(
+      () => {
+
+        reverseButton.textContent =
+          normalText;
+
+      },
+      1000
+    );
+
+  }
+);
+
+
+/* =============================================
    COPY
 ============================================= */
 
@@ -1844,6 +1930,10 @@ clearButton.addEventListener(
       [];
 
 
+    isReversed =
+      false;
+
+
     output.value =
       "";
 
@@ -1862,6 +1952,14 @@ clearButton.addEventListener(
 
     downloadButton.disabled =
       true;
+
+
+    reverseButton.disabled =
+      true;
+
+
+    reverseButton.textContent =
+      "Reverse Data";
 
 
     currentFilename =
