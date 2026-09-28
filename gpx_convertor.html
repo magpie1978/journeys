@@ -3,178 +3,349 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>GPX Journey Converter</title>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
 
+
     body {
       margin: 0;
       min-height: 100vh;
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       background: #f4f5f7;
+
       font-family: Arial, sans-serif;
       color: #222;
     }
 
+
     .container {
-      width: min(900px, 92vw);
+      width: min(1000px, 92vw);
+
       background: white;
+
       border-radius: 12px;
+
       padding: 32px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+      box-shadow:
+        0 4px 20px rgba(0,0,0,0.08);
     }
+
 
     h1 {
       margin: 0 0 8px;
+
       font-size: 26px;
     }
 
+
     .description {
       color: #666;
+
       margin-bottom: 24px;
+
+      line-height: 1.5;
     }
+
+
+    /* -----------------------------------------
+       JOURNEY DETAILS
+    ----------------------------------------- */
 
     .journey-fields {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+
+      grid-template-columns:
+        repeat(4, 1fr);
+
       gap: 14px;
+
       margin-bottom: 22px;
     }
 
+
     .field {
       display: flex;
+
       flex-direction: column;
+
       gap: 6px;
     }
 
+
     .field label {
       font-size: 13px;
+
       font-weight: bold;
+
       color: #444;
     }
 
+
     .field input {
       width: 100%;
+
       padding: 10px 12px;
+
       border: 1px solid #ccc;
+
       border-radius: 7px;
-      font-size: 14px;
+
       font-family: inherit;
+
+      font-size: 14px;
+
+      background: white;
     }
+
 
     .field input:focus {
       outline: none;
+
       border-color: #555;
+
+      box-shadow:
+        0 0 0 2px rgba(0,0,0,0.05);
     }
+
+
+    /* -----------------------------------------
+       DROP ZONE
+    ----------------------------------------- */
 
     .drop-zone {
       border: 2px dashed #aaa;
+
       border-radius: 10px;
+
       padding: 40px 20px;
+
       text-align: center;
+
       cursor: pointer;
+
       transition: 0.2s;
     }
+
 
     .drop-zone:hover,
     .drop-zone.dragover {
       border-color: #333;
+
       background: #fafafa;
     }
 
+
     .drop-zone strong {
       display: block;
+
       margin-bottom: 8px;
+
       font-size: 18px;
     }
+
 
     input[type="file"] {
       display: none;
     }
 
+
+    /* -----------------------------------------
+       FILE INFORMATION
+    ----------------------------------------- */
+
     .file-info {
       margin-top: 18px;
+
       font-size: 14px;
+
       color: #555;
     }
 
+
+    /* -----------------------------------------
+       OUTPUT
+    ----------------------------------------- */
+
     textarea {
       width: 100%;
-      height: 300px;
+
+      height: 340px;
+
       margin-top: 20px;
+
       padding: 14px;
+
       border: 1px solid #ccc;
+
       border-radius: 8px;
+
       font-family: monospace;
+
       font-size: 13px;
+
+      line-height: 1.5;
+
       resize: vertical;
+
       white-space: pre;
+
+      overflow: auto;
     }
 
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 7px;
-      padding: 11px 18px;
-      cursor: pointer;
-      font-size: 14px;
-      background: #222;
-      color: white;
-    }
-
-    button.secondary {
-      background: #e5e5e5;
-      color: #222;
-    }
-
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
 
     .count {
       margin-top: 12px;
+
       font-size: 13px;
+
       color: #666;
     }
 
-    @media (max-width: 650px) {
+
+    /* -----------------------------------------
+       BUTTONS
+    ----------------------------------------- */
+
+    .buttons {
+      display: flex;
+
+      gap: 10px;
+
+      margin-top: 14px;
+
+      flex-wrap: wrap;
+    }
+
+
+    button {
+      border: 0;
+
+      border-radius: 7px;
+
+      padding: 11px 18px;
+
+      cursor: pointer;
+
+      font-size: 14px;
+
+      background: #222;
+
+      color: white;
+    }
+
+
+    button:hover:not(:disabled) {
+      background: #444;
+    }
+
+
+    button.secondary {
+      background: #e5e5e5;
+
+      color: #222;
+    }
+
+
+    button.secondary:hover {
+      background: #d7d7d7;
+    }
+
+
+    button:disabled {
+      opacity: 0.4;
+
+      cursor: default;
+    }
+
+
+    /* -----------------------------------------
+       RESPONSIVE
+    ----------------------------------------- */
+
+    @media (max-width: 800px) {
+
+      .journey-fields {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+    }
+
+
+    @media (max-width: 500px) {
+
       .journey-fields {
         grid-template-columns: 1fr;
       }
+
+
+      .container {
+        padding: 22px;
+      }
+
     }
+
   </style>
 </head>
 
+
 <body>
+
 
 <div class="container">
 
-  <h1>GPX Journey Converter</h1>
+
+  <h1>
+    GPX Journey Converter
+  </h1>
+
 
   <div class="description">
-    Drop a GPX file below to convert its route coordinates into
-    journey data with evenly distributed UTC times.
+
+    Enter the journey details and drop a GPX file below.
+
+    The route points will be assigned evenly spaced times between
+    the journey start and end times.
+
   </div>
 
 
-  <!-- Journey details -->
+  <!-- =========================================
+       JOURNEY DETAILS
+  ========================================== -->
 
   <div class="journey-fields">
 
+
     <div class="field">
+
+      <label for="journeyDate">
+        Journey date
+      </label>
+
+      <input
+        type="date"
+        id="journeyDate"
+      >
+
+    </div>
+
+
+    <div class="field">
+
       <label for="startTime">
-        Start time
+        Start time (UTC)
       </label>
 
       <input
@@ -182,12 +353,14 @@
         id="startTime"
         step="1"
       >
+
     </div>
 
 
     <div class="field">
+
       <label for="endTime">
-        End time
+        End time (UTC)
       </label>
 
       <input
@@ -195,10 +368,12 @@
         id="endTime"
         step="1"
       >
+
     </div>
 
 
     <div class="field">
+
       <label for="callsign">
         Callsign
       </label>
@@ -209,17 +384,31 @@
         placeholder="e.g. EZY23JK"
         autocomplete="off"
       >
+
     </div>
 
+
   </div>
 
 
-  <!-- GPX drop area -->
+  <!-- =========================================
+       GPX FILE
+  ========================================== -->
 
-  <div class="drop-zone" id="dropZone">
-    <strong>Drop GPX file here</strong>
+
+  <div
+    class="drop-zone"
+    id="dropZone"
+  >
+
+    <strong>
+      Drop GPX file here
+    </strong>
+
     or click to select a file
+
   </div>
+
 
   <input
     type="file"
@@ -232,6 +421,11 @@
     class="file-info"
     id="fileInfo"
   ></div>
+
+
+  <!-- =========================================
+       OUTPUT
+  ========================================== -->
 
 
   <textarea
@@ -249,12 +443,14 @@
 
   <div class="buttons">
 
+
     <button
       id="copyButton"
       disabled
     >
       Copy Data
     </button>
+
 
     <button
       id="downloadButton"
@@ -263,6 +459,7 @@
       Download TXT
     </button>
 
+
     <button
       class="secondary"
       id="clearButton"
@@ -270,55 +467,112 @@
       Clear
     </button>
 
+
   </div>
+
 
 </div>
 
 
 <script>
 
+
+/* =============================================
+   ELEMENTS
+============================================= */
+
+
 const dropZone =
-  document.getElementById("dropZone");
+  document.getElementById(
+    "dropZone"
+  );
+
 
 const fileInput =
-  document.getElementById("fileInput");
+  document.getElementById(
+    "fileInput"
+  );
+
 
 const output =
-  document.getElementById("output");
+  document.getElementById(
+    "output"
+  );
+
 
 const fileInfo =
-  document.getElementById("fileInfo");
+  document.getElementById(
+    "fileInfo"
+  );
+
 
 const count =
-  document.getElementById("count");
+  document.getElementById(
+    "count"
+  );
+
+
+const journeyDateInput =
+  document.getElementById(
+    "journeyDate"
+  );
+
 
 const startTimeInput =
-  document.getElementById("startTime");
+  document.getElementById(
+    "startTime"
+  );
+
 
 const endTimeInput =
-  document.getElementById("endTime");
+  document.getElementById(
+    "endTime"
+  );
+
 
 const callsignInput =
-  document.getElementById("callsign");
+  document.getElementById(
+    "callsign"
+  );
+
 
 const copyButton =
-  document.getElementById("copyButton");
+  document.getElementById(
+    "copyButton"
+  );
+
 
 const downloadButton =
-  document.getElementById("downloadButton");
+  document.getElementById(
+    "downloadButton"
+  );
+
 
 const clearButton =
-  document.getElementById("clearButton");
+  document.getElementById(
+    "clearButton"
+  );
 
 
-let currentFilename = "journey";
 
-let storedCoordinates = [];
+/* =============================================
+   STATE
+============================================= */
 
 
-// -----------------------------------------
-// File selection
-// -----------------------------------------
+let currentFilename =
+  "journey";
+
+
+let storedCoordinates =
+  [];
+
+
+
+/* =============================================
+   FILE SELECTION
+============================================= */
+
 
 dropZone.addEventListener(
   "click",
@@ -330,11 +584,14 @@ dropZone.addEventListener(
 );
 
 
+
 fileInput.addEventListener(
   "change",
   () => {
 
-    if (fileInput.files.length) {
+    if (
+      fileInput.files.length
+    ) {
 
       processFile(
         fileInput.files[0]
@@ -346,15 +603,17 @@ fileInput.addEventListener(
 );
 
 
-// -----------------------------------------
-// Drag and drop
-// -----------------------------------------
+
+/* =============================================
+   DRAG AND DROP
+============================================= */
+
 
 dropZone.addEventListener(
   "dragover",
-  e => {
+  event => {
 
-    e.preventDefault();
+    event.preventDefault();
 
     dropZone.classList.add(
       "dragover"
@@ -362,6 +621,7 @@ dropZone.addEventListener(
 
   }
 );
+
 
 
 dropZone.addEventListener(
@@ -376,22 +636,24 @@ dropZone.addEventListener(
 );
 
 
+
 dropZone.addEventListener(
   "drop",
-  e => {
+  event => {
 
-    e.preventDefault();
+    event.preventDefault();
 
     dropZone.classList.remove(
       "dragover"
     );
 
+
     if (
-      e.dataTransfer.files.length
+      event.dataTransfer.files.length
     ) {
 
       processFile(
-        e.dataTransfer.files[0]
+        event.dataTransfer.files[0]
       );
 
     }
@@ -400,113 +662,85 @@ dropZone.addEventListener(
 );
 
 
-// -----------------------------------------
-// Process GPX
-// -----------------------------------------
+
+/* =============================================
+   PROCESS GPX FILE
+============================================= */
+
 
 function processFile(file) {
+
 
   const reader =
     new FileReader();
 
 
-  reader.onload = function(e) {
-
-    const text =
-      e.target.result;
-
-    const parser =
-      new DOMParser();
-
-    const xml =
-      parser.parseFromString(
-        text,
-        "application/xml"
-      );
+  reader.onload =
+    function(event) {
 
 
-    const parserError =
-      xml.querySelector(
-        "parsererror"
-      );
+      const text =
+        event.target.result;
 
 
-    if (parserError) {
-
-      alert(
-        "This file could not be read as GPX/XML."
-      );
-
-      return;
-
-    }
+      const parser =
+        new DOMParser();
 
 
-    const coordinates = [];
-
-    const trackPoints =
-      xml.getElementsByTagNameNS(
-        "*",
-        "trkpt"
-      );
-
-
-    for (
-      const point
-      of trackPoints
-    ) {
-
-      const lat =
-        point.getAttribute(
-          "lat"
+      const xml =
+        parser.parseFromString(
+          text,
+          "application/xml"
         );
 
-      const lon =
-        point.getAttribute(
-          "lon"
+
+      const parserError =
+        xml.querySelector(
+          "parsererror"
         );
 
 
       if (
-        lat !== null &&
-        lon !== null
+        parserError
       ) {
 
-        coordinates.push({
-          lon,
-          lat
-        });
+        alert(
+          "This file could not be read as GPX/XML."
+        );
+
+        return;
 
       }
 
-    }
 
 
-    // -------------------------------------
-    // If there are no track points,
-    // try route points
-    // -------------------------------------
+      const coordinates =
+        [];
 
-    if (
-      coordinates.length === 0
-    ) {
 
-      const routePoints =
+      /* -----------------------------------------
+         TRACK POINTS
+      ----------------------------------------- */
+
+
+      const trackPoints =
         xml.getElementsByTagNameNS(
           "*",
-          "rtept"
+          "trkpt"
         );
 
 
       for (
         const point
-        of routePoints
+        of trackPoints
       ) {
+
 
         const lat =
           point.getAttribute(
             "lat"
           );
+
 
         const lon =
           point.getAttribute(
@@ -528,59 +762,145 @@ function processFile(file) {
 
       }
 
-    }
 
 
-    if (
-      coordinates.length === 0
-    ) {
+      /* -----------------------------------------
+         ROUTE POINTS
 
-      storedCoordinates = [];
-
-      output.value = "";
-
-      count.textContent =
-        "No coordinates found.";
-
-      copyButton.disabled = true;
-
-      downloadButton.disabled = true;
-
-      return;
-
-    }
+         Only use route points when there
+         are no track points.
+      ----------------------------------------- */
 
 
-    storedCoordinates =
-      coordinates;
+      if (
+        coordinates.length === 0
+      ) {
 
 
-    fileInfo.textContent =
-      file.name;
+        const routePoints =
+          xml.getElementsByTagNameNS(
+            "*",
+            "rtept"
+          );
 
 
-    currentFilename =
-      file.name.replace(
-        /\.[^.]+$/,
-        ""
-      ) + "-journey";
+        for (
+          const point
+          of routePoints
+        ) {
 
 
-    generateOutput();
+          const lat =
+            point.getAttribute(
+              "lat"
+            );
 
-  };
+
+          const lon =
+            point.getAttribute(
+              "lon"
+            );
 
 
-  reader.readAsText(file);
+          if (
+            lat !== null &&
+            lon !== null
+          ) {
+
+            coordinates.push({
+              lon,
+              lat
+            });
+
+          }
+
+        }
+
+      }
+
+
+
+      /* -----------------------------------------
+         NO COORDINATES
+      ----------------------------------------- */
+
+
+      if (
+        coordinates.length === 0
+      ) {
+
+
+        storedCoordinates =
+          [];
+
+
+        output.value =
+          "";
+
+
+        fileInfo.textContent =
+          file.name;
+
+
+        count.textContent =
+          "No coordinates found.";
+
+
+        copyButton.disabled =
+          true;
+
+
+        downloadButton.disabled =
+          true;
+
+
+        return;
+
+      }
+
+
+
+      /* -----------------------------------------
+         STORE RESULT
+      ----------------------------------------- */
+
+
+      storedCoordinates =
+        coordinates;
+
+
+      fileInfo.textContent =
+        file.name;
+
+
+      currentFilename =
+        file.name.replace(
+          /\.[^.]+$/,
+          ""
+        ) +
+        "-journey";
+
+
+      generateOutput();
+
+    };
+
+
+  reader.readAsText(
+    file
+  );
 
 }
 
 
-// -----------------------------------------
-// Generate journey dataset
-// -----------------------------------------
+
+/* =============================================
+   GENERATE DATASET
+============================================= */
+
 
 function generateOutput() {
+
 
   if (
     storedCoordinates.length === 0
@@ -591,49 +911,88 @@ function generateOutput() {
   }
 
 
+
+  const journeyDate =
+    journeyDateInput.value;
+
+
   const startValue =
     startTimeInput.value;
 
+
   const endValue =
     endTimeInput.value;
+
 
   const callsign =
     callsignInput.value.trim();
 
 
+
+  /* -----------------------------------------
+     VALIDATION
+  ----------------------------------------- */
+
+
   if (
+    !journeyDate ||
     !startValue ||
     !endValue
   ) {
 
-    output.value = "";
+
+    output.value =
+      "";
+
 
     count.textContent =
-      "Enter a start time and end time.";
+      "Enter a journey date, start time and end time.";
 
-    copyButton.disabled = true;
 
-    downloadButton.disabled = true;
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
 
     return;
 
   }
 
 
-  if (!callsign) {
 
-    output.value = "";
+  if (
+    !callsign
+  ) {
+
+
+    output.value =
+      "";
+
 
     count.textContent =
       "Enter a callsign.";
 
-    copyButton.disabled = true;
 
-    downloadButton.disabled = true;
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
 
     return;
 
   }
+
+
+
+  /* -----------------------------------------
+     CONVERT TIMES TO SECONDS
+  ----------------------------------------- */
 
 
   const startSeconds =
@@ -641,24 +1000,32 @@ function generateOutput() {
       startValue
     );
 
+
   let endSeconds =
     timeToSeconds(
       endValue
     );
 
 
-  // If the end time is earlier than the
-  // start time, assume the journey
-  // crosses midnight.
+
+  /* -----------------------------------------
+     CROSSING MIDNIGHT
+
+     If end time is before start time,
+     assume journey ended the following day.
+  ----------------------------------------- */
+
 
   if (
-    endSeconds < startSeconds
+    endSeconds <
+    startSeconds
   ) {
 
     endSeconds +=
       24 * 60 * 60;
 
   }
+
 
 
   const duration =
@@ -670,7 +1037,21 @@ function generateOutput() {
     storedCoordinates.length;
 
 
-  let interval = 0;
+
+  /* -----------------------------------------
+     CALCULATE INTERVAL
+
+     N coordinates have N-1 intervals.
+
+     This guarantees:
+
+     first point = exact start time
+     last point  = exact end time
+  ----------------------------------------- */
+
+
+  let interval =
+    0;
 
 
   if (
@@ -679,27 +1060,79 @@ function generateOutput() {
 
     interval =
       duration /
-      (numberOfPoints - 1);
+      (
+        numberOfPoints - 1
+      );
 
   }
 
 
-  const rows = [];
+
+  /* -----------------------------------------
+     OUTPUT ROWS
+  ----------------------------------------- */
 
 
-  // Header
+  const rows =
+    [];
+
 
   rows.push(
     "timestamp,utc,callsign,position,altitude,speed,direction"
   );
 
 
+
   storedCoordinates.forEach(
-    (coordinate, index) => {
+    (
+      coordinate,
+      index
+    ) => {
+
+
+      /* -------------------------------------
+         CALCULATE POINT TIME
+      ------------------------------------- */
+
+
+      const exactSeconds =
+        startSeconds +
+        (
+          interval *
+          index
+        );
+
 
       const currentSeconds =
-        startSeconds +
-        (interval * index);
+        Math.round(
+          exactSeconds
+        );
+
+
+
+      /* -------------------------------------
+         DETERMINE DAY
+
+         This allows journeys to cross
+         midnight.
+      ------------------------------------- */
+
+
+      const dayOffset =
+        Math.floor(
+          currentSeconds /
+          (
+            24 *
+            60 *
+            60
+          )
+        );
+
+
+
+      /* -------------------------------------
+         UTC TIME
+      ------------------------------------- */
 
 
       const utc =
@@ -708,132 +1141,445 @@ function generateOutput() {
         );
 
 
+
+      /* -------------------------------------
+         DATE
+      ------------------------------------- */
+
+
+      const dateParts =
+        journeyDate.split(
+          "-"
+        );
+
+
+      const date =
+        new Date(
+          Date.UTC(
+
+            Number(
+              dateParts[0]
+            ),
+
+            Number(
+              dateParts[1]
+            ) - 1,
+
+            Number(
+              dateParts[2]
+            ) +
+            dayOffset
+
+          )
+        );
+
+
+
+      const timestampDate =
+        [
+
+          date.getUTCFullYear(),
+
+          String(
+            date.getUTCMonth() + 1
+          ).padStart(
+            2,
+            "0"
+          ),
+
+          String(
+            date.getUTCDate()
+          ).padStart(
+            2,
+            "0"
+          )
+
+        ].join(
+          "-"
+        );
+
+
+
+      /* -------------------------------------
+         TIMESTAMP
+
+         Required format:
+
+         2026-09-16 15:22:53+00
+      ------------------------------------- */
+
+
+      const timestamp =
+        timestampDate +
+        " " +
+        utc +
+        "+00";
+
+
+
+      /* -------------------------------------
+         POSITION
+
+         longitude,latitude
+      ------------------------------------- */
+
+
       const position =
-        `${coordinate.lon},${coordinate.lat}`;
+        coordinate.lon +
+        "," +
+        coordinate.lat;
+
+
+
+      /* -------------------------------------
+         CREATE ROW
+
+         altitude
+         speed
+         direction
+
+         intentionally remain empty.
+      ------------------------------------- */
 
 
       rows.push(
-        `,${utc},${escapeField(callsign)},"${position}",,,`
+
+        escapeField(
+          timestamp
+        ) +
+
+        "," +
+
+        escapeField(
+          utc
+        ) +
+
+        "," +
+
+        escapeField(
+          callsign
+        ) +
+
+        "," +
+
+        escapeField(
+          position
+        ) +
+
+        ",,,"
+
       );
+
 
     }
   );
 
 
+
+  /* -----------------------------------------
+     DISPLAY OUTPUT
+  ----------------------------------------- */
+
+
   output.value =
-    rows.join("\n");
+    rows.join(
+      "\n"
+    );
 
 
   count.textContent =
-    `${numberOfPoints.toLocaleString()} journey rows generated`;
+
+    numberOfPoints.toLocaleString() +
+
+    " journey rows generated • " +
+
+    formatDuration(
+      duration
+    ) +
+
+    " journey duration";
 
 
-  copyButton.disabled = false;
 
-  downloadButton.disabled = false;
+  copyButton.disabled =
+    false;
+
+
+  downloadButton.disabled =
+    false;
 
 }
 
 
-// -----------------------------------------
-// Convert HH:MM:SS to seconds
-// -----------------------------------------
 
-function timeToSeconds(value) {
+/* =============================================
+   TIME -> SECONDS
+============================================= */
+
+
+function timeToSeconds(
+  value
+) {
+
 
   const parts =
-    value.split(":");
+    value.split(
+      ":"
+    );
 
 
   const hours =
-    Number(parts[0]) || 0;
+    Number(
+      parts[0]
+    ) || 0;
+
 
   const minutes =
-    Number(parts[1]) || 0;
+    Number(
+      parts[1]
+    ) || 0;
+
 
   const seconds =
-    Number(parts[2]) || 0;
+    Number(
+      parts[2]
+    ) || 0;
 
 
   return (
-    hours * 3600 +
-    minutes * 60 +
+
+    hours *
+    3600
+
+    +
+
+    minutes *
+    60
+
+    +
+
     seconds
+
   );
 
 }
 
 
-// -----------------------------------------
-// Convert seconds to HH:MM:SS
-// -----------------------------------------
 
-function secondsToTime(seconds) {
+/* =============================================
+   SECONDS -> HH:MM:SS
+============================================= */
+
+
+function secondsToTime(
+  seconds
+) {
+
 
   seconds =
-    Math.round(seconds);
+    Math.round(
+      seconds
+    );
 
 
-  // Allow journeys to cross midnight
+  const secondsInDay =
+    24 *
+    60 *
+    60;
+
+
+  /* Wrap around after midnight */
 
   seconds =
     (
-      seconds %
-      (24 * 60 * 60)
+      (
+        seconds %
+        secondsInDay
+      )
       +
-      (24 * 60 * 60)
-    ) %
-    (24 * 60 * 60);
+      secondsInDay
+    )
+    %
+    secondsInDay;
+
 
 
   const hours =
     Math.floor(
-      seconds / 3600
+      seconds /
+      3600
     );
 
 
   const minutes =
     Math.floor(
-      (seconds % 3600) / 60
+      (
+        seconds %
+        3600
+      )
+      /
+      60
     );
 
 
   const secs =
-    seconds % 60;
+    seconds %
+    60;
+
 
 
   return [
-    String(hours).padStart(2, "0"),
-    String(minutes).padStart(2, "0"),
-    String(secs).padStart(2, "0")
-  ].join(":");
+
+    String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      secs
+    ).padStart(
+      2,
+      "0"
+    )
+
+  ].join(
+    ":"
+  );
 
 }
 
 
-// -----------------------------------------
-// Escape CSV/TXT field
-// -----------------------------------------
 
-function escapeField(value) {
+/* =============================================
+   FORMAT DURATION
+============================================= */
+
+
+function formatDuration(
+  seconds
+) {
+
+
+  seconds =
+    Math.round(
+      seconds
+    );
+
+
+  const hours =
+    Math.floor(
+      seconds /
+      3600
+    );
+
+
+  const minutes =
+    Math.floor(
+      (
+        seconds %
+        3600
+      )
+      /
+      60
+    );
+
+
+  const secs =
+    seconds %
+    60;
+
+
+
+  return [
+
+    String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      secs
+    ).padStart(
+      2,
+      "0"
+    )
+
+  ].join(
+    ":"
+  );
+
+}
+
+
+
+/* =============================================
+   ESCAPE OUTPUT FIELD
+============================================= */
+
+
+function escapeField(
+  value
+) {
+
 
   const stringValue =
-    String(value);
+    String(
+      value
+    );
 
 
   if (
-    stringValue.includes(",") ||
-    stringValue.includes('"') ||
-    stringValue.includes("\n")
+
+    stringValue.includes(
+      ","
+    )
+
+    ||
+
+    stringValue.includes(
+      '"'
+    )
+
+    ||
+
+    stringValue.includes(
+      "\n"
+    )
+
   ) {
 
+
     return (
+
       '"' +
+
       stringValue.replace(
         /"/g,
         '""'
-      ) +
+      )
+
+      +
+
       '"'
+
     );
 
   }
@@ -844,10 +1590,17 @@ function escapeField(value) {
 }
 
 
-// -----------------------------------------
-// Regenerate automatically when
-// journey details change
-// -----------------------------------------
+
+/* =============================================
+   REGENERATE WHEN DETAILS CHANGE
+============================================= */
+
+
+journeyDateInput.addEventListener(
+  "change",
+  generateOutput
+);
+
 
 startTimeInput.addEventListener(
   "change",
@@ -867,13 +1620,16 @@ callsignInput.addEventListener(
 );
 
 
-// -----------------------------------------
-// Copy
-// -----------------------------------------
+
+/* =============================================
+   COPY
+============================================= */
+
 
 copyButton.addEventListener(
   "click",
   async () => {
+
 
     await navigator.clipboard.writeText(
       output.value
@@ -902,28 +1658,38 @@ copyButton.addEventListener(
 );
 
 
-// -----------------------------------------
-// Download TXT
-// -----------------------------------------
+
+/* =============================================
+   DOWNLOAD TXT
+============================================= */
+
 
 downloadButton.addEventListener(
   "click",
   () => {
 
+
     const blob =
       new Blob(
-        [output.value],
+
+        [
+          output.value
+        ],
+
         {
           type:
             "text/plain;charset=utf-8"
         }
+
       );
+
 
 
     const url =
       URL.createObjectURL(
         blob
       );
+
 
 
     const link =
@@ -935,8 +1701,11 @@ downloadButton.addEventListener(
     link.href =
       url;
 
+
     link.download =
-      currentFilename + ".txt";
+      currentFilename +
+      ".txt";
+
 
 
     document.body.appendChild(
@@ -946,7 +1715,9 @@ downloadButton.addEventListener(
 
     link.click();
 
+
     link.remove();
+
 
 
     URL.revokeObjectURL(
@@ -957,33 +1728,60 @@ downloadButton.addEventListener(
 );
 
 
-// -----------------------------------------
-// Clear
-// -----------------------------------------
+
+/* =============================================
+   CLEAR
+============================================= */
+
 
 clearButton.addEventListener(
   "click",
   () => {
 
-    fileInput.value = "";
 
-    startTimeInput.value = "";
+    fileInput.value =
+      "";
 
-    endTimeInput.value = "";
 
-    callsignInput.value = "";
+    journeyDateInput.value =
+      "";
 
-    storedCoordinates = [];
 
-    output.value = "";
+    startTimeInput.value =
+      "";
 
-    fileInfo.textContent = "";
 
-    count.textContent = "";
+    endTimeInput.value =
+      "";
 
-    copyButton.disabled = true;
 
-    downloadButton.disabled = true;
+    callsignInput.value =
+      "";
+
+
+    storedCoordinates =
+      [];
+
+
+    output.value =
+      "";
+
+
+    fileInfo.textContent =
+      "";
+
+
+    count.textContent =
+      "";
+
+
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
 
     currentFilename =
       "journey";
@@ -991,7 +1789,9 @@ clearButton.addEventListener(
   }
 );
 
+
 </script>
+
 
 </body>
 </html>
