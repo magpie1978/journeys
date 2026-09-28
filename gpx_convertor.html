@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>GPX Journey Converter</title>
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    GPX Journey Converter
+  </title>
+
 
   <style>
 
@@ -15,21 +24,31 @@
 
     body {
       margin: 0;
+
       min-height: 100vh;
 
       display: flex;
+
       align-items: center;
+
       justify-content: center;
 
       background: #f4f5f7;
 
-      font-family: Arial, sans-serif;
+      font-family:
+        Arial,
+        sans-serif;
+
       color: #222;
     }
 
 
     .container {
-      width: min(1000px, 92vw);
+      width:
+        min(
+          1000px,
+          92vw
+        );
 
       background: white;
 
@@ -38,12 +57,21 @@
       padding: 32px;
 
       box-shadow:
-        0 4px 20px rgba(0,0,0,0.08);
+        0 4px 20px
+        rgba(
+          0,
+          0,
+          0,
+          0.08
+        );
     }
 
 
     h1 {
-      margin: 0 0 8px;
+      margin:
+        0
+        0
+        8px;
 
       font-size: 26px;
     }
@@ -58,15 +86,19 @@
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        JOURNEY DETAILS
-    ----------------------------------------- */
+    ========================================= */
+
 
     .journey-fields {
       display: grid;
 
       grid-template-columns:
-        repeat(4, 1fr);
+        repeat(
+          4,
+          1fr
+        );
 
       gap: 14px;
 
@@ -95,9 +127,13 @@
     .field input {
       width: 100%;
 
-      padding: 10px 12px;
+      padding:
+        10px
+        12px;
 
-      border: 1px solid #ccc;
+      border:
+        1px solid
+        #ccc;
 
       border-radius: 7px;
 
@@ -115,20 +151,31 @@
       border-color: #555;
 
       box-shadow:
-        0 0 0 2px rgba(0,0,0,0.05);
+        0 0 0 2px
+        rgba(
+          0,
+          0,
+          0,
+          0.05
+        );
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        DROP ZONE
-    ----------------------------------------- */
+    ========================================= */
+
 
     .drop-zone {
-      border: 2px dashed #aaa;
+      border:
+        2px dashed
+        #aaa;
 
       border-radius: 10px;
 
-      padding: 40px 20px;
+      padding:
+        40px
+        20px;
 
       text-align: center;
 
@@ -160,9 +207,10 @@
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        FILE INFORMATION
-    ----------------------------------------- */
+    ========================================= */
+
 
     .file-info {
       margin-top: 18px;
@@ -173,9 +221,10 @@
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        OUTPUT
-    ----------------------------------------- */
+    ========================================= */
+
 
     textarea {
       width: 100%;
@@ -186,11 +235,14 @@
 
       padding: 14px;
 
-      border: 1px solid #ccc;
+      border:
+        1px solid
+        #ccc;
 
       border-radius: 8px;
 
-      font-family: monospace;
+      font-family:
+        monospace;
 
       font-size: 13px;
 
@@ -213,9 +265,10 @@
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        BUTTONS
-    ----------------------------------------- */
+    ========================================= */
+
 
     .buttons {
       display: flex;
@@ -233,7 +286,9 @@
 
       border-radius: 7px;
 
-      padding: 11px 18px;
+      padding:
+        11px
+        18px;
 
       cursor: pointer;
 
@@ -269,24 +324,33 @@
     }
 
 
-    /* -----------------------------------------
+    /* =========================================
        RESPONSIVE
-    ----------------------------------------- */
+    ========================================= */
 
-    @media (max-width: 800px) {
+
+    @media (
+      max-width: 800px
+    ) {
 
       .journey-fields {
         grid-template-columns:
-          repeat(2, 1fr);
+          repeat(
+            2,
+            1fr
+          );
       }
 
     }
 
 
-    @media (max-width: 500px) {
+    @media (
+      max-width: 500px
+    ) {
 
       .journey-fields {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+          1fr;
       }
 
 
@@ -297,6 +361,7 @@
     }
 
   </style>
+
 </head>
 
 
@@ -313,17 +378,21 @@
 
   <div class="description">
 
-    Enter the journey details and drop a GPX file below.
+    Enter the journey date,
+    start time, end time and callsign,
+    then drop a GPX file below.
 
-    The route points will be assigned evenly spaced times between
-    the journey start and end times.
+    The GPX points will be assigned
+    evenly spaced UTC timestamps
+    across the journey.
 
   </div>
 
 
-  <!-- =========================================
+  <!-- =======================================
        JOURNEY DETAILS
-  ========================================== -->
+  ======================================== -->
+
 
   <div class="journey-fields">
 
@@ -391,9 +460,9 @@
   </div>
 
 
-  <!-- =========================================
-       GPX FILE
-  ========================================== -->
+  <!-- =======================================
+       GPX DROP ZONE
+  ======================================== -->
 
 
   <div
@@ -423,9 +492,9 @@
   ></div>
 
 
-  <!-- =========================================
+  <!-- =======================================
        OUTPUT
-  ========================================== -->
+  ======================================== -->
 
 
   <textarea
@@ -554,7 +623,6 @@ const clearButton =
   );
 
 
-
 /* =============================================
    STATE
 ============================================= */
@@ -566,7 +634,6 @@ let currentFilename =
 
 let storedCoordinates =
   [];
-
 
 
 /* =============================================
@@ -582,7 +649,6 @@ dropZone.addEventListener(
 
   }
 );
-
 
 
 fileInput.addEventListener(
@@ -601,7 +667,6 @@ fileInput.addEventListener(
 
   }
 );
-
 
 
 /* =============================================
@@ -623,7 +688,6 @@ dropZone.addEventListener(
 );
 
 
-
 dropZone.addEventListener(
   "dragleave",
   () => {
@@ -634,7 +698,6 @@ dropZone.addEventListener(
 
   }
 );
-
 
 
 dropZone.addEventListener(
@@ -662,13 +725,14 @@ dropZone.addEventListener(
 );
 
 
-
 /* =============================================
-   PROCESS GPX FILE
+   PROCESS GPX
 ============================================= */
 
 
-function processFile(file) {
+function processFile(
+  file
+) {
 
 
   const reader =
@@ -676,7 +740,9 @@ function processFile(file) {
 
 
   reader.onload =
-    function(event) {
+    function(
+      event
+    ) {
 
 
       const text =
@@ -713,14 +779,13 @@ function processFile(file) {
       }
 
 
-
       const coordinates =
         [];
 
 
-      /* -----------------------------------------
+      /* -------------------------------------
          TRACK POINTS
-      ----------------------------------------- */
+      ------------------------------------- */
 
 
       const trackPoints =
@@ -763,13 +828,11 @@ function processFile(file) {
       }
 
 
-
-      /* -----------------------------------------
+      /* -------------------------------------
          ROUTE POINTS
 
-         Only use route points when there
-         are no track points.
-      ----------------------------------------- */
+         Used only if no track points exist.
+      ------------------------------------- */
 
 
       if (
@@ -819,10 +882,9 @@ function processFile(file) {
       }
 
 
-
-      /* -----------------------------------------
+      /* -------------------------------------
          NO COORDINATES
-      ----------------------------------------- */
+      ------------------------------------- */
 
 
       if (
@@ -859,10 +921,9 @@ function processFile(file) {
       }
 
 
-
-      /* -----------------------------------------
-         STORE RESULT
-      ----------------------------------------- */
+      /* -------------------------------------
+         STORE GPX DATA
+      ------------------------------------- */
 
 
       storedCoordinates =
@@ -877,7 +938,8 @@ function processFile(file) {
         file.name.replace(
           /\.[^.]+$/,
           ""
-        ) +
+        )
+        +
         "-journey";
 
 
@@ -891,7 +953,6 @@ function processFile(file) {
   );
 
 }
-
 
 
 /* =============================================
@@ -911,7 +972,6 @@ function generateOutput() {
   }
 
 
-
   const journeyDate =
     journeyDateInput.value;
 
@@ -925,8 +985,9 @@ function generateOutput() {
 
 
   const callsign =
-    callsignInput.value.trim();
-
+    callsignInput
+      .value
+      .trim();
 
 
   /* -----------------------------------------
@@ -962,7 +1023,6 @@ function generateOutput() {
   }
 
 
-
   if (
     !callsign
   ) {
@@ -989,9 +1049,8 @@ function generateOutput() {
   }
 
 
-
   /* -----------------------------------------
-     CONVERT TIMES TO SECONDS
+     START / END TIMES
   ----------------------------------------- */
 
 
@@ -1007,12 +1066,12 @@ function generateOutput() {
     );
 
 
-
   /* -----------------------------------------
-     CROSSING MIDNIGHT
+     MIDNIGHT CROSSING
 
-     If end time is before start time,
-     assume journey ended the following day.
+     If the end time is earlier than the
+     start time, the journey is assumed to
+     finish the following day.
   ----------------------------------------- */
 
 
@@ -1022,10 +1081,11 @@ function generateOutput() {
   ) {
 
     endSeconds +=
-      24 * 60 * 60;
+      24 *
+      60 *
+      60;
 
   }
-
 
 
   const duration =
@@ -1037,13 +1097,12 @@ function generateOutput() {
     storedCoordinates.length;
 
 
-
   /* -----------------------------------------
-     CALCULATE INTERVAL
+     TIME BETWEEN GPX POINTS
 
-     N coordinates have N-1 intervals.
+     There are N-1 intervals between N points.
 
-     This guarantees:
+     Therefore:
 
      first point = exact start time
      last point  = exact end time
@@ -1061,15 +1120,15 @@ function generateOutput() {
     interval =
       duration /
       (
-        numberOfPoints - 1
+        numberOfPoints -
+        1
       );
 
   }
 
 
-
   /* -----------------------------------------
-     OUTPUT ROWS
+     OUTPUT
   ----------------------------------------- */
 
 
@@ -1082,7 +1141,6 @@ function generateOutput() {
   );
 
 
-
   storedCoordinates.forEach(
     (
       coordinate,
@@ -1091,7 +1149,7 @@ function generateOutput() {
 
 
       /* -------------------------------------
-         CALCULATE POINT TIME
+         TIME FOR THIS GPX POINT
       ------------------------------------- */
 
 
@@ -1109,12 +1167,8 @@ function generateOutput() {
         );
 
 
-
       /* -------------------------------------
-         DETERMINE DAY
-
-         This allows journeys to cross
-         midnight.
+         NUMBER OF DAYS AFTER START DATE
       ------------------------------------- */
 
 
@@ -1129,21 +1183,19 @@ function generateOutput() {
         );
 
 
-
       /* -------------------------------------
-         UTC TIME
+         TIME OF DAY
       ------------------------------------- */
 
 
-      const utc =
+      const time =
         secondsToTime(
           currentSeconds
         );
 
 
-
       /* -------------------------------------
-         DATE
+         CALCULATE DATE
       ------------------------------------- */
 
 
@@ -1174,8 +1226,7 @@ function generateOutput() {
         );
 
 
-
-      const timestampDate =
+      const dateString =
         [
 
           date.getUTCFullYear(),
@@ -1199,28 +1250,66 @@ function generateOutput() {
         );
 
 
+      /* =====================================
+         UTC
 
-      /* -------------------------------------
+         PostgreSQL-compatible format:
+
+         2026-09-07 09:50:00+00
+      ===================================== */
+
+
+      const utc =
+        dateString +
+        " " +
+        time +
+        "+00";
+
+
+      /* =====================================
          TIMESTAMP
 
-         Required format:
+         Convert UTC into a Unix timestamp
+         measured in seconds.
 
-         2026-09-16 15:22:53+00
-      ------------------------------------- */
+         Example:
+
+         UTC:
+         2026-09-07 09:50:00+00
+
+         timestamp:
+         1788774600
+
+         This is an integer suitable for a
+         PostgreSQL bigint column.
+      ===================================== */
+
+
+      const isoUtc =
+        dateString +
+        "T" +
+        time +
+        "Z";
+
+
+      const utcDate =
+        new Date(
+          isoUtc
+        );
 
 
       const timestamp =
-        timestampDate +
-        " " +
-        utc +
-        "+00";
-
+        Math.floor(
+          utcDate.getTime() /
+          1000
+        );
 
 
       /* -------------------------------------
          POSITION
 
-         longitude,latitude
+         Keep the original converter's
+         longitude,latitude order.
       ------------------------------------- */
 
 
@@ -1230,23 +1319,18 @@ function generateOutput() {
         coordinate.lat;
 
 
-
       /* -------------------------------------
          CREATE ROW
 
-         altitude
-         speed
-         direction
-
-         intentionally remain empty.
+         altitude = empty
+         speed = empty
+         direction = empty
       ------------------------------------- */
 
 
       rows.push(
 
-        escapeField(
-          timestamp
-        ) +
+        timestamp +
 
         "," +
 
@@ -1270,14 +1354,12 @@ function generateOutput() {
 
       );
 
-
     }
   );
 
 
-
   /* -----------------------------------------
-     DISPLAY OUTPUT
+     DISPLAY RESULT
   ----------------------------------------- */
 
 
@@ -1289,16 +1371,21 @@ function generateOutput() {
 
   count.textContent =
 
-    numberOfPoints.toLocaleString() +
+    numberOfPoints.toLocaleString()
 
-    " journey rows generated • " +
+    +
+
+    " journey rows generated • "
+
+    +
 
     formatDuration(
       duration
-    ) +
+    )
+
+    +
 
     " journey duration";
-
 
 
   copyButton.disabled =
@@ -1309,7 +1396,6 @@ function generateOutput() {
     false;
 
 }
-
 
 
 /* =============================================
@@ -1365,7 +1451,6 @@ function timeToSeconds(
 }
 
 
-
 /* =============================================
    SECONDS -> HH:MM:SS
 ============================================= */
@@ -1388,7 +1473,10 @@ function secondsToTime(
     60;
 
 
-  /* Wrap around after midnight */
+  /* -----------------------------------------
+     Wrap values after midnight
+  ----------------------------------------- */
+
 
   seconds =
     (
@@ -1396,12 +1484,16 @@ function secondsToTime(
         seconds %
         secondsInDay
       )
-      +
-      secondsInDay
-    )
-    %
-    secondsInDay;
 
+      +
+
+      secondsInDay
+
+    )
+
+    %
+
+    secondsInDay;
 
 
   const hours =
@@ -1425,7 +1517,6 @@ function secondsToTime(
   const secs =
     seconds %
     60;
-
 
 
   return [
@@ -1458,9 +1549,8 @@ function secondsToTime(
 }
 
 
-
 /* =============================================
-   FORMAT DURATION
+   FORMAT JOURNEY DURATION
 ============================================= */
 
 
@@ -1498,7 +1588,6 @@ function formatDuration(
     60;
 
 
-
   return [
 
     String(
@@ -1527,7 +1616,6 @@ function formatDuration(
   );
 
 }
-
 
 
 /* =============================================
@@ -1569,7 +1657,9 @@ function escapeField(
 
     return (
 
-      '"' +
+      '"'
+
+      +
 
       stringValue.replace(
         /"/g,
@@ -1590,9 +1680,8 @@ function escapeField(
 }
 
 
-
 /* =============================================
-   REGENERATE WHEN DETAILS CHANGE
+   REGENERATE WHEN JOURNEY DETAILS CHANGE
 ============================================= */
 
 
@@ -1618,7 +1707,6 @@ callsignInput.addEventListener(
   "input",
   generateOutput
 );
-
 
 
 /* =============================================
@@ -1658,7 +1746,6 @@ copyButton.addEventListener(
 );
 
 
-
 /* =============================================
    DOWNLOAD TXT
 ============================================= */
@@ -1684,12 +1771,10 @@ downloadButton.addEventListener(
       );
 
 
-
     const url =
       URL.createObjectURL(
         blob
       );
-
 
 
     const link =
@@ -1707,7 +1792,6 @@ downloadButton.addEventListener(
       ".txt";
 
 
-
     document.body.appendChild(
       link
     );
@@ -1719,14 +1803,12 @@ downloadButton.addEventListener(
     link.remove();
 
 
-
     URL.revokeObjectURL(
       url
     );
 
   }
 );
-
 
 
 /* =============================================
@@ -1794,4 +1876,5 @@ clearButton.addEventListener(
 
 
 </body>
+
 </html>
