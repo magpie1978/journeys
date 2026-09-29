@@ -1,0 +1,3716 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>GPX Journey Builder</title>
+
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+
+      background: #f4f5f7;
+
+      font-family: Arial, sans-serif;
+
+      color: #222;
+    }
+
+
+    .page {
+      width: min(1500px, 96vw);
+
+      margin: 30px auto;
+
+      background: white;
+
+      border-radius: 12px;
+
+      padding: 32px;
+
+      box-shadow:
+        0 4px 20px
+        rgba(0,0,0,0.08);
+    }
+
+
+    h1 {
+      margin: 0 0 8px;
+
+      font-size: 28px;
+    }
+
+
+    h2 {
+      margin: 0 0 14px;
+
+      font-size: 19px;
+    }
+
+
+    .description {
+      color: #666;
+
+      margin-bottom: 24px;
+
+      line-height: 1.5;
+    }
+
+
+    /* =========================================
+       JOURNEY DETAILS
+    ========================================= */
+
+
+    .journey-fields {
+      display: grid;
+
+      grid-template-columns:
+        repeat(5, 1fr);
+
+      gap: 14px;
+
+      margin-bottom: 22px;
+    }
+
+
+    .field {
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 6px;
+    }
+
+
+    .field label {
+      font-size: 13px;
+
+      font-weight: bold;
+
+      color: #444;
+    }
+
+
+    .field input {
+      width: 100%;
+
+      padding: 10px 12px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 7px;
+
+      font-family: inherit;
+
+      font-size: 14px;
+
+      background: white;
+    }
+
+
+    .field input:focus {
+      outline: none;
+
+      border-color: #555;
+
+      box-shadow:
+        0 0 0 2px
+        rgba(0,0,0,0.05);
+    }
+
+
+    /* =========================================
+       DROP ZONE
+    ========================================= */
+
+
+    .drop-zone {
+      border: 2px dashed #aaa;
+
+      border-radius: 10px;
+
+      padding: 34px 20px;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      transition: 0.2s;
+
+      margin-bottom: 24px;
+    }
+
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: #333;
+
+      background: #fafafa;
+    }
+
+
+    .drop-zone strong {
+      display: block;
+
+      margin-bottom: 7px;
+
+      font-size: 18px;
+    }
+
+
+    .drop-zone span {
+      display: block;
+
+      margin-top: 6px;
+
+      font-size: 13px;
+
+      color: #777;
+    }
+
+
+    input[type="file"] {
+      display: none;
+    }
+
+
+    /* =========================================
+       FILE LIST
+    ========================================= */
+
+
+    .files-section {
+      margin-bottom: 26px;
+    }
+
+
+    .files-header {
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      margin-bottom: 12px;
+    }
+
+
+    .files-header h2 {
+      margin: 0;
+    }
+
+
+    .file-summary {
+      font-size: 13px;
+
+      color: #666;
+    }
+
+
+    .file-list {
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 0;
+    }
+
+
+    .file-card {
+      border: 1px solid #ddd;
+
+      border-radius: 9px;
+
+      background: #fff;
+
+      overflow: hidden;
+    }
+
+
+    .file-card-main {
+      display: grid;
+
+      grid-template-columns:
+        50px
+        minmax(180px, 1.5fr)
+        minmax(180px, 1fr)
+        minmax(180px, 1fr)
+        auto;
+
+      align-items: center;
+
+      gap: 15px;
+
+      padding: 14px;
+    }
+
+
+    .file-number {
+      width: 34px;
+
+      height: 34px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background: #222;
+
+      color: white;
+
+      font-size: 14px;
+
+      font-weight: bold;
+    }
+
+
+    .file-name {
+      font-weight: bold;
+
+      overflow-wrap: anywhere;
+    }
+
+
+    .file-points {
+      margin-top: 4px;
+
+      font-size: 12px;
+
+      color: #777;
+    }
+
+
+    .coordinate-label {
+      display: block;
+
+      margin-bottom: 4px;
+
+      font-size: 11px;
+
+      font-weight: bold;
+
+      text-transform: uppercase;
+
+      color: #888;
+    }
+
+
+    .coordinate-value {
+      font-family: monospace;
+
+      font-size: 12px;
+    }
+
+
+    .file-actions {
+      display: flex;
+
+      gap: 6px;
+
+      flex-wrap: wrap;
+
+      justify-content: flex-end;
+    }
+
+
+    .small-button {
+      padding: 7px 10px;
+
+      font-size: 12px;
+    }
+
+
+    .danger-button {
+      background: #a72828;
+    }
+
+
+    .danger-button:hover:not(:disabled) {
+      background: #8c2020;
+    }
+
+
+    /* =========================================
+       CONNECTION / GAP
+    ========================================= */
+
+
+    .connection {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+
+      padding: 8px 14px 8px 63px;
+
+      font-size: 12px;
+
+      color: #555;
+    }
+
+
+    .connection-line {
+      width: 2px;
+
+      height: 22px;
+
+      background: #aaa;
+    }
+
+
+    .connection.good {
+      color: #237a39;
+    }
+
+
+    .connection.warning {
+      color: #a66b00;
+
+      font-weight: bold;
+    }
+
+
+    .connection.bad {
+      color: #a72828;
+
+      font-weight: bold;
+    }
+
+
+    .connection-badge {
+      padding: 4px 8px;
+
+      border-radius: 12px;
+
+      background: #eee;
+    }
+
+
+    .connection.good .connection-badge {
+      background: #e7f5eb;
+    }
+
+
+    .connection.warning .connection-badge {
+      background: #fff4d8;
+    }
+
+
+    .connection.bad .connection-badge {
+      background: #fde6e6;
+    }
+
+
+    /* =========================================
+       MAIN WORKSPACE
+    ========================================= */
+
+
+    .workspace {
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1.6fr)
+        minmax(440px, 1fr);
+
+      gap: 22px;
+
+      align-items: start;
+    }
+
+
+    .panel {
+      border: 1px solid #ddd;
+
+      border-radius: 10px;
+
+      padding: 18px;
+
+      background: #fff;
+    }
+
+
+    .panel-header {
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      margin-bottom: 12px;
+    }
+
+
+    .panel-header h2 {
+      margin: 0;
+    }
+
+
+    /* =========================================
+       JOURNEY OUTPUT
+    ========================================= */
+
+
+    textarea {
+      width: 100%;
+
+      height: 430px;
+
+      padding: 14px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 8px;
+
+      font-family: monospace;
+
+      font-size: 12px;
+
+      line-height: 1.5;
+
+      resize: vertical;
+
+      white-space: pre;
+
+      overflow: auto;
+    }
+
+
+    .count {
+      margin-top: 10px;
+
+      font-size: 13px;
+
+      color: #666;
+    }
+
+
+    /* =========================================
+       POSITIONS TABLE
+    ========================================= */
+
+
+    .positions-wrap {
+      overflow-x: auto;
+    }
+
+
+    .positions-table {
+      width: 100%;
+
+      border-collapse: collapse;
+
+      font-size: 12px;
+    }
+
+
+    .positions-table th {
+      padding: 8px;
+
+      border-bottom: 2px solid #ddd;
+
+      text-align: left;
+
+      white-space: nowrap;
+
+      color: #555;
+    }
+
+
+    .positions-table td {
+      padding: 8px;
+
+      border-bottom: 1px solid #eee;
+
+      vertical-align: middle;
+    }
+
+
+    .positions-table input {
+      width: 100%;
+
+      min-width: 90px;
+
+      padding: 7px 8px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 5px;
+
+      font-size: 12px;
+    }
+
+
+    .positions-table .uid-cell {
+      font-family: monospace;
+
+      overflow-wrap: anywhere;
+
+      min-width: 120px;
+    }
+
+
+    .positions-table .coordinate-cell {
+      font-family: monospace;
+
+      white-space: nowrap;
+    }
+
+
+    .position-source {
+      display: block;
+
+      margin-top: 3px;
+
+      max-width: 160px;
+
+      overflow: hidden;
+
+      text-overflow: ellipsis;
+
+      white-space: nowrap;
+
+      font-size: 10px;
+
+      color: #888;
+    }
+
+
+    /* =========================================
+       BUTTONS
+    ========================================= */
+
+
+    .buttons {
+      display: flex;
+
+      gap: 8px;
+
+      margin-top: 14px;
+
+      flex-wrap: wrap;
+    }
+
+
+    button {
+      border: 0;
+
+      border-radius: 7px;
+
+      padding: 10px 15px;
+
+      cursor: pointer;
+
+      font-size: 13px;
+
+      background: #222;
+
+      color: white;
+    }
+
+
+    button:hover:not(:disabled) {
+      background: #444;
+    }
+
+
+    button.secondary {
+      background: #e5e5e5;
+
+      color: #222;
+    }
+
+
+    button.secondary:hover:not(:disabled) {
+      background: #d7d7d7;
+    }
+
+
+    button:disabled {
+      opacity: 0.4;
+
+      cursor: default;
+    }
+
+
+    /* =========================================
+       EMPTY STATE
+    ========================================= */
+
+
+    .empty-state {
+      padding: 25px;
+
+      border: 1px dashed #ccc;
+
+      border-radius: 8px;
+
+      text-align: center;
+
+      color: #888;
+
+      font-size: 13px;
+    }
+
+
+    /* =========================================
+       RESPONSIVE
+    ========================================= */
+
+
+    @media (max-width: 1150px) {
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+
+      .journey-fields {
+        grid-template-columns:
+          repeat(3, 1fr);
+      }
+
+    }
+
+
+    @media (max-width: 850px) {
+
+      .file-card-main {
+        grid-template-columns:
+          45px
+          1fr;
+      }
+
+
+      .file-actions {
+        justify-content: flex-start;
+      }
+
+
+      .journey-fields {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+    }
+
+
+    @media (max-width: 550px) {
+
+      .journey-fields {
+        grid-template-columns: 1fr;
+      }
+
+
+      .page {
+        padding: 20px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+<div class="page">
+
+
+  <h1>
+    GPX Journey Builder
+  </h1>
+
+
+  <div class="description">
+
+    Upload one or more GPX files, arrange them into the correct
+    journey order, and generate one combined journey dataset.
+
+  </div>
+
+
+  <!-- =======================================
+       JOURNEY DETAILS
+  ======================================== -->
+
+
+  <div class="journey-fields">
+
+
+    <div class="field">
+
+      <label for="journeyDate">
+        Journey date
+      </label>
+
+      <input
+        type="date"
+        id="journeyDate"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label for="startTime">
+        Start time (UTC)
+      </label>
+
+      <input
+        type="time"
+        id="startTime"
+        step="1"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label for="endTime">
+        End time (UTC)
+      </label>
+
+      <input
+        type="time"
+        id="endTime"
+        step="1"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label for="callsign">
+        Callsign
+      </label>
+
+      <input
+        type="text"
+        id="callsign"
+        placeholder="e.g. EZY23JK"
+        autocomplete="off"
+      >
+
+    </div>
+
+
+    <div class="field">
+
+      <label for="journeyUid">
+        UID
+      </label>
+
+      <input
+        type="text"
+        id="journeyUid"
+        placeholder="Journey UID"
+        autocomplete="off"
+      >
+
+    </div>
+
+
+  </div>
+
+
+  <!-- =======================================
+       FILE DROP
+  ======================================== -->
+
+
+  <div
+    class="drop-zone"
+    id="dropZone"
+  >
+
+    <strong>
+      Drop GPX files here
+    </strong>
+
+    or click to select files
+
+    <span>
+      Multiple GPX files can be selected or added later
+    </span>
+
+  </div>
+
+
+  <input
+    type="file"
+    id="fileInput"
+    accept=".gpx,.xml"
+    multiple
+  >
+
+
+  <!-- =======================================
+       FILE ORDER
+  ======================================== -->
+
+
+  <section class="files-section">
+
+
+    <div class="files-header">
+
+      <h2>
+        Uploaded GPX Files
+      </h2>
+
+      <div
+        class="file-summary"
+        id="fileSummary"
+      >
+        No files loaded
+      </div>
+
+    </div>
+
+
+    <div
+      class="file-list"
+      id="fileList"
+    >
+
+      <div class="empty-state">
+        Upload GPX files to build the journey.
+      </div>
+
+    </div>
+
+
+  </section>
+
+
+  <!-- =======================================
+       OUTPUT WORKSPACE
+  ======================================== -->
+
+
+  <div class="workspace">
+
+
+    <!-- JOURNEY OUTPUT -->
+
+
+    <section class="panel">
+
+
+      <div class="panel-header">
+
+        <h2>
+          Combined Journey
+        </h2>
+
+      </div>
+
+
+      <textarea
+        id="output"
+        placeholder="Combined journey data will appear here..."
+        spellcheck="false"
+      ></textarea>
+
+
+      <div
+        class="count"
+        id="count"
+      ></div>
+
+
+      <div class="buttons">
+
+
+        <button
+          id="copyButton"
+          disabled
+        >
+          Copy Journey
+        </button>
+
+
+        <button
+          id="downloadButton"
+          disabled
+        >
+          Download TXT
+        </button>
+
+
+        <button
+          class="secondary"
+          id="reverseAllButton"
+          disabled
+        >
+          Reverse Entire Journey
+        </button>
+
+
+        <button
+          class="secondary"
+          id="clearButton"
+        >
+          Clear All
+        </button>
+
+
+      </div>
+
+
+    </section>
+
+
+    <!-- POSITIONS -->
+
+
+    <section class="panel">
+
+
+      <div class="panel-header">
+
+        <h2>
+          Positions
+        </h2>
+
+      </div>
+
+
+      <div
+        class="positions-wrap"
+        id="positionsWrap"
+      >
+
+        <div class="empty-state">
+          Final coordinates from each GPX file will appear here.
+        </div>
+
+      </div>
+
+
+      <div class="buttons">
+
+
+        <button
+          id="copyPositionsButton"
+          disabled
+        >
+          Copy Positions
+        </button>
+
+
+      </div>
+
+
+    </section>
+
+
+  </div>
+
+
+</div>
+
+
+<script>
+
+
+/* =============================================
+   ELEMENTS
+============================================= */
+
+
+const dropZone =
+  document.getElementById("dropZone");
+
+
+const fileInput =
+  document.getElementById("fileInput");
+
+
+const fileList =
+  document.getElementById("fileList");
+
+
+const fileSummary =
+  document.getElementById("fileSummary");
+
+
+const output =
+  document.getElementById("output");
+
+
+const count =
+  document.getElementById("count");
+
+
+const positionsWrap =
+  document.getElementById("positionsWrap");
+
+
+const journeyDateInput =
+  document.getElementById("journeyDate");
+
+
+const startTimeInput =
+  document.getElementById("startTime");
+
+
+const endTimeInput =
+  document.getElementById("endTime");
+
+
+const callsignInput =
+  document.getElementById("callsign");
+
+
+const journeyUidInput =
+  document.getElementById("journeyUid");
+
+
+const copyButton =
+  document.getElementById("copyButton");
+
+
+const downloadButton =
+  document.getElementById("downloadButton");
+
+
+const reverseAllButton =
+  document.getElementById("reverseAllButton");
+
+
+const clearButton =
+  document.getElementById("clearButton");
+
+
+const copyPositionsButton =
+  document.getElementById("copyPositionsButton");
+
+
+/* =============================================
+   STATE
+============================================= */
+
+
+let gpxFiles = [];
+
+
+let currentFilename =
+  "journey";
+
+
+/* =============================================
+   FILE INPUT
+============================================= */
+
+
+dropZone.addEventListener(
+  "click",
+  () => {
+
+    fileInput.click();
+
+  }
+);
+
+
+fileInput.addEventListener(
+  "change",
+  async () => {
+
+    if (
+      fileInput.files.length
+    ) {
+
+      await addFiles(
+        Array.from(
+          fileInput.files
+        )
+      );
+
+    }
+
+
+    /*
+      Clear the input so the same file can
+      be selected again later if required.
+    */
+
+    fileInput.value = "";
+
+  }
+);
+
+
+/* =============================================
+   DRAG AND DROP
+============================================= */
+
+
+dropZone.addEventListener(
+  "dragover",
+  event => {
+
+    event.preventDefault();
+
+    dropZone.classList.add(
+      "dragover"
+    );
+
+  }
+);
+
+
+dropZone.addEventListener(
+  "dragleave",
+  () => {
+
+    dropZone.classList.remove(
+      "dragover"
+    );
+
+  }
+);
+
+
+dropZone.addEventListener(
+  "drop",
+  async event => {
+
+    event.preventDefault();
+
+    dropZone.classList.remove(
+      "dragover"
+    );
+
+
+    const files =
+      Array.from(
+        event.dataTransfer.files
+      );
+
+
+    if (
+      files.length
+    ) {
+
+      await addFiles(
+        files
+      );
+
+    }
+
+  }
+);
+
+
+/* =============================================
+   ADD MULTIPLE FILES
+============================================= */
+
+
+async function addFiles(
+  files
+) {
+
+
+  for (
+    const file
+    of files
+  ) {
+
+
+    try {
+
+
+      const coordinates =
+        await parseGPXFile(
+          file
+        );
+
+
+      if (
+        coordinates.length === 0
+      ) {
+
+        alert(
+          "No coordinates were found in " +
+          file.name
+        );
+
+        continue;
+
+      }
+
+
+      gpxFiles.push({
+
+        id:
+          createLocalId(),
+
+        name:
+          file.name,
+
+        coordinates:
+          coordinates,
+
+        reversed:
+          false,
+
+        positionId:
+          "",
+
+        positionName:
+          ""
+
+      });
+
+
+    }
+    catch (
+      error
+    ) {
+
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        "Could not read " +
+        file.name
+      );
+
+    }
+
+  }
+
+
+  refreshEverything();
+
+}
+
+
+/* =============================================
+   PARSE GPX
+============================================= */
+
+
+function parseGPXFile(
+  file
+) {
+
+
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        function(
+          event
+        ) {
+
+
+          try {
+
+
+            const parser =
+              new DOMParser();
+
+
+            const xml =
+              parser.parseFromString(
+                event.target.result,
+                "application/xml"
+              );
+
+
+            const parserError =
+              xml.querySelector(
+                "parsererror"
+              );
+
+
+            if (
+              parserError
+            ) {
+
+              reject(
+                new Error(
+                  "Invalid XML"
+                )
+              );
+
+              return;
+
+            }
+
+
+            const coordinates =
+              [];
+
+
+            /* -----------------------------
+               TRACK POINTS
+            ----------------------------- */
+
+
+            const trackPoints =
+              xml.getElementsByTagNameNS(
+                "*",
+                "trkpt"
+              );
+
+
+            for (
+              const point
+              of trackPoints
+            ) {
+
+
+              const lat =
+                point.getAttribute(
+                  "lat"
+                );
+
+
+              const lon =
+                point.getAttribute(
+                  "lon"
+                );
+
+
+              if (
+                lat !== null &&
+                lon !== null
+              ) {
+
+                coordinates.push({
+                  lat,
+                  lon
+                });
+
+              }
+
+            }
+
+
+            /* -----------------------------
+               ROUTE POINTS
+
+               Only use these when the GPX
+               contains no track points.
+            ----------------------------- */
+
+
+            if (
+              coordinates.length === 0
+            ) {
+
+
+              const routePoints =
+                xml.getElementsByTagNameNS(
+                  "*",
+                  "rtept"
+                );
+
+
+              for (
+                const point
+                of routePoints
+              ) {
+
+
+                const lat =
+                  point.getAttribute(
+                    "lat"
+                  );
+
+
+                const lon =
+                  point.getAttribute(
+                    "lon"
+                  );
+
+
+                if (
+                  lat !== null &&
+                  lon !== null
+                ) {
+
+                  coordinates.push({
+                    lat,
+                    lon
+                  });
+
+                }
+
+              }
+
+            }
+
+
+            resolve(
+              coordinates
+            );
+
+
+          }
+          catch (
+            error
+          ) {
+
+            reject(
+              error
+            );
+
+          }
+
+        };
+
+
+      reader.onerror =
+        () => {
+
+          reject(
+            new Error(
+              "File read error"
+            )
+          );
+
+        };
+
+
+      reader.readAsText(
+        file
+      );
+
+    }
+  );
+
+}
+
+
+/* =============================================
+   CREATE LOCAL ID
+============================================= */
+
+
+function createLocalId() {
+
+
+  return (
+
+    Date.now()
+      .toString(36)
+
+    +
+
+    Math.random()
+      .toString(36)
+      .slice(2)
+
+  );
+
+}
+
+
+/* =============================================
+   REFRESH EVERYTHING
+============================================= */
+
+
+function refreshEverything() {
+
+
+  renderFileList();
+
+  renderPositions();
+
+  generateOutput();
+
+
+  reverseAllButton.disabled =
+    gpxFiles.length === 0;
+
+
+  if (
+    gpxFiles.length === 0
+  ) {
+
+    fileSummary.textContent =
+      "No files loaded";
+
+  }
+  else {
+
+
+    const totalPoints =
+      getTotalPointCount();
+
+
+    fileSummary.textContent =
+
+      gpxFiles.length.toLocaleString()
+
+      +
+
+      (
+        gpxFiles.length === 1
+          ? " file"
+          : " files"
+      )
+
+      +
+
+      " • "
+
+      +
+
+      totalPoints.toLocaleString()
+
+      +
+
+      " points";
+
+  }
+
+}
+
+
+/* =============================================
+   FILE LIST
+============================================= */
+
+
+function renderFileList() {
+
+
+  if (
+    gpxFiles.length === 0
+  ) {
+
+
+    fileList.innerHTML =
+      `
+        <div class="empty-state">
+          Upload GPX files to build the journey.
+        </div>
+      `;
+
+
+    return;
+
+  }
+
+
+  fileList.innerHTML =
+    "";
+
+
+  gpxFiles.forEach(
+    (
+      file,
+      index
+    ) => {
+
+
+      const first =
+        file.coordinates[0];
+
+
+      const last =
+        file.coordinates[
+          file.coordinates.length - 1
+        ];
+
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "file-card";
+
+
+      card.innerHTML =
+        `
+          <div class="file-card-main">
+
+            <div class="file-number">
+              ${index + 1}
+            </div>
+
+
+            <div>
+
+              <div class="file-name">
+                ${escapeHtml(file.name)}
+              </div>
+
+              <div class="file-points">
+                ${file.coordinates.length.toLocaleString()}
+                points
+                ${file.reversed ? " • reversed" : ""}
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <span class="coordinate-label">
+                Starts
+              </span>
+
+              <span class="coordinate-value">
+                ${formatCoordinate(first)}
+              </span>
+
+            </div>
+
+
+            <div>
+
+              <span class="coordinate-label">
+                Ends
+              </span>
+
+              <span class="coordinate-value">
+                ${formatCoordinate(last)}
+              </span>
+
+            </div>
+
+
+            <div class="file-actions">
+
+              <button
+                class="secondary small-button"
+                data-action="up"
+                data-id="${file.id}"
+                ${index === 0 ? "disabled" : ""}
+              >
+                ↑
+              </button>
+
+
+              <button
+                class="secondary small-button"
+                data-action="down"
+                data-id="${file.id}"
+                ${
+                  index === gpxFiles.length - 1
+                    ? "disabled"
+                    : ""
+                }
+              >
+                ↓
+              </button>
+
+
+              <button
+                class="secondary small-button"
+                data-action="reverse"
+                data-id="${file.id}"
+              >
+                Reverse
+              </button>
+
+
+              <button
+                class="danger-button small-button"
+                data-action="remove"
+                data-id="${file.id}"
+              >
+                Remove
+              </button>
+
+            </div>
+
+          </div>
+        `;
+
+
+      fileList.appendChild(
+        card
+      );
+
+
+      /* -------------------------------------
+         CONNECTION TO NEXT FILE
+      ------------------------------------- */
+
+
+      if (
+        index <
+        gpxFiles.length - 1
+      ) {
+
+
+        const nextFile =
+          gpxFiles[
+            index + 1
+          ];
+
+
+        const nextFirst =
+          nextFile.coordinates[0];
+
+
+        const distanceKm =
+          haversineDistance(
+            last,
+            nextFirst
+          );
+
+
+        const distanceMiles =
+          distanceKm *
+          0.621371;
+
+
+        const connection =
+          document.createElement(
+            "div"
+          );
+
+
+        let statusClass =
+          "good";
+
+
+        let statusText =
+          "Good join";
+
+
+        /*
+          These thresholds are deliberately
+          just visual warnings.
+
+          They do not change the data.
+        */
+
+
+        if (
+          distanceMiles > 10
+        ) {
+
+          statusClass =
+            "bad";
+
+          statusText =
+            "Large gap";
+
+        }
+        else if (
+          distanceMiles > 1
+        ) {
+
+          statusClass =
+            "warning";
+
+          statusText =
+            "Check join";
+
+        }
+
+
+        connection.className =
+          "connection " +
+          statusClass;
+
+
+        connection.innerHTML =
+          `
+            <div class="connection-line"></div>
+
+            <span class="connection-badge">
+              ${statusText}
+            </span>
+
+            <span>
+              ${formatDistance(distanceMiles)}
+              from end of file ${index + 1}
+              to start of file ${index + 2}
+            </span>
+          `;
+
+
+        fileList.appendChild(
+          connection
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =============================================
+   FILE ACTIONS
+============================================= */
+
+
+fileList.addEventListener(
+  "click",
+  event => {
+
+
+    const button =
+      event.target.closest(
+        "button[data-action]"
+      );
+
+
+    if (
+      !button
+    ) {
+
+      return;
+
+    }
+
+
+    const id =
+      button.dataset.id;
+
+
+    const action =
+      button.dataset.action;
+
+
+    const index =
+      gpxFiles.findIndex(
+        file =>
+          file.id === id
+      );
+
+
+    if (
+      index === -1
+    ) {
+
+      return;
+
+    }
+
+
+    /* -------------------------------------
+       MOVE UP
+    ------------------------------------- */
+
+
+    if (
+      action === "up" &&
+      index > 0
+    ) {
+
+
+      [
+        gpxFiles[index - 1],
+        gpxFiles[index]
+      ] =
+      [
+        gpxFiles[index],
+        gpxFiles[index - 1]
+      ];
+
+    }
+
+
+    /* -------------------------------------
+       MOVE DOWN
+    ------------------------------------- */
+
+
+    if (
+      action === "down" &&
+      index <
+      gpxFiles.length - 1
+    ) {
+
+
+      [
+        gpxFiles[index],
+        gpxFiles[index + 1]
+      ] =
+      [
+        gpxFiles[index + 1],
+        gpxFiles[index]
+      ];
+
+    }
+
+
+    /* -------------------------------------
+       REVERSE ONE FILE
+    ------------------------------------- */
+
+
+    if (
+      action === "reverse"
+    ) {
+
+
+      gpxFiles[index]
+        .coordinates
+        .reverse();
+
+
+      gpxFiles[index].reversed =
+        !gpxFiles[index].reversed;
+
+    }
+
+
+    /* -------------------------------------
+       REMOVE
+    ------------------------------------- */
+
+
+    if (
+      action === "remove"
+    ) {
+
+
+      gpxFiles.splice(
+        index,
+        1
+      );
+
+    }
+
+
+    refreshEverything();
+
+  }
+);
+
+
+/* =============================================
+   POSITIONS TABLE
+============================================= */
+
+
+function renderPositions() {
+
+
+  if (
+    gpxFiles.length === 0
+  ) {
+
+
+    positionsWrap.innerHTML =
+      `
+        <div class="empty-state">
+          Final coordinates from each GPX file
+          will appear here.
+        </div>
+      `;
+
+
+    copyPositionsButton.disabled =
+      true;
+
+
+    return;
+
+  }
+
+
+  const uid =
+    journeyUidInput
+      .value
+      .trim();
+
+
+  let html =
+    `
+      <table class="positions-table">
+
+        <thead>
+
+          <tr>
+
+            <th>
+              UID
+            </th>
+
+            <th>
+              Position ID
+            </th>
+
+            <th>
+              Position Name
+            </th>
+
+            <th>
+              Latitude
+            </th>
+
+            <th>
+              Longitude
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+    `;
+
+
+  gpxFiles.forEach(
+    file => {
+
+
+      const finalCoordinate =
+        file.coordinates[
+          file.coordinates.length - 1
+        ];
+
+
+      html +=
+        `
+          <tr>
+
+            <td class="uid-cell">
+              ${escapeHtml(uid)}
+
+              <span class="position-source">
+                ${escapeHtml(file.name)}
+              </span>
+            </td>
+
+
+            <td>
+
+              <input
+                type="text"
+                data-position-field="positionId"
+                data-id="${file.id}"
+                value="${escapeAttribute(file.positionId)}"
+                placeholder="ID"
+              >
+
+            </td>
+
+
+            <td>
+
+              <input
+                type="text"
+                data-position-field="positionName"
+                data-id="${file.id}"
+                value="${escapeAttribute(file.positionName)}"
+                placeholder="Position name"
+              >
+
+            </td>
+
+
+            <td class="coordinate-cell">
+              ${escapeHtml(finalCoordinate.lat)}
+            </td>
+
+
+            <td class="coordinate-cell">
+              ${escapeHtml(finalCoordinate.lon)}
+            </td>
+
+          </tr>
+        `;
+
+    }
+  );
+
+
+  html +=
+    `
+        </tbody>
+
+      </table>
+    `;
+
+
+  positionsWrap.innerHTML =
+    html;
+
+
+  copyPositionsButton.disabled =
+    false;
+
+}
+
+
+/* =============================================
+   SAVE POSITION EDITS
+============================================= */
+
+
+positionsWrap.addEventListener(
+  "input",
+  event => {
+
+
+    const input =
+      event.target.closest(
+        "[data-position-field]"
+      );
+
+
+    if (
+      !input
+    ) {
+
+      return;
+
+    }
+
+
+    const file =
+      gpxFiles.find(
+        item =>
+          item.id ===
+          input.dataset.id
+      );
+
+
+    if (
+      !file
+    ) {
+
+      return;
+
+    }
+
+
+    const field =
+      input.dataset.positionField;
+
+
+    file[field] =
+      input.value;
+
+  }
+);
+
+
+/* =============================================
+   JOURNEY UID CHANGE
+============================================= */
+
+
+journeyUidInput.addEventListener(
+  "input",
+  () => {
+
+    renderPositions();
+
+  }
+);
+
+
+/* =============================================
+   GENERATE COMBINED JOURNEY
+============================================= */
+
+
+function generateOutput() {
+
+
+  if (
+    gpxFiles.length === 0
+  ) {
+
+
+    output.value =
+      "";
+
+
+    count.textContent =
+      "";
+
+
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
+
+    return;
+
+  }
+
+
+  const journeyDate =
+    journeyDateInput.value;
+
+
+  const startValue =
+    startTimeInput.value;
+
+
+  const endValue =
+    endTimeInput.value;
+
+
+  const callsign =
+    callsignInput
+      .value
+      .trim();
+
+
+  if (
+    !journeyDate ||
+    !startValue ||
+    !endValue
+  ) {
+
+
+    output.value =
+      "";
+
+
+    count.textContent =
+      "Enter a journey date, start time and end time.";
+
+
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
+
+    return;
+
+  }
+
+
+  if (
+    !callsign
+  ) {
+
+
+    output.value =
+      "";
+
+
+    count.textContent =
+      "Enter a callsign.";
+
+
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
+
+    return;
+
+  }
+
+
+  /* -----------------------------------------
+     COMBINE ALL FILES
+  ----------------------------------------- */
+
+
+  const combinedCoordinates =
+    [];
+
+
+  gpxFiles.forEach(
+    file => {
+
+
+      file.coordinates.forEach(
+        coordinate => {
+
+          combinedCoordinates.push(
+            coordinate
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+  const numberOfPoints =
+    combinedCoordinates.length;
+
+
+  if (
+    numberOfPoints === 0
+  ) {
+
+    return;
+
+  }
+
+
+  /* -----------------------------------------
+     TIME RANGE
+  ----------------------------------------- */
+
+
+  const startSeconds =
+    timeToSeconds(
+      startValue
+    );
+
+
+  let endSeconds =
+    timeToSeconds(
+      endValue
+    );
+
+
+  if (
+    endSeconds <
+    startSeconds
+  ) {
+
+    endSeconds +=
+      24 *
+      60 *
+      60;
+
+  }
+
+
+  const duration =
+    endSeconds -
+    startSeconds;
+
+
+  let interval =
+    0;
+
+
+  if (
+    numberOfPoints > 1
+  ) {
+
+    interval =
+      duration /
+      (
+        numberOfPoints - 1
+      );
+
+  }
+
+
+  /* -----------------------------------------
+     OUTPUT
+  ----------------------------------------- */
+
+
+  const rows =
+    [];
+
+
+  rows.push(
+    "timestamp,utc,callsign,position,altitude,speed,direction"
+  );
+
+
+  combinedCoordinates.forEach(
+    (
+      coordinate,
+      index
+    ) => {
+
+
+      const exactSeconds =
+        startSeconds +
+        (
+          interval *
+          index
+        );
+
+
+      const currentSeconds =
+        Math.round(
+          exactSeconds
+        );
+
+
+      const dayOffset =
+        Math.floor(
+          currentSeconds /
+          86400
+        );
+
+
+      const time =
+        secondsToTime(
+          currentSeconds
+        );
+
+
+      const dateParts =
+        journeyDate.split(
+          "-"
+        );
+
+
+      const date =
+        new Date(
+          Date.UTC(
+
+            Number(
+              dateParts[0]
+            ),
+
+            Number(
+              dateParts[1]
+            ) - 1,
+
+            Number(
+              dateParts[2]
+            ) +
+            dayOffset
+
+          )
+        );
+
+
+      const dateString =
+        [
+
+          date.getUTCFullYear(),
+
+          String(
+            date.getUTCMonth() + 1
+          ).padStart(
+            2,
+            "0"
+          ),
+
+          String(
+            date.getUTCDate()
+          ).padStart(
+            2,
+            "0"
+          )
+
+        ].join(
+          "-"
+        );
+
+
+      /* -------------------------------------
+         UTC
+
+         2026-09-16 15:22:53+00
+      ------------------------------------- */
+
+
+      const utc =
+        dateString +
+        " " +
+        time +
+        "+00";
+
+
+      /* -------------------------------------
+         UNIX TIMESTAMP
+      ------------------------------------- */
+
+
+      const isoUtc =
+        dateString +
+        "T" +
+        time +
+        "Z";
+
+
+      const utcDate =
+        new Date(
+          isoUtc
+        );
+
+
+      const timestamp =
+        Math.floor(
+          utcDate.getTime() /
+          1000
+        );
+
+
+      /* -------------------------------------
+         POSITION
+
+         latitude,longitude
+      ------------------------------------- */
+
+
+      const position =
+        coordinate.lat +
+        "," +
+        coordinate.lon;
+
+
+      rows.push(
+
+        timestamp
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          utc
+        )
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          callsign
+        )
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          position
+        )
+
+        +
+
+        ",,,"
+
+      );
+
+    }
+  );
+
+
+  output.value =
+    rows.join(
+      "\n"
+    );
+
+
+  count.textContent =
+
+    numberOfPoints.toLocaleString()
+
+    +
+
+    " journey rows from "
+
+    +
+
+    gpxFiles.length.toLocaleString()
+
+    +
+
+    (
+      gpxFiles.length === 1
+        ? " GPX file"
+        : " GPX files"
+    )
+
+    +
+
+    " • "
+
+    +
+
+    formatDuration(
+      duration
+    )
+
+    +
+
+    " journey duration";
+
+
+  copyButton.disabled =
+    false;
+
+
+  downloadButton.disabled =
+    false;
+
+
+  currentFilename =
+    callsign
+      ? callsign + "-journey"
+      : "journey";
+
+}
+
+
+/* =============================================
+   REGENERATE WHEN JOURNEY DETAILS CHANGE
+============================================= */
+
+
+journeyDateInput.addEventListener(
+  "change",
+  generateOutput
+);
+
+
+startTimeInput.addEventListener(
+  "change",
+  generateOutput
+);
+
+
+endTimeInput.addEventListener(
+  "change",
+  generateOutput
+);
+
+
+callsignInput.addEventListener(
+  "input",
+  generateOutput
+);
+
+
+/* =============================================
+   REVERSE ENTIRE JOURNEY
+============================================= */
+
+
+reverseAllButton.addEventListener(
+  "click",
+  () => {
+
+
+    if (
+      gpxFiles.length === 0
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      Reverse file order.
+    */
+
+
+    gpxFiles.reverse();
+
+
+    /*
+      Also reverse the coordinates within
+      every file.
+
+      This genuinely reverses the entire
+      journey rather than merely changing
+      the file order.
+    */
+
+
+    gpxFiles.forEach(
+      file => {
+
+
+        file.coordinates.reverse();
+
+
+        file.reversed =
+          !file.reversed;
+
+      }
+    );
+
+
+    refreshEverything();
+
+  }
+);
+
+
+/* =============================================
+   MOVE / DISTANCE FUNCTIONS
+============================================= */
+
+
+function haversineDistance(
+  pointA,
+  pointB
+) {
+
+
+  const earthRadiusKm =
+    6371;
+
+
+  const lat1 =
+    degreesToRadians(
+      Number(
+        pointA.lat
+      )
+    );
+
+
+  const lat2 =
+    degreesToRadians(
+      Number(
+        pointB.lat
+      )
+    );
+
+
+  const deltaLat =
+    degreesToRadians(
+
+      Number(
+        pointB.lat
+      )
+
+      -
+
+      Number(
+        pointA.lat
+      )
+
+    );
+
+
+  const deltaLon =
+    degreesToRadians(
+
+      Number(
+        pointB.lon
+      )
+
+      -
+
+      Number(
+        pointA.lon
+      )
+
+    );
+
+
+  const a =
+
+    Math.sin(
+      deltaLat / 2
+    )
+    *
+    Math.sin(
+      deltaLat / 2
+    )
+
+    +
+
+    Math.cos(
+      lat1
+    )
+    *
+    Math.cos(
+      lat2
+    )
+    *
+    Math.sin(
+      deltaLon / 2
+    )
+    *
+    Math.sin(
+      deltaLon / 2
+    );
+
+
+  const c =
+
+    2
+    *
+    Math.atan2(
+
+      Math.sqrt(
+        a
+      ),
+
+      Math.sqrt(
+        1 - a
+      )
+
+    );
+
+
+  return (
+    earthRadiusKm *
+    c
+  );
+
+}
+
+
+/* =============================================
+   DEGREES -> RADIANS
+============================================= */
+
+
+function degreesToRadians(
+  degrees
+) {
+
+
+  return (
+
+    degrees *
+    Math.PI /
+    180
+
+  );
+
+}
+
+
+/* =============================================
+   FORMAT CONNECTION DISTANCE
+============================================= */
+
+
+function formatDistance(
+  miles
+) {
+
+
+  if (
+    miles < 0.1
+  ) {
+
+    return (
+
+      (
+        miles *
+        5280
+      )
+      .toFixed(
+        0
+      )
+
+      +
+
+      " ft"
+
+    );
+
+  }
+
+
+  if (
+    miles < 10
+  ) {
+
+    return (
+
+      miles.toFixed(
+        2
+      )
+
+      +
+
+      " miles"
+
+    );
+
+  }
+
+
+  return (
+
+    miles.toFixed(
+      1
+    )
+
+    +
+
+    " miles"
+
+  );
+
+}
+
+
+/* =============================================
+   FORMAT COORDINATE
+============================================= */
+
+
+function formatCoordinate(
+  coordinate
+) {
+
+
+  return (
+
+    Number(
+      coordinate.lat
+    ).toFixed(
+      6
+    )
+
+    +
+
+    ", "
+
+    +
+
+    Number(
+      coordinate.lon
+    ).toFixed(
+      6
+    )
+
+  );
+
+}
+
+
+/* =============================================
+   TOTAL POINT COUNT
+============================================= */
+
+
+function getTotalPointCount() {
+
+
+  return gpxFiles.reduce(
+    (
+      total,
+      file
+    ) => {
+
+      return (
+
+        total +
+        file.coordinates.length
+
+      );
+
+    },
+    0
+  );
+
+}
+
+
+/* =============================================
+   TIME -> SECONDS
+============================================= */
+
+
+function timeToSeconds(
+  value
+) {
+
+
+  const parts =
+    value.split(
+      ":"
+    );
+
+
+  const hours =
+    Number(
+      parts[0]
+    ) || 0;
+
+
+  const minutes =
+    Number(
+      parts[1]
+    ) || 0;
+
+
+  const seconds =
+    Number(
+      parts[2]
+    ) || 0;
+
+
+  return (
+
+    hours *
+    3600
+
+    +
+
+    minutes *
+    60
+
+    +
+
+    seconds
+
+  );
+
+}
+
+
+/* =============================================
+   SECONDS -> HH:MM:SS
+============================================= */
+
+
+function secondsToTime(
+  seconds
+) {
+
+
+  seconds =
+    Math.round(
+      seconds
+    );
+
+
+  const secondsInDay =
+    86400;
+
+
+  seconds =
+    (
+      (
+        seconds %
+        secondsInDay
+      )
+
+      +
+
+      secondsInDay
+
+    )
+
+    %
+
+    secondsInDay;
+
+
+  const hours =
+    Math.floor(
+      seconds /
+      3600
+    );
+
+
+  const minutes =
+    Math.floor(
+      (
+        seconds %
+        3600
+      )
+      /
+      60
+    );
+
+
+  const secs =
+    seconds %
+    60;
+
+
+  return [
+
+    String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      secs
+    ).padStart(
+      2,
+      "0"
+    )
+
+  ].join(
+    ":"
+  );
+
+}
+
+
+/* =============================================
+   FORMAT DURATION
+============================================= */
+
+
+function formatDuration(
+  seconds
+) {
+
+
+  seconds =
+    Math.round(
+      seconds
+    );
+
+
+  const hours =
+    Math.floor(
+      seconds /
+      3600
+    );
+
+
+  const minutes =
+    Math.floor(
+      (
+        seconds %
+        3600
+      )
+      /
+      60
+    );
+
+
+  const secs =
+    seconds %
+    60;
+
+
+  return [
+
+    String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      secs
+    ).padStart(
+      2,
+      "0"
+    )
+
+  ].join(
+    ":"
+  );
+
+}
+
+
+/* =============================================
+   OUTPUT FIELD ESCAPING
+============================================= */
+
+
+function escapeField(
+  value
+) {
+
+
+  const stringValue =
+    String(
+      value
+    );
+
+
+  if (
+
+    stringValue.includes(
+      ","
+    )
+
+    ||
+
+    stringValue.includes(
+      '"'
+    )
+
+    ||
+
+    stringValue.includes(
+      "\n"
+    )
+
+  ) {
+
+
+    return (
+
+      '"'
+
+      +
+
+      stringValue.replace(
+        /"/g,
+        '""'
+      )
+
+      +
+
+      '"'
+
+    );
+
+  }
+
+
+  return stringValue;
+
+}
+
+
+/* =============================================
+   HTML ESCAPING
+============================================= */
+
+
+function escapeHtml(
+  value
+) {
+
+
+  return String(
+    value ?? ""
+  )
+
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+
+    .replace(
+      /</g,
+      "&lt;"
+    )
+
+    .replace(
+      />/g,
+      "&gt;"
+    )
+
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =============================================
+   ATTRIBUTE ESCAPING
+============================================= */
+
+
+function escapeAttribute(
+  value
+) {
+
+
+  return escapeHtml(
+    value
+  );
+
+}
+
+
+/* =============================================
+   COPY JOURNEY
+============================================= */
+
+
+copyButton.addEventListener(
+  "click",
+  async () => {
+
+
+    await navigator.clipboard.writeText(
+      output.value
+    );
+
+
+    const original =
+      copyButton.textContent;
+
+
+    copyButton.textContent =
+      "Copied!";
+
+
+    setTimeout(
+      () => {
+
+        copyButton.textContent =
+          original;
+
+      },
+      1200
+    );
+
+  }
+);
+
+
+/* =============================================
+   DOWNLOAD JOURNEY TXT
+============================================= */
+
+
+downloadButton.addEventListener(
+  "click",
+  () => {
+
+
+    const blob =
+      new Blob(
+
+        [
+          output.value
+        ],
+
+        {
+          type:
+            "text/plain;charset=utf-8"
+        }
+
+      );
+
+
+    const url =
+      URL.createObjectURL(
+        blob
+      );
+
+
+    const link =
+      document.createElement(
+        "a"
+      );
+
+
+    link.href =
+      url;
+
+
+    link.download =
+      currentFilename +
+      ".txt";
+
+
+    document.body.appendChild(
+      link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    URL.revokeObjectURL(
+      url
+    );
+
+  }
+);
+
+
+/* =============================================
+   BUILD POSITIONS OUTPUT
+============================================= */
+
+
+function buildPositionsOutput() {
+
+
+  const uid =
+    journeyUidInput
+      .value
+      .trim();
+
+
+  const rows =
+    [];
+
+
+  rows.push(
+    "uid,position_id,position_name,lat,lon"
+  );
+
+
+  gpxFiles.forEach(
+    file => {
+
+
+      const coordinate =
+        file.coordinates[
+          file.coordinates.length - 1
+        ];
+
+
+      rows.push(
+
+        escapeField(
+          uid
+        )
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          file.positionId
+        )
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          file.positionName
+        )
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          coordinate.lat
+        )
+
+        +
+
+        ","
+
+        +
+
+        escapeField(
+          coordinate.lon
+        )
+
+      );
+
+    }
+  );
+
+
+  return rows.join(
+    "\n"
+  );
+
+}
+
+
+/* =============================================
+   COPY POSITIONS
+============================================= */
+
+
+copyPositionsButton.addEventListener(
+  "click",
+  async () => {
+
+
+    const positionData =
+      buildPositionsOutput();
+
+
+    await navigator.clipboard.writeText(
+      positionData
+    );
+
+
+    const original =
+      copyPositionsButton.textContent;
+
+
+    copyPositionsButton.textContent =
+      "Copied!";
+
+
+    setTimeout(
+      () => {
+
+        copyPositionsButton.textContent =
+          original;
+
+      },
+      1200
+    );
+
+  }
+);
+
+
+/* =============================================
+   CLEAR ALL
+============================================= */
+
+
+clearButton.addEventListener(
+  "click",
+  () => {
+
+
+    fileInput.value =
+      "";
+
+
+    journeyDateInput.value =
+      "";
+
+
+    startTimeInput.value =
+      "";
+
+
+    endTimeInput.value =
+      "";
+
+
+    callsignInput.value =
+      "";
+
+
+    journeyUidInput.value =
+      "";
+
+
+    gpxFiles =
+      [];
+
+
+    output.value =
+      "";
+
+
+    count.textContent =
+      "";
+
+
+    currentFilename =
+      "journey";
+
+
+    copyButton.disabled =
+      true;
+
+
+    downloadButton.disabled =
+      true;
+
+
+    reverseAllButton.disabled =
+      true;
+
+
+    copyPositionsButton.disabled =
+      true;
+
+
+    refreshEverything();
+
+  }
+);
+
+
+/* =============================================
+   INITIAL RENDER
+============================================= */
+
+
+refreshEverything();
+
+
+</script>
+
+
+</body>
+
+</html>
