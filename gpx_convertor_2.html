@@ -12,13 +12,11 @@
 
   <title>GPX Journey Builder</title>
 
-
   <style>
 
     * {
       box-sizing: border-box;
     }
-
 
     body {
       margin: 0;
@@ -27,7 +25,6 @@
       font-family: Arial, sans-serif;
       color: #222;
     }
-
 
     .page {
       width: min(1500px, 96vw);
@@ -38,18 +35,15 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
 
-
     h1 {
       margin: 0 0 8px;
       font-size: 28px;
     }
 
-
     h2 {
       margin: 0;
       font-size: 19px;
     }
-
 
     .description {
       color: #666;
@@ -62,7 +56,6 @@
        GLOBAL JOURNEY DETAILS
     ========================================= */
 
-
     .global-details {
       display: grid;
       grid-template-columns: minmax(280px, 420px);
@@ -70,20 +63,17 @@
       margin-bottom: 22px;
     }
 
-
     .field {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-
     .field label {
       font-size: 13px;
       font-weight: bold;
       color: #444;
     }
-
 
     .field input {
       width: 100%;
@@ -94,7 +84,6 @@
       font-size: 14px;
       background: white;
     }
-
 
     .field input:focus {
       outline: none;
@@ -107,7 +96,6 @@
        DROP ZONE
     ========================================= */
 
-
     .drop-zone {
       border: 2px dashed #aaa;
       border-radius: 10px;
@@ -118,13 +106,11 @@
       margin-bottom: 26px;
     }
 
-
     .drop-zone:hover,
     .drop-zone.dragover {
       border-color: #333;
       background: #fafafa;
     }
-
 
     .drop-zone strong {
       display: block;
@@ -132,14 +118,12 @@
       font-size: 18px;
     }
 
-
     .drop-zone span {
       display: block;
       margin-top: 6px;
       font-size: 13px;
       color: #777;
     }
-
 
     input[type="file"] {
       display: none;
@@ -150,11 +134,9 @@
        FILE SECTION
     ========================================= */
 
-
     .files-section {
       margin-bottom: 28px;
     }
-
 
     .files-header {
       display: flex;
@@ -164,12 +146,10 @@
       margin-bottom: 12px;
     }
 
-
     .file-summary {
       font-size: 13px;
       color: #666;
     }
-
 
     .file-list {
       display: flex;
@@ -181,14 +161,12 @@
        FILE CARD
     ========================================= */
 
-
     .file-card {
       border: 1px solid #d8d8d8;
       border-radius: 10px;
       background: #fff;
       overflow: hidden;
     }
-
 
     .file-card-top {
       display: flex;
@@ -198,7 +176,6 @@
       background: #fafafa;
       border-bottom: 1px solid #eee;
     }
-
 
     .file-number {
       width: 34px;
@@ -214,25 +191,21 @@
       font-weight: bold;
     }
 
-
     .file-title-area {
       min-width: 0;
       flex: 1;
     }
-
 
     .file-name {
       font-weight: bold;
       overflow-wrap: anywhere;
     }
 
-
     .file-points {
       margin-top: 3px;
       font-size: 12px;
       color: #777;
     }
-
 
     .file-actions {
       display: flex;
@@ -246,19 +219,15 @@
        LEG DETAILS
     ========================================= */
 
-
     .leg-details {
       display: grid;
       grid-template-columns:
+        minmax(160px, 1fr)
         minmax(150px, 1fr)
-        minmax(140px, 1fr)
-        minmax(140px, 1fr)
-        minmax(220px, 1.5fr);
-
+        minmax(150px, 1fr);
       gap: 12px;
       padding: 16px;
     }
-
 
     .leg-details .field input {
       padding: 9px 10px;
@@ -270,7 +239,6 @@
        COORDINATE SUMMARY
     ========================================= */
 
-
     .coordinate-summary {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -278,13 +246,11 @@
       padding: 0 16px 16px;
     }
 
-
     .coordinate-box {
       background: #f7f7f7;
       border-radius: 7px;
       padding: 10px 12px;
     }
-
 
     .coordinate-label {
       display: block;
@@ -294,7 +260,6 @@
       text-transform: uppercase;
       color: #888;
     }
-
 
     .coordinate-value {
       font-family: monospace;
@@ -306,15 +271,12 @@
        CONNECTION BETWEEN FILES
     ========================================= */
 
-
     .connection {
       position: relative;
-      margin: 0 0;
       padding: 12px 20px 12px 64px;
       font-size: 12px;
       color: #555;
     }
-
 
     .connection::before {
       content: "";
@@ -326,14 +288,12 @@
       background: #ccc;
     }
 
-
     .connection-content {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
-
 
     .badge {
       display: inline-block;
@@ -343,12 +303,10 @@
       white-space: nowrap;
     }
 
-
     .badge.good {
       color: #237a39;
       background: #e7f5eb;
     }
-
 
     .badge.warning {
       color: #8b6100;
@@ -356,13 +314,11 @@
       font-weight: bold;
     }
 
-
     .badge.bad {
       color: #a72828;
       background: #fde6e6;
       font-weight: bold;
     }
-
 
     .badge.neutral {
       color: #555;
@@ -374,7 +330,6 @@
        WORKSPACE
     ========================================= */
 
-
     .workspace {
       display: grid;
       grid-template-columns:
@@ -384,14 +339,12 @@
       align-items: start;
     }
 
-
     .panel {
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 18px;
       background: #fff;
     }
-
 
     .panel-header {
       display: flex;
@@ -405,7 +358,6 @@
     /* =========================================
        MAIN OUTPUT
     ========================================= */
-
 
     textarea {
       width: 100%;
@@ -421,7 +373,6 @@
       overflow: auto;
     }
 
-
     .count {
       margin-top: 10px;
       font-size: 13px;
@@ -434,18 +385,15 @@
        POSITIONS TABLE
     ========================================= */
 
-
     .positions-wrap {
       overflow-x: auto;
     }
-
 
     .positions-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
     }
-
 
     .positions-table th {
       padding: 8px;
@@ -455,13 +403,11 @@
       color: #555;
     }
 
-
     .positions-table td {
       padding: 8px;
       border-bottom: 1px solid #eee;
       vertical-align: middle;
     }
-
 
     .positions-table input {
       width: 100%;
@@ -472,19 +418,22 @@
       font-size: 12px;
     }
 
-
     .uid-cell {
       font-family: monospace;
-      min-width: 150px;
+      min-width: 170px;
       overflow-wrap: anywhere;
     }
 
+    .position-id-cell {
+      font-family: monospace;
+      font-weight: bold;
+      text-align: center;
+    }
 
     .coordinate-cell {
       font-family: monospace;
       white-space: nowrap;
     }
-
 
     .position-source {
       display: block;
@@ -503,14 +452,12 @@
        BUTTONS
     ========================================= */
 
-
     .buttons {
       display: flex;
       gap: 8px;
       margin-top: 14px;
       flex-wrap: wrap;
     }
-
 
     button {
       border: 0;
@@ -522,39 +469,32 @@
       color: white;
     }
 
-
     button:hover:not(:disabled) {
       background: #444;
     }
-
 
     button.secondary {
       background: #e5e5e5;
       color: #222;
     }
 
-
     button.secondary:hover:not(:disabled) {
       background: #d7d7d7;
     }
-
 
     button.danger {
       background: #a72828;
       color: white;
     }
 
-
     button.danger:hover:not(:disabled) {
       background: #8c2020;
     }
-
 
     button.small-button {
       padding: 7px 10px;
       font-size: 12px;
     }
-
 
     button:disabled {
       opacity: 0.4;
@@ -566,7 +506,6 @@
        EMPTY STATE
     ========================================= */
 
-
     .empty-state {
       padding: 25px;
       border: 1px dashed #ccc;
@@ -576,16 +515,9 @@
       font-size: 13px;
     }
 
-
-    /* =========================================
-       INCOMPLETE LEG
-    ========================================= */
-
-
     .file-card.incomplete {
       border-color: #d9ad4a;
     }
-
 
     .file-card.invalid-time {
       border-color: #b73535;
@@ -596,20 +528,13 @@
        RESPONSIVE
     ========================================= */
 
-
     @media (max-width: 1200px) {
 
       .workspace {
         grid-template-columns: 1fr;
       }
 
-
-      .leg-details {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
     }
-
 
     @media (max-width: 700px) {
 
@@ -618,23 +543,19 @@
         grid-template-columns: 1fr;
       }
 
-
       .file-card-top {
         align-items: flex-start;
         flex-wrap: wrap;
       }
-
 
       .file-actions {
         width: 100%;
         justify-content: flex-start;
       }
 
-
       .global-details {
         grid-template-columns: 1fr;
       }
-
 
       .page {
         padding: 20px;
@@ -674,7 +595,6 @@
 
   <div class="global-details">
 
-
     <div class="field">
 
       <label for="callsign">
@@ -689,7 +609,6 @@
       >
 
     </div>
-
 
   </div>
 
@@ -726,7 +645,7 @@
 
 
   <!-- =======================================
-       FILES
+       JOURNEY LEGS
   ======================================== -->
 
 
@@ -738,7 +657,6 @@
       <h2>
         Journey Legs
       </h2>
-
 
       <div
         class="file-summary"
@@ -766,16 +684,11 @@
 
 
   <!-- =======================================
-       OUTPUT WORKSPACE
+       OUTPUT
   ======================================== -->
 
 
   <div class="workspace">
-
-
-    <!-- =====================================
-         COMBINED JOURNEY
-    ====================================== -->
 
 
     <section class="panel">
@@ -868,7 +781,7 @@
       >
 
         <div class="empty-state">
-          Final coordinates from each GPX leg will appear here.
+          Intermediate positions will appear here.
         </div>
 
       </div>
@@ -876,14 +789,12 @@
 
       <div class="buttons">
 
-
         <button
           id="copyPositionsButton"
           disabled
         >
           Copy Positions
         </button>
-
 
       </div>
 
@@ -901,86 +812,60 @@
 
 
 /* =============================================
-   ELEMENT REFERENCES
+   ELEMENTS
 ============================================= */
 
 
 const dropZone =
-  document.getElementById(
-    "dropZone"
-  );
+  document.getElementById("dropZone");
 
 
 const fileInput =
-  document.getElementById(
-    "fileInput"
-  );
+  document.getElementById("fileInput");
 
 
 const fileList =
-  document.getElementById(
-    "fileList"
-  );
+  document.getElementById("fileList");
 
 
 const fileSummary =
-  document.getElementById(
-    "fileSummary"
-  );
+  document.getElementById("fileSummary");
 
 
 const callsignInput =
-  document.getElementById(
-    "callsign"
-  );
+  document.getElementById("callsign");
 
 
 const output =
-  document.getElementById(
-    "output"
-  );
+  document.getElementById("output");
 
 
 const count =
-  document.getElementById(
-    "count"
-  );
+  document.getElementById("count");
 
 
 const positionsWrap =
-  document.getElementById(
-    "positionsWrap"
-  );
+  document.getElementById("positionsWrap");
 
 
 const copyButton =
-  document.getElementById(
-    "copyButton"
-  );
+  document.getElementById("copyButton");
 
 
 const downloadButton =
-  document.getElementById(
-    "downloadButton"
-  );
+  document.getElementById("downloadButton");
 
 
 const reverseAllButton =
-  document.getElementById(
-    "reverseAllButton"
-  );
+  document.getElementById("reverseAllButton");
 
 
 const clearButton =
-  document.getElementById(
-    "clearButton"
-  );
+  document.getElementById("clearButton");
 
 
 const copyPositionsButton =
-  document.getElementById(
-    "copyPositionsButton"
-  );
+  document.getElementById("copyPositionsButton");
 
 
 /* =============================================
@@ -988,8 +873,7 @@ const copyPositionsButton =
 ============================================= */
 
 
-let gpxFiles =
-  [];
+let gpxFiles = [];
 
 
 let currentFilename =
@@ -1015,7 +899,6 @@ fileInput.addEventListener(
   "change",
   async () => {
 
-
     if (
       fileInput.files.length
     ) {
@@ -1027,14 +910,6 @@ fileInput.addEventListener(
       );
 
     }
-
-
-    /*
-      Reset the file input.
-
-      This means a file can be selected again
-      later if it was removed.
-    */
 
     fileInput.value =
       "";
@@ -1052,9 +927,7 @@ dropZone.addEventListener(
   "dragover",
   event => {
 
-
     event.preventDefault();
-
 
     dropZone.classList.add(
       "dragover"
@@ -1068,7 +941,6 @@ dropZone.addEventListener(
   "dragleave",
   () => {
 
-
     dropZone.classList.remove(
       "dragover"
     );
@@ -1081,9 +953,7 @@ dropZone.addEventListener(
   "drop",
   async event => {
 
-
     event.preventDefault();
-
 
     dropZone.classList.remove(
       "dragover"
@@ -1139,12 +1009,10 @@ async function addFiles(
         coordinates.length === 0
       ) {
 
-
         alert(
           "No coordinates were found in " +
           file.name
         );
-
 
         continue;
 
@@ -1165,12 +1033,6 @@ async function addFiles(
         reversed:
           false,
 
-
-        /*
-          Journey information is now stored
-          independently against each GPX leg.
-        */
-
         journeyDate:
           "",
 
@@ -1178,19 +1040,6 @@ async function addFiles(
           "",
 
         endTime:
-          "",
-
-        uid:
-          "",
-
-
-        /*
-          Position fields also remain attached
-          to their source leg if the files are
-          reordered.
-        */
-
-        positionId:
           "",
 
         positionName:
@@ -1272,13 +1121,11 @@ function parseGPXFile(
               )
             ) {
 
-
               reject(
                 new Error(
                   "Invalid XML"
                 )
               );
-
 
               return;
 
@@ -1287,11 +1134,6 @@ function parseGPXFile(
 
             const coordinates =
               [];
-
-
-            /* -----------------------------
-               TRACK POINTS
-            ----------------------------- */
 
 
             const trackPoints =
@@ -1324,7 +1166,6 @@ function parseGPXFile(
                 lon !== null
               ) {
 
-
                 coordinates.push({
                   lat,
                   lon
@@ -1333,14 +1174,6 @@ function parseGPXFile(
               }
 
             }
-
-
-            /* -----------------------------
-               ROUTE POINTS
-
-               Only use rtept when the file
-               contains no trkpt elements.
-            ----------------------------- */
 
 
             if (
@@ -1378,7 +1211,6 @@ function parseGPXFile(
                   lon !== null
                 ) {
 
-
                   coordinates.push({
                     lat,
                     lon
@@ -1401,7 +1233,6 @@ function parseGPXFile(
             error
           ) {
 
-
             reject(
               error
             );
@@ -1413,7 +1244,6 @@ function parseGPXFile(
 
       reader.onerror =
         () => {
-
 
           reject(
             new Error(
@@ -1435,7 +1265,7 @@ function parseGPXFile(
 
 
 /* =============================================
-   LOCAL FILE ID
+   LOCAL ID
 ============================================= */
 
 
@@ -1445,19 +1275,62 @@ function createLocalId() {
   return (
 
     Date.now()
-      .toString(
-        36
-      )
+      .toString(36)
 
     +
 
     Math.random()
-      .toString(
-        36
-      )
-      .slice(
-        2
-      )
+      .toString(36)
+      .slice(2)
+
+  );
+
+}
+
+
+/* =============================================
+   AUTOMATIC POSITION UID
+============================================= */
+
+
+function getPositionUid(
+  file
+) {
+
+
+  const callsign =
+    callsignInput
+      .value
+      .trim();
+
+
+  if (
+    !callsign ||
+    !file.journeyDate
+  ) {
+
+    return "";
+
+  }
+
+
+  /*
+    journeyDate is supplied by the HTML date
+    input already in YYYY-MM-DD format.
+  */
+
+
+  return (
+
+    callsign
+
+    +
+
+    "-"
+
+    +
+
+    file.journeyDate
 
   );
 
@@ -1486,7 +1359,6 @@ function refreshEverything() {
   if (
     gpxFiles.length === 0
   ) {
-
 
     fileSummary.textContent =
       "No files loaded";
@@ -1668,8 +1540,7 @@ function renderFileList() {
                 data-action="down"
                 data-id="${file.id}"
                 ${
-                  index ===
-                  gpxFiles.length - 1
+                  index === gpxFiles.length - 1
                     ? "disabled"
                     : ""
                 }
@@ -1755,24 +1626,6 @@ function renderFileList() {
             </div>
 
 
-            <div class="field">
-
-              <label>
-                UID
-              </label>
-
-              <input
-                type="text"
-                data-leg-field="uid"
-                data-id="${file.id}"
-                value="${escapeAttribute(file.uid)}"
-                placeholder="Journey UID"
-                autocomplete="off"
-              >
-
-            </div>
-
-
           </div>
 
 
@@ -1815,11 +1668,6 @@ function renderFileList() {
       );
 
 
-      /* =====================================
-         CONNECTION TO NEXT LEG
-      ===================================== */
-
-
       if (
         index <
         gpxFiles.length - 1
@@ -1853,7 +1701,7 @@ function renderFileList() {
 
 
 /* =============================================
-   BUILD CONNECTION INFORMATION
+   CONNECTION INFORMATION
 ============================================= */
 
 
@@ -1898,10 +1746,8 @@ function buildConnectionElement(
     distanceMiles > 10
   ) {
 
-
     distanceClass =
       "bad";
-
 
     distanceLabel =
       "Large geographic gap";
@@ -1911,20 +1757,13 @@ function buildConnectionElement(
     distanceMiles > 1
   ) {
 
-
     distanceClass =
       "warning";
-
 
     distanceLabel =
       "Check geographic join";
 
   }
-
-
-  /* -----------------------------------------
-     TIME RELATIONSHIP
-  ----------------------------------------- */
 
 
   let timeHtml =
@@ -1955,20 +1794,23 @@ function buildConnectionElement(
 
     const differenceSeconds =
       Math.round(
+
         (
           nextStartDate.getTime()
           -
           currentEndDate.getTime()
         )
+
         /
+
         1000
+
       );
 
 
     if (
       differenceSeconds < 0
     ) {
-
 
       timeHtml =
         `
@@ -1983,7 +1825,6 @@ function buildConnectionElement(
       differenceSeconds === 0
     ) {
 
-
       timeHtml =
         `
           <span class="badge good">
@@ -1993,7 +1834,6 @@ function buildConnectionElement(
 
     }
     else {
-
 
       timeHtml =
         `
@@ -2023,11 +1863,9 @@ function buildConnectionElement(
 
       <div class="connection-content">
 
-
         <span class="badge ${distanceClass}">
           ${distanceLabel}
         </span>
-
 
         <span>
           ${formatDistance(distanceMiles)}
@@ -2035,9 +1873,7 @@ function buildConnectionElement(
           to start of leg ${index + 2}
         </span>
 
-
         ${timeHtml}
-
 
       </div>
 
@@ -2077,8 +1913,7 @@ fileList.addEventListener(
     const file =
       gpxFiles.find(
         item =>
-          item.id ===
-          input.dataset.id
+          item.id === input.dataset.id
       );
 
 
@@ -2099,28 +1934,12 @@ fileList.addEventListener(
       input.value;
 
 
-    /*
-      Do not redraw the whole file list while
-      typing because that would move focus.
-
-      Update everything else immediately.
-    */
-
-
     renderPositions();
 
     generateOutput();
 
   }
 );
-
-
-/* =============================================
-   LEG FIELD CHANGE
-
-   Once a date/time input is committed, redraw
-   the file list so connection warnings update.
-============================================= */
 
 
 fileList.addEventListener(
@@ -2202,11 +2021,6 @@ fileList.addEventListener(
     }
 
 
-    /* -------------------------------------
-       MOVE UP
-    ------------------------------------- */
-
-
     if (
       action === "up" &&
       index > 0
@@ -2225,15 +2039,9 @@ fileList.addEventListener(
     }
 
 
-    /* -------------------------------------
-       MOVE DOWN
-    ------------------------------------- */
-
-
     if (
       action === "down" &&
-      index <
-      gpxFiles.length - 1
+      index < gpxFiles.length - 1
     ) {
 
 
@@ -2247,11 +2055,6 @@ fileList.addEventListener(
       ];
 
     }
-
-
-    /* -------------------------------------
-       REVERSE ONE GPX LEG
-    ------------------------------------- */
 
 
     if (
@@ -2268,11 +2071,6 @@ fileList.addEventListener(
         !gpxFiles[index].reversed;
 
     }
-
-
-    /* -------------------------------------
-       REMOVE
-    ------------------------------------- */
 
 
     if (
@@ -2310,7 +2108,6 @@ function getLegStatus(
     !file.endTime
   ) {
 
-
     return "incomplete";
 
   }
@@ -2333,7 +2130,6 @@ function getLegStatus(
     !end
   ) {
 
-
     return "invalid";
 
   }
@@ -2345,7 +2141,7 @@ function getLegStatus(
 
 
 /* =============================================
-   GET LEG START DATE
+   LEG START DATE
 ============================================= */
 
 
@@ -2358,7 +2154,6 @@ function getLegStartDate(
     !file.journeyDate ||
     !file.startTime
   ) {
-
 
     return null;
 
@@ -2375,7 +2170,7 @@ function getLegStartDate(
 
 
 /* =============================================
-   GET LEG END DATE
+   LEG END DATE
 ============================================= */
 
 
@@ -2389,7 +2184,6 @@ function getLegEndDate(
     !file.startTime ||
     !file.endTime
   ) {
-
 
     return null;
 
@@ -2406,13 +2200,6 @@ function getLegEndDate(
     timeToSeconds(
       file.endTime
     );
-
-
-  /*
-    If the end clock time is earlier than the
-    start clock time, assume this leg crossed
-    midnight into the following day.
-  */
 
 
   const dayOffset =
@@ -2447,7 +2234,6 @@ function createUTCDate(
     !timeValue
   ) {
 
-
     return null;
 
   }
@@ -2465,50 +2251,33 @@ function createUTCDate(
     );
 
 
-  const year =
-    Number(
-      dateParts[0]
-    );
-
-
-  const month =
-    Number(
-      dateParts[1]
-    ) - 1;
-
-
-  const day =
-    Number(
-      dateParts[2]
-    );
-
-
-  const hour =
-    Number(
-      timeParts[0]
-    ) || 0;
-
-
-  const minute =
-    Number(
-      timeParts[1]
-    ) || 0;
-
-
-  const second =
-    Number(
-      timeParts[2]
-    ) || 0;
-
-
   return new Date(
     Date.UTC(
-      year,
-      month,
-      day + dayOffset,
-      hour,
-      minute,
-      second
+
+      Number(
+        dateParts[0]
+      ),
+
+      Number(
+        dateParts[1]
+      ) - 1,
+
+      Number(
+        dateParts[2]
+      ) + dayOffset,
+
+      Number(
+        timeParts[0]
+      ) || 0,
+
+      Number(
+        timeParts[1]
+      ) || 0,
+
+      Number(
+        timeParts[2]
+      ) || 0
+
     )
   );
 
@@ -2600,7 +2369,6 @@ function generateOutput() {
 
 
     count.textContent =
-
       "Enter the journey date, start time and end time for every GPX leg.";
 
 
@@ -2628,18 +2396,6 @@ function generateOutput() {
 
   let totalRows =
     0;
-
-
-  /* =========================================
-     PROCESS EACH LEG INDEPENDENTLY
-
-     This is the key difference from the
-     previous version.
-
-     Every GPX file receives its own time
-     range. We DO NOT distribute one global
-     time range across all files.
-  ========================================= */
 
 
   for (
@@ -2700,15 +2456,6 @@ function generateOutput() {
       startMilliseconds;
 
 
-    /*
-      N points contain N - 1 intervals.
-
-      Therefore the first point receives the
-      exact leg start time and the final point
-      receives the exact leg end time.
-    */
-
-
     const intervalMilliseconds =
 
       numberOfPoints > 1
@@ -2753,14 +2500,6 @@ function generateOutput() {
           );
 
 
-        /*
-          Unix timestamp in seconds.
-
-          Suitable for the bigint timestamp
-          field used by the existing dataset.
-        */
-
-
         const timestamp =
           Math.floor(
             pointMilliseconds /
@@ -2768,24 +2507,10 @@ function generateOutput() {
           );
 
 
-        /*
-          Human-readable UTC:
-
-          2026-09-07 09:50:00+00
-        */
-
-
         const utc =
           formatUTCDate(
             pointDate
           );
-
-
-        /*
-          Position is deliberately:
-
-          latitude,longitude
-        */
 
 
         const position =
@@ -2883,15 +2608,14 @@ function generateOutput() {
 
 
   currentFilename =
-    callsign
-      ? callsign + "-journey"
-      : "journey";
+    callsign +
+    "-journey";
 
 }
 
 
 /* =============================================
-   FORMAT UTC DATE
+   FORMAT UTC
 ============================================= */
 
 
@@ -2951,50 +2675,17 @@ function formatUTCDate(
 
   return (
 
-    year
-
-    +
-
-    "-"
-
-    +
-
-    month
-
-    +
-
-    "-"
-
-    +
-
-    day
-
-    +
-
-    " "
-
-    +
-
-    hours
-
-    +
-
-    ":"
-
-    +
-
-    minutes
-
-    +
-
-    ":"
-
-    +
-
-    seconds
-
-    +
-
+    year +
+    "-" +
+    month +
+    "-" +
+    day +
+    " " +
+    hours +
+    ":" +
+    minutes +
+    ":" +
+    seconds +
     "+00"
 
   );
@@ -3003,26 +2694,60 @@ function formatUTCDate(
 
 
 /* =============================================
-   GLOBAL CALLSIGN CHANGE
+   GLOBAL CALLSIGN
 ============================================= */
 
 
 callsignInput.addEventListener(
   "input",
-  generateOutput
+  () => {
+
+
+    generateOutput();
+
+
+    /*
+      Position UIDs depend on callsign,
+      so regenerate the Positions table too.
+    */
+
+
+    renderPositions();
+
+  }
 );
 
 
 /* =============================================
-   POSITIONS TABLE
+   POSITIONS
+
+   IMPORTANT:
+
+   The final GPX file is deliberately excluded.
+
+   If there are 4 GPX legs there are only
+   3 intermediate Positions rows.
+
+   Position 1 = end of leg 1
+   Position 2 = end of leg 2
+   Position 3 = end of leg 3
+
+   The end of leg 4 is the final destination
+   and is NOT output here.
 ============================================= */
 
 
 function renderPositions() {
 
 
+  /*
+    One GPX file means there are no
+    intermediate positions.
+  */
+
+
   if (
-    gpxFiles.length === 0
+    gpxFiles.length < 2
   ) {
 
 
@@ -3030,8 +2755,17 @@ function renderPositions() {
       `
         <div class="empty-state">
 
-          Final coordinates from each GPX leg
-          will appear here.
+          ${
+            gpxFiles.length === 0
+
+              ?
+
+              "Intermediate positions will appear here."
+
+              :
+
+              "There are no intermediate positions for a single GPX leg."
+          }
 
         </div>
       `;
@@ -3051,9 +2785,7 @@ function renderPositions() {
 
       <table class="positions-table">
 
-
         <thead>
-
 
           <tr>
 
@@ -3079,88 +2811,110 @@ function renderPositions() {
 
           </tr>
 
-
         </thead>
-
 
         <tbody>
 
     `;
 
 
-  gpxFiles.forEach(
-    file => {
+  /*
+    Deliberately stop at length - 1.
+
+    Therefore the final GPX leg's final
+    coordinates are never included.
+  */
 
 
-      const finalCoordinate =
-        file.coordinates[
-          file.coordinates.length - 1
-        ];
+  for (
+    let index = 0;
+    index < gpxFiles.length - 1;
+    index++
+  ) {
 
 
-      html +=
-        `
-
-          <tr>
+    const file =
+      gpxFiles[index];
 
 
-            <td class="uid-cell">
-
-              ${
-                file.uid
-                  ? escapeHtml(file.uid)
-                  : '<span style="color:#aaa;">No UID</span>'
-              }
-
-              <span class="position-source">
-                ${escapeHtml(file.name)}
-              </span>
-
-            </td>
+    const finalCoordinate =
+      file.coordinates[
+        file.coordinates.length - 1
+      ];
 
 
-            <td>
-
-              <input
-                type="text"
-                data-position-field="positionId"
-                data-id="${file.id}"
-                value="${escapeAttribute(file.positionId)}"
-                placeholder="ID"
-              >
-
-            </td>
+    const uid =
+      getPositionUid(
+        file
+      );
 
 
-            <td>
-
-              <input
-                type="text"
-                data-position-field="positionName"
-                data-id="${file.id}"
-                value="${escapeAttribute(file.positionName)}"
-                placeholder="Position name"
-              >
-
-            </td>
+    const positionId =
+      index + 1;
 
 
-            <td class="coordinate-cell">
-              ${escapeHtml(finalCoordinate.lat)}
-            </td>
+    html +=
+      `
+
+        <tr>
 
 
-            <td class="coordinate-cell">
-              ${escapeHtml(finalCoordinate.lon)}
-            </td>
+          <td class="uid-cell">
+
+            ${
+              uid
+
+                ?
+
+                escapeHtml(
+                  uid
+                )
+
+                :
+
+                '<span style="color:#aaa;">Enter callsign and date</span>'
+            }
+
+            <span class="position-source">
+              ${escapeHtml(file.name)}
+            </span>
+
+          </td>
 
 
-          </tr>
+          <td class="position-id-cell">
+            ${positionId}
+          </td>
 
-        `;
 
-    }
-  );
+          <td>
+
+            <input
+              type="text"
+              data-position-field="positionName"
+              data-id="${file.id}"
+              value="${escapeAttribute(file.positionName)}"
+              placeholder="Position name"
+            >
+
+          </td>
+
+
+          <td class="coordinate-cell">
+            ${escapeHtml(finalCoordinate.lat)}
+          </td>
+
+
+          <td class="coordinate-cell">
+            ${escapeHtml(finalCoordinate.lon)}
+          </td>
+
+
+        </tr>
+
+      `;
+
+  }
 
 
   html +=
@@ -3184,7 +2938,7 @@ function renderPositions() {
 
 
 /* =============================================
-   POSITION EDITING
+   POSITION NAME EDITING
 ============================================= */
 
 
@@ -3225,11 +2979,7 @@ positionsWrap.addEventListener(
     }
 
 
-    const field =
-      input.dataset.positionField;
-
-
-    file[field] =
+    file.positionName =
       input.value;
 
   }
@@ -3238,6 +2988,8 @@ positionsWrap.addEventListener(
 
 /* =============================================
    BUILD POSITIONS OUTPUT
+
+   Again, the final GPX file is excluded.
 ============================================= */
 
 
@@ -3253,66 +3005,82 @@ function buildPositionsOutput() {
   );
 
 
-  gpxFiles.forEach(
-    file => {
+  for (
+    let index = 0;
+    index < gpxFiles.length - 1;
+    index++
+  ) {
 
 
-      const coordinate =
-        file.coordinates[
-          file.coordinates.length - 1
-        ];
+    const file =
+      gpxFiles[index];
 
 
-      rows.push(
+    const coordinate =
+      file.coordinates[
+        file.coordinates.length - 1
+      ];
 
-        escapeField(
-          file.uid
-        )
 
-        +
-
-        ","
-
-        +
-
-        escapeField(
-          file.positionId
-        )
-
-        +
-
-        ","
-
-        +
-
-        escapeField(
-          file.positionName
-        )
-
-        +
-
-        ","
-
-        +
-
-        escapeField(
-          coordinate.lat
-        )
-
-        +
-
-        ","
-
-        +
-
-        escapeField(
-          coordinate.lon
-        )
-
+    const uid =
+      getPositionUid(
+        file
       );
 
-    }
-  );
+
+    const positionId =
+      index + 1;
+
+
+    rows.push(
+
+      escapeField(
+        uid
+      )
+
+      +
+
+      ","
+
+      +
+
+      escapeField(
+        positionId
+      )
+
+      +
+
+      ","
+
+      +
+
+      escapeField(
+        file.positionName
+      )
+
+      +
+
+      ","
+
+      +
+
+      escapeField(
+        coordinate.lat
+      )
+
+      +
+
+      ","
+
+      +
+
+      escapeField(
+        coordinate.lon
+      )
+
+    );
+
+  }
 
 
   return rows.join(
@@ -3341,24 +3109,7 @@ reverseAllButton.addEventListener(
     }
 
 
-    /*
-      Reverse the order of the GPX legs.
-    */
-
-
     gpxFiles.reverse();
-
-
-    /*
-      Reverse the coordinates within each leg.
-
-      The leg's own journey date/start/end/UID
-      stay attached to that leg.
-
-      generateOutput() therefore recalculates
-      that leg's points from its own start time
-      through to its own end time.
-    */
 
 
     gpxFiles.forEach(
@@ -3449,7 +3200,9 @@ function haversineDistance(
     Math.sin(
       deltaLat / 2
     )
+
     *
+
     Math.sin(
       deltaLat / 2
     )
@@ -3459,15 +3212,21 @@ function haversineDistance(
     Math.cos(
       lat1
     )
+
     *
+
     Math.cos(
       lat2
     )
+
     *
+
     Math.sin(
       deltaLon / 2
     )
+
     *
+
     Math.sin(
       deltaLon / 2
     );
@@ -3503,7 +3262,7 @@ function haversineDistance(
 
 
 /* =============================================
-   DEGREES TO RADIANS
+   DEGREES -> RADIANS
 ============================================= */
 
 
@@ -3671,37 +3430,33 @@ function timeToSeconds(
     );
 
 
-  const hours =
-    Number(
-      parts[0]
-    ) || 0;
-
-
-  const minutes =
-    Number(
-      parts[1]
-    ) || 0;
-
-
-  const seconds =
-    Number(
-      parts[2]
-    ) || 0;
-
-
   return (
 
-    hours *
+    (
+      Number(
+        parts[0]
+      ) || 0
+    )
+    *
     3600
 
     +
 
-    minutes *
+    (
+      Number(
+        parts[1]
+      ) || 0
+    )
+    *
     60
 
     +
 
-    seconds
+    (
+      Number(
+        parts[2]
+      ) || 0
+    )
 
   );
 
@@ -3733,14 +3488,14 @@ function formatDuration(
     );
 
 
-  const remainingAfterDays =
+  const remaining =
     seconds %
     86400;
 
 
   const hours =
     Math.floor(
-      remainingAfterDays /
+      remaining /
       3600
     );
 
@@ -3748,7 +3503,7 @@ function formatDuration(
   const minutes =
     Math.floor(
       (
-        remainingAfterDays %
+        remaining %
         3600
       )
       /
@@ -3757,7 +3512,7 @@ function formatDuration(
 
 
   const secs =
-    remainingAfterDays %
+    remaining %
     60;
 
 
@@ -3768,7 +3523,6 @@ function formatDuration(
   if (
     days > 0
   ) {
-
 
     result +=
       days +
@@ -3828,15 +3582,16 @@ function formatSignedDuration(
 ) {
 
 
-  const prefix =
-    seconds < 0
-      ? "-"
-      : "+";
-
-
   return (
 
-    prefix +
+    (
+      seconds < 0
+        ? "-"
+        : "+"
+    )
+
+    +
+
     formatDuration(
       seconds
     )
@@ -3847,7 +3602,7 @@ function formatSignedDuration(
 
 
 /* =============================================
-   CSV/TXT FIELD ESCAPING
+   ESCAPE OUTPUT FIELD
 ============================================= */
 
 
@@ -3993,10 +3748,8 @@ copyButton.addEventListener(
     setTimeout(
       () => {
 
-
         copyButton.textContent =
           originalText;
-
 
       },
       1200
@@ -4101,10 +3854,8 @@ copyPositionsButton.addEventListener(
     setTimeout(
       () => {
 
-
         copyPositionsButton.textContent =
           originalText;
-
 
       },
       1200
@@ -4115,7 +3866,7 @@ copyPositionsButton.addEventListener(
 
 
 /* =============================================
-   CLEAR EVERYTHING
+   CLEAR
 ============================================= */
 
 
