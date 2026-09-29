@@ -268,7 +268,7 @@
 
 
     /* =========================================
-       CONNECTION BETWEEN FILES
+       CONNECTIONS
     ========================================= */
 
     .connection {
@@ -382,7 +382,7 @@
 
 
     /* =========================================
-       POSITIONS TABLE
+       POSITIONS
     ========================================= */
 
     .positions-wrap {
@@ -411,7 +411,7 @@
 
     .positions-table input {
       width: 100%;
-      min-width: 90px;
+      min-width: 100px;
       padding: 7px 8px;
       border: 1px solid #ccc;
       border-radius: 5px;
@@ -424,7 +424,7 @@
       overflow-wrap: anywhere;
     }
 
-    .position-id-cell {
+    .stop-order-cell {
       font-family: monospace;
       font-weight: bold;
       text-align: center;
@@ -503,7 +503,7 @@
 
 
     /* =========================================
-       EMPTY STATE
+       EMPTY / STATUS
     ========================================= */
 
     .empty-state {
@@ -614,7 +614,7 @@
 
 
   <!-- =======================================
-       DROP ZONE
+       GPX UPLOAD
   ======================================== -->
 
 
@@ -684,11 +684,14 @@
 
 
   <!-- =======================================
-       OUTPUT
+       OUTPUT WORKSPACE
   ======================================== -->
 
 
   <div class="workspace">
+
+
+    <!-- COMBINED JOURNEY -->
 
 
     <section class="panel">
@@ -758,9 +761,7 @@
     </section>
 
 
-    <!-- =====================================
-         POSITIONS
-    ====================================== -->
+    <!-- POSITIONS -->
 
 
     <section class="panel">
@@ -781,7 +782,7 @@
       >
 
         <div class="empty-state">
-          Intermediate positions will appear here.
+          Intermediate stops will appear here.
         </div>
 
       </div>
@@ -1042,7 +1043,7 @@ async function addFiles(
         endTime:
           "",
 
-        positionName:
+        stopName:
           ""
 
       });
@@ -1136,6 +1137,11 @@ function parseGPXFile(
               [];
 
 
+            /* -----------------------------
+               TRACK POINTS
+            ----------------------------- */
+
+
             const trackPoints =
               xml.getElementsByTagNameNS(
                 "*",
@@ -1174,6 +1180,11 @@ function parseGPXFile(
               }
 
             }
+
+
+            /* -----------------------------
+               ROUTE POINTS
+            ----------------------------- */
 
 
             if (
@@ -1289,11 +1300,16 @@ function createLocalId() {
 
 
 /* =============================================
-   AUTOMATIC POSITION UID
+   AUTOMATIC STOP UID
+
+   callsign + journey date
+
+   Example:
+   GBSTR-GBWHI-2026-09-07
 ============================================= */
 
 
-function getPositionUid(
+function getStopUid(
   file
 ) {
 
@@ -1312,12 +1328,6 @@ function getPositionUid(
     return "";
 
   }
-
-
-  /*
-    journeyDate is supplied by the HTML date
-    input already in YYYY-MM-DD format.
-  */
 
 
   return (
@@ -1401,7 +1411,7 @@ function refreshEverything() {
 
 
 /* =============================================
-   RENDER FILE LIST
+   RENDER JOURNEY LEGS
 ============================================= */
 
 
@@ -1668,6 +1678,11 @@ function renderFileList() {
       );
 
 
+      /* -------------------------------------
+         CONNECTION TO NEXT LEG
+      ------------------------------------- */
+
+
       if (
         index <
         gpxFiles.length - 1
@@ -1913,7 +1928,8 @@ fileList.addEventListener(
     const file =
       gpxFiles.find(
         item =>
-          item.id === input.dataset.id
+          item.id ===
+          input.dataset.id
       );
 
 
@@ -2021,6 +2037,11 @@ fileList.addEventListener(
     }
 
 
+    /* -------------------------------------
+       MOVE UP
+    ------------------------------------- */
+
+
     if (
       action === "up" &&
       index > 0
@@ -2039,9 +2060,15 @@ fileList.addEventListener(
     }
 
 
+    /* -------------------------------------
+       MOVE DOWN
+    ------------------------------------- */
+
+
     if (
       action === "down" &&
-      index < gpxFiles.length - 1
+      index <
+      gpxFiles.length - 1
     ) {
 
 
@@ -2055,6 +2082,11 @@ fileList.addEventListener(
       ];
 
     }
+
+
+    /* -------------------------------------
+       REVERSE ONE LEG
+    ------------------------------------- */
 
 
     if (
@@ -2071,6 +2103,11 @@ fileList.addEventListener(
         !gpxFiles[index].reversed;
 
     }
+
+
+    /* -------------------------------------
+       REMOVE
+    ------------------------------------- */
 
 
     if (
@@ -2141,7 +2178,7 @@ function getLegStatus(
 
 
 /* =============================================
-   LEG START DATE
+   LEG START
 ============================================= */
 
 
@@ -2170,7 +2207,7 @@ function getLegStartDate(
 
 
 /* =============================================
-   LEG END DATE
+   LEG END
 ============================================= */
 
 
@@ -2200,6 +2237,12 @@ function getLegEndDate(
     timeToSeconds(
       file.endTime
     );
+
+
+  /*
+    If the end time is earlier than the start
+    time, the leg is assumed to cross midnight.
+  */
 
 
   const dayOffset =
@@ -2398,6 +2441,15 @@ function generateOutput() {
     0;
 
 
+  /*
+    Each GPX file is timed independently.
+
+    This preserves real gaps between journey
+    legs instead of spreading one continuous
+    time range over the complete journey.
+  */
+
+
   for (
     const file
     of gpxFiles
@@ -2456,6 +2508,15 @@ function generateOutput() {
       startMilliseconds;
 
 
+    /*
+      N points have N - 1 intervals.
+
+      Therefore:
+      first point = exact start
+      last point  = exact end
+    */
+
+
     const intervalMilliseconds =
 
       numberOfPoints > 1
@@ -2511,6 +2572,12 @@ function generateOutput() {
           formatUTCDate(
             pointDate
           );
+
+
+        /*
+          Position is:
+          latitude,longitude
+        */
 
 
         const position =
@@ -2694,7 +2761,7 @@ function formatUTCDate(
 
 
 /* =============================================
-   GLOBAL CALLSIGN
+   CALLSIGN CHANGE
 ============================================= */
 
 
@@ -2707,8 +2774,7 @@ callsignInput.addEventListener(
 
 
     /*
-      Position UIDs depend on callsign,
-      so regenerate the Positions table too.
+      Stop UIDs depend on the callsign.
     */
 
 
@@ -2719,31 +2785,23 @@ callsignInput.addEventListener(
 
 
 /* =============================================
-   POSITIONS
+   POSITIONS / STOPS
 
-   IMPORTANT:
+   The final destination is deliberately
+   excluded.
 
-   The final GPX file is deliberately excluded.
+   Example with 4 legs:
 
-   If there are 4 GPX legs there are only
-   3 intermediate Positions rows.
+   Leg 1 -> Stop 1
+   Leg 2 -> Stop 2
+   Leg 3 -> Stop 3
+   Leg 4 -> Final destination (not output)
 
-   Position 1 = end of leg 1
-   Position 2 = end of leg 2
-   Position 3 = end of leg 3
-
-   The end of leg 4 is the final destination
-   and is NOT output here.
+   Therefore 4 legs produce 3 stop rows.
 ============================================= */
 
 
 function renderPositions() {
-
-
-  /*
-    One GPX file means there are no
-    intermediate positions.
-  */
 
 
   if (
@@ -2760,11 +2818,11 @@ function renderPositions() {
 
               ?
 
-              "Intermediate positions will appear here."
+              "Intermediate stops will appear here."
 
               :
 
-              "There are no intermediate positions for a single GPX leg."
+              "There are no intermediate stops for a single GPX leg."
           }
 
         </div>
@@ -2794,11 +2852,11 @@ function renderPositions() {
             </th>
 
             <th>
-              Position ID
+              Stop Order
             </th>
 
             <th>
-              Position Name
+              Stop Name
             </th>
 
             <th>
@@ -2819,10 +2877,11 @@ function renderPositions() {
 
 
   /*
-    Deliberately stop at length - 1.
+    Stop before the final GPX leg.
 
-    Therefore the final GPX leg's final
-    coordinates are never included.
+    This deliberately prevents the final
+    destination coordinates from appearing
+    in the Positions output.
   */
 
 
@@ -2844,12 +2903,18 @@ function renderPositions() {
 
 
     const uid =
-      getPositionUid(
+      getStopUid(
         file
       );
 
 
-    const positionId =
+    /*
+      stop_order is automatically generated
+      from the current journey order.
+    */
+
+
+    const stopOrder =
       index + 1;
 
 
@@ -2882,8 +2947,8 @@ function renderPositions() {
           </td>
 
 
-          <td class="position-id-cell">
-            ${positionId}
+          <td class="stop-order-cell">
+            ${stopOrder}
           </td>
 
 
@@ -2891,10 +2956,10 @@ function renderPositions() {
 
             <input
               type="text"
-              data-position-field="positionName"
+              data-stop-field="stopName"
               data-id="${file.id}"
-              value="${escapeAttribute(file.positionName)}"
-              placeholder="Position name"
+              value="${escapeAttribute(file.stopName)}"
+              placeholder="Stop name"
             >
 
           </td>
@@ -2938,7 +3003,7 @@ function renderPositions() {
 
 
 /* =============================================
-   POSITION NAME EDITING
+   STOP NAME EDITING
 ============================================= */
 
 
@@ -2949,7 +3014,7 @@ positionsWrap.addEventListener(
 
     const input =
       event.target.closest(
-        "[data-position-field]"
+        "[data-stop-field]"
       );
 
 
@@ -2979,7 +3044,7 @@ positionsWrap.addEventListener(
     }
 
 
-    file.positionName =
+    file.stopName =
       input.value;
 
   }
@@ -2989,7 +3054,13 @@ positionsWrap.addEventListener(
 /* =============================================
    BUILD POSITIONS OUTPUT
 
-   Again, the final GPX file is excluded.
+   Output format:
+
+   uid,
+   stop_order,
+   stop_name,
+   latitude,
+   longitude
 ============================================= */
 
 
@@ -3001,8 +3072,13 @@ function buildPositionsOutput() {
 
 
   rows.push(
-    "uid,position_id,position_name,lat,lon"
+    "uid,stop_order,stop_name,latitude,longitude"
   );
+
+
+  /*
+    Exclude final destination.
+  */
 
 
   for (
@@ -3023,12 +3099,12 @@ function buildPositionsOutput() {
 
 
     const uid =
-      getPositionUid(
+      getStopUid(
         file
       );
 
 
-    const positionId =
+    const stopOrder =
       index + 1;
 
 
@@ -3045,7 +3121,7 @@ function buildPositionsOutput() {
       +
 
       escapeField(
-        positionId
+        stopOrder
       )
 
       +
@@ -3055,7 +3131,7 @@ function buildPositionsOutput() {
       +
 
       escapeField(
-        file.positionName
+        file.stopName
       )
 
       +
@@ -3602,7 +3678,7 @@ function formatSignedDuration(
 
 
 /* =============================================
-   ESCAPE OUTPUT FIELD
+   OUTPUT ESCAPING
 ============================================= */
 
 
