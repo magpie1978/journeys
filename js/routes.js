@@ -240,26 +240,19 @@ function ensureRouteLayers() {
         "line-width": 8,
         "line-opacity": 0.18,
         "line-blur": 6,
-  
+          
         "line-color": [
           "case",
-  
+        
           [
             "==",
             ["get", "journey_type"],
             "Flight"
           ],
           "#CCFF00",
-  
-          [
-            "==",
-            ["get", "journey_type"],
-            "Drive"
-          ],
-         "#D8DADF",
-  
-          "#E53935"
-        ]
+        
+          "#D8DADF"
+        ]        
       }
     });
   }
@@ -286,26 +279,19 @@ function ensureRouteLayers() {
       paint: {
         "line-width": 1.4,
         "line-opacity": 0.85,
-
+        
         "line-color": [
           "case",
-
+        
           [
             "==",
             ["get", "journey_type"],
             "Flight"
           ],
-          "#CCFF00",  //was #FFD700
-
-          [
-            "==",
-            ["get", "journey_type"],
-            "Drive"
-          ],
-          "#D8DADF",
-
-          "#E53935"
-        ]
+          "#CCFF00",
+        
+          "#D8DADF"
+        ]      
       }
     });
   }
