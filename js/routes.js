@@ -640,58 +640,109 @@ if (error) {
 }
 
 // -------------------------------------------------
-// DESTINATION COUNTRY LOOKUP
+// ORIGIN / DESTINATION COUNTRY LOOKUP
 // -------------------------------------------------
 
-const destinationCodes =
-  [...new Set(
-    (data || [])
-      .map(route => route?.destination)
-      .filter(Boolean)
-  )];
-
-let destinationCountryMap =
-  new Map();
-
-if (destinationCodes.length) {
-
-  const {
-    data: locationRows,
-    error: locationError
-  } = await sb
-    .from("journey_locations")
-    .select("airport_code,country")
-    .in("airport_code", destinationCodes);
-
-  if (locationError) {
-    console.error(
-      "[routes] Destination country lookup failed:",
-      locationError
-    );
-  } else {
-
-    destinationCountryMap =
-      new Map(
-        (locationRows || []).map(location => [
-          location.airport_code,
-          location.country
+  const locationCodes =
+    [...new Set(
+      (data || [])
+        .flatMap(route => [
+          route?.origin,
+          route?.destination
         ])
-      );
-  }
-}
+        .filter(Boolean)
+    )];
   
+  let locationCountryMap =
+    new Map();
+  
+  if (locationCodes.length) {
+  
+    const {
+      data: locationRows,
+      error: locationError
+    } = await sb
+      .from("journey_locations")
+      .select("airport_code,country")
+      .in(
+        "airport_code",
+        locationCodes
+      );
+  
+    if (locationError) {
+  
+      console.error(
+        "[routes] Country lookup failed:",
+        locationError
+      );
+  
+    } else {
+  
+      locationCountryMap =
+        new Map(
+          (locationRows || []).map(
+            location => [
+              location.airport_code,
+              location.country
+            ]
+          )
+        );
+    }
+  }
+  
+  
+  // Add origin and destination countries
+  // to every journey.
+  
+  let routes =
+    (data || [])
+      .filter(route => route?.geom)
+      .map(route => ({
+        ...route,
+  
+        origin_country:
+          locationCountryMap.get(
+            route.origin
+          ) || null,
+  
+        destination_country:
+          locationCountryMap.get(
+            route.destination
+          ) || null
+      }));
 
-let routes =
-  (data || [])
-    .filter(route => route?.geom)
-    .map(route => ({
-      ...route,
-      destination_country:
-        destinationCountryMap.get(
-          route.destination
-        ) || null
-    }));
 
+// -------------------------------------------------
+// COUNTRY FILTER
+// Journey must START and END in a selected country.
+// An empty selection means no country restriction.
+// -------------------------------------------------
+
+  if (
+    selected.countries instanceof Set &&
+    selected.countries.size > 0
+  ) {
+  
+    routes = routes.filter(route => {
+  
+      const originCountry =
+        route.origin_country;
+  
+      const destinationCountry =
+        route.destination_country;
+  
+      return (
+        selected.countries.has(
+          originCountry
+        ) &&
+        selected.countries.has(
+          destinationCountry
+        )
+      );
+    });
+  }
+
+  
 // -------------------------------------------------
 // CABIN / CLASS FILTER
 // Applies only to Flight journeys
