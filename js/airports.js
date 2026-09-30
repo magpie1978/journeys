@@ -1159,42 +1159,43 @@ function bindNonFlightHover() {
       const properties =
         feature.properties || {};
 
-      nonFlightPopup
-        .setLngLat(
-          feature.geometry.coordinates
-        )
-        .setHTML(`
-          <div class="journey-tooltip-content">
-            <strong>
+nonFlightPopup
+  .setLngLat(
+    feature.geometry.coordinates
+  )
+  
+  .setHTML(`
+    <div class="journey-tooltip-content">
+      <strong>
+        ${escapePopupHtml(
+          properties.type ||
+          "Journey"
+        )}
+      </strong>
+
+      <br>
+
+      ${escapePopupHtml(
+        properties.from
+      )}
+      →
+      ${escapePopupHtml(
+        properties.to
+      )}
+
+      ${
+        properties.date
+          ? `
+              <br>
               ${escapePopupHtml(
-                properties.type ||
-                "Journey"
+                properties.date
               )}
-            </strong>
-
-            <br>
-
-            ${escapePopupHtml(
-              properties.from
-            )}
-            →
-            ${escapePopupHtml(
-              properties.to
-            )}
-
-            ${
-              properties.date
-                ? `
-                  <br>
-                  ${escapePopupHtml(
-                    properties.date
-                  )}
-                `
-                : ""
-            }
-          </div>
-        `)
-        .addTo(map);
+            `
+          : ""
+      }
+    </div>
+  `)
+  .addTo(map);
     }
   );
 
@@ -1254,48 +1255,27 @@ function bindJourneyStopHover() {
           "Intermediate stop"
         );
 
+journeyStopPopup
 
-      const stopOrder =
-        properties.stop_order;
+  .setLngLat(
+    feature.geometry.coordinates
+  )
 
+  .setHTML(`
 
-      journeyStopPopup
+    <div class="journey-tooltip-content">
 
-        .setLngLat(
-          feature.geometry.coordinates
-        )
+      <strong>
+        ${stopName}
+      </strong>
 
-        .setHTML(`
+    </div>
 
-          <div class="journey-tooltip-content">
+  `)
 
-            <strong>
-              ${stopName}
-            </strong>
-
-            ${
-              stopOrder !== undefined &&
-              stopOrder !== null &&
-              stopOrder !== ""
-
-                ? `
-                    <br>
-                    Stop ${escapePopupHtml(
-                      stopOrder
-                    )}
-                  `
-
-                : ""
-            }
-
-          </div>
-
-        `)
-
-        .addTo(
-          map
-        );
-
+  .addTo(
+    map
+  );
     }
   );
 
