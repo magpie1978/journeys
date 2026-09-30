@@ -588,7 +588,7 @@ async function loadAirports(routes) {
           "circle-radius": 3.5,
         
           "circle-color":
-            "#CCFF00",
+            "#FFFFFF",
         
           "circle-stroke-width":
             1.25,
@@ -760,7 +760,7 @@ function renderAirportMarkers(airports) {
 
       paint: {
         "circle-radius": 6,
-        "circle-color": "#ffffff",
+        "circle-color": "#CCFF00",
         "circle-stroke-width": 1.5,
         "circle-stroke-color":
           "#000000"
@@ -988,7 +988,7 @@ function renderNonFlightEndpoints(routes) {
 
       paint: {
         "circle-radius": 5,
-        "circle-color": "#ffffff",
+        "circle-color": "#CCFF00",
         "circle-stroke-width": 1.5,
         "circle-stroke-color":
           "#000000"
