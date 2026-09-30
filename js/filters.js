@@ -50,7 +50,8 @@ function buildFilterMenu(containerId, values, targetSet) {
 
   if (
     containerId === "filter-airport" ||
-    containerId === "filter-airline"
+    containerId === "filter-airline" ||
+    containerId === "filter-country"
   ) {
 
     const searchWrapper = document.createElement("div");
@@ -75,6 +76,16 @@ function buildFilterMenu(containerId, values, targetSet) {
       searchInput.setAttribute(
         "aria-label",
         "Search airlines"
+      );
+    }
+    
+    if (containerId === "filter-country") {
+      searchInput.placeholder =
+        "Search countries...";
+    
+      searchInput.setAttribute(
+        "aria-label",
+        "Search countries"
       );
     }
 
@@ -302,7 +313,8 @@ function buildFilterMenu(containerId, values, targetSet) {
       !wasOpen &&
       (
         containerId === "filter-airport" ||
-        containerId === "filter-airline"
+        containerId === "filter-airline" ||
+        containerId === "filter-country"
       ) &&
       searchInput
     ) {      requestAnimationFrame(() => {
@@ -331,13 +343,25 @@ document.addEventListener("click", e => {
 // =====================================================
 async function loadFilters() {
 
-const previousSelections = {
-  years: new Set(selected.years || []),
-  airlines: new Set(selected.airlines || []),
-  types: new Set(selected.types || []),
-  airports: new Set(selected.airports || []),
-  cabins: new Set(selected.cabins || [])
-};
+  const previousSelections = {
+    years:
+      new Set(selected.years || []),
+  
+    airlines:
+      new Set(selected.airlines || []),
+  
+    types:
+      new Set(selected.types || []),
+  
+    airports:
+      new Set(selected.airports || []),
+  
+    cabins:
+      new Set(selected.cabins || []),
+  
+    countries:
+      new Set(selected.countries || [])
+  };
 
   
   const { data, error } = await sb
@@ -377,6 +401,92 @@ const previousSelections = {
       .map(d => d.journey_type)
       .filter(Boolean)
   )].sort();
+
+
+  
+  // =====================================================
+  // COUNTRIES
+  // =====================================================
+  
+  // Collect every origin and destination code used by
+  // the journeys currently available to the filters.
+  
+  const locationCodes =
+    [...new Set(
+      (data || [])
+        .flatMap(row => [
+          row.origin,
+          row.destination
+        ])
+        .filter(Boolean)
+    )];
+  
+  
+  // Map each location code to its country.
+  // This will also be used by loadRoutes() when applying
+  // the Country filter.
+  
+  window.journeyLocationCountries =
+    new Map();
+  
+  
+  if (locationCodes.length) {
+  
+    const {
+      data: locationData,
+      error: locationError
+    } = await sb
+      .from("journey_locations")
+      .select(`
+        airport_code,
+        country
+      `)
+      .in(
+        "airport_code",
+        locationCodes
+      );
+  
+  
+    if (locationError) {
+  
+      console.error(
+        "[filters] country lookup failed:",
+        locationError
+      );
+  
+    } else {
+  
+      (locationData || []).forEach(location => {
+  
+        if (
+          location.airport_code &&
+          location.country
+        ) {
+  
+          window.journeyLocationCountries.set(
+            location.airport_code,
+            location.country
+          );
+  
+        }
+  
+      });
+  
+    }
+  
+  }
+  
+  
+  // Build the alphabetical Country dropdown.
+  
+  const countries =
+    [...new Set(
+      [...window.journeyLocationCountries.values()]
+        .filter(Boolean)
+    )]
+      .sort((a, b) =>
+        a.localeCompare(b)
+      );
 
 
 
@@ -507,12 +617,16 @@ selected.airports =
 
 selected.cabins =
   selected.cabins || new Set();
+  
+selected.countries =
+  selected.countries || new Set();
 
 selected.years.clear();
 selected.airlines.clear();
 selected.types.clear();
 selected.airports.clear();
 selected.cabins.clear();
+selected.countries.clear();
 
   
 // -------------------------------------------------
@@ -577,6 +691,21 @@ previousSelections.cabins.forEach(cabin => {
 });
 
 
+// -------------------------------------------------
+// RESTORE VALID COUNTRY SELECTIONS
+// -------------------------------------------------
+
+previousSelections.countries.forEach(
+  country => {
+
+    if (countries.includes(country)) {
+      selected.countries.add(country);
+    }
+
+  }
+);
+
+
 // =====================================================
 // DEFAULTS
 // Only apply when no valid saved selection remains
@@ -618,6 +747,7 @@ if (
   buildFilterMenu("filter-type", types, selected.types);
   buildFilterMenu("filter-airport", airports, selected.airports);
   buildFilterMenu("filter-cabin",cabins,selected.cabins);
+  buildFilterMenu("filter-country",countries,selected.countries);
 
   // =====================================================
   // INITIAL LOAD
