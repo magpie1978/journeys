@@ -370,10 +370,9 @@ async function loadAirports(routes) {
   // NON-FLIGHT ENDPOINTS
   // -------------------------------------------------
 
-  renderNonFlightEndpoints(
+  await renderNonFlightEndpoints(
     safeRoutes
   );
-
 
 
   // =====================================================
@@ -866,65 +865,196 @@ function getRouteEndpointCoordinates(route) {
 // RENDER NON-FLIGHT ENDPOINTS
 // =====================================================
 
-function renderNonFlightEndpoints(routes) {
+async function renderNonFlightEndpoints(routes) {
+
+  const nonFlightRoutes =
+    (routes || []).filter(
+      route =>
+        getJourneyType(route) !== "flight"
+    );
+
+
+  // -------------------------------------------------
+  // COLLECT CANONICAL ENDPOINT CODES
+  // -------------------------------------------------
+
+  const endpointCodes =
+    [...new Set(
+      nonFlightRoutes
+        .flatMap(route => [
+          route.origin_location_code,
+          route.destination_location_code
+        ])
+        .filter(Boolean)
+        .map(code =>
+          String(code).trim()
+        )
+    )];
+
+
+  // -------------------------------------------------
+  // LOAD DISPLAY NAMES FROM journey_locations
+  // -------------------------------------------------
+
+  const locationNameMap =
+    new Map();
+
+
+  if (endpointCodes.length) {
+
+    const {
+      data: locationRows,
+      error: locationError
+    } = await sb
+      .from("journey_locations")
+      .select(
+        "airport_code,airport"
+      )
+      .in(
+        "airport_code",
+        endpointCodes
+      );
+
+
+    if (locationError) {
+
+      console.error(
+        "[airports] Endpoint name lookup failed:",
+        locationError
+      );
+
+    } else {
+
+      (locationRows || []).forEach(location => {
+
+        const code =
+          location?.airport_code != null
+            ? String(
+                location.airport_code
+              ).trim()
+            : "";
+
+        const name =
+          location?.airport != null
+            ? String(
+                location.airport
+              ).trim()
+            : "";
+
+
+        if (
+          code &&
+          name
+        ) {
+
+          locationNameMap.set(
+            code,
+            name
+          );
+        }
+      });
+    }
+  }
+
+
+  // -------------------------------------------------
+  // BUILD ENDPOINT FEATURES
+  // -------------------------------------------------
+
   const features = [];
 
-  (routes || []).forEach(route => {
-    if (getJourneyType(route) === "flight") {
-      return;
-    }
+
+  nonFlightRoutes.forEach(route => {
 
     const endpoints =
       getRouteEndpointCoordinates(
         route
       );
 
+
     if (!endpoints) {
       return;
     }
 
-features.push(
-  {
-    type: "Feature",
 
-    geometry: {
-      type: "Point",
+    const originCode =
+      route.origin_location_code ||
+      "";
 
-      coordinates:
-        endpoints.start
-    },
+    const destinationCode =
+      route.destination_location_code ||
+      "";
 
-    properties: {
-      location:
-        route.origin || ""
-    }
-  },
 
-  {
-    type: "Feature",
+    const originName =
+      locationNameMap.get(
+        originCode
+      ) ||
+      route.origin ||
+      originCode ||
+      "";
 
-    geometry: {
-      type: "Point",
+    const destinationName =
+      locationNameMap.get(
+        destinationCode
+      ) ||
+      route.destination ||
+      destinationCode ||
+      "";
 
-      coordinates:
-        endpoints.end
-    },
 
-    properties: {
-      location:
-        route.destination || ""
-    }
-  }
-);
-  
+    features.push(
+
+      {
+        type: "Feature",
+
+        geometry: {
+          type: "Point",
+
+          coordinates:
+            endpoints.start
+        },
+
+        properties: {
+          location:
+            originName,
+
+          location_code:
+            originCode
+        }
+      },
+
+
+      {
+        type: "Feature",
+
+        geometry: {
+          type: "Point",
+
+          coordinates:
+            endpoints.end
+        },
+
+        properties: {
+          location:
+            destinationName,
+
+          location_code:
+            destinationCode
+        }
+      }
+
+    );
+
   });
 
-  /*
-   * Most initial views may contain flights only.
-   * Do not create an unused source and layer unless
-   * non-flight endpoints actually exist.
-   */
+
+  // -------------------------------------------------
+  // NO ENDPOINTS
+  // -------------------------------------------------
+
   if (!features.length) {
+
     clearGeoJsonSource(
       ENDPOINT_SOURCE_ID
     );
@@ -937,21 +1067,31 @@ features.push(
     return;
   }
 
+
+  // -------------------------------------------------
+  // GEOJSON
+  // -------------------------------------------------
+
   const featureCollection = {
     type: "FeatureCollection",
     features
   };
+
 
   const existingSource =
     map.getSource(
       ENDPOINT_SOURCE_ID
     );
 
+
   if (existingSource) {
+
     existingSource.setData(
       featureCollection
     );
+
   } else {
+
     map.addSource(
       ENDPOINT_SOURCE_ID,
       {
@@ -961,45 +1101,60 @@ features.push(
     );
   }
 
-  /*
-   * Create the visible endpoint layer only when there
-   * are endpoint features to display.
-   */
+
+  // -------------------------------------------------
+  // ENDPOINT LAYER
+  // -------------------------------------------------
+
   if (
     !map.getLayer(
       ENDPOINT_CIRCLE_LAYER_ID
     )
   ) {
+
     map.addLayer({
+
       id:
         ENDPOINT_CIRCLE_LAYER_ID,
 
-      type: "circle",
+      type:
+        "circle",
 
       source:
         ENDPOINT_SOURCE_ID,
 
       paint: {
-        "circle-radius": 5,
-        "circle-color": "#CCFF00",
-        "circle-stroke-width": 1.5,
+
+        "circle-radius":
+          5,
+
+        "circle-color":
+          "#CCFF00",
+
+        "circle-stroke-width":
+          1.5,
+
         "circle-stroke-color":
           "#000000"
       }
     });
+
 
     map.moveLayer(
       ENDPOINT_CIRCLE_LAYER_ID
     );
   }
 
+
   setLayerVisibility(
     ENDPOINT_CIRCLE_LAYER_ID,
     "visible"
   );
 
+
   bindNonFlightHover();
 }
+
 
 
 // =====================================================
