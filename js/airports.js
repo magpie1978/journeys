@@ -584,20 +584,19 @@ async function loadAirports(routes) {
           STOP_SOURCE_ID,
   
         paint: {
-  
-          "circle-radius": 4,
-  
+        
+          "circle-radius": 3.5,
+        
           "circle-color":
-            "#ffffff",
-  
+            "#CCFF00",
+        
           "circle-stroke-width":
-            1.5,
-  
+            1.25,
+        
           "circle-stroke-color":
             "#000000"
-  
-        }
-  
+        
+        }  
       });
   
   
