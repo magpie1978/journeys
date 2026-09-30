@@ -642,130 +642,179 @@ if (error) {
 // -------------------------------------------------
 // ORIGIN / DESTINATION COUNTRY LOOKUP
 //
-// journey origins/destinations are not stored
-// consistently:
+// Flights:
+//   origin / destination already contain the
+//   canonical airport codes.
 //
-// Flights generally use journey_locations.airport_code
-// e.g. LHR
+// Non-flight journeys:
+//   canonical endpoint codes are stored in the UID:
 //
-// Non-flight journeys may use either:
-//   - airport_code, e.g. GBBAT
-//   - location name, e.g. Bath
+//   GBREI-GBCAT-2017-09-04
+//   └─origin └─destination
 //
-// Build a lookup that understands BOTH.
+// journey_locations now contains country information
+// for every canonical non-flight endpoint code.
+//
+// This means country filtering no longer depends on
+// matching human-readable origin/destination names.
 // -------------------------------------------------
 
-const locationValues =
+
+// -------------------------------------------------
+// GET CANONICAL ENDPOINT CODES
+// -------------------------------------------------
+
+function getRouteLocationCodes(route) {
+
+  const journeyType =
+    String(
+      route?.journey_type || ""
+    ).toLowerCase();
+
+
+  // -----------------------------------------------
+  // FLIGHT
+  // origin / destination are already airport codes.
+  // -----------------------------------------------
+
+  if (journeyType === "flight") {
+
+    return {
+      originCode:
+        route?.origin != null
+          ? String(route.origin).trim()
+          : "",
+
+      destinationCode:
+        route?.destination != null
+          ? String(route.destination).trim()
+          : ""
+    };
+  }
+
+
+  // -----------------------------------------------
+  // NON-FLIGHT
+  // Extract canonical codes from UID.
+  //
+  // Example:
+  // GBREI-GBCAT-2017-09-04
+  //
+  // parts[0] = GBREI
+  // parts[1] = GBCAT
+  // -----------------------------------------------
+
+  const uid =
+    route?.uid != null
+      ? String(route.uid).trim()
+      : "";
+
+  const parts =
+    uid.split("-");
+
+
+  return {
+    originCode:
+      parts[0]
+        ? parts[0].trim()
+        : "",
+
+    destinationCode:
+      parts[1]
+        ? parts[1].trim()
+        : ""
+  };
+}
+
+
+// -------------------------------------------------
+// COLLECT EVERY LOCATION CODE REQUIRED BY THE
+// CURRENT ROUTE COLLECTION
+// -------------------------------------------------
+
+const locationCodes =
   [...new Set(
     (data || [])
-      .flatMap(route => [
-        route?.origin,
-        route?.destination
-      ])
-      .filter(value =>
-        value != null &&
-        String(value).trim() !== ""
+      .flatMap(route => {
+
+        const {
+          originCode,
+          destinationCode
+        } = getRouteLocationCodes(route);
+
+        return [
+          originCode,
+          destinationCode
+        ];
+      })
+      .filter(code =>
+        code != null &&
+        String(code).trim() !== ""
       )
-      .map(value =>
-        String(value).trim()
+      .map(code =>
+        String(code).trim()
       )
   )];
 
+
+// -------------------------------------------------
+// BUILD CODE → COUNTRY LOOKUP
+// -------------------------------------------------
 
 const locationCountryMap =
   new Map();
 
 
-if (locationValues.length) {
-
-  // -------------------------------------------------
-  // LOOK UP BY LOCATION CODE
-  // -------------------------------------------------
+if (locationCodes.length) {
 
   const {
-    data: codeRows,
-    error: codeError
+    data: locationRows,
+    error: locationError
   } = await sb
     .from("journey_locations")
     .select(
-      "airport_code,airport,country"
+      "airport_code,country"
     )
     .in(
       "airport_code",
-      locationValues
+      locationCodes
     );
 
 
-  if (codeError) {
+  if (locationError) {
 
     console.error(
-      "[routes] Country code lookup failed:",
-      codeError
+      "[routes] Country lookup failed:",
+      locationError
     );
 
   } else {
 
-    (codeRows || []).forEach(location => {
+    (locationRows || []).forEach(location => {
+
+      const code =
+        location?.airport_code != null
+          ? String(
+              location.airport_code
+            ).trim()
+          : "";
+
+      const country =
+        location?.country != null
+          ? String(
+              location.country
+            ).trim()
+          : "";
+
 
       if (
-        location.airport_code &&
-        location.country
+        code &&
+        country
       ) {
 
         locationCountryMap.set(
-          String(
-            location.airport_code
-          ).trim(),
-          String(
-            location.country
-          ).trim()
-        );
-      }
-    });
-  }
-
-
-  // -------------------------------------------------
-  // LOOK UP BY LOCATION NAME
-  // -------------------------------------------------
-
-  const {
-    data: nameRows,
-    error: nameError
-  } = await sb
-    .from("journey_locations")
-    .select(
-      "airport_code,airport,country"
-    )
-    .in(
-      "airport",
-      locationValues
-    );
-
-
-  if (nameError) {
-
-    console.error(
-      "[routes] Country name lookup failed:",
-      nameError
-    );
-
-  } else {
-
-    (nameRows || []).forEach(location => {
-
-      if (
-        location.airport &&
-        location.country
-      ) {
-
-        locationCountryMap.set(
-          String(
-            location.airport
-          ).trim(),
-          String(
-            location.country
-          ).trim()
+          code,
+          country
         );
       }
     });
@@ -774,7 +823,7 @@ if (locationValues.length) {
 
 
 // -------------------------------------------------
-// ADD COUNTRIES TO EACH JOURNEY
+// ADD CANONICAL CODES AND COUNTRIES TO EACH JOURNEY
 // -------------------------------------------------
 
 let routes =
@@ -782,34 +831,33 @@ let routes =
     .filter(route => route?.geom)
     .map(route => {
 
-      const origin =
-        route?.origin != null
-          ? String(
-              route.origin
-            ).trim()
-          : "";
+      const {
+        originCode,
+        destinationCode
+      } = getRouteLocationCodes(route);
 
-      const destination =
-        route?.destination != null
-          ? String(
-              route.destination
-            ).trim()
-          : "";
 
       return {
         ...route,
 
+        origin_location_code:
+          originCode || null,
+
+        destination_location_code:
+          destinationCode || null,
+
         origin_country:
           locationCountryMap.get(
-            origin
+            originCode
           ) || null,
 
         destination_country:
           locationCountryMap.get(
-            destination
+            destinationCode
           ) || null
       };
     });
+
 
 // -------------------------------------------------
 // COUNTRY FILTER
