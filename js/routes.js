@@ -256,7 +256,7 @@ function ensureRouteLayers() {
             ["get", "journey_type"],
             "Drive"
           ],
-          "#1E90FF",
+         "#D8DADF",
   
           "#E53935"
         ]
@@ -302,7 +302,7 @@ function ensureRouteLayers() {
             ["get", "journey_type"],
             "Drive"
           ],
-          "#1E90FF",
+          "#D8DADF",
 
           "#E53935"
         ]
