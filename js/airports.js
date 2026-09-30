@@ -883,47 +883,40 @@ function renderNonFlightEndpoints(routes) {
       return;
     }
 
-    const properties = {
-      type:
-        route.journey_type ||
-        "Journey",
+features.push(
+  {
+    type: "Feature",
 
-      from:
-        route.origin || "",
+    geometry: {
+      type: "Point",
 
-      to:
-        route.destination || "",
+      coordinates:
+        endpoints.start
+    },
 
-      date:
-        route.journey_date || ""
-    };
+    properties: {
+      location:
+        route.origin || ""
+    }
+  },
 
-    features.push(
-      {
-        type: "Feature",
+  {
+    type: "Feature",
 
-        geometry: {
-          type: "Point",
+    geometry: {
+      type: "Point",
 
-          coordinates:
-            endpoints.start
-        },
+      coordinates:
+        endpoints.end
+    },
 
-        properties
-      },
-      {
-        type: "Feature",
-
-        geometry: {
-          type: "Point",
-
-          coordinates:
-            endpoints.end
-        },
-
-        properties
-      }
-    );
+    properties: {
+      location:
+        route.destination || ""
+    }
+  }
+);
+  
   });
 
   /*
@@ -1030,6 +1023,7 @@ const nonFlightPopup =
     className:
       "journey-tooltip"
   });
+
 
 const journeyStopPopup =
   new mapboxgl.Popup({
@@ -1159,43 +1153,20 @@ function bindNonFlightHover() {
       const properties =
         feature.properties || {};
 
-nonFlightPopup
-  .setLngLat(
-    feature.geometry.coordinates
-  )
-  
-  .setHTML(`
-    <div class="journey-tooltip-content">
-      <strong>
-        ${escapePopupHtml(
-          properties.type ||
-          "Journey"
-        )}
-      </strong>
-
-      <br>
-
-      ${escapePopupHtml(
-        properties.from
-      )}
-      →
-      ${escapePopupHtml(
-        properties.to
-      )}
-
-      ${
-        properties.date
-          ? `
-              <br>
+      nonFlightPopup
+        .setLngLat(
+          feature.geometry.coordinates
+        )
+        .setHTML(`
+          <div class="journey-tooltip-content">
+            <strong>
               ${escapePopupHtml(
-                properties.date
+                properties.location
               )}
-            `
-          : ""
-      }
-    </div>
-  `)
-  .addTo(map);
+            </strong>
+          </div>
+        `)
+        .addTo(map);
     }
   );
 
