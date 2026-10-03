@@ -2174,11 +2174,18 @@
         }
 
         console.log("[AM Optimiser] Browser update recorded:", result);
-
-        // Reload optimiser data so the route immediately reflects its
-        // database-backed 24-hour price lock.
-        await loadOptimiserResults(currentScanId);
-
+        
+        // Reload the optimiser data so the route immediately reflects
+        // its database-backed 24-hour price lock.
+        //
+        // loadOptimiser() preserves the current search/filter controls,
+        // but reloads the underlying results from Supabase.
+        await loadOptimiser();
+        
+        console.log(
+          `[AM Optimiser] Optimiser refreshed after successful update of route ${routeId}.`
+        );
+        
       } catch (error) {
         console.error("[AM Optimiser] Could not record browser update:", error);
       }
