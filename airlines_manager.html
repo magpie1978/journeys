@@ -836,8 +836,18 @@
         <button id="lockedTab" class="btn tab" type="button">Locked</button>
       </div>
 
-      <div class="optimiser-toolbar">
-        <input id="routeSearch" type="search" placeholder="Search route, e.g. BKK/KAN">
+    <div class="optimiser-toolbar">
+    
+      <select id="hubFilter" aria-label="Hub">
+        <option value="all">All hubs</option>
+      </select>
+    
+      <input
+        id="routeSearch"
+        type="search"
+        placeholder="Search route, e.g. BKK/KAN"
+      >
+      
         <select id="cabinFilter">
           <option value="all">All cabins</option>
           <option value="economy">Economy</option>
@@ -1914,28 +1924,69 @@
     /* =========================================================
        OPTIMISER RESULTS UI
        ========================================================= */
-
-    const scanCard = document.querySelector(".scan-card");
-    const optimiserView = document.getElementById("optimiserView");
-    const optimiserSummary = document.getElementById("optimiserSummary");
-    const optimiserRows = document.getElementById("optimiserRows");
-    const optimiserEmpty = document.getElementById("optimiserEmpty");
-    const resultsMeta = document.getElementById("resultsMeta");
-    const routeSearch = document.getElementById("routeSearch");
-    const cabinFilter = document.getElementById("cabinFilter");
-    const changeFilter = document.getElementById("changeFilter");
-    const sortFilter = document.getElementById("sortFilter");
-    const amendableTab = document.getElementById("amendableTab");
-    const lockedTab = document.getElementById("lockedTab");
-    const backToScanButton = document.getElementById("backToScanButton");
-    const fullRefreshButton = document.getElementById("fullRefreshButton");
-    const lastFullRefresh = document.getElementById("lastFullRefresh");
-    const batchSizeSelect = document.getElementById("batchSizeSelect");
-    const applySelectedButton = document.getElementById("applySelectedButton");
-    const clearSelectedButton = document.getElementById("clearSelectedButton");
-    const batchStatus = document.getElementById("batchStatus");
-    const batchPanel = document.getElementById("batchPanel");
-
+    
+    const scanCard =
+      document.querySelector(".scan-card");
+    
+    const optimiserView =
+      document.getElementById("optimiserView");
+    
+    const optimiserSummary =
+      document.getElementById("optimiserSummary");
+    
+    const optimiserRows =
+      document.getElementById("optimiserRows");
+    
+    const optimiserEmpty =
+      document.getElementById("optimiserEmpty");
+    
+    const resultsMeta =
+      document.getElementById("resultsMeta");
+    
+    const hubFilter =
+      document.getElementById("hubFilter");
+    
+    const routeSearch =
+      document.getElementById("routeSearch");
+    
+    const cabinFilter =
+      document.getElementById("cabinFilter");
+    
+    const changeFilter =
+      document.getElementById("changeFilter");
+    
+    const sortFilter =
+      document.getElementById("sortFilter");
+    
+    const amendableTab =
+      document.getElementById("amendableTab");
+    
+    const lockedTab =
+      document.getElementById("lockedTab");
+    
+    const backToScanButton =
+      document.getElementById("backToScanButton");
+    
+    const fullRefreshButton =
+      document.getElementById("fullRefreshButton");
+    
+    const lastFullRefresh =
+      document.getElementById("lastFullRefresh");
+    
+    const batchSizeSelect =
+      document.getElementById("batchSizeSelect");
+    
+    const applySelectedButton =
+      document.getElementById("applySelectedButton");
+    
+    const clearSelectedButton =
+      document.getElementById("clearSelectedButton");
+    
+    const batchStatus =
+      document.getElementById("batchStatus");
+    
+    const batchPanel =
+      document.getElementById("batchPanel");    
     let optimiserData = null;
     let optimiserTab = "amendable";
     let expandedRouteId = null;
@@ -1949,6 +2000,296 @@
       return [5, 10, 20, 50].includes(value) ? value : 5;
     }
 
+
+    function rowHubCode(row) {
+    
+      return String(
+        row?.hub_code ||
+        row?.hubCode ||
+        ""
+      )
+        .trim()
+        .toUpperCase();
+    }
+    
+    
+    function selectedHubCode() {
+    
+      return hubFilter?.value || "all";
+    }
+    
+    
+    function rowMatchesSelectedHub(row) {
+    
+      const selected =
+        selectedHubCode();
+    
+      if (selected === "all") {
+        return true;
+      }
+    
+      return (
+        rowHubCode(row) === selected
+      );
+    }
+    
+    
+    function getHubFilteredRoutes(type) {
+    
+      if (!optimiserData) {
+        return [];
+      }
+    
+      const rows =
+        type === "locked"
+          ? (
+              optimiserData.lockedRoutes ||
+              []
+            )
+          : (
+              optimiserData.amendableRoutes ||
+              []
+            );
+    
+      return rows.filter(
+        rowMatchesSelectedHub
+      );
+    }
+    
+    
+    function buildHubFilter() {
+    
+      if (
+        !hubFilter ||
+        !optimiserData
+      ) {
+        return;
+      }
+    
+    
+      const previousValue =
+        hubFilter.value || "all";
+    
+    
+      const hubs =
+        new Map();
+    
+    
+      function addHub(row) {
+    
+        const code =
+          rowHubCode(row);
+    
+        if (!code) {
+          return;
+        }
+    
+    
+        const name =
+          String(
+            row?.hub_name ||
+            row?.hubName ||
+            ""
+          ).trim();
+    
+    
+        if (
+          !hubs.has(code) ||
+          (
+            !hubs.get(code) &&
+            name
+          )
+        ) {
+    
+          hubs.set(
+            code,
+            name
+          );
+        }
+      }
+    
+    
+      /*
+       * Discover hubs from the actual
+       * optimiser route data.
+       */
+    
+      (
+        optimiserData.amendableRoutes ||
+        []
+      ).forEach(addHub);
+    
+    
+      (
+        optimiserData.lockedRoutes ||
+        []
+      ).forEach(addHub);
+    
+    
+      /*
+       * Also use hub metadata returned
+       * by the Edge Function, if present.
+       */
+    
+      const hubMetadata =
+        optimiserData.hubs ||
+        optimiserData.scanHubs ||
+        optimiserData.scan?.hubs ||
+        [];
+    
+    
+      if (
+        Array.isArray(
+          hubMetadata
+        )
+      ) {
+    
+        for (
+          const hub of hubMetadata
+        ) {
+    
+          const code =
+            String(
+              hub?.hub_code ||
+              hub?.hubCode ||
+              ""
+            )
+              .trim()
+              .toUpperCase();
+    
+    
+          const name =
+            String(
+              hub?.hub_name ||
+              hub?.hubName ||
+              ""
+            ).trim();
+    
+    
+          if (!code) {
+            continue;
+          }
+    
+    
+          if (
+            !hubs.has(code) ||
+            (
+              !hubs.get(code) &&
+              name
+            )
+          ) {
+    
+            hubs.set(
+              code,
+              name
+            );
+          }
+        }
+      }
+    
+    
+      /*
+       * Rebuild the dropdown.
+       */
+    
+      hubFilter.innerHTML = "";
+    
+    
+      hubFilter.appendChild(
+        new Option(
+          "All hubs",
+          "all"
+        )
+      );
+    
+    
+      [
+        ...hubs.entries()
+      ]
+        .sort(
+          ([codeA], [codeB]) =>
+            codeA.localeCompare(
+              codeB
+            )
+        )
+        .forEach(
+          ([code, name]) => {
+    
+            const label =
+              name
+                ? `${code} — ${name}`
+                : code;
+    
+    
+            hubFilter.appendChild(
+              new Option(
+                label,
+                code
+              )
+            );
+          }
+        );
+    
+    
+      /*
+       * Preserve the currently selected
+       * hub when the optimiser reloads.
+       */
+    
+      hubFilter.value =
+        (
+          previousValue === "all" ||
+          hubs.has(
+            previousValue
+          )
+        )
+          ? previousValue
+          : "all";
+    }
+
+    function summariseCabin(
+  rows,
+  prefix
+) {
+
+  const summary = {
+    raise: 0,
+    reduce: 0,
+    unchanged: 0,
+    noCapacity: 0
+  };
+
+
+  for (const row of rows) {
+
+    const status =
+      cabinStatus(
+        row,
+        prefix
+      );
+
+
+    if (status === "raise") {
+      summary.raise++;
+    }
+
+    else if (status === "reduce") {
+      summary.reduce++;
+    }
+
+    else if (status === "unchanged") {
+      summary.unchanged++;
+    }
+
+    else if (status === "no-capacity") {
+      summary.noCapacity++;
+    }
+  }
+
+
+  return summary;
+}
+        
     function numberOrNull(value) {
       if (value === null || value === undefined || value === "") return null;
       const n = Number(value);
@@ -1985,58 +2326,188 @@
       return "unchanged";
     }
 
-    function renderOptimiserSummary() {
-      const s = optimiserData.summary;
-      optimiserSummary.innerHTML = "";
+function renderOptimiserSummary() {
 
-      const cards = [
-        {
-          title: "Routes",
-          big: formatNumber(s.amendableRoutes),
-          lines: `${formatNumber(s.totalRoutes)} total · ${formatNumber(s.lockedRoutes)} locked`
-        },
-        {
-          title: "Economy",
-          big: formatNumber(s.economy.raise),
-          lines: `raises · ${formatNumber(s.economy.reduce)} reductions · ${formatNumber(s.economy.unchanged)} unchanged · ${formatNumber(s.economy.noCapacity)} no capacity`
-        },
-        {
-          title: "Business",
-          big: formatNumber(s.business.raise),
-          lines: `raises · ${formatNumber(s.business.reduce)} reductions · ${formatNumber(s.business.unchanged)} unchanged · ${formatNumber(s.business.noCapacity)} no capacity`
-        },
-        {
-          title: "First",
-          big: formatNumber(s.first.raise),
-          lines: `raises · ${formatNumber(s.first.reduce)} reductions · ${formatNumber(s.first.unchanged)} unchanged · ${formatNumber(s.first.noCapacity)} no capacity`
-        },
-        {
-          title: "Cargo",
-          big: formatNumber(s.cargo.raise),
-          lines: `raises · ${formatNumber(s.cargo.reduce)} reductions · ${formatNumber(s.cargo.unchanged)} unchanged · ${formatNumber(s.cargo.noCapacity)} no capacity`
-        }
-      ];
+  if (!optimiserData) {
+    return;
+  }
 
-      for (const card of cards) {
-        const el = document.createElement("div");
-        el.className = "summary-card";
 
-        const h = document.createElement("h3");
-        h.textContent = card.title;
+  const amendableRoutes =
+    getHubFilteredRoutes(
+      "amendable"
+    );
 
-        const big = document.createElement("div");
-        big.className = "summary-big";
-        big.textContent = card.big;
 
-        const lines = document.createElement("div");
-        lines.className = "summary-lines";
-        lines.textContent = card.lines;
+  const lockedRoutes =
+    getHubFilteredRoutes(
+      "locked"
+    );
 
-        el.append(h, big, lines);
-        optimiserSummary.appendChild(el);
-      }
+
+  const totalRoutes =
+    amendableRoutes.length +
+    lockedRoutes.length;
+
+
+  const economy =
+    summariseCabin(
+      amendableRoutes,
+      "eco"
+    );
+
+
+  const business =
+    summariseCabin(
+      amendableRoutes,
+      "bus"
+    );
+
+
+  const first =
+    summariseCabin(
+      amendableRoutes,
+      "first"
+    );
+
+
+  const cargo =
+    summariseCabin(
+      amendableRoutes,
+      "cargo"
+    );
+
+
+  optimiserSummary.innerHTML = "";
+
+
+  const cards = [
+
+    {
+      title: "Routes",
+
+      big:
+        formatNumber(
+          amendableRoutes.length
+        ),
+
+      lines:
+        `${formatNumber(totalRoutes)} total · ${formatNumber(lockedRoutes.length)} locked`
+    },
+
+
+    {
+      title: "Economy",
+
+      big:
+        formatNumber(
+          economy.raise
+        ),
+
+      lines:
+        `raises · ${formatNumber(economy.reduce)} reductions · ${formatNumber(economy.unchanged)} unchanged · ${formatNumber(economy.noCapacity)} no capacity`
+    },
+
+
+    {
+      title: "Business",
+
+      big:
+        formatNumber(
+          business.raise
+        ),
+
+      lines:
+        `raises · ${formatNumber(business.reduce)} reductions · ${formatNumber(business.unchanged)} unchanged · ${formatNumber(business.noCapacity)} no capacity`
+    },
+
+
+    {
+      title: "First",
+
+      big:
+        formatNumber(
+          first.raise
+        ),
+
+      lines:
+        `raises · ${formatNumber(first.reduce)} reductions · ${formatNumber(first.unchanged)} unchanged · ${formatNumber(first.noCapacity)} no capacity`
+    },
+
+
+    {
+      title: "Cargo",
+
+      big:
+        formatNumber(
+          cargo.raise
+        ),
+
+      lines:
+        `raises · ${formatNumber(cargo.reduce)} reductions · ${formatNumber(cargo.unchanged)} unchanged · ${formatNumber(cargo.noCapacity)} no capacity`
     }
 
+  ];
+
+
+  for (const card of cards) {
+
+    const el =
+      document.createElement(
+        "div"
+      );
+
+    el.className =
+      "summary-card";
+
+
+    const h =
+      document.createElement(
+        "h3"
+      );
+
+    h.textContent =
+      card.title;
+
+
+    const big =
+      document.createElement(
+        "div"
+      );
+
+    big.className =
+      "summary-big";
+
+    big.textContent =
+      card.big;
+
+
+    const lines =
+      document.createElement(
+        "div"
+      );
+
+    lines.className =
+      "summary-lines";
+
+    lines.textContent =
+      card.lines;
+
+
+    el.append(
+      h,
+      big,
+      lines
+    );
+
+
+    optimiserSummary.appendChild(
+      el
+    );
+  }
+}
+
+    
     function matchesChange(row) {
       const wanted = changeFilter.value;
       if (wanted === "all" || optimiserTab === "locked") return true;
@@ -2392,16 +2863,19 @@
       return tr;
     }
 
-    function renderOptimiserRows() {
-      if (!optimiserData) return;
+function renderOptimiserRows() {
+  if (!optimiserData) return;
 
-      const source =
-        optimiserTab === "locked"
-          ? optimiserData.lockedRoutes
-          : optimiserData.amendableRoutes;
+  const source =
+    getHubFilteredRoutes(
+      optimiserTab
+    );
 
-      const search = routeSearch.value.trim().toUpperCase();
-
+  const search =
+    routeSearch.value
+      .trim()
+      .toUpperCase();
+  
       let rows = source.filter(row => {
         const routeMatches =
           !search || String(row.route || "").toUpperCase().includes(search);
@@ -2577,8 +3051,9 @@
           `Last full refresh: ${formatDateTime(result.scan?.completedAt)}`;
         optimiserTab = "amendable";
         expandedRouteId = null;
-
-        renderOptimiserSummary();
+        
+        buildHubFilter();
+        renderOptimiserSummary();        
         renderOptimiserRows();
         updateBatchControls();
 
@@ -2617,6 +3092,22 @@
       updateBatchControls();
     });
 
+hubFilter.addEventListener(
+  "change",
+  () => {
+
+    expandedRouteId = null;
+
+    selectedRouteIds.clear();
+
+    renderOptimiserSummary();
+
+    renderOptimiserRows();
+
+    updateBatchControls();
+  }
+);
+    
     applySelectedButton.addEventListener("click", startSelectedBatch);
     clearSelectedButton.addEventListener("click", () => {
       if (activeBatch) return;
