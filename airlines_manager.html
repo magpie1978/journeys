@@ -2997,12 +2997,14 @@ if (
           
           activeBatch.states[i] = "success";
           renderBatchPanel();
-          event.source?.postMessage({
-            type: "am-optimiser-batch-ack",
-            routeId,
-            ok: true
-          }, event.origin);
-
+event.source?.postMessage({
+  type: "am-optimiser-batch-ack",
+  hubId,
+  hubCode,
+  routeId,
+  ok: true
+}, event.origin);
+          
           if (i + 1 < activeBatch.routes.length) {
             activeBatch.current = i + 1;
             activeBatch.states[i + 1] = "working";
@@ -3026,12 +3028,14 @@ if (
           activeBatch.states[i] = "failed";
           renderBatchPanel();
           batchStatus.textContent = `Batch stopped: ${error.message}`;
-          event.source?.postMessage({
-            type: "am-optimiser-batch-ack",
-            routeId,
-            ok: false,
-            error: error.message
-          }, event.origin);
+event.source?.postMessage({
+  type: "am-optimiser-batch-ack",
+  hubId,
+  hubCode,
+  routeId,
+  ok: false,
+  error: error.message
+}, event.origin);
           activeBatch = null;
           updateBatchControls();
         }
