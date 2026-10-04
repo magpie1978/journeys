@@ -2606,25 +2606,70 @@ function renderOptimiserSummary() {
         .replace(/=+$/g, "");
     }
 
-    function rowPayload(row) {
-      return {
-        routeId: Number(row.route_id),
-        route: row.route || "",
-        expected: {
-          eco: numberOrNull(row.eco_current_price),
-          bus: numberOrNull(row.bus_current_price),
-          first: numberOrNull(row.first_current_price),
-          cargo: numberOrNull(row.cargo_current_price)
-        },
-        targets: {
-          eco: numberOrNull(row.eco_target_price),
-          bus: numberOrNull(row.bus_target_price),
-          first: numberOrNull(row.first_target_price),
-          cargo: numberOrNull(row.cargo_target_price)
-        }
-      };
-    }
+function rowPayload(row) {
 
+  return {
+
+    hubId:
+      Number(row.hub_id),
+
+    hubCode:
+      rowHubCode(row),
+
+    routeId:
+      Number(row.route_id),
+
+    route:
+      row.route || "",
+
+    expected: {
+
+      eco:
+        numberOrNull(
+          row.eco_current_price
+        ),
+
+      bus:
+        numberOrNull(
+          row.bus_current_price
+        ),
+
+      first:
+        numberOrNull(
+          row.first_current_price
+        ),
+
+      cargo:
+        numberOrNull(
+          row.cargo_current_price
+        )
+    },
+
+    targets: {
+
+      eco:
+        numberOrNull(
+          row.eco_target_price
+        ),
+
+      bus:
+        numberOrNull(
+          row.bus_target_price
+        ),
+
+      first:
+        numberOrNull(
+          row.first_target_price
+        ),
+
+      cargo:
+        numberOrNull(
+          row.cargo_target_price
+        )
+    }
+  };
+}
+    
     function updateBatchControls() {
       const count = selectedRouteIds.size;
       const limit = selectedBatchLimit();
@@ -2809,12 +2854,22 @@ async function startSelectedBatch() {
       statusEl.textContent = "Checking route…";
 
       try {
-        const status = await callFunction({
-          action: "price-status",
-          scanId: currentScanId,
-          routeId: row.route_id
-        });
+const status = await callFunction({
 
+  action:
+    "price-status",
+
+  scanId:
+    currentScanId,
+
+  hubId:
+    Number(row.hub_id),
+
+  routeId:
+    Number(row.route_id)
+});
+
+        
         if (!status.amendable || status.affiliatedLocked) {
           statusEl.textContent = "Route locked / non-amendable.";
           return;
@@ -2851,12 +2906,45 @@ async function startSelectedBatch() {
       const message = event.data;
       if (!message || message.type !== "am-optimiser-native-submit-complete") return;
 
-      const routeId = Number(message.routeId);
-      if (!currentScanId || !Number.isInteger(routeId) || routeId <= 0) return;
+const hubId =
+  Number(message.hubId);
 
+const hubCode =
+  String(
+    message.hubCode || ""
+  )
+    .trim()
+    .toUpperCase();
+
+const routeId =
+  Number(message.routeId);
+
+
+if (
+  !currentScanId ||
+  !Number.isInteger(hubId) ||
+  hubId <= 0 ||
+  !Number.isInteger(routeId) ||
+  routeId <= 0
+) {
+  return;
+}
+      
       try {
         const response = await fetch(
-          functionUrl({ action: "record-browser-success", scanId: currentScanId, routeId }),
+         functionUrl({
+
+  action:
+    "record-browser-success",
+
+  scanId:
+    currentScanId,
+
+  hubId,
+
+  routeId
+}),
+          
           {
             method: "POST",
             headers: {
@@ -2864,7 +2952,12 @@ async function startSelectedBatch() {
               "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ routeId })
+            body: JSON.stringify({
+  hubId,
+  hubCode,
+  routeId
+})
+            
           }
         );
         const result = await response.json();
@@ -2876,10 +2969,32 @@ async function startSelectedBatch() {
 
         if (activeBatch) {
           const i = activeBatch.current;
-          const expectedRouteId = Number(activeBatch.routes[i]?.routeId);
-          if (expectedRouteId !== routeId) {
-            throw new Error(`Batch expected route ${expectedRouteId}, but worker reported ${routeId}.`);
-          }
+const expectedRoute =
+  activeBatch.routes[i];
+
+
+const expectedHubId =
+  Number(
+    expectedRoute?.hubId
+  );
+
+
+const expectedRouteId =
+  Number(
+    expectedRoute?.routeId
+  );
+
+
+if (
+  expectedHubId !== hubId ||
+  expectedRouteId !== routeId
+) {
+
+  throw new Error(
+    `Batch expected hub ${expectedHubId} route ${expectedRouteId}, but worker reported hub ${hubId} route ${routeId}.`
+  );
+}
+          
           activeBatch.states[i] = "success";
           renderBatchPanel();
           event.source?.postMessage({
