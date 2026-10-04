@@ -2717,8 +2717,8 @@ async function startSelectedBatch() {
 
 
   /*
-   * Only resolve selections against routes
-   * belonging to the currently selected hub.
+   * Resolve the selected routes from the
+   * currently selected hub.
    */
 
   const availableRows =
@@ -2737,8 +2737,8 @@ async function startSelectedBatch() {
 
 
   /*
-   * Every selected key must resolve to exactly
-   * one route in the current hub selection.
+   * Every selected key must still resolve
+   * to exactly one route.
    */
 
   if (
@@ -2758,78 +2758,201 @@ async function startSelectedBatch() {
   }
 
 
-  if (
-    rows.some(
-      row =>
-        row.price_lock_locked
-    )
-  ) {
+  /*
+   * Do not trust the optimiser's cached
+   * price_lock_locked value here.
+   *
+   * Re-check every selected route against
+   * the server immediately before starting
+   * the batch.
+   */
 
-    batchStatus.textContent =
-      "One or more selected routes are now price locked.";
+  applySelectedButton.disabled =
+    true;
 
-    await loadOptimiser();
-
-    return;
-  }
-
-
-  const routes =
-    rows.map(
-      rowPayload
-    );
-
-
-  const summary =
-    routes
-      .map(
-        route =>
-          route.route
-      )
-      .join(", ");
-
-
-  if (
-    !window.confirm(
-      `Apply target prices to these ${routes.length} routes as one batch?\n\n${summary}\n\nThe batch will stop on the first verification failure.`
-    )
-  ) {
-    return;
-  }
-
-
-  activeBatch = {
-    routes,
-    states:
-      routes.map(
-        (_, index) =>
-          index === 0
-            ? "working"
-            : "waiting"
-      ),
-    current: 0
-  };
-
-
-  renderBatchPanel();
-
-  updateBatchControls();
-
+  clearSelectedButton.disabled =
+    true;
 
   batchStatus.textContent =
-    "Batch started. Keep the optimiser and AM worker tabs open.";
+    `Checking ${rows.length} selected route${rows.length === 1 ? "" : "s"}…`;
 
 
-  batchWorker =
-    window.open(
-      batchApplyUrl(routes),
-      "amOptimiserWorker"
-    );
+  try {
+
+    const checks =
+      await Promise.all(
+        rows.map(
+          row =>
+            callFunction({
+
+              action:
+                "price-status",
+
+              scanId:
+                currentScanId,
+
+              hubId:
+                Number(
+                  row.hub_id
+                ),
+
+              routeId:
+                Number(
+                  row.route_id
+                )
+            })
+        )
+      );
 
 
-  if (!batchWorker) {
+    /*
+     * Reject anything which is no longer
+     * safe to amend.
+     */
 
-    activeBatch = null;
+    const unavailable =
+      checks.filter(
+        status =>
+          !status?.ok ||
+          !status?.amendable ||
+          status?.affiliatedLocked ||
+          status?.priceLock?.locked
+      );
+
+
+    if (
+      unavailable.length
+    ) {
+
+      const descriptions =
+        unavailable.map(
+          status => {
+
+            const route =
+              status?.route ||
+              `route ${status?.routeId ?? "unknown"}`;
+
+            if (
+              status?.priceLock?.locked
+            ) {
+
+              return (
+                `${route} — locked until ` +
+                `${formatDateTime(
+                  status.priceLock.unlockAt
+                )}`
+              );
+            }
+
+
+            return (
+              `${route} — no longer amendable`
+            );
+          }
+        );
+
+
+      selectedRouteIds.clear();
+
+
+      /*
+       * Reload optimiser data so any lock
+       * information returned by "results"
+       * is also refreshed.
+       */
+
+      await loadOptimiser();
+
+
+      batchStatus.textContent =
+        `Batch not started: ${descriptions.join("; ")}`;
+
+
+      updateBatchControls();
+
+      return;
+    }
+
+
+    /*
+     * Also verify that every status response
+     * refers to the exact hub + route that
+     * we requested.
+     */
+
+    for (
+      let i = 0;
+      i < rows.length;
+      i++
+    ) {
+
+      const row =
+        rows[i];
+
+      const status =
+        checks[i];
+
+
+      if (
+        Number(status?.hubId) !==
+          Number(row.hub_id) ||
+        Number(status?.routeId) !==
+          Number(row.route_id)
+      ) {
+
+        throw new Error(
+          `Route verification mismatch for ${row.route || row.route_id}.`
+        );
+      }
+    }
+
+
+    const routes =
+      rows.map(
+        rowPayload
+      );
+
+
+    const summary =
+      routes
+        .map(
+          route =>
+            route.route
+        )
+        .join(", ");
+
+
+    if (
+      !window.confirm(
+        `Apply target prices to these ${routes.length} routes as one batch?\n\n${summary}\n\nAll routes have just been checked against the 24-hour price lock. The batch will stop on the first verification failure.`
+      )
+    ) {
+
+      updateBatchControls();
+
+      batchStatus.textContent =
+        `${routes.length} route${routes.length === 1 ? "" : "s"} checked and ready.`;
+
+      return;
+    }
+
+
+    activeBatch = {
+
+      routes,
+
+      states:
+        routes.map(
+          (_, index) =>
+            index === 0
+              ? "working"
+              : "waiting"
+        ),
+
+      current:
+        0
+    };
+
 
     renderBatchPanel();
 
@@ -2837,7 +2960,50 @@ async function startSelectedBatch() {
 
 
     batchStatus.textContent =
-      "Chrome blocked the worker tab. Allow pop-ups and try again.";
+      "Batch started. Keep the optimiser and AM worker tabs open.";
+
+
+    batchWorker =
+      window.open(
+        batchApplyUrl(
+          routes
+        ),
+        "amOptimiserWorker"
+      );
+
+
+    if (
+      !batchWorker
+    ) {
+
+      activeBatch =
+        null;
+
+      renderBatchPanel();
+
+      updateBatchControls();
+
+
+      batchStatus.textContent =
+        "Chrome blocked the worker tab. Allow pop-ups and try again.";
+    }
+
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "[AM Optimiser] Batch preflight failed:",
+      error
+    );
+
+
+    batchStatus.textContent =
+      `Batch not started: ${error.message}`;
+
+
+    updateBatchControls();
   }
 }
     
