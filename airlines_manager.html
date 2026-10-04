@@ -936,7 +936,7 @@
       "https://eukgodthgusongsbhdwg.supabase.co";
 
     const SUPABASE_PUBLISHABLE_KEY =
-      "sb_secret_2H8bD6IN5K2dEjgGduwtPA_L03Fj8a-";
+      "sb_publishable_pBMWDgyFgIUGetg6NwkKkA_rMa1--kc";
 
 
     /*
@@ -1995,6 +1995,13 @@
     let batchWorker = null;
     const MAX_BATCH_SIZE = 50;
 
+
+    function routeSelectionKey(row) {
+
+  return `${rowHubCode(row)}:${Number(row.route_id)}`;
+}
+
+    
     function selectedBatchLimit() {
       const value = Number(batchSizeSelect?.value || 5);
       return [5, 10, 20, 50].includes(value) ? value : 5;
@@ -2619,35 +2626,146 @@ function renderOptimiserSummary() {
       batchPanel.innerHTML = `<strong>Batch price update</strong><div style="margin-top:8px;line-height:1.7">${lines}</div>`;
     }
 
-    async function startSelectedBatch() {
-      const limit = selectedBatchLimit();
-      if (activeBatch || selectedRouteIds.size === 0 || selectedRouteIds.size > limit) return;
-      const rows = optimiserData.amendableRoutes.filter(r => selectedRouteIds.has(Number(r.route_id)));
-      if (rows.length !== selectedRouteIds.size) {
-        batchStatus.textContent = "Selection changed. Reload the optimiser and try again.";
-        return;
-      }
-      if (rows.some(r => r.price_lock_locked)) {
-        batchStatus.textContent = "One or more selected routes are now price locked.";
-        await loadOptimiser();
-        return;
-      }
-      const routes = rows.map(rowPayload);
-      const summary = routes.map(r => r.route).join(", ");
-      if (!window.confirm(`Apply target prices to these ${routes.length} routes as one batch?\n\n${summary}\n\nThe batch will stop on the first verification failure.`)) return;
-      activeBatch = { routes, states: routes.map((_, i) => i === 0 ? "working" : "waiting"), current: 0 };
-      renderBatchPanel();
-      updateBatchControls();
-      batchStatus.textContent = "Batch started. Keep the optimiser and AM worker tabs open.";
-      batchWorker = window.open(batchApplyUrl(routes), "amOptimiserWorker");
-      if (!batchWorker) {
-        activeBatch = null;
-        renderBatchPanel();
-        updateBatchControls();
-        batchStatus.textContent = "Chrome blocked the worker tab. Allow pop-ups and try again.";
-      }
-    }
+async function startSelectedBatch() {
 
+  const limit =
+    selectedBatchLimit();
+
+
+  if (
+    activeBatch ||
+    selectedRouteIds.size === 0 ||
+    selectedRouteIds.size > limit
+  ) {
+    return;
+  }
+
+
+  /*
+   * Only resolve selections against routes
+   * belonging to the currently selected hub.
+   */
+
+  const availableRows =
+    getHubFilteredRoutes(
+      "amendable"
+    );
+
+
+  const rows =
+    availableRows.filter(
+      row =>
+        selectedRouteIds.has(
+          routeSelectionKey(row)
+        )
+    );
+
+
+  /*
+   * Every selected key must resolve to exactly
+   * one route in the current hub selection.
+   */
+
+  if (
+    rows.length !==
+    selectedRouteIds.size
+  ) {
+
+    selectedRouteIds.clear();
+
+    renderOptimiserRows();
+    updateBatchControls();
+
+    batchStatus.textContent =
+      "Selection changed. Select the routes again and retry.";
+
+    return;
+  }
+
+
+  if (
+    rows.some(
+      row =>
+        row.price_lock_locked
+    )
+  ) {
+
+    batchStatus.textContent =
+      "One or more selected routes are now price locked.";
+
+    await loadOptimiser();
+
+    return;
+  }
+
+
+  const routes =
+    rows.map(
+      rowPayload
+    );
+
+
+  const summary =
+    routes
+      .map(
+        route =>
+          route.route
+      )
+      .join(", ");
+
+
+  if (
+    !window.confirm(
+      `Apply target prices to these ${routes.length} routes as one batch?\n\n${summary}\n\nThe batch will stop on the first verification failure.`
+    )
+  ) {
+    return;
+  }
+
+
+  activeBatch = {
+    routes,
+    states:
+      routes.map(
+        (_, index) =>
+          index === 0
+            ? "working"
+            : "waiting"
+      ),
+    current: 0
+  };
+
+
+  renderBatchPanel();
+
+  updateBatchControls();
+
+
+  batchStatus.textContent =
+    "Batch started. Keep the optimiser and AM worker tabs open.";
+
+
+  batchWorker =
+    window.open(
+      batchApplyUrl(routes),
+      "amOptimiserWorker"
+    );
+
+
+  if (!batchWorker) {
+
+    activeBatch = null;
+
+    renderBatchPanel();
+
+    updateBatchControls();
+
+
+    batchStatus.textContent =
+      "Chrome blocked the worker tab. Allow pop-ups and try again.";
+  }
+}
+    
     function browserApplyUrl(row) {
       const payload = rowPayload(row);
 
@@ -2958,25 +3076,62 @@ function renderOptimiserRows() {
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.className = "route-select";
-          checkbox.checked = selectedRouteIds.has(Number(row.route_id));
-          checkbox.disabled = !!row.price_lock_locked || !!activeBatch;
-          checkbox.style.marginRight = "9px";
-          checkbox.addEventListener("click", event => event.stopPropagation());
-          checkbox.addEventListener("change", event => {
-            event.stopPropagation();
-            const id = Number(row.route_id);
-            if (checkbox.checked) {
-              if (selectedRouteIds.size >= selectedBatchLimit()) {
-                checkbox.checked = false;
-                batchStatus.textContent = `This batch is limited to ${selectedBatchLimit()} routes.`;
-                return;
-              }
-              selectedRouteIds.add(id);
-            } else {
-              selectedRouteIds.delete(id);
-            }
-            updateBatchControls();
-          });
+const selectionKey =
+  routeSelectionKey(row);
+
+checkbox.checked =
+  selectedRouteIds.has(
+    selectionKey
+  );
+
+checkbox.disabled =
+  !!row.price_lock_locked ||
+  !!activeBatch;
+
+checkbox.style.marginRight =
+  "9px";
+
+checkbox.addEventListener(
+  "click",
+  event =>
+    event.stopPropagation()
+);
+
+checkbox.addEventListener(
+  "change",
+  event => {
+
+    event.stopPropagation();
+
+    if (checkbox.checked) {
+
+      if (
+        selectedRouteIds.size >=
+        selectedBatchLimit()
+      ) {
+
+        checkbox.checked = false;
+
+        batchStatus.textContent =
+          `This batch is limited to ${selectedBatchLimit()} routes.`;
+
+        return;
+      }
+
+      selectedRouteIds.add(
+        selectionKey
+      );
+
+    } else {
+
+      selectedRouteIds.delete(
+        selectionKey
+      );
+    }
+
+    updateBatchControls();
+  }
+);
           routeTd.appendChild(checkbox);
         }
 
