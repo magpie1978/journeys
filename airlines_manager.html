@@ -2687,6 +2687,51 @@ function rowPayload(row) {
       return `https://tycoon.airlines-manager.com/marketing/pricing/${routes[0].routeId}#ambatch=${encodeOptimiserPayload({ version: 1, routes })}`;
     }
 
+    function sendBatchAck({
+  hubId,
+  hubCode,
+  routeId,
+  ok,
+  error = null
+}) {
+  const message = {
+    type: "am-optimiser-batch-ack",
+    hubId: Number(hubId),
+    hubCode: String(hubCode || "")
+      .trim()
+      .toUpperCase(),
+    routeId: Number(routeId),
+    ok: !!ok
+  };
+
+  if (error) {
+    message.error = String(error);
+  }
+
+  /*
+   * Prefer the worker window we opened.
+   * This remains valid while the worker navigates
+   * between AM route pages.
+   */
+  if (
+    batchWorker &&
+    !batchWorker.closed
+  ) {
+    batchWorker.postMessage(
+      message,
+      "https://tycoon.airlines-manager.com"
+    );
+
+    return;
+  }
+
+  console.warn(
+    "[AM Optimiser] Batch worker is unavailable for acknowledgement.",
+    message
+  );
+}
+    
+
     function renderBatchPanel() {
       if (!activeBatch) {
         batchPanel.classList.add("hidden");
@@ -2963,14 +3008,64 @@ async function startSelectedBatch() {
       "Batch started. Keep the optimiser and AM worker tabs open.";
 
 
+const workerUrl =
+  batchApplyUrl(
+    routes
+  );
+
+/*
+ * If the named worker already exists, first move it
+ * away from the previous AM pricing document.
+ *
+ * Then navigate it to the new batch URL.
+ *
+ * This guarantees a real document navigation so the
+ * Tampermonkey userscript runs again and reads #ambatch.
+ */
+if (
+  batchWorker &&
+  !batchWorker.closed
+) {
+  try {
+    batchWorker.location.replace(
+      workerUrl
+    );
+
+    batchWorker.focus();
+  } catch (error) {
+    /*
+     * Cross-origin window access can prevent location.replace().
+     * window.open() with the existing name can still navigate it.
+     */
     batchWorker =
       window.open(
-        batchApplyUrl(
-          routes
-        ),
+        workerUrl,
         "amOptimiserWorker"
       );
+  }
+} else {
+  batchWorker =
+    window.open(
+      workerUrl,
+      "amOptimiserWorker"
+    );
+}
 
+if (
+  !batchWorker
+) {
+  activeBatch =
+    null;
+
+  renderBatchPanel();
+
+  updateBatchControls();
+
+  batchStatus.textContent =
+    "Chrome blocked the worker tab. Allow pop-ups and try again.";
+}
+
+    
 
     if (
       !batchWorker
@@ -3163,13 +3258,12 @@ if (
           
           activeBatch.states[i] = "success";
           renderBatchPanel();
-event.source?.postMessage({
-  type: "am-optimiser-batch-ack",
+sendBatchAck({
   hubId,
   hubCode,
   routeId,
   ok: true
-}, event.origin);
+});
           
           if (i + 1 < activeBatch.routes.length) {
             activeBatch.current = i + 1;
@@ -3194,14 +3288,13 @@ event.source?.postMessage({
           activeBatch.states[i] = "failed";
           renderBatchPanel();
           batchStatus.textContent = `Batch stopped: ${error.message}`;
-event.source?.postMessage({
-  type: "am-optimiser-batch-ack",
+sendBatchAck({
   hubId,
   hubCode,
   routeId,
   ok: false,
   error: error.message
-}, event.origin);
+});
           activeBatch = null;
           updateBatchControls();
         }
