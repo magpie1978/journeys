@@ -2514,6 +2514,36 @@ function renderOptimiserSummary() {
   }
 }
 
+
+    function updateOptimiserTabCounts() {
+
+  if (!optimiserData) {
+    return;
+  }
+
+
+  const amendableCount =
+    getHubFilteredRoutes(
+      "amendable"
+    ).length;
+
+
+  const lockedCount =
+    getHubFilteredRoutes(
+      "locked"
+    ).length;
+
+
+  amendableTab.textContent =
+    `Amendable (${formatNumber(amendableCount)})`;
+
+
+  lockedTab.textContent =
+    `Locked (${formatNumber(lockedCount)})`;
+}
+
+    
+
     
     function matchesChange(row) {
       const wanted = changeFilter.value;
@@ -3207,11 +3237,16 @@ checkbox.addEventListener(
         optimiserTab = "amendable";
         expandedRouteId = null;
         
-        buildHubFilter();
-        renderOptimiserSummary();        
-        renderOptimiserRows();
-        updateBatchControls();
+buildHubFilter();
 
+renderOptimiserSummary();
+
+updateOptimiserTabCounts();
+
+renderOptimiserRows();
+
+updateBatchControls();
+        
         scanCard.classList.add("hidden");
         optimiserView.classList.remove("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3257,11 +3292,14 @@ hubFilter.addEventListener(
 
     renderOptimiserSummary();
 
+    updateOptimiserTabCounts();
+
     renderOptimiserRows();
 
     updateBatchControls();
   }
 );
+
     
     applySelectedButton.addEventListener("click", startSelectedBatch);
     clearSelectedButton.addEventListener("click", () => {
