@@ -887,6 +887,8 @@
           <option value="20">20</option>
           <option value="50">50</option>
           <option value="100" selected>100</option>
+          <option value="250" selected>250</option>
+
         </select>
         
         <button
@@ -894,7 +896,7 @@
           class="btn"
           type="button"
         >
-          Select next 100
+          Select next 250
         </button>
         
         <button
@@ -2021,7 +2023,7 @@
     const selectedRouteIds = new Set();
     let activeBatch = null;
     let batchWorker = null;
-    const MAX_BATCH_SIZE = 100;
+    const MAX_BATCH_SIZE = 250;
 
 
     function routeSelectionKey(row) {
@@ -2031,8 +2033,8 @@
 
     
     function selectedBatchLimit() {
-      const value = Number(batchSizeSelect?.value || 100);    
-      return [5,10,20,50,100].includes(value) ? value : 100;
+      const value = Number(batchSizeSelect?.value || 250);    
+      return [5,10,20,50,100,250].includes(value) ? value : 250;
     }
 
     function selectNextAvailableRoutes() {
