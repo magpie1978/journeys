@@ -882,13 +882,38 @@
       <div class="batch-bar">
         <label for="batchSizeSelect" class="batch-status">Batch size</label>
         <select id="batchSizeSelect">
-          <option value="5" selected>5</option>
+          <option value="5">5</option>
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="50">50</option>
+          <option value="100" selected>100</option>
         </select>
-        <button id="applySelectedButton" class="btn btn-primary" type="button" disabled>Apply selected (0)</button>
-        <button id="clearSelectedButton" class="btn" type="button" disabled>Clear selection</button>
+        
+        <button
+          id="selectNextButton"
+          class="btn"
+          type="button"
+        >
+          Select next 100
+        </button>
+        
+        <button
+          id="applySelectedButton"
+          class="btn btn-primary"
+          type="button"
+          disabled
+        >
+          Apply selected (0)
+        </button>
+        
+        <button
+          id="clearSelectedButton"
+          class="btn"
+          type="button"
+          disabled
+        >
+          Clear selection
+        </button>
         <span id="batchStatus" class="batch-status">Select up to 5 unlocked routes for a batch.</span>
       </div>
       <div id="batchPanel" class="batch-panel hidden"></div>
@@ -1975,6 +2000,9 @@
     
     const batchSizeSelect =
       document.getElementById("batchSizeSelect");
+
+    const selectNextButton =
+      document.getElementById("selectNextButton");
     
     const applySelectedButton =
       document.getElementById("applySelectedButton");
@@ -1993,7 +2021,7 @@
     const selectedRouteIds = new Set();
     let activeBatch = null;
     let batchWorker = null;
-    const MAX_BATCH_SIZE = 50;
+    const MAX_BATCH_SIZE = 100;
 
 
     function routeSelectionKey(row) {
@@ -2003,10 +2031,163 @@
 
     
     function selectedBatchLimit() {
-      const value = Number(batchSizeSelect?.value || 5);
-      return [5, 10, 20, 50].includes(value) ? value : 5;
+      const value = Number(batchSizeSelect?.value || 100);    
+      return [5,10,20,50,100].includes(value) ? value : 100;
     }
 
+    function selectNextAvailableRoutes() {
+
+      if (
+        !optimiserData ||
+        activeBatch
+      ) {
+        return;
+      }
+    
+    
+      /*
+       * Automatic selection only makes sense
+       * for amendable routes.
+       */
+      if (
+        optimiserTab !== "amendable"
+      ) {
+    
+        batchStatus.textContent =
+          "Switch to the Amendable tab to select routes.";
+    
+        return;
+      }
+    
+    
+      const limit =
+        selectedBatchLimit();
+    
+    
+      /*
+       * Start with the routes belonging to the
+       * currently selected hub.
+       */
+      const source =
+        getHubFilteredRoutes(
+          "amendable"
+        );
+    
+        
+        const search =
+        routeSearch.value
+          .trim()
+          .toUpperCase();
+        
+        
+        /*
+        * Apply exactly the same search/change
+        * filters as the visible optimiser table.
+        */
+        let rows =
+        source.filter(
+          row => {
+        
+            const routeMatches =
+              !search ||
+              String(
+                row.route || ""
+              )
+                .toUpperCase()
+                .includes(
+                  search
+                );
+        
+        
+            return (
+              routeMatches &&
+              matchesChange(row)
+            );
+          }
+        );
+        
+        
+        /*
+        * Respect the current optimiser sort order.
+        */
+        rows =
+        sortRoutes(
+          rows
+        );
+        
+        
+        /*
+        * Only routes which are currently available
+        * for a price change can be selected.
+        *
+        * Routes with an active 24-hour price lock
+        * are skipped automatically.
+        */
+        const availableRows =
+        rows.filter(
+          row =>
+            !row.price_lock_locked
+        );
+        
+        
+        /*
+        * Replace the existing selection with the
+        * next available batch.
+        */
+        selectedRouteIds.clear();
+        
+        
+        for (
+        const row of
+        availableRows.slice(
+          0,
+          limit
+        )
+        ) {
+        
+        selectedRouteIds.add(
+          routeSelectionKey(
+            row
+          )
+        );
+        }
+        
+        
+        renderOptimiserRows();
+        
+        updateBatchControls();
+        
+        
+        const selected =
+        selectedRouteIds.size;
+        
+        
+        if (
+        selected === 0
+        ) {
+        
+        batchStatus.textContent =
+          "No currently available routes match these filters.";
+        
+        return;
+        }
+        
+        
+        if (
+        selected < limit
+        ) {
+        
+        batchStatus.textContent =
+          `${selected} available route${selected === 1 ? "" : "s"} selected.`;
+        
+        return;
+        }
+        
+        
+        batchStatus.textContent =
+        `Next ${selected} available routes selected.`;
+        }
+        
 
     function rowHubCode(row) {
     
@@ -2673,6 +2854,18 @@ function rowPayload(row) {
     function updateBatchControls() {
       const count = selectedRouteIds.size;
       const limit = selectedBatchLimit();
+
+      if (selectNextButton) {
+
+        selectNextButton.textContent =
+          `Select next ${limit}`;
+      
+        selectNextButton.disabled =
+          !!activeBatch ||
+          optimiserTab !== "amendable";
+      }
+
+      
       applySelectedButton.textContent = `Apply selected (${count})`;
       applySelectedButton.disabled = count === 0 || count > limit || !!activeBatch;
       clearSelectedButton.disabled = count === 0 || !!activeBatch;
@@ -3678,7 +3871,7 @@ hubFilter.addEventListener(
   }
 );
 
-    
+    selectNextButton.addEventListener("click",selectNextAvailableRoutes);
     applySelectedButton.addEventListener("click", startSelectedBatch);
     clearSelectedButton.addEventListener("click", () => {
       if (activeBatch) return;
