@@ -2993,31 +2993,90 @@ if (
 
   try {
 
-    const checks =
-      await Promise.all(
-        rows.map(
-          row =>
-            callFunction({
+const PREFLIGHT_CONCURRENCY = 10;
 
-              action:
-                "price-status",
+const checks =
+  new Array(
+    rows.length
+  );
 
-              scanId:
-                currentScanId,
+let nextCheckIndex = 0;
 
-              hubId:
-                Number(
-                  row.hub_id
-                ),
 
-              routeId:
-                Number(
-                  row.route_id
-                )
-            })
-        )
-      );
+async function preflightWorker() {
 
+  while (true) {
+
+    const index =
+      nextCheckIndex++;
+
+    if (
+      index >= rows.length
+    ) {
+      return;
+    }
+
+
+    const row =
+      rows[index];
+
+
+    checks[index] =
+      await callFunction({
+
+        action:
+          "price-status",
+
+        scanId:
+          currentScanId,
+
+        hubId:
+          Number(
+            row.hub_id
+          ),
+
+        routeId:
+          Number(
+            row.route_id
+          )
+      });
+
+
+    /*
+     * Give the UI useful progress feedback
+     * during a large Select All preflight.
+     */
+    const completed =
+      checks.filter(
+        value =>
+          value !== undefined
+      ).length;
+
+
+    batchStatus.textContent =
+      `Checking selected routes: ${completed}/${rows.length}…`;
+  }
+}
+
+
+const workerCount =
+  Math.min(
+    PREFLIGHT_CONCURRENCY,
+    rows.length
+  );
+
+
+await Promise.all(
+  Array.from(
+    {
+      length:
+        workerCount
+    },
+    () =>
+      preflightWorker()
+  )
+);
+    
 
     /*
      * Reject anything which is no longer
