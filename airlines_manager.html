@@ -879,46 +879,6 @@
         </select>
       </div>
 
-      <div class="batch-bar">
-        <label for="batchSizeSelect" class="batch-status">Batch size</label>
-        <select id="batchSizeSelect">
-          <option value="5">5</option>
-          <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-          <option value="100" selected>100</option>
-          <option value="250" selected>250</option>
-
-        </select>
-        
-        <button
-          id="selectNextButton"
-          class="btn"
-          type="button"
-        >
-          Select next 250
-        </button>
-        
-        <button
-          id="applySelectedButton"
-          class="btn btn-primary"
-          type="button"
-          disabled
-        >
-          Apply selected (0)
-        </button>
-        
-        <button
-          id="clearSelectedButton"
-          class="btn"
-          type="button"
-          disabled
-        >
-          Clear selection
-        </button>
-        <span id="batchStatus" class="batch-status">Select up to 5 unlocked routes for a batch.</span>
-      </div>
-      <div id="batchPanel" class="batch-panel hidden"></div>
 
       <div id="resultsMeta" class="results-meta"></div>
       <div class="results-wrap">
@@ -2000,12 +1960,6 @@
     const lastFullRefresh =
       document.getElementById("lastFullRefresh");
     
-    const batchSizeSelect =
-      document.getElementById("batchSizeSelect");
-
-    const selectNextButton =
-      document.getElementById("selectNextButton");
-    
     const applySelectedButton =
       document.getElementById("applySelectedButton");
     
@@ -2014,16 +1968,22 @@
     
     const batchStatus =
       document.getElementById("batchStatus");
+
+    const selectAllButton =
+      document.getElementById("selectAllButton");
     
-    const batchPanel =
-      document.getElementById("batchPanel");    
+    const batchPanel = 
+      document.getElementById("batchPanel");
+    
     let optimiserData = null;
     let optimiserTab = "amendable";
     let expandedRouteId = null;
-    const selectedRouteIds = new Set();
+    
+    const selectedRouteIds =
+      new Set();
+    
     let activeBatch = null;
     let batchWorker = null;
-    const MAX_BATCH_SIZE = 250;
 
 
     function routeSelectionKey(row) {
@@ -2032,164 +1992,125 @@
 }
 
     
-    function selectedBatchLimit() {
-      const value = Number(batchSizeSelect?.value || 250);    
-      return [5,10,20,50,100,250].includes(value) ? value : 250;
-    }
+function selectAllAvailableRoutes() {
 
-    function selectNextAvailableRoutes() {
+  if (
+    !optimiserData ||
+    activeBatch
+  ) {
+    return;
+  }
 
-      if (
-        !optimiserData ||
-        activeBatch
-      ) {
-        return;
-      }
-    
-    
-      /*
-       * Automatic selection only makes sense
-       * for amendable routes.
-       */
-      if (
-        optimiserTab !== "amendable"
-      ) {
-    
-        batchStatus.textContent =
-          "Switch to the Amendable tab to select routes.";
-    
-        return;
-      }
-    
-    
-      const limit =
-        selectedBatchLimit();
-    
-    
-      /*
-       * Start with the routes belonging to the
-       * currently selected hub.
-       */
-      const source =
-        getHubFilteredRoutes(
-          "amendable"
-        );
-    
-        
-        const search =
-        routeSearch.value
-          .trim()
-          .toUpperCase();
-        
-        
-        /*
-        * Apply exactly the same search/change
-        * filters as the visible optimiser table.
-        */
-        let rows =
-        source.filter(
-          row => {
-        
-            const routeMatches =
-              !search ||
-              String(
-                row.route || ""
-              )
-                .toUpperCase()
-                .includes(
-                  search
-                );
-        
-        
-            return (
-              routeMatches &&
-              matchesChange(row)
-            );
-          }
-        );
-        
-        
-        /*
-        * Respect the current optimiser sort order.
-        */
-        rows =
-        sortRoutes(
-          rows
-        );
-        
-        
-        /*
-        * Only routes which are currently available
-        * for a price change can be selected.
-        *
-        * Routes with an active 24-hour price lock
-        * are skipped automatically.
-        */
-        const availableRows =
-        rows.filter(
-          row =>
-            !row.price_lock_locked
-        );
-        
-        
-        /*
-        * Replace the existing selection with the
-        * next available batch.
-        */
-        selectedRouteIds.clear();
-        
-        
-        for (
-        const row of
-        availableRows.slice(
-          0,
-          limit
-        )
-        ) {
-        
-        selectedRouteIds.add(
-          routeSelectionKey(
-            row
+
+  if (
+    optimiserTab !==
+    "amendable"
+  ) {
+
+    batchStatus.textContent =
+      "Switch to the Amendable tab to select routes.";
+
+    return;
+  }
+
+
+  /*
+   * Start with routes belonging to the
+   * currently selected hub.
+   */
+  const source =
+    getHubFilteredRoutes(
+      "amendable"
+    );
+
+
+  const search =
+    routeSearch.value
+      .trim()
+      .toUpperCase();
+
+
+  /*
+   * Apply the same filters as the
+   * optimiser table.
+   */
+  let rows =
+    source.filter(
+      row => {
+
+        const routeMatches =
+          !search ||
+          String(
+            row.route || ""
           )
+            .toUpperCase()
+            .includes(
+              search
+            );
+
+
+        return (
+          routeMatches &&
+          matchesChange(row)
         );
-        }
-        
-        
-        renderOptimiserRows();
-        
-        updateBatchControls();
-        
-        
-        const selected =
-        selectedRouteIds.size;
-        
-        
-        if (
-        selected === 0
-        ) {
-        
-        batchStatus.textContent =
-          "No currently available routes match these filters.";
-        
-        return;
-        }
-        
-        
-        if (
-        selected < limit
-        ) {
-        
-        batchStatus.textContent =
-          `${selected} available route${selected === 1 ? "" : "s"} selected.`;
-        
-        return;
-        }
-        
-        
-        batchStatus.textContent =
-        `Next ${selected} available routes selected.`;
-        }
-        
+      }
+    );
+
+
+  /*
+   * Keep the same ordering as the table.
+   */
+  rows =
+    sortRoutes(
+      rows
+    );
+
+
+  /*
+   * Never select routes currently carrying
+   * the 24-hour price lock.
+   */
+  const availableRows =
+    rows.filter(
+      row =>
+        !row.price_lock_locked
+    );
+
+
+  selectedRouteIds.clear();
+
+
+  /*
+   * Select EVERY matching unlocked route.
+   */
+  for (
+    const row of
+    availableRows
+  ) {
+
+    selectedRouteIds.add(
+      routeSelectionKey(
+        row
+      )
+    );
+  }
+
+
+  renderOptimiserRows();
+
+  updateBatchControls();
+
+
+  const selected =
+    selectedRouteIds.size;
+
+
+  batchStatus.textContent =
+    selected
+      ? `${selected} available route${selected === 1 ? "" : "s"} selected.`
+      : "No currently available routes match these filters.";
+}
+    
 
     function rowHubCode(row) {
     
@@ -2853,31 +2774,49 @@ function rowPayload(row) {
   };
 }
     
-    function updateBatchControls() {
-      const count = selectedRouteIds.size;
-      const limit = selectedBatchLimit();
+function updateBatchControls() {
 
-      if (selectNextButton) {
+  const count =
+    selectedRouteIds.size;
 
-        selectNextButton.textContent =
-          `Select next ${limit}`;
-      
-        selectNextButton.disabled =
-          !!activeBatch ||
-          optimiserTab !== "amendable";
-      }
 
-      
-      applySelectedButton.textContent = `Apply selected (${count})`;
-      applySelectedButton.disabled = count === 0 || count > limit || !!activeBatch;
-      clearSelectedButton.disabled = count === 0 || !!activeBatch;
-      if (!activeBatch) {
-        batchStatus.textContent = count
-          ? `${count} of ${limit} routes selected.`
-          : `Select up to ${limit} unlocked routes for a batch.`;
-      }
-    }
+  if (
+    selectAllButton
+  ) {
 
+    selectAllButton.disabled =
+      !!activeBatch ||
+      optimiserTab !==
+        "amendable";
+  }
+
+
+  applySelectedButton.textContent =
+    `Apply selected (${count})`;
+
+
+  applySelectedButton.disabled =
+    count === 0 ||
+    !!activeBatch;
+
+
+  clearSelectedButton.disabled =
+    count === 0 ||
+    !!activeBatch;
+
+
+  if (
+    !activeBatch
+  ) {
+
+    batchStatus.textContent =
+      count
+        ? `${count} route${count === 1 ? "" : "s"} selected.`
+        : "Select unlocked routes for a batch.";
+  }
+}
+
+    
     function batchApplyUrl(routes) {
       return `https://tycoon.airlines-manager.com/marketing/pricing/${routes[0].routeId}#ambatch=${encodeOptimiserPayload({ version: 1, routes })}`;
     }
@@ -2947,14 +2886,12 @@ async function startSelectedBatch() {
     selectedBatchLimit();
 
 
-  if (
-    activeBatch ||
-    selectedRouteIds.size === 0 ||
-    selectedRouteIds.size > limit
-  ) {
-    return;
-  }
-
+if (
+  activeBatch ||
+  selectedRouteIds.size === 0
+) {
+  return;
+}
 
   /*
    * Resolve the selected routes from the
@@ -3151,30 +3088,6 @@ async function startSelectedBatch() {
       rows.map(
         rowPayload
       );
-
-
-    const summary =
-      routes
-        .map(
-          route =>
-            route.route
-        )
-        .join(", ");
-
-
-    if (
-      !window.confirm(
-        `Apply target prices to these ${routes.length} routes as one batch?\n\n${summary}\n\nAll routes have just been checked against the 24-hour price lock. The batch will stop on the first verification failure.`
-      )
-    ) {
-
-      updateBatchControls();
-
-      batchStatus.textContent =
-        `${routes.length} route${routes.length === 1 ? "" : "s"} checked and ready.`;
-
-      return;
-    }
 
 
     activeBatch = {
@@ -3846,14 +3759,6 @@ updateBatchControls();
     amendableTab.addEventListener("click", () => showTab("amendable"));
     lockedTab.addEventListener("click", () => showTab("locked"));
 
-    batchSizeSelect.addEventListener("change", () => {
-      const limit = selectedBatchLimit();
-      if (selectedRouteIds.size > limit) {
-        selectedRouteIds.clear();
-        renderOptimiserRows();
-      }
-      updateBatchControls();
-    });
 
 hubFilter.addEventListener(
   "change",
@@ -3873,7 +3778,7 @@ hubFilter.addEventListener(
   }
 );
 
-    selectNextButton.addEventListener("click",selectNextAvailableRoutes);
+    selectAllButton.addEventListener("click",selectAllAvailableRoutes);    
     applySelectedButton.addEventListener("click", startSelectedBatch);
     clearSelectedButton.addEventListener("click", () => {
       if (activeBatch) return;
