@@ -2858,10 +2858,101 @@ function updateBatchControls() {
 }
 
     
-    function batchApplyUrl(routes) {
-      return `https://tycoon.airlines-manager.com/marketing/pricing/${routes[0].routeId}#ambatch=${encodeOptimiserPayload({ version: 1, routes })}`;
-    }
+/*
+ * Open only the first Airlines Manager route.
+ *
+ * IMPORTANT:
+ * The complete batch is deliberately NOT placed in the URL.
+ * Large batches can contain hundreds or thousands of routes,
+ * which would make the #ambatch URL excessively large.
+ *
+ * #ambatch=handoff tells the Tampermonkey helper to announce
+ * that it is ready. The optimiser then transfers the complete
+ * batch using postMessage.
+ */
+function batchApplyUrl(routes) {
 
+  const firstRoute =
+    routes?.[0];
+
+  if (
+    !firstRoute ||
+    !Number.isInteger(
+      Number(firstRoute.routeId)
+    )
+  ) {
+    throw new Error(
+      "Cannot start batch: first route is invalid."
+    );
+  }
+
+  return (
+    "https://tycoon.airlines-manager.com" +
+    `/marketing/pricing/${Number(firstRoute.routeId)}` +
+    "#ambatch=handoff"
+  );
+}
+
+
+/*
+ * Transfer the complete batch to the AM worker only after
+ * Tampermonkey has explicitly announced that it is ready.
+ */
+function sendBatchHandoff() {
+
+  if (
+    !activeBatch ||
+    !Array.isArray(activeBatch.routes) ||
+    activeBatch.routes.length < 1
+  ) {
+    console.warn(
+      "[AM Optimiser] No active batch is available for handoff."
+    );
+
+    return false;
+  }
+
+
+  if (
+    !batchWorker ||
+    batchWorker.closed
+  ) {
+    console.warn(
+      "[AM Optimiser] Batch worker is unavailable for handoff."
+    );
+
+    return false;
+  }
+
+
+  const message = {
+
+    type:
+      "am-optimiser-batch-handoff",
+
+    version:
+      2,
+
+    routes:
+      activeBatch.routes
+  };
+
+
+  batchWorker.postMessage(
+    message,
+    "https://tycoon.airlines-manager.com"
+  );
+
+
+  console.log(
+    `[AM Optimiser] Batch handed to worker: ${activeBatch.routes.length} routes.`
+  );
+
+
+  return true;
+}
+
+    
     function sendBatchAck({
   hubId,
   hubCode,
@@ -2907,20 +2998,179 @@ function updateBatchControls() {
 }
     
 
-    function renderBatchPanel() {
-      if (!activeBatch) {
-        batchPanel.classList.add("hidden");
-        return;
-      }
-      batchPanel.classList.remove("hidden");
-      const lines = activeBatch.routes.map((r, i) => {
-        const state = activeBatch.states[i] || "waiting";
-        const icon = state === "success" ? "✓" : state === "working" ? "●" : state === "failed" ? "✕" : "○";
-        return `<div>${icon} ${i + 1}/${activeBatch.routes.length} ${r.route} — ${state}</div>`;
-      }).join("");
-      batchPanel.innerHTML = `<strong>Batch price update</strong><div style="margin-top:8px;line-height:1.7">${lines}</div>`;
-    }
+function renderBatchPanel() {
 
+  if (!activeBatch) {
+
+    batchPanel.classList.add(
+      "hidden"
+    );
+
+    return;
+  }
+
+
+  batchPanel.classList.remove(
+    "hidden"
+  );
+
+
+  const total =
+    activeBatch.routes.length;
+
+
+  const currentIndex =
+    Math.max(
+      0,
+      Math.min(
+        Number(activeBatch.current) || 0,
+        Math.max(
+          total - 1,
+          0
+        )
+      )
+    );
+
+
+  const successful =
+    activeBatch.states.filter(
+      state =>
+        state === "success"
+    ).length;
+
+
+  const failed =
+    activeBatch.states.filter(
+      state =>
+        state === "failed"
+    ).length;
+
+
+  const waiting =
+    activeBatch.states.filter(
+      state =>
+        state === "waiting"
+    ).length;
+
+
+  const currentRoute =
+    activeBatch.routes[
+      currentIndex
+    ];
+
+
+  /*
+   * Do not render hundreds/thousands of route rows.
+   *
+   * Show only the most recent successful routes plus
+   * the currently active route.
+   */
+  const recentStart =
+    Math.max(
+      0,
+      currentIndex - 4
+    );
+
+
+  const recentLines =
+    activeBatch.routes
+      .slice(
+        recentStart,
+        currentIndex + 1
+      )
+      .map(
+        (route, offset) => {
+
+          const index =
+            recentStart +
+            offset;
+
+
+          const state =
+            activeBatch.states[index] ||
+            "waiting";
+
+
+          const icon =
+            state === "success"
+              ? "✓"
+              : state === "working"
+                ? "●"
+                : state === "failed"
+                  ? "✕"
+                  : "○";
+
+
+          return `
+            <div>
+              ${icon}
+              ${index + 1}/${total}
+              ${route.route}
+              — ${state}
+            </div>
+          `;
+        }
+      )
+      .join("");
+
+
+  batchPanel.innerHTML = `
+    <strong>
+      Batch price update
+    </strong>
+
+    <div
+      style="
+        margin-top:10px;
+        line-height:1.7;
+      "
+    >
+
+      <div>
+        <strong>
+          ${successful} / ${total}
+        </strong>
+        verified
+      </div>
+
+      <div>
+        Current:
+        <strong>
+          ${
+            currentRoute?.route ||
+            "waiting for worker"
+          }
+        </strong>
+      </div>
+
+      <div>
+        Waiting:
+        ${waiting}
+        &nbsp; · &nbsp;
+        Failed:
+        ${failed}
+      </div>
+
+      ${
+        recentLines
+          ? `
+              <div
+                style="
+                  margin-top:10px;
+                  padding-top:8px;
+                  border-top:1px solid rgba(255,255,255,.12);
+                "
+              >
+                ${recentLines}
+              </div>
+            `
+          : ""
+      }
+
+    </div>
+  `;
+}
+    
 async function startSelectedBatch() {
 
 if (
@@ -3286,25 +3536,57 @@ const workerUrl =
     routes
   );
 
+
 /*
- * If the named worker already exists, first move it
- * away from the previous AM pricing document.
+ * Open/navigate the named AM worker.
  *
- * Then navigate it to the new batch URL.
- *
- * This guarantees a real document navigation so the
- * Tampermonkey userscript runs again and reads #ambatch.
+ * The URL contains no route-array payload.
+ * Tampermonkey will announce when the new AM document
+ * is ready to receive the batch through postMessage.
  */
 if (
   batchWorker &&
   !batchWorker.closed
 ) {
-  try {
-    batchWorker.location.replace(
-      workerUrl
+
+  batchWorker =
+    window.open(
+      workerUrl,
+      "amOptimiserWorker"
     );
 
-    batchWorker.focus();
+} else {
+
+  batchWorker =
+    window.open(
+      workerUrl,
+      "amOptimiserWorker"
+    );
+}
+
+
+if (
+  !batchWorker
+) {
+
+  activeBatch =
+    null;
+
+  renderBatchPanel();
+
+  updateBatchControls();
+
+
+  batchStatus.textContent =
+    "Chrome blocked the worker tab. Allow pop-ups and try again.";
+
+  return;
+}
+
+
+batchStatus.textContent =
+  `Batch started: waiting for AM worker to accept ${routes.length} route${routes.length === 1 ? "" : "s"}…`;
+    
   } catch (error) {
     /*
      * Cross-origin window access can prevent location.replace().
@@ -3435,11 +3717,112 @@ const status = await callFunction({
      * independently GETs the live AM page, verifies the target prices and
      * lock state, and only then records the successful update.
      */
-    window.addEventListener("message", async event => {
-      if (event.origin !== "https://tycoon.airlines-manager.com") return;
-      const message = event.data;
-      if (!message || message.type !== "am-optimiser-native-submit-complete") return;
+window.addEventListener(
+  "message",
+  async event => {
 
+    if (
+      event.origin !==
+      "https://tycoon.airlines-manager.com"
+    ) {
+      return;
+    }
+
+
+    const message =
+      event.data;
+
+
+    if (!message) {
+      return;
+    }
+
+
+    /*
+     * New scalable batch handshake.
+     *
+     * The worker has loaded the first AM route and
+     * Tampermonkey is ready to receive the route array.
+     */
+    if (
+      message.type ===
+      "am-optimiser-batch-worker-ready"
+    ) {
+
+      if (
+        !activeBatch
+      ) {
+        return;
+      }
+
+
+      /*
+       * Make sure the ready signal came from the
+       * actual named worker window we opened.
+       */
+      if (
+        batchWorker &&
+        event.source !== batchWorker
+      ) {
+        console.warn(
+          "[AM Optimiser] Ignored batch-ready message from an unexpected AM window."
+        );
+
+        return;
+      }
+
+
+      const firstRoute =
+        activeBatch.routes[0];
+
+
+      if (
+        Number(message.routeId) !==
+        Number(firstRoute?.routeId)
+      ) {
+
+        batchStatus.textContent =
+          "Batch stopped: AM worker opened an unexpected first route.";
+
+        console.error(
+          "[AM Optimiser] Worker route mismatch.",
+          {
+            expected:
+              firstRoute?.routeId,
+
+            received:
+              message.routeId
+          }
+        );
+
+        return;
+      }
+
+
+      if (
+        sendBatchHandoff()
+      ) {
+
+        batchStatus.textContent =
+          `AM worker ready. ${activeBatch.routes.length} route${activeBatch.routes.length === 1 ? "" : "s"} handed over; starting first route…`;
+      }
+
+
+      return;
+    }
+
+
+    /*
+     * Existing route-completion message.
+     */
+    if (
+      message.type !==
+      "am-optimiser-native-submit-complete"
+    ) {
+      return;
+    }
+
+    
 const hubId =
   Number(message.hubId);
 
