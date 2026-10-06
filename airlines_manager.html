@@ -879,6 +879,47 @@
         </select>
       </div>
 
+      <div class="batch-bar">
+      
+        <button
+          id="selectAllButton"
+          class="btn"
+          type="button"
+        >
+          Select All
+        </button>
+      
+        <button
+          id="applySelectedButton"
+          class="btn btn-primary"
+          type="button"
+          disabled
+        >
+          Apply selected (0)
+        </button>
+      
+        <button
+          id="clearSelectedButton"
+          class="btn"
+          type="button"
+          disabled
+        >
+          Clear selection
+        </button>
+      
+        <span
+          id="batchStatus"
+          class="batch-status"
+        >
+          Select unlocked routes for a batch.
+        </span>
+      
+      </div>
+      
+      <div
+        id="batchPanel"
+        class="batch-panel hidden"
+      ></div>
 
       <div id="resultsMeta" class="results-meta"></div>
       <div class="results-wrap">
@@ -2881,10 +2922,6 @@ function updateBatchControls() {
     }
 
 async function startSelectedBatch() {
-
-  const limit =
-    selectedBatchLimit();
-
 
 if (
   activeBatch ||
