@@ -3173,237 +3173,233 @@ function renderBatchPanel() {
     
 async function startSelectedBatch() {
 
-if (
-  activeBatch ||
-  selectedRouteIds.size === 0
-) {
-  return;
-}
-
-  /*
-   * Resolve the selected routes from the
-   * currently selected hub.
-   */
-
-  const availableRows =
-    getHubFilteredRoutes(
-      "amendable"
-    );
-
-
-  const rows =
-    availableRows.filter(
-      row =>
-        selectedRouteIds.has(
-          routeSelectionKey(row)
-        )
-    );
-
-
-  /*
-   * Every selected key must still resolve
-   * to exactly one route.
-   */
-
   if (
-    rows.length !==
-    selectedRouteIds.size
+    !currentScanId ||
+    activeBatch ||
+    selectedRouteIds.size === 0
   ) {
-
-    selectedRouteIds.clear();
-
-    renderOptimiserRows();
-    updateBatchControls();
-
-    batchStatus.textContent =
-      "Selection changed. Select the routes again and retry.";
-
     return;
   }
 
 
   /*
-   * Do not trust the optimiser's cached
-   * price_lock_locked value here.
-   *
-   * Re-check every selected route against
-   * the server immediately before starting
-   * the batch.
+   * Resolve the selected composite hub:route keys
+   * against the current optimiser data.
    */
+  const rows =
+    (
+      optimiserData?.amendableRoutes ||
+      []
+    )
+      .filter(
+        row =>
+          selectedRouteIds.has(
+            routeSelectionKey(row)
+          )
+      )
+      .sort(
+        (a, b) => {
 
-  applySelectedButton.disabled =
-    true;
+          const hubCompare =
+            rowHubCode(a).localeCompare(
+              rowHubCode(b)
+            );
 
-  clearSelectedButton.disabled =
-    true;
+          if (hubCompare !== 0) {
+            return hubCompare;
+          }
+
+          return String(
+            a.route || ""
+          ).localeCompare(
+            String(
+              b.route || ""
+            )
+          );
+        }
+      );
+
+
+  if (!rows.length) {
+
+    batchStatus.textContent =
+      "No selected routes are available.";
+
+    updateBatchControls();
+
+    return;
+  }
+
 
   batchStatus.textContent =
-    `Checking ${rows.length} selected route${rows.length === 1 ? "" : "s"}…`;
+    `Checking selected routes: 0/${rows.length}…`;
 
 
   try {
 
-const PREFLIGHT_CONCURRENCY = 10;
-const PREFLIGHT_TIMEOUT_MS = 30000;
+    /*
+     * Preflight every selected route immediately before
+     * starting the batch.
+     *
+     * Keep concurrency bounded so Select All does not
+     * create hundreds of simultaneous requests.
+     */
+    const PREFLIGHT_CONCURRENCY =
+      10;
 
-const checks =
-  new Array(
-    rows.length
-  );
-
-let nextCheckIndex = 0;
-let completedChecks = 0;
-
-
-/*
- * Run one promise with a hard timeout.
- * This prevents one stalled price-status request
- * from holding the entire batch indefinitely.
- */
-function withTimeout(
-  promise,
-  timeoutMs,
-  description
-) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const timer =
-        setTimeout(
-          () => {
-            reject(
-              new Error(
-                `${description} timed out after ${Math.round(
-                  timeoutMs / 1000
-                )} seconds.`
-              )
-            );
-          },
-          timeoutMs
-        );
+    const PREFLIGHT_TIMEOUT_MS =
+      30000;
 
 
-      Promise.resolve(
-        promise
-      )
-        .then(
-          value => {
-
-            clearTimeout(
-              timer
-            );
-
-            resolve(
-              value
-            );
-          }
-        )
-        .catch(
-          error => {
-
-            clearTimeout(
-              timer
-            );
-
-            reject(
-              error
-            );
-          }
-        );
-    }
-  );
-}
-
-
-async function preflightWorker() {
-
-  while (true) {
-
-    const index =
-      nextCheckIndex++;
-
-    if (
-      index >= rows.length
-    ) {
-      return;
-    }
-
-
-    const row =
-      rows[index];
-
-
-    const routeName =
-      row.route ||
-      `route ${row.route_id}`;
-
-
-    checks[index] =
-      await withTimeout(
-
-        callFunction({
-
-          action:
-            "price-status",
-
-          scanId:
-            currentScanId,
-
-          hubId:
-            Number(
-              row.hub_id
-            ),
-
-          routeId:
-            Number(
-              row.route_id
-            )
-        }),
-
-        PREFLIGHT_TIMEOUT_MS,
-
-        `price-status for ${routeName}`
+    const checks =
+      new Array(
+        rows.length
       );
 
 
+    let nextCheckIndex =
+      0;
+
+    let completedChecks =
+      0;
+
+
+    async function withTimeout(
+      promise,
+      timeoutMs,
+      label
+    ) {
+
+      let timer;
+
+
+      try {
+
+        return await Promise.race([
+
+          promise,
+
+          new Promise(
+            (
+              _resolve,
+              reject
+            ) => {
+
+              timer =
+                setTimeout(
+                  () => {
+                    reject(
+                      new Error(
+                        `${label} timed out after ${Math.round(timeoutMs / 1000)} seconds.`
+                      )
+                    );
+                  },
+                  timeoutMs
+                );
+              }
+            )
+        ]);
+
+      } finally {
+
+        if (timer) {
+          clearTimeout(
+            timer
+          );
+        }
+      }
+    }
+
+
+    async function preflightWorker() {
+
+      while (true) {
+
+        const index =
+          nextCheckIndex++;
+
+
+        if (
+          index >=
+          rows.length
+        ) {
+          return;
+        }
+
+
+        const row =
+          rows[index];
+
+
+        const routeName =
+          row.route ||
+          row.route_id;
+
+
+        checks[index] =
+          await withTimeout(
+
+            callFunction({
+
+              action:
+                "price-status",
+
+              scanId:
+                currentScanId,
+
+              hubId:
+                Number(
+                  row.hub_id
+                ),
+
+              routeId:
+                Number(
+                  row.route_id
+                )
+            }),
+
+            PREFLIGHT_TIMEOUT_MS,
+
+            `price-status for ${routeName}`
+          );
+
+
+        /*
+         * Only increment after the request
+         * has genuinely completed.
+         */
+        completedChecks++;
+
+
+        batchStatus.textContent =
+          `Checking selected routes: ${completedChecks}/${rows.length}…`;
+      }
+    }
+
+
+    const workerCount =
+      Math.min(
+        PREFLIGHT_CONCURRENCY,
+        rows.length
+      );
+
+
+    await Promise.all(
+      Array.from(
+        {
+          length:
+            workerCount
+        },
+        () =>
+          preflightWorker()
+      )
+    );
+
+
     /*
-     * Only increment after the request
-     * has genuinely completed.
+     * Reject anything which is no longer safe
+     * to amend.
      */
-    completedChecks++;
-
-
-    batchStatus.textContent =
-      `Checking selected routes: ${completedChecks}/${rows.length}…`;
-  }
-}
-
-
-const workerCount =
-  Math.min(
-    PREFLIGHT_CONCURRENCY,
-    rows.length
-  );
-
-
-await Promise.all(
-  Array.from(
-    {
-      length:
-        workerCount
-    },
-    () =>
-      preflightWorker()
-  )
-);
-    
-
-    /*
-     * Reject anything which is no longer
-     * safe to amend.
-     */
-
     const unavailable =
       checks.filter(
         status =>
@@ -3426,6 +3422,7 @@ await Promise.all(
               status?.route ||
               `route ${status?.routeId ?? "unknown"}`;
 
+
             if (
               status?.priceLock?.locked
             ) {
@@ -3446,32 +3443,32 @@ await Promise.all(
         );
 
 
-selectedRouteIds.clear();
+      selectedRouteIds.clear();
 
-/*
- * Reload the optimiser so newly discovered
- * price locks are reflected in the table.
- */
-await loadOptimiser();
 
-/*
- * loadOptimiser()/updateBatchControls() resets
- * batchStatus, so set the failure explanation
- * AFTER the reload and do not overwrite it again.
- */
-batchStatus.textContent =
-  `Batch not started: ${descriptions.join("; ")}`;
+      /*
+       * Reload the optimiser so newly discovered
+       * price locks are reflected in the table.
+       */
+      await loadOptimiser();
 
-return;
+
+      /*
+       * loadOptimiser()/updateBatchControls() resets
+       * batchStatus, so set the explanation afterwards.
+       */
+      batchStatus.textContent =
+        `Batch not started: ${descriptions.join("; ")}`;
+
+
+      return;
     }
 
 
     /*
-     * Also verify that every status response
-     * refers to the exact hub + route that
-     * we requested.
+     * Verify every status response refers to the exact
+     * hub + route requested.
      */
-
     for (
       let i = 0;
       i < rows.length;
@@ -3486,10 +3483,18 @@ return;
 
 
       if (
-        Number(status?.hubId) !==
-          Number(row.hub_id) ||
-        Number(status?.routeId) !==
-          Number(row.route_id)
+        Number(
+          status?.hubId
+        ) !==
+          Number(
+            row.hub_id
+          ) ||
+        Number(
+          status?.routeId
+        ) !==
+          Number(
+            row.route_id
+          )
       ) {
 
         throw new Error(
@@ -3499,6 +3504,11 @@ return;
     }
 
 
+    /*
+     * Build the complete batch in memory.
+     *
+     * This is no longer encoded into the AM URL.
+     */
     const routes =
       rows.map(
         rowPayload
@@ -3511,7 +3521,10 @@ return;
 
       states:
         routes.map(
-          (_, index) =>
+          (
+            _,
+            index
+          ) =>
             index === 0
               ? "working"
               : "waiting"
@@ -3527,100 +3540,28 @@ return;
     updateBatchControls();
 
 
-    batchStatus.textContent =
-      "Batch started. Keep the optimiser and AM worker tabs open.";
-
-
-const workerUrl =
-  batchApplyUrl(
-    routes
-  );
-
-
-/*
- * Open/navigate the named AM worker.
- *
- * The URL contains no route-array payload.
- * Tampermonkey will announce when the new AM document
- * is ready to receive the batch through postMessage.
- */
-if (
-  batchWorker &&
-  !batchWorker.closed
-) {
-
-  batchWorker =
-    window.open(
-      workerUrl,
-      "amOptimiserWorker"
-    );
-
-} else {
-
-  batchWorker =
-    window.open(
-      workerUrl,
-      "amOptimiserWorker"
-    );
-}
-
-
-if (
-  !batchWorker
-) {
-
-  activeBatch =
-    null;
-
-  renderBatchPanel();
-
-  updateBatchControls();
-
-
-  batchStatus.textContent =
-    "Chrome blocked the worker tab. Allow pop-ups and try again.";
-
-  return;
-}
-
-
-batchStatus.textContent =
-  `Batch started: waiting for AM worker to accept ${routes.length} route${routes.length === 1 ? "" : "s"}…`;
-    
-  } catch (error) {
     /*
-     * Cross-origin window access can prevent location.replace().
-     * window.open() with the existing name can still navigate it.
+     * The URL contains only the first route plus the
+     * small #ambatch=handoff marker.
+     */
+    const workerUrl =
+      batchApplyUrl(
+        routes
+      );
+
+
+    /*
+     * Open or navigate the single named AM worker.
+     *
+     * Tampermonkey will respond with
+     * am-optimiser-batch-worker-ready.
      */
     batchWorker =
       window.open(
         workerUrl,
         "amOptimiserWorker"
       );
-  }
-} else {
-  batchWorker =
-    window.open(
-      workerUrl,
-      "amOptimiserWorker"
-    );
-}
 
-if (
-  !batchWorker
-) {
-  activeBatch =
-    null;
-
-  renderBatchPanel();
-
-  updateBatchControls();
-
-  batchStatus.textContent =
-    "Chrome blocked the worker tab. Allow pop-ups and try again.";
-}
-
-    
 
     if (
       !batchWorker
@@ -3629,6 +3570,7 @@ if (
       activeBatch =
         null;
 
+
       renderBatchPanel();
 
       updateBatchControls();
@@ -3636,7 +3578,14 @@ if (
 
       batchStatus.textContent =
         "Chrome blocked the worker tab. Allow pop-ups and try again.";
+
+
+      return;
     }
+
+
+    batchStatus.textContent =
+      `Batch started: waiting for AM worker to accept ${routes.length} route${routes.length === 1 ? "" : "s"}…`;
 
 
   } catch (
@@ -3649,13 +3598,24 @@ if (
     );
 
 
-    batchStatus.textContent =
-      `Batch not started: ${error.message}`;
+    /*
+     * Nothing should remain marked as an active browser
+     * batch if startup/preflight failed.
+     */
+    activeBatch =
+      null;
 
+
+    renderBatchPanel();
 
     updateBatchControls();
+
+
+    batchStatus.textContent =
+      `Batch not started: ${error.message}`;
   }
 }
+
     
     function browserApplyUrl(row) {
       const payload = rowPayload(row);
