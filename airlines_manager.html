@@ -2994,6 +2994,7 @@ if (
   try {
 
 const PREFLIGHT_CONCURRENCY = 10;
+const PREFLIGHT_TIMEOUT_MS = 30000;
 
 const checks =
   new Array(
@@ -3001,6 +3002,68 @@ const checks =
   );
 
 let nextCheckIndex = 0;
+let completedChecks = 0;
+
+
+/*
+ * Run one promise with a hard timeout.
+ * This prevents one stalled price-status request
+ * from holding the entire batch indefinitely.
+ */
+function withTimeout(
+  promise,
+  timeoutMs,
+  description
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const timer =
+        setTimeout(
+          () => {
+            reject(
+              new Error(
+                `${description} timed out after ${Math.round(
+                  timeoutMs / 1000
+                )} seconds.`
+              )
+            );
+          },
+          timeoutMs
+        );
+
+
+      Promise.resolve(
+        promise
+      )
+        .then(
+          value => {
+
+            clearTimeout(
+              timer
+            );
+
+            resolve(
+              value
+            );
+          }
+        )
+        .catch(
+          error => {
+
+            clearTimeout(
+              timer
+            );
+
+            reject(
+              error
+            );
+          }
+        );
+    }
+  );
+}
 
 
 async function preflightWorker() {
@@ -3021,40 +3084,48 @@ async function preflightWorker() {
       rows[index];
 
 
+    const routeName =
+      row.route ||
+      `route ${row.route_id}`;
+
+
     checks[index] =
-      await callFunction({
+      await withTimeout(
 
-        action:
-          "price-status",
+        callFunction({
 
-        scanId:
-          currentScanId,
+          action:
+            "price-status",
 
-        hubId:
-          Number(
-            row.hub_id
-          ),
+          scanId:
+            currentScanId,
 
-        routeId:
-          Number(
-            row.route_id
-          )
-      });
+          hubId:
+            Number(
+              row.hub_id
+            ),
+
+          routeId:
+            Number(
+              row.route_id
+            )
+        }),
+
+        PREFLIGHT_TIMEOUT_MS,
+
+        `price-status for ${routeName}`
+      );
 
 
     /*
-     * Give the UI useful progress feedback
-     * during a large Select All preflight.
+     * Only increment after the request
+     * has genuinely completed.
      */
-    const completed =
-      checks.filter(
-        value =>
-          value !== undefined
-      ).length;
+    completedChecks++;
 
 
     batchStatus.textContent =
-      `Checking selected routes: ${completed}/${rows.length}…`;
+      `Checking selected routes: ${completedChecks}/${rows.length}…`;
   }
 }
 
