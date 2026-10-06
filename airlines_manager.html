@@ -3715,20 +3715,9 @@ checkbox.addEventListener(
 
     event.stopPropagation();
 
-    if (checkbox.checked) {
-
-      if (
-        selectedRouteIds.size >=
-        selectedBatchLimit()
-      ) {
-
-        checkbox.checked = false;
-
-        batchStatus.textContent =
-          `This batch is limited to ${selectedBatchLimit()} routes.`;
-
-        return;
-      }
+    if (
+      checkbox.checked
+    ) {
 
       selectedRouteIds.add(
         selectionKey
