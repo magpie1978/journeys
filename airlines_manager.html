@@ -3196,25 +3196,23 @@ await Promise.all(
         );
 
 
-      selectedRouteIds.clear();
+selectedRouteIds.clear();
 
+/*
+ * Reload the optimiser so newly discovered
+ * price locks are reflected in the table.
+ */
+await loadOptimiser();
 
-      /*
-       * Reload optimiser data so any lock
-       * information returned by "results"
-       * is also refreshed.
-       */
+/*
+ * loadOptimiser()/updateBatchControls() resets
+ * batchStatus, so set the failure explanation
+ * AFTER the reload and do not overwrite it again.
+ */
+batchStatus.textContent =
+  `Batch not started: ${descriptions.join("; ")}`;
 
-      await loadOptimiser();
-
-
-      batchStatus.textContent =
-        `Batch not started: ${descriptions.join("; ")}`;
-
-
-      updateBatchControls();
-
-      return;
+return;
     }
 
 
