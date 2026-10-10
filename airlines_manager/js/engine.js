@@ -38,6 +38,12 @@ export const EXCLUDED = new Set([
   "MPM"
 ]);
 
+export const FIXED_AIRCRAFT = {
+  model: "A380-800",
+  eco: 852,
+  cargo: 4
+};
+
 export const ROTATION_HOURS = 168;
 export const AIRCRAFT_PER_GROUP = 7;
 
@@ -561,6 +567,7 @@ export function hasDemand(
 // 11. ROTATION OPTIMISER
 // ============================================================
 
+
 export function optimise(
   data,
   {
@@ -570,246 +577,158 @@ export function optimise(
     stop = () => false
   } = {}
 ) {
-  // Validate the complete input before searching.
   const validation = validateData(data);
 
-  groups = Math.max(
-    0,
-    Math.floor(Number(groups) || 0)
+  const aircraft = data.aircraft.find(
+    item => item.model === FIXED_AIRCRAFT.model
   );
 
-  passengerMin = Math.max(
-    0,
-    Math.min(100, Number(passengerMin) || 0)
-  );
-
-  const remaining = new Map();
-
-  for (const route of data.routes) {
-    remaining.set(route.id, {
-      eco: route.ecoDemand,
-      cargo: route.cargoDemand
-    });
+  if (!aircraft) {
+    throw new Error(
+      `${FIXED_AIRCRAFT.model} was not found in aircraft.csv.`
+    );
   }
 
+  const eco = FIXED_AIRCRAFT.eco;
+  const cargo = FIXED_AIRCRAFT.cargo;
+
+  if (eco > aircraft.seats) {
+    throw new Error(
+      `The A380-800 cannot accommodate ${eco} Economy seats.`
+    );
+  }
+
+  const payloadRequired =
+    eco * ECONOMY_PAYLOAD_TONNES + cargo;
+
+  if (payloadRequired > aircraft.payload + 1e-7) {
+    throw new Error(
+      `The fixed configuration exceeds the A380-800 payload.`
+    );
+  }
+
+  const remaining = new Map(
+    data.routes.map(route => [
+      route.id,
+      {
+        eco: route.ecoDemand,
+        cargo: route.cargoDemand
+      }
+    ])
+  );
+
   const rotations = [];
-
   let total = 0;
-
-  // ----------------------------------------------------------
-  // Search for the best available rotation group.
-  // ----------------------------------------------------------
 
   for (
     let groupIndex = 0;
     groupIndex < groups && !stop();
     groupIndex++
   ) {
-    let best = null;
+    const options = [];
 
-    // Evaluate every usable aircraft model.
-    for (const aircraft of data.aircraft) {
-      if (stop()) {
-        break;
+    for (const route of data.routes) {
+      if (!isEligible(aircraft, route)) {
+        continue;
       }
 
-      // Cargo allocation candidates.
-      const maximumCargo = Math.min(
-        35,
-        Math.floor(aircraft.payload)
+      if (route.ecoFare <= 0) {
+        continue;
+      }
+
+      const flightHours = duration(
+        route.distance,
+        aircraft.speed
       );
 
-      for (
-        let cargo = MIN_CARGO_UNITS;
-        cargo <= maximumCargo;
-        cargo++
-      ) {
-        const configuration = getConfiguration(
-          aircraft,
-          cargo
-        );
-
-        if (!configuration) {
-          continue;
-        }
-
-        if (
-          configuration.passengerPayloadPercent <
-          passengerMin
-        ) {
-          continue;
-        }
-
-        const eco = configuration.eco;
-
-        const options = [];
-
-        // ----------------------------------------------------
-        // Evaluate compatible routes.
-        // ----------------------------------------------------
-
-        for (const route of data.routes) {
-          if (!isEligible(aircraft, route)) {
-            continue;
-          }
-
-          if (
-            route.ecoFare <= 0 ||
-            route.ecoDemand <= 0
-          ) {
-            continue;
-          }
-
-          const flightHours = duration(
-            route.distance,
-            aircraft.speed
-          );
-
-          if (flightHours > ROTATION_HOURS) {
-            continue;
-          }
-
-          if (
-            !hasDemand(
-              remaining,
-              route.id,
-              eco,
-              cargo
-            )
-          ) {
-            continue;
-          }
-
-          const revenue = calculateLegRevenue(
-            route,
-            eco,
-            cargo
-          );
-
-          options.push({
-            route,
-            hours: flightHours,
-            revenue: revenue.totalRevenue,
-            economyRevenue: revenue.economyRevenue,
-            cargoRevenue: revenue.cargoRevenue,
-            ratio: revenue.totalRevenue / flightHours
-          });
-        }
-
-        // ----------------------------------------------------
-        // Sort candidate services by weekly revenue per hour.
-        // ----------------------------------------------------
-
-        options.sort(
-          (a, b) => b.ratio - a.ratio
-        );
-
-        let hours = 0;
-        let revenue = 0;
-
-        const legs = [];
-        const usage = new Map();
-
-        // ----------------------------------------------------
-        // Build one rotation sequence.
-        // ----------------------------------------------------
-
-        for (const option of options) {
-          const route = option.route;
-
-          const used =
-            usage.get(route.id) || 0;
-
-          if (
-            hours + option.hours >
-            ROTATION_HOURS + 1e-7
-          ) {
-            continue;
-          }
-
-          // Account for repeated destinations within
-          // the same proposed rotation.
-          if (
-            !hasDemand(
-              remaining,
-              route.id,
-              eco,
-              cargo,
-              used + 1
-            )
-          ) {
-            continue;
-          }
-
-          legs.push({
-            code: route.code,
-            routeId: route.id,
-            start: hours,
-            duration: option.hours,
-            revenue: option.revenue
-          });
-
-          hours += option.hours;
-          revenue += option.revenue;
-
-          usage.set(
-            route.id,
-            used + 1
-          );
-        }
-
-        // ----------------------------------------------------
-        // Keep the highest-revenue candidate.
-        // ----------------------------------------------------
-
-        if (
-          legs.length > 0 &&
-          (!best || revenue > best.revenue)
-        ) {
-          best = {
-            model: aircraft.model,
-            aircraftId: aircraft.id,
-
-            eco,
-            cargo,
-
-            hours,
-            revenue,
-            legs
-          };
-        }
+      if (flightHours > ROTATION_HOURS) {
+        continue;
       }
+
+      if (
+        !hasDemand(
+          remaining,
+          route.id,
+          eco,
+          cargo
+        )
+      ) {
+        continue;
+      }
+
+      const revenue = calculateLegRevenue(
+        route,
+        eco,
+        cargo
+      );
+
+      options.push({
+        route,
+        hours: flightHours,
+        revenue: revenue.totalRevenue,
+        ratio: revenue.totalRevenue / flightHours
+      });
     }
 
-    // No further feasible candidate groups.
-    if (!best) {
+    options.sort(
+      (a, b) => b.ratio - a.ratio
+    );
+
+    const legs = [];
+    let hours = 0;
+    let revenue = 0;
+
+    for (const option of options) {
+      if (
+        hours + option.hours >
+        ROTATION_HOURS + 1e-7
+      ) {
+        continue;
+      }
+
+      legs.push({
+        code: option.route.code,
+        routeId: option.route.id,
+        start: hours,
+        duration: option.hours,
+        revenue: option.revenue
+      });
+
+      hours += option.hours;
+      revenue += option.revenue;
+    }
+
+    if (legs.length === 0) {
       break;
     }
 
-    // --------------------------------------------------------
-    // Commit the selected group's DAILY demand consumption.
-    // --------------------------------------------------------
-
-    for (const leg of best.legs) {
+    for (const leg of legs) {
       const available = remaining.get(
         leg.routeId
       );
 
-      available.eco -= 2 * best.eco;
-      available.cargo -= 2 * best.cargo;
+      available.eco -= 2 * eco;
+      available.cargo -= 2 * cargo;
     }
 
-    best.id =
-      `BOM-${String(groupIndex + 1).padStart(3, "0")}`;
+    const rotation = {
+      id: `BOM-${String(groupIndex + 1).padStart(3, "0")}`,
+      model: aircraft.model,
+      aircraftId: aircraft.id,
+      eco,
+      cargo,
+      hours,
+      revenue,
+      legs
+    };
 
-    rotations.push(best);
-
-    total += best.revenue;
+    rotations.push(rotation);
+    total += revenue;
 
     onProgress({
       completed: groupIndex + 1,
       total,
-      rotation: best
+      rotation
     });
   }
 
@@ -818,11 +737,11 @@ export function optimise(
     total,
     remaining,
     validation,
-
-    method: "greedy-passenger-first",
+    method: "fixed-a380-greedy",
     preflight: "NOT_RUN"
   };
 }
+
 
 // ============================================================
 // 12. CSV EXPORT
