@@ -1,49 +1,27 @@
 
 /**
  * Airlines Manager Rotation Optimiser
- * ===================================
+ * app.js v0.5
  *
- * File: js/app.js
- * Version: 0.2
+ * BOM mixed-fleet interface.
  *
- * BOM-only interface.
+ * Supported models:
+ * - A380-800
+ * - A350-900ULR
  *
- * Fixed aircraft:
- *   Airbus A380-800
- *   852 Economy seats
- *   4 Cargo units
- *   7 aircraft per rotation group
- *
- * Responsibilities:
- * - Load route, pricing and aircraft CSV files
- * - Prepare data for the optimisation engine
- * - Display route and aircraft information
- * - Start and stop the optimisation Web Worker
- * - Display optimisation progress
- * - Render proposed rotations
- * - Export results to CSV
- *
- * No game-changing actions are performed.
+ * Scenario A: Rebuild schedules from scratch.
  */
 
 import {
   csv,
   prepare,
-  exportCSV
+  exportCSV,
+  FIXED_AIRCRAFT
 } from "./engine.js";
 
-// ============================================================
-// 1. CONSTANTS
-// ============================================================
-
 const HUB = "BOM";
-
-const AIRCRAFT_MODEL = "A380-800";
-
-const FIXED_ECONOMY = 852;
-const FIXED_CARGO = 4;
-
 const AIRCRAFT_PER_GROUP = 7;
+const ECONOMY_PAYLOAD_TONNES = 0.1;
 
 const DATA_FILES = [
   "./data/routes.csv",
@@ -51,17 +29,13 @@ const DATA_FILES = [
   "./data/aircraft.csv"
 ];
 
-// ============================================================
-// 2. APPLICATION STATE
-// ============================================================
-
 let preparedData = null;
 let optimisationResult = null;
 let worker = null;
 let isRunning = false;
 
 // ============================================================
-// 3. DOM HELPERS
+// DOM AND FORMATTING
 // ============================================================
 
 function $(id) {
@@ -88,8 +62,38 @@ function formatBillions(value) {
   return (value / 1_000_000_000).toFixed(3);
 }
 
+function percentage(part, total) {
+  if (!(total > 0)) {
+    return "0.0%";
+  }
+
+  return `${(100 * part / total).toFixed(1)}%`;
+}
+
+function appendRow(tbody, values) {
+  const row = document.createElement("tr");
+
+  for (const value of values) {
+    const cell = document.createElement("td");
+    cell.textContent = String(value);
+    row.appendChild(cell);
+  }
+
+  tbody.appendChild(row);
+}
+
+function clearResults() {
+  for (const id of [
+    "results",
+    "fleet-results",
+    "demand-results"
+  ]) {
+    $(id)?.replaceChildren();
+  }
+}
+
 // ============================================================
-// 4. BUTTON STATE
+// BUTTON STATE
 // ============================================================
 
 function updateButtons() {
@@ -115,11 +119,10 @@ function updateButtons() {
 }
 
 // ============================================================
-// 5. LOAD CSV DATA
+// LOAD DATA
 // ============================================================
 
 async function loadCSVFile(path) {
-  // Avoid stale CSV files after GitHub Pages deployments.
   const response = await fetch(path, {
     cache: "no-store"
   });
@@ -130,24 +133,81 @@ async function loadCSVFile(path) {
     );
   }
 
-  const text = await response.text();
+  return csv(await response.text());
+}
 
-  return csv(text);
+function getConfiguredFleet() {
+  if (!preparedData) {
+    return [];
+  }
+
+  return Object.entries(FIXED_AIRCRAFT).map(
+    ([model, config]) => {
+      const aircraft = preparedData.aircraft.find(
+        item => item.model === model
+      );
+
+      if (!aircraft) {
+        throw new Error(
+          `${model} is missing from the usable aircraft catalogue.`
+        );
+      }
+
+      const payloadRequired =
+        config.eco * ECONOMY_PAYLOAD_TONNES +
+        config.cargo;
+
+      if (config.eco > aircraft.seats) {
+        throw new Error(
+          `${model} requires ${config.eco} seats, ` +
+          `but only ${aircraft.seats} are available.`
+        );
+      }
+
+      if (payloadRequired > aircraft.payload + 1e-7) {
+        throw new Error(
+          `${model} requires ${payloadRequired} tonnes ` +
+          `but only ${aircraft.payload} are available.`
+        );
+      }
+
+      return {
+        ...aircraft,
+        ...config
+      };
+    }
+  );
+}
+
+function renderConfigurations(fleet) {
+  const tbody = $("fleet-configurations");
+
+  if (!tbody) {
+    return;
+  }
+
+  tbody.replaceChildren();
+
+  for (const aircraft of fleet) {
+    appendRow(tbody, [
+      aircraft.model,
+      formatNumber(aircraft.eco),
+      formatNumber(aircraft.cargo),
+      aircraft.category,
+      formatNumber(aircraft.range),
+      formatNumber(aircraft.speed)
+    ]);
+  }
 }
 
 async function loadData() {
-  setStatus(
-    "Loading route, pricing and aircraft data…"
-  );
+  setStatus("Loading route, pricing and aircraft data…");
 
   try {
-    const [
-      routes,
-      pricing,
-      aircraft
-    ] = await Promise.all(
-      DATA_FILES.map(loadCSVFile)
-    );
+    const [routes, pricing, aircraft] =
+      await Promise.all(
+        DATA_FILES.map(loadCSVFile)
+      );
 
     preparedData = prepare(
       routes,
@@ -165,64 +225,21 @@ async function loadData() {
       );
     }
 
-    // --------------------------------------------------------
-    // Display route count.
-    // --------------------------------------------------------
+    const fleet = getConfiguredFleet();
 
-    const routesElement = $("routes");
+    $("routes").textContent =
+      formatNumber(preparedData.routes.length);
 
-    if (routesElement) {
-      routesElement.textContent = formatNumber(
-        preparedData.routes.length
-      );
-    }
+    $("models").textContent =
+      formatNumber(fleet.length);
 
-    // --------------------------------------------------------
-    // Verify that the fixed A380-800 model exists.
-    // --------------------------------------------------------
-
-    const a380 = preparedData.aircraft.find(
-      aircraft => aircraft.model === AIRCRAFT_MODEL
-    );
-
-    if (!a380) {
-      throw new Error(
-        `${AIRCRAFT_MODEL} is missing from the ` +
-        "usable aircraft catalogue."
-      );
-    }
-
-    // --------------------------------------------------------
-    // Check the fixed aircraft configuration.
-    // --------------------------------------------------------
-
-    const requiredPayload =
-      FIXED_ECONOMY * 0.1 + FIXED_CARGO;
-
-    if (a380.seats < FIXED_ECONOMY) {
-      throw new Error(
-        `A380-800 seat capacity is ${a380.seats}, ` +
-        `but ${FIXED_ECONOMY} seats are required.`
-      );
-    }
-
-    if (requiredPayload > a380.payload + 1e-7) {
-      throw new Error(
-        `A380-800 payload is ${a380.payload} tonnes, ` +
-        `but ${requiredPayload} tonnes are required.`
-      );
-    }
-
-    // --------------------------------------------------------
-    // Data successfully loaded.
-    // --------------------------------------------------------
+    renderConfigurations(fleet);
 
     setStatus(
       `${HUB}: ${formatNumber(preparedData.routes.length)} ` +
       `eligible owned routes loaded. ` +
-      `${AIRCRAFT_MODEL} configured at ` +
-      `${FIXED_ECONOMY}E + ${FIXED_CARGO}C. ` +
-      "Ready to optimise."
+      `${fleet.map(item => item.model).join(" + ")} ready. ` +
+      "Scenario A: total demand."
     );
 
   } catch (error) {
@@ -242,56 +259,128 @@ async function loadData() {
 }
 
 // ============================================================
-// 6. RENDER ROTATION RESULTS
+// RENDER ROTATIONS
 // ============================================================
 
 function renderResults() {
-  const tableBody = $("results");
+  const tbody = $("results");
 
-  if (!tableBody) {
+  if (!tbody) {
     return;
   }
 
-  tableBody.replaceChildren();
+  tbody.replaceChildren();
 
-  if (
-    !optimisationResult ||
-    !Array.isArray(optimisationResult.rotations)
-  ) {
+  if (!optimisationResult?.rotations) {
     return;
   }
 
   for (const rotation of optimisationResult.rotations) {
-    const row = document.createElement("tr");
-
-    const destinations = rotation.legs
-      .map(leg => leg.code)
-      .join(", ");
-
-    const values = [
+    appendRow(tbody, [
       rotation.id,
       rotation.model,
       `${rotation.eco}E + ${rotation.cargo}C`,
       Number(rotation.hours).toFixed(2),
-      destinations,
+      rotation.legs.map(leg => leg.code).join(", "),
       formatMoney(rotation.revenue)
-    ];
-
-    for (const value of values) {
-      const cell = document.createElement("td");
-
-      // textContent avoids inserting untrusted HTML.
-      cell.textContent = String(value);
-
-      row.appendChild(cell);
-    }
-
-    tableBody.appendChild(row);
+    ]);
   }
 }
 
 // ============================================================
-// 7. START OPTIMISATION
+// RENDER FLEET SUMMARY
+// ============================================================
+
+function renderFleetSummary() {
+  const tbody = $("fleet-results");
+
+  if (!tbody) {
+    return;
+  }
+
+  tbody.replaceChildren();
+
+  const summary = optimisationResult?.fleetSummary;
+
+  if (!summary) {
+    return;
+  }
+
+  let totalGroups = 0;
+  let totalAircraft = 0;
+  let totalServices = 0;
+  let totalRevenue = 0;
+
+  for (const item of Object.values(summary)) {
+    appendRow(tbody, [
+      item.model,
+      `${item.eco}E + ${item.cargo}C`,
+      formatNumber(item.groups),
+      formatNumber(item.aircraftCount),
+      formatNumber(item.services),
+      formatMoney(item.weeklyRevenue)
+    ]);
+
+    totalGroups += item.groups;
+    totalAircraft += item.aircraftCount;
+    totalServices += item.services;
+    totalRevenue += item.weeklyRevenue;
+  }
+
+  appendRow(tbody, [
+    "TOTAL",
+    "Mixed fleet",
+    formatNumber(totalGroups),
+    formatNumber(totalAircraft),
+    formatNumber(totalServices),
+    formatMoney(totalRevenue)
+  ]);
+}
+
+// ============================================================
+// RENDER DEMAND SUMMARY
+// ============================================================
+
+function renderDemandSummary() {
+  const tbody = $("demand-results");
+
+  if (!tbody) {
+    return;
+  }
+
+  tbody.replaceChildren();
+
+  const demand = optimisationResult?.demandSummary;
+
+  if (!demand) {
+    return;
+  }
+
+  appendRow(tbody, [
+    "Economy",
+    formatNumber(demand.startingEconomy),
+    formatNumber(demand.allocatedEconomy),
+    formatNumber(demand.remainingEconomy),
+    percentage(
+      demand.remainingEconomy,
+      demand.startingEconomy
+    )
+  ]);
+
+  appendRow(tbody, [
+    "Cargo",
+    formatNumber(demand.startingCargo),
+    formatNumber(demand.allocatedCargo),
+    formatNumber(demand.remainingCargo),
+    percentage(
+      demand.remainingCargo,
+      demand.startingCargo
+    )
+  ]);
+}
+
+// ============================================================
+// RUN OPTIMISER
 // ============================================================
 
 function runOptimiser() {
@@ -299,55 +388,46 @@ function runOptimiser() {
     return;
   }
 
-  const groupsInput = $("groups");
+  const groupText = $("groups")?.value.trim() ?? "";
 
-  const groups = Number(groupsInput?.value);
+  // Blank = unlimited.
+  const groups = groupText === ""
+    ? null
+    : Number(groupText);
 
   if (
-    !Number.isInteger(groups) ||
-    groups < 1 ||
-    groups > 300
+    groups !== null &&
+    (
+      !Number.isSafeInteger(groups) ||
+      groups < 1
+    )
   ) {
     setStatus(
-      "Please enter a group count between 1 and 300."
+      "Enter a positive whole number or leave blank for unlimited."
     );
 
     return;
   }
 
-  // ----------------------------------------------------------
-  // Clear previous results.
-  // ----------------------------------------------------------
-
   optimisationResult = null;
-
-  const tableBody = $("results");
-
-  if (tableBody) {
-    tableBody.replaceChildren();
-  }
-
-  // ----------------------------------------------------------
-  // Terminate any previous worker.
-  // ----------------------------------------------------------
+  clearResults();
 
   if (worker) {
     worker.terminate();
     worker = null;
   }
 
-  // ----------------------------------------------------------
-  // Create the optimisation worker.
-  // ----------------------------------------------------------
-
   isRunning = true;
-
   updateButtons();
 
+  const groupDescription =
+    groups === null
+      ? "unlimited groups"
+      : `up to ${groups} groups`;
+
   setStatus(
-    `Optimising ${groups} seven-aircraft groups ` +
-    `using ${AIRCRAFT_MODEL} ` +
-    `(${FIXED_ECONOMY}E + ${FIXED_CARGO}C)…`
+    `Optimising ${groupDescription} using A380-800 ` +
+    "and A350-900ULR…"
   );
 
   try {
@@ -360,10 +440,6 @@ function runOptimiser() {
 
     worker = activeWorker;
 
-    // --------------------------------------------------------
-    // Handle messages from the worker.
-    // --------------------------------------------------------
-
     activeWorker.onmessage = event => {
       if (worker !== activeWorker) {
         return;
@@ -375,23 +451,19 @@ function runOptimiser() {
         message
       } = event.data;
 
-      // ------------------------------------------------------
-      // Progress update.
-      // ------------------------------------------------------
-
       if (type === "progress") {
+        const countDescription =
+          groups === null
+            ? `${payload.completed} groups`
+            : `${payload.completed} of ${groups} groups`;
+
         setStatus(
-          `Built ${payload.completed} of ${groups} groups · ` +
-          `provisional $${formatBillions(payload.total)}` +
-          "bn/week"
+          `Built ${countDescription} · ` +
+          `provisional $${formatBillions(payload.total)}bn/week`
         );
 
         return;
       }
-
-      // ------------------------------------------------------
-      // Engine error.
-      // ------------------------------------------------------
 
       if (type === "error") {
         console.error(
@@ -409,13 +481,8 @@ function runOptimiser() {
         worker = null;
 
         updateButtons();
-
         return;
       }
-
-      // ------------------------------------------------------
-      // Optimisation completed.
-      // ------------------------------------------------------
 
       if (type === "result") {
         optimisationResult = payload;
@@ -426,25 +493,31 @@ function runOptimiser() {
         worker = null;
 
         renderResults();
+        renderFleetSummary();
+        renderDemandSummary();
 
         const completed =
           optimisationResult.rotations.length;
 
+        const fleetText = Object.values(
+          optimisationResult.fleetSummary ?? {}
+        )
+          .map(item =>
+            `${item.model}: ${item.groups} groups`
+          )
+          .join(" · ");
+
         setStatus(
           `Completed ${completed} groups · ` +
+          `${fleetText} · ` +
           `provisional $${formatBillions(
             optimisationResult.total
-          )}bn/week · ` +
-          "NOT game validated"
+          )}bn/week · NOT game validated`
         );
 
         updateButtons();
       }
     };
-
-    // --------------------------------------------------------
-    // Handle worker loading/runtime errors.
-    // --------------------------------------------------------
 
     activeWorker.onerror = event => {
       if (worker !== activeWorker) {
@@ -469,18 +542,9 @@ function runOptimiser() {
       updateButtons();
     };
 
-    // --------------------------------------------------------
-    // Send data and settings to the worker.
-    //
-    // No passengerMin setting is passed.
-    // The engine uses the fixed A380 configuration.
-    // --------------------------------------------------------
-
     activeWorker.postMessage({
       type: "run",
-
       data: preparedData,
-
       settings: {
         groups
       }
@@ -503,7 +567,7 @@ function runOptimiser() {
 }
 
 // ============================================================
-// 8. STOP OPTIMISATION
+// STOP OPTIMISER
 // ============================================================
 
 function stopOptimiser() {
@@ -511,33 +575,29 @@ function stopOptimiser() {
     return;
   }
 
-  // Terminating the worker immediately stops its computation.
   if (worker) {
     worker.terminate();
     worker = null;
   }
 
   isRunning = false;
-
   optimisationResult = null;
 
+  clearResults();
+
   setStatus(
-    "Optimisation stopped. Run again to obtain " +
-    "a complete result."
+    "Optimisation stopped. Run again to obtain a complete result."
   );
 
   updateButtons();
 }
 
 // ============================================================
-// 9. EXPORT ROTATIONS CSV
+// EXPORT CSV
 // ============================================================
 
 function downloadRotations() {
-  if (
-    !optimisationResult ||
-    !optimisationResult.rotations.length
-  ) {
+  if (!optimisationResult?.rotations?.length) {
     return;
   }
 
@@ -563,7 +623,10 @@ function downloadRotations() {
         .map(leg => leg.code)
         .join(","),
 
-      configuration_status: "FIXED_852E_4C",
+      configuration_status:
+        `FIXED_${rotation.eco}E_${rotation.cargo}C`,
+
+      scenario: "REBUILD_FROM_SCRATCH",
 
       preflight_status: "NOT_RUN"
     })
@@ -579,18 +642,13 @@ function downloadRotations() {
   );
 
   const url = URL.createObjectURL(blob);
-
   const link = document.createElement("a");
 
   link.href = url;
-
-  link.download =
-    `${HUB}_A380_Fixed_Rotations.csv`;
+  link.download = `${HUB}_Mixed_Fleet_Rotations.csv`;
 
   document.body.appendChild(link);
-
   link.click();
-
   link.remove();
 
   setTimeout(() => {
@@ -599,45 +657,29 @@ function downloadRotations() {
 }
 
 // ============================================================
-// 10. EVENT LISTENERS
+// EVENTS AND INITIALISATION
 // ============================================================
 
 function initialiseEvents() {
-  const runButton = $("run");
-  const stopButton = $("stop");
-  const downloadButton = $("download");
+  $("run")?.addEventListener(
+    "click",
+    runOptimiser
+  );
 
-  if (runButton) {
-    runButton.addEventListener(
-      "click",
-      runOptimiser
-    );
-  }
+  $("stop")?.addEventListener(
+    "click",
+    stopOptimiser
+  );
 
-  if (stopButton) {
-    stopButton.addEventListener(
-      "click",
-      stopOptimiser
-    );
-  }
-
-  if (downloadButton) {
-    downloadButton.addEventListener(
-      "click",
-      downloadRotations
-    );
-  }
+  $("download")?.addEventListener(
+    "click",
+    downloadRotations
+  );
 }
-
-// ============================================================
-// 11. INITIALISATION
-// ============================================================
 
 async function initialise() {
   initialiseEvents();
-
   updateButtons();
-
   await loadData();
 }
 
