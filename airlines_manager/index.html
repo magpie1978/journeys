@@ -18,19 +18,16 @@
     <header>
       <div>
         <p class="eyebrow">AIRLINES MANAGER · BOM</p>
-
         <h1>Rotation Optimiser</h1>
-
         <p>
-          Passenger-first fleet planning ·
-          Browser-based baseline
+          Mixed-fleet planning · Browser-based baseline
         </p>
       </div>
 
-      <span class="pill">v0.2 · Read-only</span>
+      <span class="pill">v0.5 · Read-only</span>
     </header>
 
-    <!-- SUMMARY -->
+    <!-- SUMMARY METRICS -->
     <section class="metrics">
 
       <article>
@@ -39,8 +36,8 @@
       </article>
 
       <article>
-        <small>Aircraft model</small>
-        <strong>A380-800</strong>
+        <small>Aircraft models</small>
+        <strong id="aircraft-model-count">2</strong>
       </article>
 
       <article>
@@ -50,13 +47,12 @@
 
     </section>
 
-    <!-- SETTINGS -->
+    <!-- OPTIMISATION SETTINGS -->
     <section class="panel">
 
       <h2>Optimisation settings</h2>
 
       <div class="inputs">
-
         <label>
           Maximum seven-aircraft groups
 
@@ -64,66 +60,76 @@
             id="groups"
             type="number"
             min="1"
-            max="300"
+            step="1"
+            placeholder="Unlimited"
             value="5"
           >
         </label>
-
-      </div>
-
-      <h3>Fixed aircraft configuration</h3>
-
-      <div class="inputs">
-
-        <label>
-          Aircraft
-          <input
-            type="text"
-            value="Airbus A380-800"
-            readonly
-          >
-        </label>
-
-        <label>
-          Economy seats
-          <input
-            type="number"
-            value="852"
-            readonly
-          >
-        </label>
-
-        <label>
-          Cargo units
-          <input
-            type="number"
-            value="4"
-            readonly
-          >
-        </label>
-
       </div>
 
       <p class="hint">
-        <p class="hint">
-          Scenario A: Complete BOM schedule rebuild.
-          All existing flight allocations are ignored,
-          while all owned routes are retained.
-          Every A380-800 uses 852 Economy + 4 Cargo.
-          Each group contains seven aircraft.
-          BKK, CGK, DEL and MPM are excluded.
-          Total daily demand is shared across newly
-          proposed rotation groups.
-        </p>
+        Enter a maximum number of groups, or leave
+        this field blank for unlimited optimisation.
+      </p>
+
+      <h3>Fixed aircraft configurations</h3>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Aircraft</th>
+              <th>Economy</th>
+              <th>Cargo</th>
+              <th>Category</th>
+              <th>Range (km)</th>
+              <th>Speed (km/h)</th>
+            </tr>
+          </thead>
+
+          <tbody id="aircraft-configurations">
+            <tr>
+              <td>A380-800</td>
+              <td>852</td>
+              <td>4</td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+
+            <tr>
+              <td>A350-900ULR</td>
+              <td>430</td>
+              <td>1</td>
+              <td>7</td>
+              <td>18,000</td>
+              <td>911</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="hint">
+        Scenario A: Complete BOM schedule rebuild.
+        Existing flight allocations are ignored,
+        while owned routes are retained.
+        BKK, CGK, DEL and MPM are excluded.
+        Each rotation group contains seven identical
+        aircraft using one fixed configuration.
+        All proposed groups share the same total
+        daily demand.
       </p>
 
       <div class="actions">
-
         <button id="run" disabled>
           Run optimiser
         </button>
 
-        <button id="stop" class="secondary">
+        <button
+          id="stop"
+          class="secondary"
+          disabled
+        >
           Stop
         </button>
 
@@ -134,7 +140,6 @@
         >
           Export rotations CSV
         </button>
-
       </div>
 
       <p id="status" role="status">
@@ -143,19 +148,90 @@
 
     </section>
 
-    <!-- RESULTS -->
+    <!-- FLEET SUMMARY -->
+    <section class="panel">
+
+      <h2>Fleet allocation</h2>
+
+      <p class="hint">
+        Number of seven-aircraft groups assigned
+        to each model, with provisional weekly
+        gross revenue.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Aircraft</th>
+              <th>Configuration</th>
+              <th>Groups</th>
+              <th>Aircraft used</th>
+              <th>Return services/day</th>
+              <th>Weekly gross ($)</th>
+            </tr>
+          </thead>
+
+          <tbody id="fleet-results">
+            <tr>
+              <td colspan="6">
+                Run the optimiser to see fleet allocation.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- REMAINING DEMAND -->
+    <section class="panel">
+
+      <h2>Network demand</h2>
+
+      <p class="hint">
+        Total daily demand remaining after all
+        proposed rotations have been allocated.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Demand</th>
+              <th>Starting</th>
+              <th>Allocated</th>
+              <th>Remaining</th>
+              <th>Remaining %</th>
+            </tr>
+          </thead>
+
+          <tbody id="demand-results">
+            <tr>
+              <td colspan="5">
+                Run the optimiser to see demand allocation.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ROTATION RESULTS -->
     <section class="panel">
 
       <h2>Proposed rotations</h2>
 
       <p class="hint">
-        A380-800 only · Fixed 852E + 4C configuration.
-        Exploratory greedy baseline.
+        A380-800 (852E + 4C) and A350-900ULR
+        (430E + 1C). Each group uses one aircraft
+        model and configuration.
+        Exploratory revenue-first greedy optimiser.
         No rotations have passed game preflight.
       </p>
 
       <div class="scroll">
-
         <table>
           <thead>
             <tr>
@@ -169,9 +245,7 @@
           </thead>
 
           <tbody id="results"></tbody>
-
         </table>
-
       </div>
 
     </section>
