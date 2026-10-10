@@ -1,0 +1,2275 @@
+﻿hub,airport_code,route_id,status,audit_date,audit_reliability,audit_price_economy,audit_demand_economy,audit_price_cargo,audit_demand_cargo,current_price_economy,current_demand_economy,remaining_demand_economy,current_price_cargo,current_demand_cargo,remaining_demand_cargo,error
+BOM,AAC,164695435,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1399,3802,5351,407,1245,3941,533,4762,422,406,
+BOM,AAE,164695227,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2154,3922,7602,483,1744,4171,763,6157,513,497,
+BOM,AAL,164702142,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2171,2997,7666,519,1823,3157,3157,6439,547,547,
+BOM,AAN,164695097,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",700,2887,2537,444,623,2993,1289,2257,460,452,
+BOM,AAR,164693562,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2151,2790,7592,486,1806,2940,1236,6377,512,504,
+BOM,ABA,164693887,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1411,3474,5401,429,1255,3602,194,4806,444,428,
+BOM,ABB,164695681,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2378,4580,8420,431,2315,4621,1213,9901,203,187,
+BOM,ABC,164702325,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2411,2290,8540,411,1952,2436,2436,6917,437,437,
+BOM,ABJ,164695539,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2734,5692,9713,505,2328,5974,862,10372,402,378,
+BOM,ABQ,121540839,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4459,3439,15991,590,3776,3614,206,17582,414,398,
+BOM,ABS,164695426,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1451,4608,5559,489,1189,4885,1477,4558,519,503,
+BOM,ABT,164694730,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1133,3779,4279,460,963,3968,560,3637,483,467,
+BOM,ABV,164695688,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2330,5973,8243,569,2124,6150,1038,9355,338,314,
+BOM,ACA,164703148,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5065,2917,18194,501,4406,3044,3044,15828,523,523,
+BOM,ACC,164695509,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2608,5406,9254,510,2314,5610,498,10491,305,281,
+BOM,ACY,121540860,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4051,3021,14506,509,3928,3052,1348,16186,332,324,
+BOM,ACZ,164694445,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",663,2886,2389,381,583,3003,1299,2102,396,388,
+BOM,ADA,164702938,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1407,4923,5385,546,1266,5087,5087,4846,564,564,
+BOM,ADB,164694999,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1633,4923,6293,594,1332,5225,113,6731,470,446,
+BOM,ADD,164695482,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1308,7537,4987,595,1261,7628,812,5351,465,433,
+BOM,ADE,164695164,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1066,5532,4011,478,895,5827,715,3369,504,480,
+BOM,ADF,164702941,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1334,3825,5090,436,1147,4004,4004,4377,456,456,
+BOM,ADL,164696472,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2961,3761,10541,604,2773,3840,432,12566,256,240,
+BOM,AEP,164716516,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4752,3660,17055,589,3896,3880,3880,13985,624,624,
+BOM,AER,164693942,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1388,4369,5306,524,1165,4603,1195,4457,552,536,
+BOM,AEX,121540843,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4522,2074,16218,468,4166,2128,424,18519,268,260,
+BOM,AFW,121541065,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4501,2149,16145,488,4318,2178,474,19082,221,213,
+BOM,AGA,164695642,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2673,4945,9492,523,2283,5186,74,10639,333,309,
+BOM,AGP,164694031,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2493,3660,8835,642,2198,3804,396,9952,398,382,
+BOM,AGT,164696410,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4653,2809,16697,431,4511,2837,1133,18838,265,257,
+BOM,AGU,164696104,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4910,2910,17631,501,4680,2956,1252,19436,347,339,
+BOM,AHB,164694723,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1106,5513,4170,649,884,5882,770,3336,692,668,
+BOM,AHO,164693723,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2140,2998,7554,520,1926,3097,1393,6798,537,529,
+BOM,AJF,164694734,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1208,4165,4581,502,1063,4332,924,4031,522,506,
+BOM,AJI,164695002,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1253,3711,4764,406,1090,3872,464,4144,424,408,
+BOM,AKL,54210095,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3935,5589,14083,681,3487,5801,689,15826,428,404,
+BOM,AKN,121541218,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3301,2644,11776,435,2706,2803,2803,9656,461,461,
+BOM,AKX,164694525,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1276,3931,4858,457,1122,4090,682,4275,475,459,
+BOM,ALA,164694528,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",965,5356,3603,565,791,5678,566,2954,599,575,
+BOM,ALB,121540835,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3946,3223,14122,548,3433,3362,3362,12286,572,572,
+BOM,ALC,164694011,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2379,3542,8421,622,2032,3714,306,9261,436,420,
+BOM,ALG,164695211,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2281,4996,8065,603,1870,5296,184,8627,477,453,
+BOM,ALO,121541716,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4149,2586,14863,423,3402,2741,2741,12187,449,449,
+BOM,ALP,164694879,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1347,4988,5144,523,1118,5270,158,4269,553,529,
+BOM,ALS,121541570,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4376,2487,15690,405,3763,2603,2603,13493,423,423,
+BOM,AMA,121541526,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4445,2967,15939,498,4446,2965,1261,18416,265,257,
+BOM,AMD,164694390,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",257,3843,797,570,226,3997,589,701,593,577,
+BOM,AMM,164694517,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1341,5225,5116,576,1166,5453,341,4450,600,576,
+BOM,AMS,164693808,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2246,4453,7940,752,2057,4578,1170,8847,494,478,
+BOM,ANC,121541650,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3316,3371,11832,577,2883,3518,110,13476,336,320,
+BOM,ANF,164704449,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5141,2703,18471,471,4267,2856,2856,15330,497,497,
+BOM,ANU,164695892,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4346,3793,15579,501,3476,4046,638,12463,535,519,
+BOM,AOE,164702943,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1559,3463,5997,435,1293,3660,3660,4977,459,459,
+BOM,AOI,164693719,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2018,2771,7107,483,1674,2928,1224,5898,511,503,
+BOM,AOJ,164694469,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2225,3125,7862,516,1869,3292,1588,6604,543,535,
+BOM,AOR,164702646,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1144,4017,4326,466,938,4258,4258,3547,494,494,
+BOM,APN,121540844,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",3993,2501,14294,407,3394,2626,2626,12149,427,427,
+BOM,APW,164696589,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4185,4258,14992,468,3626,4448,1040,15862,386,370,
+BOM,AQG,164694191,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1548,3215,5950,417,1253,3419,11,4819,444,428,
+BOM,AQI,164694766,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1019,4198,3822,506,876,4394,986,3286,529,513,
+BOM,AQJ,164694515,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1356,3853,5179,439,1139,4058,650,4350,462,446,
+BOM,AQP,164704269,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5156,3622,18528,532,4279,3827,3827,15378,562,562,
+BOM,ARN,164694055,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2057,4147,7249,663,1770,4340,932,7688,542,526,
+BOM,ASB,164695084,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",903,4476,3354,503,776,4685,1277,2884,526,510,
+BOM,ASK,164695543,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2763,4309,9819,381,2265,4568,1160,8051,403,387,
+BOM,ASM,164695468,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1244,5724,4727,447,1094,5954,842,4159,464,440,
+BOM,ASR,164695024,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1422,4439,5445,498,1265,4603,1195,4846,516,500,
+BOM,ASU,164696412,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4736,3248,16999,497,4154,3381,-27,19791,252,236,
+BOM,ASW,164695430,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1411,4814,5398,510,1185,5071,-41,4534,538,514,
+BOM,ATA,164704282,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5285,3622,18996,532,4492,3803,3803,16146,559,559,
+BOM,ATH,164693679,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1716,3965,6010,660,1597,4056,648,7009,331,315,
+BOM,ATL,54208825,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4361,4267,15633,752,4090,4355,-757,18040,404,380,
+BOM,ATQ,164694386,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",558,4617,2104,497,485,4818,1410,1830,518,502,
+BOM,ATZ,164695428,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1469,4407,5633,469,1233,4643,1235,4731,494,478,
+BOM,AUA,164695900,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4659,3293,16720,534,3935,3463,55,18592,354,338,
+BOM,AUH,164695094,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",731,4143,2660,618,584,4420,1012,2128,659,643,
+BOM,AUS,121540865,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4598,2614,16496,611,4598,2614,910,19512,275,267,
+BOM,AVV,164696476,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3157,2616,11252,438,2920,2682,978,12248,322,314,
+BOM,AWA,164695484,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1343,6097,5125,477,1195,6321,1209,4561,495,471,
+BOM,AWZ,164694426,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",979,5150,3660,534,881,5322,210,3294,551,527,
+BOM,AXD,164702186,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1685,2742,5896,468,1348,2925,2925,4716,500,500,
+BOM,AYP,164704283,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5218,2709,18752,420,4539,2827,2827,16314,438,438,
+BOM,AYQ,164716059,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2595,2712,9206,468,2335,2802,2802,8285,483,483,
+BOM,AYT,164695006,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1525,5595,5859,669,1410,5735,623,6891,315,291,
+BOM,AZA,121541328,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4513,2148,16188,487,3964,2235,531,17415,376,368,
+BOM,AZD,164694443,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",846,3881,3123,471,702,4101,693,2592,498,482,
+BOM,AZR,164695242,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2418,3386,8562,422,2176,3499,91,7705,436,420,
+BOM,AZS,164696017,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4496,2886,16124,441,4279,2932,1228,17766,306,298,
+BOM,BAF,121540872,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3947,2522,14127,411,3354,2648,2648,12007,432,432,
+BOM,BAH,164694147,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",868,3998,3212,594,711,4240,832,2633,629,613,
+BOM,BAL,164695009,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1271,3976,4836,451,1016,4241,833,3868,481,465,
+BOM,BAQ,164696383,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4817,3202,17292,512,3988,3386,-22,18994,360,344,
+BOM,BAX,164693894,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1335,4490,5094,537,1094,4760,1352,4177,569,553,
+BOM,BBA,164704448,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4960,2651,17815,462,4116,2801,2801,14786,488,488,
+BOM,BBO,164695745,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1096,6542,4132,440,887,6958,142,3346,468,436,
+BOM,BBU,164693872,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1716,4636,6009,612,1675,4673,1265,7085,283,267,
+BOM,BCN,164694017,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2302,4058,8140,709,1994,4239,831,8744,551,535,
+BOM,BDA,164695921,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4065,3636,14559,498,3771,3724,316,17334,213,197,
+BOM,BDL,121541760,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3952,3412,14147,585,3413,3567,159,15927,364,348,
+BOM,BDS,164702210,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1889,3036,6638,526,1624,3178,3178,5708,551,551,
+BOM,BEG,164693993,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1856,4342,6517,549,1672,4485,1077,7162,385,369,
+BOM,BEL,164696365,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4256,4713,15250,548,4169,4746,-366,17968,255,231,
+BOM,BEN,164695590,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1798,3631,6310,506,1528,3813,405,5363,531,515,
+BOM,BER,164693640,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2065,4178,7279,700,1781,4370,962,7722,572,556,
+BOM,BES,164693603,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2447,2680,8668,515,2177,2779,1075,7714,534,526,
+BOM,BEY,164694556,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1371,4899,5239,588,1124,5193,81,4295,623,599,
+BOM,BFF,121541725,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4221,3487,15124,600,3587,3661,3661,12855,630,630,
+BOM,BFI,121541217,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3981,2631,14252,432,3900,2649,945,16458,231,223,
+BOM,BFL,121541318,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4406,2754,15797,456,4161,2805,1101,17408,317,309,
+BOM,BFM,121541365,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4499,2288,16136,525,4101,2355,651,17791,363,355,
+BOM,BFS,164694087,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2473,3458,8765,585,2214,3579,171,10216,294,278,
+BOM,BFU,164702380,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1565,4487,6019,582,1298,4743,4743,4995,615,615,
+BOM,BGI,164695911,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4364,3826,15646,536,3939,3950,542,17812,313,297,
+BOM,BGO,164693823,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2273,3750,8038,583,2084,3854,446,9368,293,277,
+BOM,BGR,121540869,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3816,2964,13650,498,3520,3040,1336,14505,404,396,
+BOM,BGW,164694451,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1126,5892,4253,504,900,6287,1175,3402,538,514,
+BOM,BGY,164693736,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2114,3547,7459,608,1827,3708,300,8301,402,386,
+BOM,BHH,164694742,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1101,3774,4153,459,891,4014,606,3363,488,472,
+BOM,BHJ,164702491,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",297,5004,969,555,240,5324,5324,784,590,590,
+BOM,BHK,164695125,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",875,4125,3242,462,700,4400,992,2593,492,476,
+BOM,BHM,121541595,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4391,3248,15742,553,3732,3410,2,17717,345,329,
+BOM,BHV,164694665,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",475,5926,1742,624,408,6205,1093,1498,653,629,
+BOM,BHX,164694088,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2383,3668,8438,618,2216,3753,345,10061,261,245,
+BOM,BHY,164694198,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1298,4089,4943,483,1155,4239,831,4399,500,484,
+BOM,BIA,164702173,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2112,2723,7450,525,1731,2887,2887,6109,556,556,
+BOM,BIL,121540895,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4088,2968,14640,498,3773,3044,1340,15557,405,397,
+BOM,BIO,164702327,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2424,3247,8586,572,1939,3464,3464,6868,610,610,
+BOM,BIS,121540899,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4046,2838,14489,473,3641,2932,2932,13040,489,489,
+BOM,BJL,164695499,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3058,5480,10893,468,2695,5697,585,12194,300,276,
+BOM,BJM,164695326,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1786,5198,6263,436,1518,5458,346,5323,458,434,
+BOM,BJV,164695013,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1612,4528,6208,551,1450,4679,1271,5587,569,553,
+BOM,BJX,54211358,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4931,3224,17707,550,4091,3407,-1,19459,387,371,
+BOM,BJZ,164694015,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2544,2437,9021,435,2136,2567,863,7577,458,450,
+BOM,BKI,164694560,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1637,4465,6309,579,1743,3598,190,7376,285,269,
+BOM,BKK,53110285,error,,,,,,,,,,,,,Route verification failed: Route identity mismatch
+BOM,BLJ,164695218,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2197,3496,7758,435,1955,3624,216,6904,450,434,
+BOM,BLL,164693563,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2175,3167,7679,547,2269,2756,1052,9182,226,218,
+BOM,BLQ,164693730,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2072,3423,7305,588,1693,3631,223,7742,482,466,
+BOM,BLR,164694358,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",378,5724,1321,635,306,6087,975,1070,675,651,
+BOM,BLV,121541340,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4261,2604,15272,427,4212,2614,910,17837,212,204,
+BOM,BMV,164695140,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1307,3980,4982,439,1071,4219,811,4085,465,449,
+BOM,BNA,121541393,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4309,3572,15443,616,3609,3765,357,16575,480,464,
+BOM,BND,164694428,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",712,4143,2584,498,640,4282,874,2325,514,498,
+BOM,BNE,54211214,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3239,4654,11552,675,2963,4786,1378,12712,471,455,
+BOM,BNX,164702120,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1928,3053,6782,411,1600,3226,3226,5629,435,435,
+BOM,BOD,164693619,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2366,3098,8376,608,2303,3126,1422,9350,396,388,
+BOM,BOG,54208293,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4938,4245,17733,671,4475,4378,970,19747,442,426,
+BOM,BOI,121541096,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4146,3241,14853,552,3331,3453,45,15734,453,437,
+BOM,BOJ,164693508,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1662,3904,6411,534,1462,4061,653,5641,556,540,
+BOM,BON,164696115,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4622,2594,16585,483,4170,2679,975,17622,393,385,
+BOM,BOO,164693822,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2205,3437,7791,526,1846,3623,215,8456,391,375,
+BOM,BOS,121541081,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3915,3969,14013,693,3374,4151,743,15051,539,523,
+BOM,BOY,164695314,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2685,4931,9536,397,2887,3818,-1294,11133,197,173,
+BOM,BPX,164694196,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",972,3872,3632,434,845,4040,632,3159,453,437,
+BOM,BQN,164696133,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4452,3125,15964,479,4636,2738,1034,19078,198,190,
+BOM,BQS,164693905,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1948,3286,6855,444,1655,3450,42,5826,466,450,
+BOM,BRQ,164702137,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1972,3175,6943,483,1617,3366,3366,5693,511,511,
+BOM,BRU,164700113,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2248,3932,7946,669,2087,4026,2322,9269,334,326,
+BOM,BSB,54208488,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4384,5647,15718,650,4066,5784,672,18485,306,282,
+BOM,BSK,164695192,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2215,3345,7825,417,1860,3524,116,6573,440,424,
+BOM,BSL,164694066,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2171,3365,7666,618,1846,3533,125,8532,409,393,
+BOM,BSR,164694455,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",999,5254,3740,453,809,5588,476,3029,481,457,
+BOM,BTH,164694412,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1343,5287,5128,560,1154,5535,423,4410,586,562,
+BOM,BTM,121540889,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4077,2597,14599,426,3546,2709,2709,12701,444,444,
+BOM,BTS,164694003,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1953,3768,6873,540,1679,3944,536,5910,566,550,
+BOM,BTU,164702642,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1580,3605,6079,481,1406,3738,3738,5410,499,499,
+BOM,BTV,121540910,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3887,3080,13910,520,3342,3224,3224,11962,544,544,
+BOM,BUD,164693697,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1901,4264,6683,614,1820,4324,916,7879,284,268,
+BOM,BUF,121541406,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4005,3415,14339,585,3324,3608,3608,11901,618,618,
+BOM,BWI,121541668,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4089,3887,14646,678,3706,4008,600,16698,393,377,
+BOM,BWN,164694172,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1614,3157,6217,524,1388,3305,1601,5346,548,540,
+BOM,BYJ,164693852,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2578,2464,9146,394,2139,2604,900,7591,416,408,
+BOM,BYN,164694600,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1342,3628,5120,404,1113,3835,427,4249,427,411,
+BOM,BZN,121541076,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4086,2941,14632,493,3268,3137,3137,11705,526,526,
+BOM,BZV,164695397,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2232,4840,7888,506,1790,5160,48,8319,423,399,
+BOM,CAE,121540968,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4308,3020,15440,508,3489,3211,3211,12506,540,540,
+BOM,CAG,164693722,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2119,3262,7477,562,1864,3393,-15,6579,585,569,
+BOM,CAI,164695434,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1466,6171,5619,650,1318,6379,1267,6236,436,412,
+BOM,CAL,164694090,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2462,2301,8723,401,2323,2345,641,9953,231,223,
+BOM,CAN,164694194,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1423,6237,5448,737,1283,6442,1330,6054,491,467,
+BOM,CAY,164696395,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4293,4136,15387,486,4038,4218,810,17910,246,230,
+BOM,CBB,164705305,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4987,3428,17910,492,4139,3623,3623,14865,520,520,
+BOM,CBH,164695196,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2457,3323,8706,415,2039,3511,103,7225,439,423,
+BOM,CBR,164696483,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3236,3447,11540,559,2651,3655,247,12226,459,443,
+BOM,CBT,164695275,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2411,4437,8539,435,2538,3736,328,9860,233,217,
+BOM,CCC,164695991,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4597,2584,16494,439,4440,2613,909,18829,252,244,
+BOM,CCJ,164694360,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",412,4842,1469,537,354,5069,1661,1263,562,546,
+BOM,CCS,54208471,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4620,4278,16577,613,3587,4597,1189,17737,484,468,
+BOM,CCU,164694383,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",636,5781,2278,622,521,6130,1018,1867,659,635,
+BOM,CDB,121540962,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3294,3420,11751,586,2754,3607,199,12763,434,418,
+BOM,CDC,121540919,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4358,2479,15624,402,3922,2561,2561,14061,416,416,
+BOM,CDG,164693606,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2288,3745,8090,752,2259,3761,353,8929,518,502,
+BOM,CEB,164694695,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1845,5312,6478,587,1681,5469,357,7610,279,255,
+BOM,CEI,164694964,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",997,4585,3732,495,847,4815,1407,3172,519,503,
+BOM,CEK,164693901,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1403,5023,5367,594,1178,5292,180,4508,625,601,
+BOM,CFE,164693609,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2272,2512,8031,477,1863,2662,958,6585,506,498,
+BOM,CGD,164702384,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1381,3899,5277,460,1104,4160,4160,4221,491,491,
+BOM,CGK,55575237,error,,,,,,,,,,,,,Unexpected redirect
+BOM,CGN,164693641,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2191,3721,7737,627,2024,3816,408,9123,290,274,
+BOM,CGO,164694311,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1476,5121,5663,605,1328,5293,181,5096,625,601,
+BOM,CGP,164694161,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",740,5928,2698,564,621,6246,1134,2266,594,570,
+BOM,CGQ,164694263,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1856,4376,6517,568,1750,4460,1052,7507,309,293,
+BOM,CHC,164696557,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3908,4768,13987,601,3120,5088,-24,14779,499,475,
+BOM,CHQ,164693680,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1698,3139,5943,531,1358,3349,-59,4754,566,550,
+BOM,CHR,164693604,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2306,2141,8157,395,1937,2255,551,6851,416,408,
+BOM,CHS,121540932,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4323,3181,15497,540,3544,3372,3372,12707,572,572,
+BOM,CID,121541660,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4167,3001,14927,504,3750,3102,3102,13434,521,521,
+BOM,CIH,164702413,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1471,3987,5641,471,1294,4147,4147,4964,489,489,
+BOM,CIX,164704276,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5317,2880,19114,441,4732,2986,2986,17011,457,457,
+BOM,CJB,164702473,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",430,4648,1547,516,387,4803,4803,1392,533,533,
+BOM,CJC,164704457,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5091,2687,18291,468,4072,2867,2867,14632,500,500,
+BOM,CJJ,164702977,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1866,3335,6556,507,1679,3447,3447,5900,524,524,
+BOM,CJS,164703128,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4577,3068,16419,525,3798,3242,3242,13627,555,555,
+BOM,CJU,164694843,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1830,4422,6426,639,1748,4488,1080,7493,320,304,
+BOM,CKG,164694240,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1236,5780,4697,648,988,6166,1054,3757,692,668,
+BOM,CKY,164695520,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3002,5488,10688,462,2531,5775,663,11401,369,345,
+BOM,CLE,121541162,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4089,3594,14643,621,3434,3786,638,12300,654,612,
+BOM,CLO,164705338,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5023,3383,18043,540,4118,3586,3586,14795,572,572,
+BOM,CLT,54210694,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4267,4157,15291,730,3805,4307,899,16833,509,493,
+BOM,CMB,164694868,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",593,4329,2251,551,486,4590,1182,1845,584,568,
+BOM,CMH,121541194,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4145,3461,14846,594,3518,3635,227,16324,417,401,
+BOM,CMN,54211038,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2598,5414,9220,594,2405,5548,436,10955,258,234,
+BOM,CMW,164695990,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4615,2553,16558,435,4594,2556,852,19560,198,190,
+BOM,CND,164693876,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1659,3679,6397,498,1459,3827,419,5629,517,501,
+BOM,CNF,54210321,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4284,5228,15353,604,3844,5407,295,17841,310,286,
+BOM,CNS,164696480,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2883,3510,10254,568,2511,3661,253,11542,354,338,
+BOM,CNX,164694962,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",970,5236,3624,556,863,5429,317,3225,576,552,
+BOM,COD,121541776,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4132,2602,14800,427,3512,2732,2732,12580,448,448,
+BOM,COK,164694365,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",449,5177,1631,574,395,5385,273,1435,597,573,
+BOM,COQ,164702668,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1652,3295,6371,403,1371,3482,3482,5287,426,426,
+BOM,COR,164696328,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4932,3090,17710,511,4580,3164,1460,18821,415,407,
+BOM,COS,121540958,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4328,3143,15514,532,4223,3169,21,17312,347,305,
+BOM,CPH,164693568,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2108,3909,7434,665,1975,3991,583,8770,306,290,
+BOM,CPR,121541394,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4188,2712,15004,448,3808,2794,1090,15937,364,356,
+BOM,CPT,54210742,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2672,5651,9490,615,2453,5805,693,11030,315,291,
+BOM,CRK,164694688,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1692,4224,5922,484,1505,4380,972,5270,502,486,
+BOM,CRL,164702111,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2248,3402,7945,584,1933,3560,3560,6832,611,611,
+BOM,CSX,164694213,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1426,5835,5460,689,1207,6134,1022,5776,569,545,
+BOM,CTC,164716038,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4987,2431,17912,420,4089,2576,2576,14687,446,446,
+BOM,CTS,164694491,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2250,4398,7952,692,2102,4495,1087,9066,401,385,
+BOM,CTU,164694286,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1166,6107,4415,685,967,6454,1342,3664,724,700,
+BOM,CUN,54208790,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4783,4128,17168,695,4354,4252,844,19349,430,414,
+BOM,CUR,164696118,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4639,2744,16646,510,4529,2766,1062,19015,292,284,
+BOM,CUU,164703151,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4677,3085,16785,528,3881,3260,3260,13931,558,558,
+BOM,CUZ,164704267,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5148,3494,18497,517,4581,3623,3623,16462,536,536,
+BOM,CVG,121541424,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4194,3628,15027,627,3609,3797,389,16529,439,423,
+BOM,CWB,164716442,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4477,3764,16058,591,3939,3915,3915,14131,614,614,
+BOM,CXR,164695142,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1349,4468,5150,490,1106,4736,1328,4223,519,503,
+BOM,CYO,164695998,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4678,2611,16788,443,4326,2676,972,18276,325,317,
+BOM,CYS,121540944,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4247,2538,15221,414,3907,2605,901,16565,304,296,
+BOM,CZL,164695216,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2188,3785,7725,467,1750,4038,630,6180,498,482,
+BOM,CZM,164703133,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4799,2814,17228,485,3935,2983,2983,14126,514,514,
+BOM,CZX,164694204,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1632,3734,6289,484,1387,3921,513,5345,508,492,
+BOM,DAB,121540983,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4449,2853,15954,476,4421,2859,1155,18430,254,246,
+BOM,DAC,164694156,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",705,6111,2557,582,599,6418,1306,2173,611,587,
+BOM,DAD,164695146,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1284,4765,4887,522,1040,5067,-45,3958,555,531,
+BOM,DAL,121541280,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4503,2592,16152,605,4052,2678,2678,14536,625,625,
+BOM,DAM,164694889,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1339,5373,5110,558,1191,5571,459,4547,579,555,
+BOM,DAR,164695790,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1572,5372,6047,516,1273,5712,600,4898,548,524,
+BOM,DAY,121541190,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4163,3211,14912,546,3335,3424,16,15796,448,432,
+BOM,DBV,164693535,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1890,3591,6644,512,1549,3806,398,5448,542,526,
+BOM,DCN,164696485,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2259,2409,7986,422,1852,2554,850,6548,447,439,
+BOM,DDG,164702390,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1794,3368,6295,437,1471,3570,3570,5161,463,463,
+BOM,DEC,121540986,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4211,2520,15088,411,3495,2663,2663,12523,434,434,
+BOM,DEL,118492729,error,,,,,,,,,,,,,Unexpected redirect
+BOM,DEN,54209013,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4291,4267,15381,752,3763,4442,1034,16527,584,568,
+BOM,DEZ,164694893,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1259,4106,4789,425,1082,4298,890,4118,445,429,
+BOM,DGO,164696100,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4833,2808,17353,484,4685,2836,1132,19589,297,289,
+BOM,DHN,121541002,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4445,2648,15941,436,3556,2824,2824,12752,465,465,
+BOM,DIG,164694302,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1017,4091,3812,459,813,4364,956,3049,489,473,
+BOM,DIY,164695022,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1293,4556,4925,509,1163,4709,1301,4432,526,510,
+BOM,DJE,164695831,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2073,4271,7309,546,1944,4360,952,8417,297,281,
+BOM,DJG,164695214,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2142,3373,7561,420,1884,3509,101,6653,437,421,
+BOM,DLA,164695336,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2303,5234,8147,494,1937,5511,399,8804,374,350,
+BOM,DLC,164694324,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1716,4788,6009,621,1465,5021,-91,6825,368,344,
+BOM,DLH,121541011,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4005,2782,14340,462,3746,2842,1138,15613,338,330,
+BOM,DLM,164695016,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1577,4612,6070,561,1356,4827,1419,5220,587,571,
+BOM,DME,164693927,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1666,5273,6427,677,1404,5550,438,6967,506,482,
+BOM,DMK,164694968,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1053,7090,3957,732,895,7445,629,3363,769,737,
+BOM,DMM,164694754,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",894,4170,3319,567,804,4310,902,2987,586,570,
+BOM,DNH,164694223,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1094,4008,4123,449,918,4223,815,3463,473,457,
+BOM,DNK,164694075,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1574,4133,6057,536,1290,4382,974,4966,568,552,
+BOM,DNZ,164695020,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1562,3594,6006,449,1405,3715,307,5405,464,448,
+BOM,DOH,164694707,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",831,4398,3065,653,681,4662,1254,2513,692,676,
+BOM,DOK,164694077,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1518,3746,5830,489,1290,3934,526,4955,514,498,
+BOM,DOL,164702170,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2342,2371,8288,446,1873,2529,2529,6630,476,476,
+BOM,DOM,164696004,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4365,3990,15650,458,3940,4119,711,17588,288,272,
+BOM,DPS,164694408,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1848,5161,6489,597,1599,5393,281,7282,378,354,
+BOM,DRO,121541236,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4387,2805,15727,466,4205,2844,1140,17541,305,297,
+BOM,DRS,164693644,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2050,3127,7226,532,1763,3273,1569,6214,557,549,
+BOM,DRW,164696486,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2369,3111,8386,528,2360,3115,1411,9579,302,294,
+BOM,DSA,164694104,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2368,2960,8383,506,2060,3088,1384,7293,528,520,
+BOM,DSM,121540994,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4192,3124,15018,528,3437,3311,3311,12314,560,560,
+BOM,DSS,164695721,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3057,6174,10888,555,2688,6423,-393,11782,418,386,
+BOM,DTW,54210726,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4081,4052,14614,710,3535,4233,825,15699,552,536,
+BOM,DUB,164693710,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2476,4646,8777,688,2677,3514,106,10385,310,294,
+BOM,DUR,164695762,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2298,5199,8126,574,2101,5347,235,9652,250,226,
+BOM,DUS,164693646,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2201,3983,7773,669,1898,4166,758,8347,520,504,
+BOM,DVO,164694689,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1932,4289,6796,540,1564,4561,1153,5504,575,559,
+BOM,DWC,164695101,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",719,3524,2614,503,639,3655,247,2326,521,505,
+BOM,DWD,164694763,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1056,3316,3972,410,887,3493,85,3336,432,416,
+BOM,DXB,164695106,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",717,5094,2604,750,609,5350,238,2213,788,764,
+BOM,DYG,164702416,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1346,4354,5136,514,1130,4586,4586,4314,541,541,
+BOM,DYR,164693954,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2840,3180,10101,417,2319,3375,-33,10942,312,296,
+BOM,DYU,164694945,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",801,4587,2944,500,656,4863,1455,2414,530,514,
+BOM,EAM,164694758,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1051,3939,3949,477,851,4188,780,3198,508,492,
+BOM,EBB,164695841,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1636,5404,6304,507,1325,5747,635,5106,539,515,
+BOM,EBD,164695776,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1543,4206,5931,402,1296,4431,1023,4982,423,407,
+BOM,EBJ,164702143,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2185,2594,7715,456,1748,2767,2767,6172,486,486,
+BOM,EBL,164694458,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1175,6151,4450,526,1057,6357,1245,4005,544,520,
+BOM,ECP,121541436,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4480,2404,16066,555,4407,2417,713,18997,251,243,
+BOM,EDI,164702359,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2417,3663,8559,618,2175,3785,3785,7703,638,638,
+BOM,EDL,164695552,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1545,4291,5939,416,1359,4464,1056,5226,432,416,
+BOM,EGE,121541021,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4301,2835,15415,472,3741,2958,2958,13411,492,492,
+BOM,EIN,164693812,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2231,3502,7882,600,1878,3686,278,8563,445,429,
+BOM,EJH,164694736,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1299,3256,4949,422,1052,3462,54,4008,449,433,
+BOM,ELF,164695775,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1699,4510,5948,431,1478,4706,1298,5174,449,433,
+BOM,ELG,164695200,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2312,3100,8179,390,1942,3265,1561,6870,410,402,
+BOM,ELP,121541027,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4571,2403,16397,555,4064,2492,788,17430,450,442,
+BOM,ELQ,164694740,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1075,3916,4048,475,870,4165,757,3278,505,489,
+BOM,ELU,164695206,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2188,3256,7728,408,1816,3440,32,6414,431,415,
+BOM,EMA,164694091,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2375,3481,8407,588,2108,3612,204,9688,319,303,
+BOM,ENY,164694313,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1380,3698,5275,436,1131,3920,512,4325,462,446,
+BOM,EOH,164715483,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4944,3172,17756,507,4301,3309,3309,15447,529,529,
+BOM,ERC,164695028,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1336,3913,5098,445,1082,4161,753,4129,473,457,
+BOM,ERF,164702177,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2109,2725,7440,468,1792,2862,2862,6324,492,492,
+BOM,ERH,164695653,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2517,3627,8923,401,2445,3661,253,9708,295,279,
+BOM,ERZ,164695031,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1301,4349,4958,489,1144,4524,1116,4363,508,492,
+BOM,ESB,164695032,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1501,5401,5762,594,1290,5654,542,4955,621,597,
+BOM,ETM,164694465,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1357,3186,5183,457,1180,3324,-84,4509,477,461,
+BOM,ETZ,164693622,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2204,2447,7786,463,1763,2610,906,6228,494,486,
+BOM,EVE,164693830,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2195,3077,7752,486,1887,3221,1517,6666,508,500,
+BOM,EVN,164694132,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1231,4815,4675,520,1083,5008,-104,4114,541,517,
+BOM,EWR,121541399,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4010,4092,14356,718,3563,4244,836,15802,501,485,
+BOM,EZE,54208802,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4754,3810,17064,610,4424,3898,2194,20119,282,274,
+BOM,FAI,121541046,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3240,2980,11555,501,3028,3045,1341,12431,387,379,
+BOM,FAO,164702285,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2585,3870,9173,583,2068,4128,4128,7338,622,622,
+BOM,FAR,121541140,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4027,2946,14420,494,3543,3064,3064,12689,514,514,
+BOM,FAT,121541071,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4357,3042,15618,513,4375,3004,1300,18048,273,265,
+BOM,FBM,164695407,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1988,5395,6999,456,1669,5684,572,5879,480,456,
+BOM,FCA,121541090,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",3991,2816,14289,468,3591,2910,2910,12860,484,484,
+BOM,FCO,164693732,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2040,4287,7188,726,2164,3505,1801,8410,355,347,
+BOM,FDF,164696084,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4376,4086,15690,537,3842,4252,844,17032,399,383,
+BOM,FEZ,164695649,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2521,4316,8939,484,2319,4431,1023,10050,303,287,
+BOM,FIH,164695409,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2228,5699,7873,483,1898,5980,868,8403,386,362,
+BOM,FJR,164695108,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",686,2640,2483,420,562,2799,1095,2036,445,437,
+BOM,FKB,164693639,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2162,3002,7634,513,1924,3112,1408,6794,531,523,
+BOM,FKI,164695404,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1848,5403,6491,456,1496,5746,634,5257,485,461,
+BOM,FLL,121541152,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4526,2864,16233,677,3937,2989,2989,14122,706,706,
+BOM,FMM,164693656,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2110,2797,7445,480,1772,2947,1243,6253,505,497,
+BOM,FNA,164695732,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2998,5678,10676,451,2727,5849,737,12226,254,230,
+BOM,FNC,164693859,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2862,3731,10179,545,2674,3813,405,12127,232,216,
+BOM,FNJ,164694641,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1826,3679,6411,444,1606,3827,419,5641,461,445,
+BOM,FNL,121541057,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4272,2617,15309,429,3844,2705,2705,13778,444,444,
+BOM,FOC,164694212,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1621,4521,6245,587,1458,4673,1265,5620,606,590,
+BOM,FOR,164716526,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3962,5033,14182,583,3565,5201,5201,12763,602,602,
+BOM,FPO,164696159,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4487,2631,16092,475,4348,2658,954,18377,272,264,
+BOM,FRA,164693649,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2157,4504,7613,752,1914,4673,1265,8180,584,568,
+BOM,FRU,164694547,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",947,5154,3533,489,804,5413,301,3003,514,490,
+BOM,FSD,121541191,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4140,2935,14830,492,3519,3082,3082,12605,516,516,
+BOM,FUK,164694474,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1944,4400,6840,693,1716,4572,1164,7346,539,523,
+BOM,FWA,121541062,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4139,2893,14825,483,3986,2928,1224,16538,316,308,
+BOM,GAF,164695823,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2128,3131,7510,404,1787,3299,1595,6308,425,417,
+BOM,GAN,164702654,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",802,3440,2946,444,705,3579,3579,2592,461,461,
+BOM,GAU,164694379,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",762,5121,2785,534,670,5327,215,2450,556,532,
+BOM,GBE,164695303,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2298,4142,8129,474,1930,4363,955,6828,500,484,
+BOM,GCN,121541099,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4421,2916,15853,488,3669,3081,3081,13157,515,515,
+BOM,GDL,164703134,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4954,3862,17791,652,4260,4043,4043,15300,682,682,
+BOM,GDN,164693843,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1985,3613,6989,529,1687,3793,385,5940,555,539,
+BOM,GDX,164693945,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2447,3183,8668,431,2006,3374,-34,7107,457,441,
+BOM,GEG,121541621,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4003,3257,14332,555,3602,3366,3366,12898,573,573,
+BOM,GEO,164696401,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4446,4280,15944,458,3902,4454,1046,17077,360,344,
+BOM,GES,164694693,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1926,3813,6774,480,1598,4029,621,5622,507,491,
+BOM,GGG,121541022,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4504,1915,16155,426,3846,2009,305,17369,329,321,
+BOM,GHA,164695223,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2278,3412,8054,425,1936,3582,174,6845,446,430,
+BOM,GIG,54208814,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4280,5549,15341,639,3868,5727,-1089,17634,352,320,
+BOM,GIZ,164694750,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1114,4121,4204,498,935,4342,934,3531,524,508,
+BOM,GJT,121541711,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4318,2872,15478,480,4012,2940,1236,16650,370,362,
+BOM,GLA,164702360,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2437,3624,8633,612,1973,3854,3854,6992,650,650,
+BOM,GLK,164695740,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1071,6330,4031,423,878,6710,-106,3305,449,417,
+BOM,GME,164702108,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1724,3083,6039,423,1430,3258,3258,5012,446,446,
+BOM,GMP,164694835,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1849,4490,6495,647,1754,4567,1159,7488,350,334,
+BOM,GNB,164693610,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2219,2467,7840,468,1775,2631,927,6272,499,491,
+BOM,GND,164703085,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4449,3965,15954,471,3603,4217,4217,12922,501,501,
+BOM,GOA,164693744,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2132,2979,7522,517,1833,3118,1414,6468,541,533,
+BOM,GOI,164694369,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",251,3747,770,556,208,3961,553,639,588,572,
+BOM,GOJ,164693932,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1603,3471,6173,465,1330,3668,260,5123,491,475,
+BOM,GOQ,164694226,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1012,3758,3792,421,819,3997,589,3071,448,432,
+BOM,GOT,164694056,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2132,3502,7522,571,1856,3653,245,8467,356,340,
+BOM,GOU,164695338,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2127,4439,7507,418,1765,4690,1282,6230,442,426,
+BOM,GPA,164693671,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1785,2529,6260,435,1499,2664,960,5258,458,450,
+BOM,GPT,121541117,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4517,2194,16202,499,3929,2289,2289,14095,521,521,
+BOM,GRB,121540868,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4053,2944,14515,493,3404,3101,3101,12192,519,519,
+BOM,GRK,121541216,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4569,2120,16392,480,4094,2194,490,18068,332,324,
+BOM,GRR,121541088,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4082,3131,14617,530,3242,3346,-62,15480,436,420,
+BOM,GRU,136105762,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4384,6099,15720,699,4112,6226,-590,16886,544,512,
+BOM,GRV,164702293,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1268,3529,4824,435,1141,3647,3647,4341,449,449,
+BOM,GRX,164694019,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2471,2945,8755,521,2549,2666,962,10466,215,207,
+BOM,GRZ,164693473,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1985,2990,6989,507,1766,3100,1396,6220,526,518,
+BOM,GSO,121541467,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4226,3126,15144,529,4307,2946,1242,17703,261,253,
+BOM,GSP,121541113,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4293,3057,15388,516,4266,3064,1360,17578,295,287,
+BOM,GTF,121541104,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4027,2804,14418,466,3682,2884,1180,15316,379,371,
+BOM,GUA,164703095,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5035,4195,18087,551,4028,4475,4475,14469,588,588,
+BOM,GUC,121541118,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4339,2648,15554,436,4022,2712,1008,16931,320,312,
+BOM,GUM,164696530,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2492,3190,8834,546,2575,2872,1168,10445,247,239,
+BOM,GUW,164694532,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1253,3332,4764,388,1039,3522,114,3954,410,394,
+BOM,GVA,164694063,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2201,3622,7776,667,1913,3780,372,8658,440,424,
+BOM,GXF,164695173,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",918,4221,3414,418,780,4432,1024,2901,439,423,
+BOM,GYD,164694140,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1118,4918,4220,534,894,5247,135,3376,570,546,
+BOM,GYE,164704637,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5237,3855,18820,561,4503,4035,4035,16185,587,587,
+BOM,GZT,164695057,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1350,4464,5153,500,1201,4628,1220,4586,518,502,
+BOM,HAH,164695387,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1578,4852,6071,480,1278,5160,48,4917,511,487,
+BOM,HAJ,164693654,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2144,3437,7567,582,1955,3538,130,9019,246,230,
+BOM,HAK,164694274,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1339,5193,5109,613,1071,5540,428,4087,654,630,
+BOM,HAM,164693653,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2145,3702,7571,624,1856,3869,461,8326,437,421,
+BOM,HAN,164695151,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1186,5427,4495,563,1008,5698,586,3820,591,567,
+BOM,HAS,164694746,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1145,3923,4329,476,984,4107,699,3722,498,482,
+BOM,HAV,54209167,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4653,3696,16697,599,4115,3838,430,18802,372,356,
+BOM,HBE,164695433,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1519,3924,5835,459,1275,4135,727,4901,484,468,
+BOM,HBT,164694749,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1033,3245,3878,402,888,3397,-11,3335,420,404,
+BOM,HDN,121541773,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4272,2779,15310,461,4273,2777,1073,17887,228,220,
+BOM,HDY,164694969,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1132,4853,4278,520,1007,5032,-80,3807,539,515,
+BOM,HEA,164702367,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",734,3367,2675,474,653,3491,3491,2380,491,491,
+BOM,HEL,164693590,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1957,3901,6885,642,1659,4099,691,7301,526,510,
+BOM,HER,164702189,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1668,3497,6436,587,1401,3683,3683,5406,618,618,
+BOM,HET,164694192,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1487,4686,5705,553,1204,4983,1575,4621,588,572,
+BOM,HFE,164694267,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1559,4300,5997,558,1309,4530,1122,5037,588,572,
+BOM,HGH,164694308,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1647,5028,6351,653,1399,5280,168,7049,437,413,
+BOM,HHN,164693650,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2185,3095,7715,537,2077,3146,1442,8405,393,385,
+BOM,HIN,164702979,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1878,2893,6599,454,1615,3028,3028,5675,475,475,
+BOM,HKD,164694475,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2228,3235,7873,531,1849,3419,11,6534,561,545,
+BOM,HKG,164694232,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1444,6365,5533,752,1179,6754,-62,5988,566,534,
+BOM,HKT,164694976,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1051,5595,3949,591,882,5895,783,3317,622,598,
+BOM,HLA,164695765,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2282,3957,8068,450,1871,4194,786,6615,477,461,
+BOM,HLD,164702393,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1775,3733,6223,484,1420,3982,3982,4978,516,516,
+BOM,HLN,121541143,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4056,2734,14523,453,3407,2880,2880,12199,477,477,
+BOM,HLP,164694411,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1568,3870,6034,459,1254,4128,720,4827,490,474,
+BOM,HME,164695226,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2212,3891,7814,479,1813,4125,717,6407,508,492,
+BOM,HND,164694478,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2207,4830,7796,752,2195,4839,1431,9306,315,299,
+BOM,HNL,54211347,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4117,3820,14747,665,3714,3944,536,16812,385,369,
+BOM,HOD,164695165,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1116,4765,4210,414,1004,4925,1517,3789,427,411,
+BOM,HOF,164694737,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",895,2964,3320,417,787,3083,1379,2921,434,426,
+BOM,HOG,164695987,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4601,2986,16509,497,4301,3051,1347,17761,384,376,
+BOM,HOI,164715868,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5222,2237,18766,408,4334,2364,2364,15575,431,431,
+BOM,HRB,164694289,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1881,4605,6611,598,1697,4755,1347,7182,443,427,
+BOM,HRE,164695871,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2025,5139,7133,488,1867,5272,160,7738,364,340,
+BOM,HRG,164695438,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1384,5681,5290,600,1405,5423,311,5764,438,414,
+BOM,HRL,121541701,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4731,2179,16982,495,4115,2273,2273,14774,517,517,
+BOM,HRM,164695208,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2290,3336,8098,417,1900,3526,118,6721,440,424,
+BOM,HSV,121541167,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4357,3039,15619,512,4278,3058,1354,17635,313,305,
+BOM,HTA,164693903,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1690,3318,5914,447,1352,3539,131,4731,477,461,
+BOM,HTN,164694236,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",773,3548,2833,454,641,3750,342,2351,480,464,
+BOM,HTY,164695033,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1374,4156,5251,469,1112,4420,1012,4253,499,483,
+BOM,HUI,164702895,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1265,4624,4813,483,1138,4778,4778,4331,499,499,
+BOM,HUX,164703131,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5068,2922,18208,502,4105,3107,3107,14748,534,534,
+BOM,HVD,164694605,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1245,3874,4731,410,996,4132,724,3784,437,421,
+BOM,HYD,54209477,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",312,5473,1036,607,271,5713,4009,901,633,625,
+BOM,IAD,121541009,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4107,3917,14711,684,3649,4063,655,16384,450,434,
+BOM,IAG,121541408,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4003,2460,14330,399,3913,2478,774,16732,198,190,
+BOM,IAH,54209178,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4589,3087,16464,735,4618,3028,-380,19047,389,373,
+BOM,IAM,164695243,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2120,3613,7481,447,1696,3853,445,5984,477,461,
+BOM,IBZ,164694027,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2325,3283,8226,578,2088,3394,-14,9804,245,229,
+BOM,ICN,164694839,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1839,5002,6459,709,1508,5303,1895,6919,557,541,
+BOM,ICT,121541729,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4344,3090,15573,522,4131,3140,1436,16963,382,374,
+BOM,IDA,121541050,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4162,2796,14908,465,3745,2889,2889,13417,480,480,
+BOM,IFN,164694439,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",921,4481,3425,531,746,4765,1357,2774,565,549,
+BOM,IFO,164702347,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1797,3329,6303,438,1545,3485,3485,5420,459,459,
+BOM,IGR,164696326,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4642,2928,16658,489,4327,2994,1290,17920,377,369,
+BOM,IKA,164694430,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",988,5394,3695,571,790,5754,642,2956,609,585,
+BOM,IKS,164693949,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2242,3031,7923,414,1950,3162,1458,6893,431,423,
+BOM,IKT,164693908,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1542,3834,5929,507,1295,4039,631,4980,534,518,
+BOM,IMF,164702477,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",819,4662,3016,486,687,4912,4912,2533,512,512,
+BOM,INC,164694229,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1320,4592,5035,542,1135,4807,1399,4330,567,551,
+BOM,IND,121541172,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4190,3519,15012,606,3533,3703,295,16309,448,432,
+BOM,INZ,164695231,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2340,3257,8279,408,2106,3366,-42,7451,421,405,
+BOM,IQQ,164704454,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5128,2754,18427,479,4307,2901,2901,15478,504,504,
+BOM,IRJ,164715996,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5016,2423,18017,419,4213,2552,2552,15134,441,441,
+BOM,ISB,164694666,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",620,5670,2217,580,533,5936,824,1906,607,583,
+BOM,ISE,164695065,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1545,3224,5939,408,1344,3364,-44,5166,426,410,
+BOM,IST,164695037,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1619,4311,6236,752,1406,4500,1092,6617,614,598,
+BOM,ITM,164694479,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2086,4171,7355,660,1904,4292,884,8286,409,393,
+BOM,ITO,121541145,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4225,3065,15139,517,4013,3117,1413,16490,378,370,
+BOM,IXB,164694354,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",675,4575,2438,492,580,4790,1382,2096,515,499,
+BOM,IXC,164702471,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",537,4561,2011,491,461,4776,4776,1729,514,514,
+BOM,IXE,164694381,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",341,4513,1160,501,300,4694,1286,1020,521,505,
+BOM,IXL,164694375,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",658,4301,2367,463,552,4532,1124,1988,488,472,
+BOM,IXR,164702468,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",545,4388,2046,472,436,4681,4681,1636,504,504,
+BOM,IXZ,164694398,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",827,4670,3050,487,661,4983,1575,2440,520,504,
+BOM,JAI,164694374,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",402,4755,1425,528,333,5027,3323,1182,558,550,
+BOM,JAN,121541178,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4466,2257,16017,516,4019,2333,2333,14415,533,533,
+BOM,JAU,164704284,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5246,2564,18853,402,4354,2709,2709,15647,425,425,
+BOM,JAX,121541184,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4419,3428,15846,588,3863,3572,164,18051,342,326,
+BOM,JDH,164702482,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",366,3928,1270,435,314,4114,4114,1092,456,456,
+BOM,JED,164694752,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1210,5559,4592,654,1064,5783,671,4040,680,656,
+BOM,JFK,54210679,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4005,4251,14340,749,3833,4312,-800,16928,343,319,
+BOM,JGA,164702480,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",268,2920,843,433,225,3076,3076,708,456,456,
+BOM,JGS,164702396,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1469,3734,5633,441,1189,3971,3971,4562,468,468,
+BOM,JHB,164694576,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1321,4167,5036,518,1162,4334,926,4431,539,523,
+BOM,JIB,164695412,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1139,5595,4306,453,1013,5801,689,3832,470,446,
+BOM,JIU,164694268,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1507,3642,5787,430,1250,3850,442,4803,454,438,
+BOM,JJN,164702399,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1588,4063,6114,528,1365,4253,4253,5258,552,552,
+BOM,JNB,164695769,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2279,5918,8057,669,2006,6155,1043,8840,473,449,
+BOM,JNG,164694242,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1551,3417,5964,444,1364,3555,147,5248,461,445,
+BOM,JNU,121541201,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3543,2938,12658,492,3188,3036,3036,11392,509,509,
+BOM,JNZ,164702401,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1719,3302,6021,429,1495,3446,3446,5238,447,447,
+BOM,JRH,164702489,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",844,4100,3118,428,759,4238,4238,2806,442,442,
+BOM,JRO,164695794,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1560,4865,6001,466,1248,5189,77,4800,497,473,
+BOM,JUL,164704285,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5104,2997,18339,456,4338,3147,3147,15588,478,478,
+BOM,JYV,164702157,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1982,2518,6979,437,1645,2661,2661,5792,462,462,
+BOM,JZH,164694239,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1180,4725,4471,530,1014,4947,1539,3845,554,538,
+BOM,KAC,164694896,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1256,4011,4776,417,1042,4239,831,3964,440,424,
+BOM,KAD,164695683,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2311,4693,8175,444,2033,4881,1473,7194,462,446,
+BOM,KAN,164695686,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2259,6259,7987,597,2175,6337,1225,9490,259,235,
+BOM,KBL,164694116,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",664,3870,2394,540,551,4090,682,1987,571,555,
+BOM,KBP,164694072,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1690,4587,5916,591,1663,4611,1203,7052,250,234,
+BOM,KBV,164694970,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1071,4611,4032,497,931,4812,1404,3507,518,502,
+BOM,KCH,164694562,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1523,4193,5849,558,1279,4417,1009,4913,588,572,
+BOM,KDH,164694114,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",600,3198,2284,466,510,3357,-51,1941,489,473,
+BOM,KEF,164693700,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2715,3578,9643,538,2249,3783,375,10213,443,427,
+BOM,KEJ,164693912,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1414,3807,5412,464,1230,3972,564,4708,484,468,
+BOM,KEM,164702164,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2057,2529,7252,438,1686,2681,2681,5946,465,465,
+BOM,KER,164694432,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",748,4074,2733,490,613,4319,911,2241,519,503,
+BOM,KGF,164694537,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1174,3880,4445,436,974,4101,693,3689,461,445,
+BOM,KGL,164695708,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1739,4981,6092,446,1443,5264,152,5056,471,447,
+BOM,KGP,164702296,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1606,3408,6185,458,1349,3590,3590,5195,482,482,
+BOM,KHG,164694244,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",831,3802,3065,487,722,3968,560,2666,508,492,
+BOM,KHH,164694913,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1648,3572,6354,570,1367,3775,367,5273,603,587,
+BOM,KHI,164694668,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",390,5599,1375,590,327,5900,788,1155,621,597,
+BOM,KHN,164694210,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1508,4818,5792,569,1296,5044,-68,4981,595,571,
+BOM,KHV,164693914,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2106,3857,7428,510,1801,4043,635,7962,400,384,
+BOM,KIM,164695758,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2419,3782,8569,431,2056,3971,563,7283,452,436,
+BOM,KIN,164703111,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4687,3600,16820,529,3749,3840,3840,13456,564,564,
+BOM,KIV,164693796,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1681,4394,5881,499,1361,4673,1265,4763,531,515,
+BOM,KIX,164694483,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2081,4556,7336,714,1980,4630,1222,8463,384,368,
+BOM,KJA,164693920,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1495,4259,5738,513,1196,4543,1135,4590,547,531,
+BOM,KJT,164694414,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1611,5418,6205,625,1369,5689,577,6722,469,445,
+BOM,KLU,164702099,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2009,2782,7075,476,1707,2921,2921,6013,500,500,
+BOM,KLX,164693683,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1763,2570,6182,442,1445,2724,1020,5069,469,461,
+BOM,KMG,164694250,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1094,5981,4122,671,875,6380,1268,3297,716,692,
+BOM,KMJ,164694487,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1956,3465,6882,563,1682,3626,218,5918,589,573,
+BOM,KMQ,164702600,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2112,3250,7450,533,1752,3435,3435,6183,563,563,
+BOM,KNO,164694416,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1145,6202,4328,640,984,6493,1381,3722,670,646,
+BOM,KOA,121541228,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4198,3219,15043,547,3671,3354,-54,17525,276,260,
+BOM,KOJ,164694480,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1952,3687,6868,594,1620,3896,488,5700,627,611,
+BOM,KRK,164702277,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1914,3817,6729,555,1665,3983,3983,5854,579,579,
+BOM,KRL,164694246,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",991,4139,3707,464,832,4361,953,3113,489,473,
+BOM,KRN,164702336,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2143,2680,7562,456,1821,2814,2814,6427,478,478,
+BOM,KRP,164693565,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2179,2661,7694,466,1830,2803,1099,6462,491,483,
+BOM,KRR,164693917,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1433,4388,5488,526,1275,4550,1142,4884,545,529,
+BOM,KRT,164695778,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1449,5357,5552,465,1275,5571,459,4885,484,460,
+BOM,KRY,164702404,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1092,3734,4117,418,939,3908,3908,3540,438,438,
+BOM,KSC,164694002,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1869,3345,6565,488,1607,3501,93,5645,511,495,
+BOM,KSD,164702334,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2130,2537,7517,435,1874,2638,2638,6614,453,453,
+BOM,KSH,164694437,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1065,4606,4008,486,883,4869,1461,3326,514,498,
+BOM,KSO,164702187,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1801,2268,6320,394,1548,2374,2374,5435,412,412,
+BOM,KSY,164695040,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1267,4121,4821,465,1064,4341,933,4049,490,474,
+BOM,KTM,164694628,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",613,5304,2340,541,539,5518,406,2059,563,539,
+BOM,KTW,164693848,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1933,3733,6798,545,1546,3982,574,5438,581,565,
+BOM,KUA,164694574,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1269,3794,4829,464,1078,3985,577,4104,487,471,
+BOM,KUF,164693923,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1451,4280,5559,515,1291,4438,1030,4947,534,518,
+BOM,KUL,164694561,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1243,6098,4724,702,1093,6343,1231,4157,730,706,
+BOM,KUN,164693771,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1888,3224,6636,480,1680,3342,-66,5906,497,481,
+BOM,KUO,164693587,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1965,2687,6917,462,1591,2858,1154,5602,492,484,
+BOM,KUV,164702978,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1839,2855,6458,450,1489,3036,3036,5230,478,478,
+BOM,KVA,164693686,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1719,2746,6020,469,1375,2930,1226,4816,500,492,
+BOM,KVD,164694138,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1200,4015,4552,447,1008,4229,2525,3823,471,463,
+BOM,KWE,164694261,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1216,5257,4613,589,984,5591,479,3736,626,602,
+BOM,KWI,164694540,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",975,5357,3644,604,780,5714,602,2915,644,620,
+BOM,KWJ,164694837,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1842,3430,6470,519,1473,3659,251,5176,554,538,
+BOM,KWL,164694254,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1321,4959,5038,585,1070,5273,161,4080,622,598,
+BOM,KYA,164695043,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1488,4135,5712,467,1190,4411,1003,4569,498,482,
+BOM,KYZ,164702301,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1385,3385,5296,419,1218,3521,3521,4660,436,436,
+BOM,KZN,164693911,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1520,3894,5838,515,1322,4064,656,5079,537,521,
+BOM,LAD,164695286,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2363,5568,8363,545,2001,5852,740,8938,432,408,
+BOM,LAO,164694694,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1672,3605,5850,453,1387,3810,402,4855,478,462,
+BOM,LAR,121541250,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4243,2523,15203,411,3436,2683,2683,12314,437,437,
+BOM,LAS,54209217,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4406,4175,15796,734,4067,4282,874,18017,424,408,
+BOM,LAW,121541256,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4454,2709,15971,447,3563,2889,2889,12776,477,477,
+BOM,LAX,54209197,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4460,3148,15995,752,4601,2849,1145,18931,338,330,
+BOM,LBB,121541491,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4499,2231,16135,510,4355,2255,551,19074,231,223,
+BOM,LBE,121540852,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4094,2554,14661,417,3275,2725,2725,11728,445,445,
+BOM,LBV,164695492,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2356,4232,8337,495,2096,4388,-7540,7419,513,457,
+BOM,LCA,164693548,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1431,4002,5482,585,1259,4162,754,4824,608,592,
+BOM,LCE,164696066,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4942,3192,17748,459,5109,2868,-540,20971,209,193,
+BOM,LDE,164693612,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2352,2523,8322,480,2116,2608,904,7489,496,488,
+BOM,LEA,164696489,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2109,2446,7440,428,1855,2544,840,6547,445,437,
+BOM,LED,164693936,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1870,4569,6569,594,1722,4690,1282,7308,393,377,
+BOM,LEI,164694012,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2434,2868,8621,508,2020,3030,1326,7155,537,529,
+BOM,LEJ,164693657,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2085,3195,7352,543,1992,3243,-165,8009,397,381,
+BOM,LFW,164695810,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2555,5089,9063,467,2273,5276,164,10501,244,220,
+BOM,LGB,121541269,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4466,2391,16016,552,4108,2455,751,17663,381,373,
+BOM,LGG,164693490,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2227,2731,7869,477,1848,2885,1181,6531,504,496,
+BOM,LGK,164694563,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1122,4394,4237,511,953,4614,1206,3601,537,521,
+BOM,LGS,164716086,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5054,2290,18155,401,4346,2396,2396,15613,419,419,
+BOM,LGW,164694093,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2350,4306,8316,720,2185,4406,998,9484,417,401,
+BOM,LHE,164694663,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",551,5439,2070,556,457,5748,636,1718,588,564,
+BOM,LHR,164694095,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2356,4504,8339,752,2115,4658,1250,9070,554,538,
+BOM,LHW,164694322,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1225,4928,4652,552,1004,5224,112,3814,585,561,
+BOM,LIL,164693611,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2278,2791,8055,540,2050,2884,1180,7249,558,550,
+BOM,LIM,164704288,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5301,4301,19054,615,4717,4459,4459,16958,638,638,
+BOM,LIR,164703055,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5066,2759,18201,477,4255,2906,2906,15288,502,502,
+BOM,LIS,136108585,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2605,4332,9246,645,2478,4403,995,10783,323,307,
+BOM,LIT,121540830,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4407,3184,15801,540,3878,3312,3312,13904,562,562,
+BOM,LJU,164694006,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2004,3388,7056,524,1998,3391,-17,7966,321,305,
+BOM,LKL,164693828,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2134,2571,7531,429,1792,2708,1004,6326,451,443,
+BOM,LKO,164702466,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",486,4736,1790,525,427,4927,4927,1575,546,546,
+BOM,LLA,164694057,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2083,3038,7346,506,1687,3230,1526,5950,538,530,
+BOM,LLW,164695608,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1865,4943,6551,456,1492,5272,160,5240,486,462,
+BOM,LMT,121541221,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4163,2576,14915,422,3751,2661,957,15838,343,335,
+BOM,LNK,121541267,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4233,2800,15167,465,4147,2819,1115,17319,267,259,
+BOM,LNZ,164693470,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2022,2924,7122,497,1718,3071,1367,6053,522,514,
+BOM,LOO,164695221,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2298,3081,8126,387,1999,3215,1511,7069,404,396,
+BOM,LOP,164694419,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1879,4920,6604,572,1670,5102,-10,7756,272,248,
+BOM,LOS,54210146,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2483,6245,8801,595,2140,6533,1421,9297,494,470,
+BOM,LPA,164694025,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2868,3709,10200,626,2620,3816,408,11894,314,298,
+BOM,LPB,164705193,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5047,3486,18130,500,4138,3695,3695,14866,530,530,
+BOM,LRD,121541252,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4698,2030,16859,456,4181,2105,2105,15004,473,473,
+BOM,LRM,164696010,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4496,3116,16124,475,4331,3155,1451,17771,329,321,
+BOM,LSE,121541232,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4097,2757,14675,457,3646,2858,2858,13060,474,474,
+BOM,LTK,164694886,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1373,4141,5247,447,1112,4403,995,4250,475,459,
+BOM,LUN,164695853,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2037,5311,7179,489,1721,5586,474,7757,370,346,
+BOM,LUQ,164716082,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4983,2397,17897,416,4036,2549,2549,14496,442,442,
+BOM,LUX,164693778,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2207,3051,7796,528,2265,2810,1106,9216,239,231,
+BOM,LWN,164694130,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1254,3639,4767,410,1116,3773,365,4242,425,409,
+BOM,LWO,164694078,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1823,3822,6399,498,1604,3975,2271,5631,518,510,
+BOM,LXA,164694252,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",785,4643,2881,574,667,4875,1467,2448,603,587,
+BOM,LXR,164695439,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1415,5093,5415,540,1245,5297,185,4765,561,537,
+BOM,LXS,164693684,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1696,2592,5935,445,1526,2679,975,5341,460,452,
+BOM,LYP,164694667,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",543,4432,2035,454,477,4612,1204,1790,472,456,
+BOM,LYS,164693617,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2226,3224,7864,636,1887,3387,-21,8858,394,378,
+BOM,LZY,164694276,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",879,3464,3258,444,782,3591,183,2899,460,444,
+BOM,MAA,164694363,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",440,5747,1590,637,387,5978,866,1399,663,639,
+BOM,MAD,164694010,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2450,4311,8682,752,2153,4485,1077,9329,584,568,
+BOM,MAF,121541346,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4559,2198,16353,501,4259,2246,542,18679,287,279,
+BOM,MAN,164694102,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2394,4092,8478,686,2582,3128,-280,10144,281,265,
+BOM,MAR,164696457,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4747,3547,17038,551,4013,3730,322,18500,409,393,
+BOM,MBA,164695559,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1501,5798,5764,511,1215,6166,1054,4668,543,519,
+BOM,MBJ,164703113,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4695,3839,16851,561,3990,4032,4032,14323,589,589,
+BOM,MCI,121541205,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4273,3609,15315,624,3589,3801,393,16440,486,470,
+BOM,MCO,54211017,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4475,3035,16049,722,4194,3098,1394,17286,555,547,
+BOM,MCT,164694650,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",612,4165,2337,573,501,4417,1009,1916,608,592,
+BOM,MCX,164702309,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1218,3675,4621,430,1010,3884,3884,3835,454,454,
+BOM,MDC,164702577,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1977,3953,6958,473,1779,4085,4085,6262,489,489,
+BOM,MDE,164696384,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4941,3068,17744,492,5077,2814,1110,20973,223,215,
+BOM,MDG,164702394,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1953,3567,6873,463,1601,3781,3781,5635,491,491,
+BOM,MDL,164694610,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",871,5058,3226,518,722,5347,235,2677,547,523,
+BOM,MDT,121541133,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4061,3053,14542,515,4214,2708,1004,17383,213,205,
+BOM,MDZ,164705513,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5055,2992,18159,498,4296,3142,3142,15435,522,522,
+BOM,MEC,164704635,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5235,3065,18814,464,4240,3259,3259,15239,493,493,
+BOM,MED,164694761,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1195,5845,4530,685,1015,6139,1027,3850,719,695,
+BOM,MEI,121541324,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4452,2569,15964,420,4153,2627,923,17587,292,284,
+BOM,MEL,136108151,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3160,4438,11265,702,2860,4578,1170,12398,490,474,
+BOM,MEM,121541323,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4377,3620,15691,625,3806,3777,369,17466,413,397,
+BOM,MEX,164703132,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4970,4485,17849,752,4224,4710,4710,15171,789,789,
+BOM,MFM,164694270,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1434,4854,5492,573,1218,5097,-15,4668,602,578,
+BOM,MFR,121541544,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4148,2910,14860,487,3401,3085,3085,12185,516,516,
+BOM,MGM,121541374,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4426,2820,15872,469,3983,2914,2914,14284,485,485,
+BOM,MGQ,164695741,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1220,6392,4632,429,976,6819,3,3705,457,425,
+BOM,MHD,164694442,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",834,4406,3076,524,733,4583,1175,2706,545,529,
+BOM,MHT,121541295,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3906,3272,13979,558,3184,3473,65,14994,436,420,
+BOM,MIA,54210947,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4536,3042,16270,724,3967,3170,1466,19419,303,295,
+BOM,MID,164696108,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4825,3228,17322,552,3961,3421,13,18809,409,393,
+BOM,MIR,164695820,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2073,4496,7307,573,1988,4558,1150,8515,289,273,
+BOM,MJZ,164693926,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1906,3475,6700,465,1715,3591,183,6030,481,465,
+BOM,MKE,121541084,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4101,3527,14690,607,3577,3677,269,16543,377,361,
+BOM,MLA,164693785,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1969,3922,6929,557,1711,4093,685,7523,413,397,
+BOM,MLB,121541321,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4474,2039,16047,459,4150,2088,384,18535,245,237,
+BOM,MLE,164694588,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",633,4102,2270,548,569,4241,833,2043,566,550,
+BOM,MLH,164693621,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2171,3146,7666,618,2167,3147,1443,8762,353,345,
+BOM,MLI,121541508,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4172,2997,14946,504,4179,2982,1278,17271,268,260,
+BOM,MLM,164703142,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4967,2922,17840,502,4172,3078,3078,14985,529,529,
+BOM,MLX,164695046,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1353,4263,5166,480,1204,4420,1012,4597,497,481,
+BOM,MMX,164694058,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2093,3179,7381,526,1841,3306,1602,6495,547,539,
+BOM,MNL,164694698,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1712,5406,5995,684,1503,5626,514,6736,430,406,
+BOM,MOB,121541362,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4499,2143,16135,486,3959,2229,2229,14198,505,505,
+BOM,MPL,164702171,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2252,2766,7959,534,2004,2868,2868,7083,554,554,
+BOM,MPM,50775765,error,,,,,,,,,,,,,Unexpected redirect
+BOM,MPW,164702348,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1505,3406,5778,411,1279,3577,3577,4911,431,431,
+BOM,MQM,164702946,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1273,4064,4843,460,1056,4295,4295,4019,486,486,
+BOM,MQP,164695763,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2196,4017,7756,457,1778,4271,863,6282,486,470,
+BOM,MQT,121541582,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3987,2675,14272,441,3961,2681,977,16672,218,210,
+BOM,MRS,164693628,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2220,3179,7845,626,2244,3076,1372,9072,332,324,
+BOM,MRU,164695625,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1575,4062,6061,547,1260,4333,925,4848,584,568,
+BOM,MRV,164693925,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1337,3986,5104,483,1149,4173,765,4389,506,490,
+BOM,MSE,164694100,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2317,2347,8197,408,1853,2504,800,6557,435,427,
+BOM,MSN,121540977,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4107,3094,14710,523,3655,3208,3208,13091,542,542,
+BOM,MSO,121541359,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4040,2906,14465,486,3850,2952,1248,15944,337,329,
+BOM,MSP,54210711,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4077,4061,14601,712,3858,4134,726,17231,327,311,
+BOM,MSQ,164693483,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1801,3834,6318,507,1927,3029,-379,7552,210,194,
+BOM,MSR,164695050,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1270,3891,4833,443,1016,4151,743,3866,472,456,
+BOM,MST,164702248,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2220,2732,7845,477,1887,2869,2869,6668,501,501,
+BOM,MSU,164695569,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2371,4528,8393,425,1920,4816,1408,6798,452,436,
+BOM,MSY,121541275,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4543,2607,16297,609,4151,2682,978,17545,469,461,
+BOM,MTJ,121541377,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4340,2740,15556,453,4377,2670,966,18380,206,198,
+BOM,MTY,54210300,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4761,3737,17089,633,4085,3914,506,18571,468,452,
+BOM,MUC,164693652,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2077,4314,7322,722,1994,4372,964,8641,331,315,
+BOM,MUX,164703004,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",505,4495,1872,461,424,4735,4735,1572,485,485,
+BOM,MVD,164696444,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4683,3093,16807,518,4610,3109,1405,18976,317,309,
+BOM,MWX,164694847,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1830,2679,6425,429,1628,2778,1074,5718,444,436,
+BOM,MWZ,164695796,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1663,4762,6414,456,1380,5032,-80,5323,482,458,
+BOM,MXL,164703153,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4522,2992,16221,513,3888,3132,3132,13950,537,537,
+BOM,MXP,164693733,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2138,3944,7544,671,1881,4102,694,8300,469,453,
+BOM,MYR,121541385,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4284,3082,15353,521,4357,2924,1220,17946,257,249,
+BOM,MYY,164702644,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1593,3883,6131,522,1417,4026,4026,5456,541,541,
+BOM,MZH,164695004,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1448,3680,5548,422,1158,3926,518,4438,450,434,
+BOM,MZR,164694121,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",750,3138,2740,449,600,3347,-61,2192,479,463,
+BOM,MZT,164703149,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4869,2986,17481,513,4284,3105,3105,15383,533,533,
+BOM,NAG,164694372,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",331,4645,1117,515,281,4879,1471,949,541,525,
+BOM,NAJ,164694142,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1189,3641,4507,411,1022,3811,403,3876,430,414,
+BOM,NAN,164696514,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3879,4818,13881,522,3108,5137,25,14645,436,412,
+BOM,NAP,164702209,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1984,3427,6987,588,1706,3588,3588,6008,616,616,
+BOM,NAS,164696164,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4508,3057,16167,556,4679,2709,1005,19332,229,221,
+BOM,NAV,164695052,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1447,3905,5543,444,1244,4087,679,4766,464,448,
+BOM,NBC,164702291,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1488,3698,5712,453,1264,3884,3884,4855,475,475,
+BOM,NBE,164695821,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2081,3561,7338,457,1664,3799,391,5870,488,472,
+BOM,NBO,164695556,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1525,6014,5859,583,1332,6267,1155,6343,438,414,
+BOM,NCE,164693607,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2171,3290,7664,651,1951,3402,-6,9141,274,258,
+BOM,NDG,164702409,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1842,3418,6467,444,1620,3555,3555,5690,461,461,
+BOM,NDJ,164695378,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2047,5385,7213,455,1842,5565,453,6491,470,446,
+BOM,NDR,164695655,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2461,4241,8719,468,2279,4346,938,9915,275,259,
+BOM,NGB,164694258,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1677,4392,5869,570,1341,4686,1278,4695,608,592,
+BOM,NGO,164694471,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2125,4062,7496,645,1906,4202,794,8345,426,410,
+BOM,NGS,164694488,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1928,3450,6782,561,1696,3589,181,5968,583,567,
+BOM,NIM,164695675,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",2453,5530,8690,450,2291,5652,-7980,9420,336,272,
+BOM,NJC,164693928,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1565,3506,6021,469,1283,3717,309,4937,497,481,
+BOM,NKC,136108576,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2985,5997,10625,547,2784,6132,1020,12335,283,259,
+BOM,NKG,164694265,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1604,4853,6177,630,1479,4979,-133,6793,442,418,
+BOM,NLA,164695857,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1984,5489,6987,507,1749,5706,594,7828,323,299,
+BOM,NLU,164703138,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4959,3993,17809,673,4314,4166,4166,15493,702,702,
+BOM,NNG,164702415,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1261,5141,4797,576,1122,5330,5330,4269,597,597,
+BOM,NOJ,164702304,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1641,3247,6324,438,1329,3453,3453,5122,466,466,
+BOM,NOU,164696550,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3568,4186,12747,486,3151,4349,941,13827,363,347,
+BOM,NQY,164702362,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2455,2800,8700,480,2184,2903,2903,7743,498,498,
+BOM,NRT,164694490,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2224,4745,7857,740,2204,4759,1351,9378,310,294,
+BOM,NSI,164695341,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2247,4845,7942,457,1967,5046,-66,9199,240,216,
+BOM,NSK,164693889,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1878,3556,6600,475,1502,3793,385,5280,507,491,
+BOM,NTE,164693624,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2384,3080,8441,604,2002,3245,1541,7090,636,628,
+BOM,NUE,164702181,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2099,3385,7403,573,1784,3554,3554,6292,602,602,
+BOM,NUX,164702302,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1741,3529,6102,472,1549,3659,3659,5430,489,489,
+BOM,NYO,164694059,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2063,3323,7272,546,1856,3434,26,6544,564,548,
+BOM,NZH,164694272,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1728,3455,6054,448,1486,3616,208,5206,469,453,
+BOM,OAK,121541334,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4307,3588,15436,619,3899,3701,293,17998,311,295,
+BOM,ODS,164694079,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1636,4133,6306,536,1406,4327,919,5423,561,545,
+BOM,OGX,164695224,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2233,3325,7890,415,1853,3514,106,6548,439,423,
+BOM,OGZ,164693897,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1286,3722,4897,455,1144,3859,451,4358,471,455,
+BOM,OHD,164702257,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1820,3288,6386,427,1547,3453,3453,5428,448,448,
+BOM,OIT,164694492,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1981,3266,6974,535,1782,3375,-33,6276,553,537,
+BOM,OKA,164694489,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1867,4326,6560,682,1680,4470,1062,7218,477,461,
+BOM,OKC,121541735,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4422,3285,15855,560,3894,3416,8,18474,282,266,
+BOM,OKJ,164694495,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2041,3207,7193,527,1673,3400,-8,5898,558,542,
+BOM,OLA,164702266,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2230,2297,7880,398,2007,2373,2373,7092,411,411,
+BOM,OMA,121541035,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4213,3346,15095,572,3770,3463,55,17791,265,249,
+BOM,OMS,164693951,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1356,5023,5180,594,1152,5275,163,4403,623,599,
+BOM,OND,164695671,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2430,3661,8607,414,2065,3844,436,7315,434,418,
+BOM,ONT,121541444,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4461,2499,15999,580,4139,2559,855,17647,401,393,
+BOM,OPO,164693854,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2579,3824,9150,576,2326,3949,541,10422,336,320,
+BOM,ORB,164702337,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2099,2510,7404,432,1847,2611,2611,6515,449,449,
+BOM,ORD,54210107,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4133,4267,14804,752,3959,4327,919,17476,344,328,
+BOM,ORF,121541411,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4149,3290,14862,561,3485,3466,3466,12484,591,591,
+BOM,ORN,164695204,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2390,4172,8463,510,2157,4308,900,9406,340,324,
+BOM,ORY,164693626,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2292,3575,8106,714,2115,3667,259,9673,300,284,
+BOM,OSL,164693826,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2174,4461,7678,672,1925,4632,1224,8245,523,507,
+BOM,OSR,164693555,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1946,3031,6847,463,1634,3193,1489,5751,488,480,
+BOM,OSS,164702624,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",861,4130,3187,455,697,4392,4392,2581,484,484,
+BOM,OST,164700782,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2284,2597,8076,456,1941,2727,1023,6864,478,470,
+BOM,OTP,164693874,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1716,4395,6011,583,1585,4507,1099,6767,363,347,
+BOM,OUA,164695317,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2582,5437,9161,461,2270,5656,544,10252,296,272,
+BOM,OUD,164695645,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2431,4248,8611,468,2348,4296,888,9147,381,365,
+BOM,OUL,164702159,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2032,2901,7160,494,1828,2998,2998,6444,510,510,
+BOM,OVB,164693934,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1384,4435,5292,531,1204,4627,1219,4604,554,538,
+BOM,OXB,164695530,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3042,5184,10834,424,2750,5349,237,12680,207,183,
+BOM,OZH,164702350,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1562,3164,6006,419,1343,3312,3312,5165,438,438,
+BOM,OZZ,164695658,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2596,3894,9211,435,2574,3905,497,10149,302,286,
+BOM,PAP,54208458,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4571,5095,16400,603,3899,5345,233,18194,405,381,
+BOM,PBC,164703155,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4974,2886,17865,497,3979,3078,3078,14292,530,530,
+BOM,PBG,121541485,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3886,2711,13907,448,3533,2793,1089,14771,364,356,
+BOM,PBI,121541454,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4507,2546,16165,593,4437,2559,855,18905,291,283,
+BOM,PBM,164696432,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4370,4395,15668,473,3948,4536,1128,17199,334,318,
+BOM,PCL,164704278,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5177,3031,18604,460,4141,3233,3233,14883,491,491,
+BOM,PDG,164702575,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1273,4869,4843,519,1082,5112,5112,4116,545,545,
+BOM,PDX,121541487,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4044,3705,14480,642,3422,3895,487,15545,500,484,
+BOM,PEE,164693900,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1525,3709,5858,493,1296,3894,486,4979,518,502,
+BOM,PEK,164694201,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1597,5789,6147,752,1444,5974,862,6994,441,417,
+BOM,PEM,164704289,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5052,2983,18147,454,4092,3172,3172,14699,483,483,
+BOM,PEN,164694564,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1156,4952,4371,557,947,5251,139,3584,590,566,
+BOM,PER,164696490,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2382,3789,8434,630,2004,3989,581,8942,516,500,
+BOM,PEW,164703006,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",635,4906,2276,502,533,5169,5169,1911,529,529,
+BOM,PFO,164702131,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1461,3601,5603,530,1285,3745,3745,4930,551,551,
+BOM,PHC,164695691,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2382,5365,8434,510,2063,5604,492,9339,345,321,
+BOM,PHL,54211335,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4049,4045,14498,708,3667,4172,764,16342,438,422,
+BOM,PHX,54209420,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4508,3069,16167,731,4482,3075,1371,18488,416,408,
+BOM,PIA,121541086,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4191,2881,15016,481,4126,2896,1192,17148,276,268,
+BOM,PIE,121540959,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4512,2183,16182,497,4117,2247,543,18053,324,316,
+BOM,PIH,121540848,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4181,2581,14980,423,4082,2601,897,17297,226,218,
+BOM,PIK,164694094,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2440,3203,8645,544,1975,3407,-1,9271,426,410,
+BOM,PIT,121541479,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4097,3538,14675,609,3732,3643,235,17303,282,266,
+BOM,PKC,164693910,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2609,3316,9261,447,2477,3372,-36,9959,345,329,
+BOM,PKX,164694202,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1587,5459,6107,752,1457,5608,496,7190,352,328,
+BOM,PLX,164694538,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1216,3607,4615,411,1009,3812,404,3830,434,418,
+BOM,PMC,164704459,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5066,2885,18200,499,4103,3068,3068,14742,531,531,
+BOM,PMI,164694033,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2287,3920,8089,686,2243,3945,537,8818,500,484,
+BOM,PMO,164693739,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2010,3341,7078,575,1797,3459,51,8342,267,251,
+BOM,PMV,164696454,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4531,3599,16252,534,3759,3804,396,17213,439,423,
+BOM,PNH,164694181,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1212,6114,4600,526,1090,6320,1208,4140,544,520,
+BOM,PNQ,164702488,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",158,3348,367,552,131,3539,3539,304,583,583,
+BOM,PNZ,164696358,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4088,3927,14640,462,3473,4124,716,15489,382,366,
+BOM,POA,164696363,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4548,3822,16314,599,4147,3934,526,18802,325,309,
+BOM,POM,164715514,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2829,5467,10060,523,2489,5686,5686,8852,544,544,
+BOM,POP,164696008,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4503,3371,16152,513,3998,3497,89,18808,260,244,
+BOM,POS,164696173,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4463,3243,16006,546,3710,3426,18,17588,384,368,
+BOM,POZ,164702278,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1997,3535,7034,516,1697,3712,3712,5978,542,542,
+BOM,PPG,164696467,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4230,3902,15159,436,3629,4086,678,16229,344,328,
+BOM,PPS,164702992,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1681,3931,5881,495,1344,4194,4194,4704,528,528,
+BOM,PPT,54211306,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4938,2925,17733,522,4710,2970,1266,19552,361,353,
+BOM,PQC,164695147,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1199,4391,4545,459,1043,4581,1173,3954,479,463,
+BOM,PRG,164693557,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2033,4309,7161,635,1910,4396,988,8256,343,327,
+BOM,PRN,164693759,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1821,4411,6393,539,1757,4463,1055,7531,251,235,
+BOM,PSA,164693727,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2092,3316,7377,570,1715,3516,108,6049,604,588,
+BOM,PSM,121541460,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3893,2667,13932,439,3740,2702,998,15720,270,262,
+BOM,PSP,121541456,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4475,2281,16050,522,4123,2341,637,17910,341,333,
+BOM,PTP,164696047,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4357,4160,15619,546,4105,4240,832,18196,275,259,
+BOM,PTY,164703181,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4972,3475,17858,577,3977,3707,3707,14286,616,616,
+BOM,PUB,121541502,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4345,2475,15577,402,4300,2484,780,18395,184,176,
+BOM,PUJ,54211318,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4480,3517,16066,534,3905,3668,260,18078,333,317,
+BOM,PUQ,164696373,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4809,2694,17266,469,4732,2709,1005,19946,250,242,
+BOM,PUS,164694831,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1903,4143,6689,606,1733,4267,859,7532,376,360,
+BOM,PUY,164693536,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2010,3238,7078,468,1768,3368,-40,6228,487,471,
+BOM,PVG,164694280,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1690,5666,5914,736,1519,5857,2449,6728,432,416,
+BOM,PVK,164693670,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1806,2697,6338,462,1517,2841,1137,5323,486,478,
+BOM,PVR,164703161,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4953,3417,17788,582,4259,3577,3577,15297,609,609,
+BOM,PXO,164693863,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2846,2945,10122,444,2476,3072,1368,8806,463,455,
+BOM,PZI,164694277,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1072,4040,4033,453,879,4283,875,3307,480,464,
+BOM,RAE,164694741,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1187,3677,4496,449,961,3911,503,3641,477,461,
+BOM,RAH,164694768,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1107,3413,4178,420,918,3608,200,3467,444,428,
+BOM,RAK,164695650,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2624,5046,9312,555,2134,5360,248,9831,462,438,
+BOM,RAP,121541518,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4145,2897,14849,484,3689,3003,3003,13215,502,502,
+BOM,RBA,164695660,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2570,4278,9118,471,2411,4366,958,10490,258,242,
+BOM,RCQ,164696327,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4803,2215,17242,390,4690,2232,528,20586,163,155,
+BOM,RDU,121541014,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4217,3576,15109,617,3734,3712,304,17216,359,343,
+BOM,REC,164696353,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3891,5118,13925,592,3360,5351,-1465,15629,374,342,
+BOM,REP,164702378,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1161,6159,4393,529,1010,6426,6426,3821,552,552,
+BOM,RES,164696336,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4785,2545,17178,436,4760,2550,846,20293,199,191,
+BOM,RFD,121540946,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4136,2746,14815,455,3994,2778,1074,16719,279,271,
+BOM,RGL,164696332,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4810,2691,17269,456,4783,2696,992,20176,226,218,
+BOM,RGN,164694614,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",886,6504,3284,570,797,6722,-94,2955,589,557,
+BOM,RHO,164693674,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1594,3327,6138,560,1434,3438,30,5524,578,562,
+BOM,RIC,121541524,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4148,3283,14858,560,3608,3425,3425,12926,584,584,
+BOM,RIX,164693766,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1919,3820,6747,565,1631,4011,603,5734,593,577,
+BOM,RIY,164695169,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",909,4546,3378,450,809,4712,1304,3006,466,450,
+BOM,RKS,121541643,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4233,2573,15167,421,4265,2515,811,18116,175,167,
+BOM,RKT,164695112,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",704,2945,2552,451,612,3073,1369,2220,471,463,
+BOM,RLG,164702178,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2101,2627,7412,453,1722,2785,2785,6077,480,480,
+BOM,RMF,164695443,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1356,4703,5180,499,1206,4877,1469,4610,517,501,
+BOM,RMI,164693724,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2038,2783,7181,486,1630,2969,1265,5744,518,510,
+BOM,RMQ,164694920,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1653,3250,6373,525,1322,3466,58,5098,560,544,
+BOM,RNO,121541644,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4265,3310,15285,565,3530,3500,92,16599,419,403,
+BOM,ROB,164695578,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2933,5272,10437,452,2556,5498,386,11678,290,266,
+BOM,ROS,164696330,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4826,2557,17326,438,4857,2508,804,20698,182,174,
+BOM,ROW,121541548,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4517,1946,16203,434,4051,2013,309,18281,267,259,
+BOM,RST,121541536,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4105,2785,14702,462,3840,2845,1141,16007,339,331,
+BOM,RSW,121541613,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4538,2592,16279,605,4337,2630,926,18391,369,361,
+BOM,RUH,164694756,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",979,5824,3659,683,822,6135,1023,3073,719,695,
+BOM,RUN,164695697,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1617,3583,6230,546,1325,3798,390,5108,578,562,
+BOM,RVN,164693589,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2057,2726,7252,468,1727,2872,1168,6091,492,484,
+BOM,RYK,164694674,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",450,3986,1633,422,400,4133,4133,1453,437,437,
+BOM,RZE,164693846,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1867,3116,6559,464,1605,3261,1557,5640,485,477,
+BOM,SAF,121541576,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4439,2519,15919,411,3995,2603,2603,14327,424,424,
+BOM,SAH,164695170,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1070,6018,4026,519,941,6259,1147,3542,539,515,
+BOM,SAL,164703075,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5047,3807,18131,531,4542,3934,3934,16317,548,548,
+BOM,SAN,121541567,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4508,2808,16171,662,4222,2867,1163,17629,483,475,
+BOM,SAP,164703102,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4968,3446,17844,495,4371,3584,3584,15702,514,514,
+BOM,SAT,121541561,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4625,2600,16594,607,3838,2747,2747,13773,641,641,
+BOM,SAV,121541147,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4363,3109,15642,526,4493,2831,1127,18493,238,230,
+BOM,SAW,164695058,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1601,4951,6165,597,1344,5215,103,5178,629,605,
+BOM,SBN,121541603,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4127,2928,14782,490,3549,3065,3065,12712,513,513,
+BOM,SBW,164694566,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1560,3691,6001,499,1357,3851,443,5220,521,505,
+BOM,SBZ,164693878,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1776,3352,6226,459,1420,3576,168,4980,489,473,
+BOM,SCK,121541641,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4309,2608,15443,428,4169,2637,933,17627,246,238,
+BOM,SCL,164704452,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5106,3655,18347,618,4493,3801,3801,16145,642,642,
+BOM,SCQ,164694035,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2563,3021,9093,534,2485,3052,1348,10147,348,340,
+BOM,SCT,164695178,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",786,4135,2884,410,628,4412,1004,2307,437,421,
+BOM,SCU,164695986,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4613,2724,16552,459,4498,2747,1043,18899,263,255,
+BOM,SDD,164695278,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2448,4648,8674,455,2560,4010,602,9903,261,245,
+BOM,SDF,121541279,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4233,3279,15169,559,3801,3390,-18,18076,237,221,
+BOM,SDJ,164694496,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2234,3502,7895,568,1839,3708,300,8365,466,450,
+BOM,SDQ,54210351,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4514,3641,16192,553,3974,3786,378,18224,345,329,
+BOM,SEA,121541585,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3984,4054,14261,710,3690,4153,745,16453,382,366,
+BOM,SEZ,164695729,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1128,3806,4261,470,992,3959,551,3749,489,473,
+BOM,SFA,164695828,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2075,3368,7316,433,1722,3559,151,6072,458,442,
+BOM,SFB,121541448,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4464,2301,16007,528,4120,2360,656,17862,344,336,
+BOM,SFJ,164696029,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3030,2971,10792,446,2797,3047,1343,11462,363,355,
+BOM,SFO,54209438,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4309,4169,15444,732,3758,4347,-765,16593,569,545,
+BOM,SFS,164702994,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1685,3387,5898,425,1348,3613,3613,4718,453,453,
+BOM,SGC,164693946,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1577,3831,6066,507,1340,4023,615,5156,533,517,
+BOM,SGN,164695153,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1278,6086,4864,661,1022,6492,1380,3891,705,681,
+BOM,SHA,164694235,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1676,5340,5863,693,1481,5547,435,6667,408,384,
+BOM,SHE,164694291,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1784,4669,6258,606,1596,4833,1425,6715,473,457,
+BOM,SHJ,164695115,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",713,3907,2589,585,641,4039,631,2330,605,589,
+BOM,SHR,121541589,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4124,2547,14772,416,3464,2683,2683,12408,438,438,
+BOM,SHV,121541592,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4495,2126,16123,481,3730,2246,2246,13382,508,508,
+BOM,SHW,164694772,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",963,3548,3598,435,847,3690,282,3166,453,437,
+BOM,SID,164695355,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3218,4709,11474,507,3051,4790,1382,13056,297,281,
+BOM,SIN,164694798,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1335,4914,5094,739,1201,5078,-34,4584,764,740,
+BOM,SIP,164694081,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1544,3842,5935,501,1235,4098,690,4748,534,518,
+BOM,SJC,121541413,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4321,3550,15488,612,3736,3710,302,17237,404,388,
+BOM,SJD,164696107,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4867,3446,17475,586,4170,3610,202,19445,388,372,
+BOM,SJJ,164702118,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1896,3643,6666,483,1706,3765,3765,5999,499,499,
+BOM,SJO,164703057,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5056,3365,18163,573,4044,3590,3590,14530,612,612,
+BOM,SJU,136107547,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4425,4072,15867,612,3838,4252,844,17030,477,461,
+BOM,SJW,164694219,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1531,3991,5883,518,1331,4164,756,5118,540,524,
+BOM,SKD,164695128,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",851,3911,3146,441,689,4159,751,2548,468,452,
+BOM,SKU,164693688,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1708,2321,5981,403,1434,2445,741,5024,425,417,
+BOM,SKZ,164703008,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",444,4118,1606,435,399,4257,4257,1445,450,450,
+BOM,SLA,164715609,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4984,2865,17902,480,4435,2970,2970,15932,498,498,
+BOM,SLC,121541557,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4256,3870,15250,675,3644,4056,648,16377,525,509,
+BOM,SLL,164694654,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",739,3477,2693,476,628,3651,243,2289,500,484,
+BOM,SLP,164696109,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4885,2849,17541,491,4959,2719,1015,20732,223,215,
+BOM,SLY,164702305,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1763,3409,6181,458,1551,3545,3545,5439,476,476,
+BOM,SMA,164693865,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3042,2902,10835,438,2797,2980,1276,11507,357,349,
+BOM,SMF,121541553,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4279,3577,15337,617,3679,3744,3744,13189,646,646,
+BOM,SNN,164693711,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2533,3548,8983,552,2309,3653,245,10584,256,240,
+BOM,SNU,164695984,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4624,2545,16593,433,4256,2613,909,18062,318,310,
+BOM,SOC,164702572,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1700,3943,5951,467,1394,4179,4179,4879,495,495,
+BOM,SOF,164693511,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1763,4083,6182,557,1758,4087,679,6818,385,369,
+BOM,SPP,164695281,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2323,4311,8219,423,2044,4484,1076,7232,439,423,
+BOM,SPS,121541732,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4474,1957,16044,437,4106,2011,307,18529,234,226,
+BOM,SPU,164702124,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1945,3607,6842,514,1672,3776,3776,5884,538,538,
+BOM,SQQ,164693772,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1914,2517,6729,381,1588,2660,956,5585,403,395,
+BOM,SRE,164715841,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4965,3124,17833,450,4120,3301,3301,14801,476,476,
+BOM,SRG,164702570,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1678,4167,5873,491,1443,4361,4361,5050,514,514,
+BOM,SRQ,121541580,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4525,2268,16231,519,4396,2289,585,19188,235,227,
+BOM,SRZ,164696344,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4891,3368,17563,484,4342,3494,86,20442,246,230,
+BOM,SSA,54210337,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4049,5262,14498,608,3526,5488,376,16276,384,360,
+BOM,SSG,164695458,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2339,3950,8277,465,1964,4162,754,6952,490,474,
+BOM,SSH,164695447,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1368,5765,5227,608,1490,4222,-890,6112,299,275,
+BOM,STI,164703069,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4513,3321,16185,506,4061,3432,3432,14566,523,523,
+BOM,STL,121541243,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4259,3684,15264,638,3845,3804,396,17598,345,329,
+BOM,STN,164694106,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2341,4078,8285,684,2101,4217,809,9227,450,434,
+BOM,STR,164693647,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2136,3720,7539,627,1830,3897,489,8191,464,448,
+BOM,STV,164694395,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",189,2803,503,416,166,2917,2917,442,433,433,
+BOM,STW,164702307,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1375,3664,5254,449,1168,3848,3848,4465,471,471,
+BOM,SUB,164694413,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1754,5414,6148,624,1623,5549,437,7308,271,247,
+BOM,SUX,121541596,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4178,2623,14968,431,3634,2737,2737,13022,449,449,
+BOM,SVG,164702267,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2258,3608,7983,565,2009,3740,3740,7104,586,586,
+BOM,SVO,164693938,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1686,5082,5899,654,1514,5255,143,6938,308,284,
+BOM,SVQ,164694036,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2527,3264,8959,575,2220,3396,-12,10440,289,273,
+BOM,SVX,164693916,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1454,4547,5573,543,1308,4699,1291,5015,561,545,
+BOM,SWF,121541635,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3986,2849,14268,475,3742,2907,1203,15536,348,340,
+BOM,SXR,164694394,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",636,4723,2281,508,559,4914,1506,2007,528,512,
+BOM,SYD,54210124,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3269,5029,11662,725,2868,5235,123,13419,397,373,
+BOM,SYR,121541126,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",3966,3164,14198,537,3410,3312,3312,12210,562,562,
+BOM,SYX,164694278,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1311,5162,4998,609,1048,5508,396,3998,650,626,
+BOM,SYZ,164694440,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",850,4579,3140,541,722,4809,1401,2669,568,552,
+BOM,SZB,164694568,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1231,4274,4677,499,984,4560,1152,3741,532,516,
+BOM,SZF,164695072,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1430,4480,5475,501,1272,4645,1237,4872,520,504,
+BOM,SZG,164702101,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2046,3175,7210,534,1636,3387,3387,5768,570,570,
+BOM,SZX,164694197,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1440,5853,5517,691,1421,5879,-937,6290,400,368,
+BOM,TAE,164694826,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1896,3286,6665,513,1573,3472,64,5531,542,526,
+BOM,TAI,164695180,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1086,4880,4093,423,923,5124,12,3479,444,420,
+BOM,TAM,164703144,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4865,2879,17468,495,4183,3014,3014,15022,518,518,
+BOM,TAO,164694260,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1668,4793,6434,622,1349,5099,-13,6884,491,467,
+BOM,TAS,164695130,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",891,4866,3307,534,801,5030,-82,2976,552,528,
+BOM,TAT,164702317,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1894,2872,6658,429,1534,3054,3054,5392,456,456,
+BOM,TBJ,164695816,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2124,3359,7495,432,1869,3493,85,6595,450,434,
+BOM,TBS,164694349,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1248,4589,4743,489,1023,4865,1457,3889,519,503,
+BOM,TBZ,164694444,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1152,4867,4359,509,933,5175,63,3530,541,517,
+BOM,TCP,164695449,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1363,4291,5207,457,1104,4562,1154,4217,486,470,
+BOM,TEE,164695197,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2147,3505,7576,435,1867,3658,250,6591,454,438,
+BOM,TEQ,164695069,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1638,3351,6313,422,1375,3530,122,5302,444,428,
+BOM,TER,164693858,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3070,3053,10936,458,3186,2707,1003,13067,190,182,
+BOM,TFN,164694037,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2890,3367,10283,570,2351,3576,168,10895,468,452,
+BOM,TFS,164694039,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2901,3623,10323,612,2633,3734,326,12035,307,291,
+BOM,TFU,164694216,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1177,6666,4457,748,1012,6978,162,3833,783,751,
+BOM,TGG,164694578,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1240,4052,4710,482,1054,4255,847,4003,506,490,
+BOM,TGR,164695229,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2209,3185,7804,399,1966,3302,1598,6945,414,406,
+BOM,THQ,164694296,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1259,3689,4787,414,1007,3935,527,3829,441,425,
+BOM,THR,164694435,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",989,6067,3701,615,860,6331,1219,3219,641,617,
+BOM,TIA,164702087,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1847,4310,6486,531,1569,4527,4527,5513,558,558,
+BOM,TID,164695194,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2334,3032,8257,382,1913,3215,1511,6770,405,397,
+BOM,TIF,164694779,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1166,3935,4414,477,1037,4080,672,3928,495,479,
+BOM,TIJ,164696098,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4516,3642,16199,618,3760,3846,438,17173,506,490,
+BOM,TIN,164695241,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2657,3552,9433,426,2666,3516,108,10642,262,246,
+BOM,TIP,164695592,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2006,4044,7063,556,1797,4185,777,7855,369,353,
+BOM,TIV,164702239,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1878,3653,6599,487,1633,3812,3812,5741,508,508,
+BOM,TJA,164715504,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4955,3157,17796,455,4162,3325,3325,14948,479,479,
+BOM,TJM,164693937,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1447,4172,5543,503,1201,4408,1000,4600,531,515,
+BOM,TLC,164703158,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4976,2864,17873,493,3980,3055,3055,14298,526,526,
+BOM,TLL,164693577,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1944,3525,6840,531,1555,3760,352,5472,567,551,
+BOM,TLM,164702877,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2416,3620,8558,448,2101,3777,3777,7445,467,467,
+BOM,TLS,164693600,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2316,3162,8195,622,2338,3072,1368,9476,330,322,
+BOM,TLV,164694463,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1374,4500,5251,631,1167,4726,1318,4463,663,647,
+BOM,TMP,164702161,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1995,2872,7024,489,1655,3035,3035,5829,517,517,
+BOM,TMR,164695189,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2276,3597,8047,446,1957,3765,357,6920,467,451,
+BOM,TMX,164695238,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2396,3127,8483,393,2036,3284,1580,7210,412,404,
+BOM,TNA,164694316,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1586,4554,6104,591,1427,4706,1298,6630,438,422,
+BOM,TNG,164695646,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2537,4369,8997,481,2236,4541,1133,9640,378,362,
+BOM,TNR,164695599,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1683,5061,5889,489,1497,5247,135,5241,506,482,
+BOM,TOE,164695825,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2149,3402,7587,438,1826,3573,165,6448,459,443,
+BOM,TOL,121541670,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4105,2742,14703,454,4184,2583,879,17567,188,180,
+BOM,TPA,121541648,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4507,2802,16166,660,4367,2831,1127,18268,403,395,
+BOM,TPE,164694926,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1670,4460,5844,693,1547,4569,1161,6586,429,413,
+BOM,TPP,164704271,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5207,3016,18713,458,4269,3197,3197,15344,485,485,
+BOM,TPS,164702208,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2026,3049,7137,528,1701,3213,3213,5995,556,556,
+BOM,TRC,164703140,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4781,2870,17162,494,4207,2985,2985,15102,514,514,
+BOM,TRD,164693832,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2208,3764,7800,563,1876,3952,544,8367,440,424,
+BOM,TRF,164693831,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2180,3431,7698,525,1962,3546,138,6928,543,527,
+BOM,TRN,164693747,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2163,3272,7635,564,1822,3444,36,8493,373,357,
+BOM,TRS,164693742,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2025,2842,7133,495,1680,3004,1300,5920,523,515,
+BOM,TRU,164704273,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5315,3020,19105,459,4570,3161,3161,16430,480,480,
+BOM,TRV,164694396,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",509,5078,1891,546,417,5384,272,1550,579,555,
+BOM,TSA,164702966,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1680,3539,5880,566,1411,3727,3727,4939,596,596,
+BOM,TSE,164694535,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1221,4683,4635,513,1025,4933,1525,3893,541,525,
+BOM,TSN,164694206,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1608,4548,6191,591,1318,4822,1414,5076,626,610,
+BOM,TSR,164693880,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1839,3746,6459,505,1636,3884,476,5748,524,508,
+BOM,TUC,164715780,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4971,2760,17855,465,4473,2853,2853,16069,481,481,
+BOM,TUI,164694781,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1262,3406,4799,420,1060,3588,180,4031,442,426,
+BOM,TUL,121541685,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4384,3244,15720,552,3923,3358,-50,18731,235,219,
+BOM,TUN,164695817,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2087,4487,7360,573,2043,4518,1110,8772,243,227,
+BOM,TUS,121541682,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4556,2438,16342,564,4207,2501,797,18023,390,382,
+BOM,TUU,164694776,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1302,3849,4963,490,1067,4080,672,4069,519,503,
+BOM,TWF,121541284,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4190,2604,15011,427,3352,2777,2777,12008,456,456,
+BOM,TWU,164702647,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1724,3639,6038,492,1430,3845,3845,5011,520,520,
+BOM,TXN,164702412,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1581,3587,6085,465,1296,3802,3802,4989,493,493,
+BOM,TYN,164694300,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1472,4893,5646,578,1207,5187,75,4629,612,588,
+BOM,TYS,121541316,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4287,3112,15366,526,3558,3289,3289,12753,556,556,
+BOM,TZX,164702947,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1350,4724,5154,526,1080,5039,5039,4123,561,561,
+BOM,UET,164694672,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",547,4540,2053,465,481,4723,1315,1806,484,468,
+BOM,UFA,164693952,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1422,4268,5442,513,1279,4411,1003,4897,530,514,
+BOM,UIO,164704639,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",5157,4002,18532,579,4331,4216,4216,15566,610,610,
+BOM,ULN,164694603,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1490,4359,5717,484,1281,4563,1155,4916,507,491,
+BOM,ULU,164695843,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1598,4162,6153,391,1422,4315,907,5476,405,389,
+BOM,ULY,164693955,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1492,3576,5725,439,1238,3779,371,4751,464,448,
+BOM,UPG,164694417,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1909,4799,6712,567,1648,5017,-95,7706,315,291,
+BOM,URC,164694222,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1073,5332,4041,598,933,5564,452,3515,624,600,
+BOM,URT,164694979,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1061,4320,3989,469,901,4537,1129,3390,493,477,
+BOM,URY,164694744,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1301,3489,4958,449,1144,3629,221,4363,467,451,
+BOM,USH,164696331,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4731,2849,16979,483,4649,2866,1162,19391,277,269,
+BOM,USQ,164702949,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1576,3168,6062,402,1339,3327,3327,5152,422,422,
+BOM,UTN,164695773,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2493,3688,8839,420,2082,3891,483,9343,348,332,
+BOM,UTP,164694983,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1077,3868,4056,426,936,4037,629,3528,445,429,
+BOM,UUD,164693892,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1582,3332,6089,449,1313,3521,113,5053,474,458,
+BOM,UUS,164693964,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2276,3661,8046,487,1941,3840,432,8727,363,347,
+BOM,UVF,164703571,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4392,4412,15747,483,3601,4677,4677,12912,512,512,
+BOM,UYL,164695782,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1724,4538,6040,434,1379,4841,1433,4832,463,447,
+BOM,VAA,164702165,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2047,2712,7214,465,1658,2883,2883,5843,495,495,
+BOM,VAN,164702950,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1226,4659,4655,496,993,4954,4954,3770,527,527,
+BOM,VAS,164695061,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1401,3908,5358,444,1218,4078,670,4661,464,448,
+BOM,VBS,164693735,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2098,2566,7401,451,1825,2677,973,6438,471,463,
+BOM,VCE,164693745,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2050,3505,7226,600,1727,3689,281,7850,445,429,
+BOM,VCP,164696367,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4403,5069,15788,587,3627,5367,255,16886,464,440,
+BOM,VCT,121541705,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4638,1830,16642,403,4090,1902,198,18770,248,240,
+BOM,VDA,164694464,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1360,2920,5196,435,1196,3038,1334,4572,453,445,
+BOM,VHC,164695290,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2159,4241,7620,416,1770,4496,1088,6248,441,425,
+BOM,VIE,164693474,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1967,4117,6923,674,1710,4296,888,7434,524,508,
+BOM,VIL,164695648,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2926,3875,10412,411,2563,4035,627,11415,292,276,
+BOM,VIT,164694021,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2421,2416,8574,432,1936,2577,873,6859,460,452,
+BOM,VKO,164693958,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1680,4689,5878,608,1591,4772,1364,6697,354,338,
+BOM,VLC,164694041,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2373,3356,8399,591,2104,3483,75,9790,297,281,
+BOM,VLL,164694044,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2479,2709,8786,481,2156,2826,1122,7643,502,494,
+BOM,VLN,164696452,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4655,3149,16704,483,3705,3363,-45,17678,398,382,
+BOM,VNO,164702216,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1862,3637,6540,537,1564,3831,3831,5493,565,565,
+BOM,VOL,164693687,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1754,2341,6150,406,1438,2481,777,5043,430,422,
+BOM,VPE,164695284,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2423,4667,8582,457,2393,4686,1278,10210,197,181,
+BOM,VPS,121541434,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4485,2181,16085,496,4091,2245,541,17945,324,316,
+BOM,VRA,164695996,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4635,3124,16632,516,4724,2944,1240,19441,254,246,
+BOM,VRN,164693748,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2085,3220,7352,555,1876,3327,-81,6616,574,558,
+BOM,VST,164702340,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2077,2631,7324,449,1827,2737,2737,6445,467,467,
+BOM,VTE,164694551,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1090,5337,4107,480,872,5693,581,3285,512,488,
+BOM,VTZ,164694399,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",461,4456,1683,494,382,4711,1303,1396,522,506,
+BOM,VVI,54210368,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4889,3487,17555,500,4020,3693,285,18584,412,396,
+BOM,VVO,164693957,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",2011,3906,7085,516,1902,3976,568,8437,220,204,
+BOM,VVZ,164695234,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2157,3304,7613,413,1941,3414,6,6851,427,411,
+BOM,WAE,164694785,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1017,3568,3815,437,823,3795,387,3090,464,448,
+BOM,WAW,164693840,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1912,4320,6721,621,1798,4406,998,7747,336,320,
+BOM,WDH,164695669,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2472,4435,8762,494,2389,4484,1076,10316,231,215,
+BOM,WEF,164702414,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1636,3399,6306,441,1357,3592,3592,5233,466,466,
+BOM,WEH,164702391,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1724,3795,6038,492,1448,3998,3998,5071,519,519,
+BOM,WJU,164702981,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1881,2720,6609,433,1692,2811,2811,5948,447,447,
+BOM,WUH,164694293,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1465,5360,5617,633,1289,5575,463,4942,659,635,
+BOM,WUX,164694287,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1650,4163,6361,540,1452,4330,922,5597,562,546,
+BOM,WXN,164694297,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1296,3872,4938,457,1088,4079,671,4147,481,465,
+BOM,XCR,164693631,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2250,2320,7953,435,2025,2398,694,7157,449,441,
+BOM,XIC,164694281,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1093,4224,4118,474,961,4394,986,3623,492,476,
+BOM,XIY,164694306,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1336,5543,5096,654,1248,5664,552,5538,484,460,
+BOM,XMN,164694225,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1574,4876,6056,633,1266,5195,83,6401,525,501,
+BOM,XNA,121541431,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4371,3024,15672,509,3627,3195,3195,13007,538,538,
+BOM,XNN,164694208,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1186,4628,4495,519,1019,4845,1437,3865,543,527,
+BOM,XUZ,164694227,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1577,3723,6070,483,1261,3971,563,4856,516,500,
+BOM,YBG,121549179,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3749,2780,13406,437,3669,2800,1096,15304,251,243,
+BOM,YCU,164694317,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1404,4091,5372,483,1235,4255,847,4727,502,486,
+BOM,YEG,121549303,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3822,3834,13673,597,3599,3908,500,16300,252,236,
+BOM,YEI,164695015,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1588,3452,6112,433,1318,3648,240,5072,458,442,
+BOM,YFB,121549403,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3289,3105,11732,449,2729,3282,3282,9737,474,474,
+BOM,YHM,121549433,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4012,3098,14366,485,3726,3171,1467,15263,394,386,
+BOM,YHZ,121549660,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3730,3616,13337,564,2984,3858,3858,10669,601,601,
+BOM,YIA,164694418,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1697,5075,5940,597,1542,5229,-8403,6374,466,402,
+BOM,YIH,164702411,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1384,4164,5290,492,1217,4331,4331,4655,511,511,
+BOM,YJT,121549725,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3558,2623,12711,414,3254,2698,994,13664,320,312,
+BOM,YKS,164693962,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2118,3633,7472,484,1906,3754,346,6724,500,484,
+BOM,YLW,121549456,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3916,3323,14014,519,3250,3511,3511,11631,549,549,
+BOM,YNB,164694787,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1246,3719,4734,453,1009,3955,547,3834,482,466,
+BOM,YNG,121541778,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4079,2564,14610,420,3630,2658,2658,13002,435,435,
+BOM,YNJ,164702388,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1942,3844,6831,499,1747,3973,3973,6147,516,516,
+BOM,YNT,164702406,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1702,4143,5958,537,1378,4406,4406,4825,571,571,
+BOM,YOL,164695693,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2159,4486,7622,424,1943,4636,1228,6859,438,422,
+BOM,YOW,121549503,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3896,3676,13942,573,3402,3831,423,15511,379,363,
+BOM,YQB,121549429,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3797,3246,13583,508,3265,3398,3398,11681,532,532,
+BOM,YQG,121549802,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4074,2805,14590,441,3666,2899,2899,13131,456,456,
+BOM,YQQ,121549281,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3892,2934,13928,460,3886,2935,1231,16088,246,238,
+BOM,YQX,121549353,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3482,2969,12435,465,3406,2991,1287,14034,286,278,
+BOM,YRQ,121549657,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3827,2707,13691,426,3406,2806,2806,12184,442,442,
+BOM,YUL,121549520,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3866,4130,13835,642,3520,4253,845,15585,398,382,
+BOM,YUM,121541785,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4525,2006,16229,450,3910,2097,393,17453,348,340,
+BOM,YVO,121549757,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3840,2842,13738,447,3939,2622,918,16413,185,177,
+BOM,YVR,121549758,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3920,4293,14031,666,3483,4452,1044,15253,492,476,
+BOM,YWG,121549423,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3928,3616,14057,564,3264,3820,412,14893,463,447,
+BOM,YXE,121549413,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3869,3249,13843,508,3366,3390,3390,12043,530,530,
+BOM,YXS,121549608,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3768,3035,13475,476,3657,3065,1361,15031,311,303,
+BOM,YXU,121549493,ok,16/06/2065,"Reliable
+                              The audit appears to be reliable!",4031,3056,14432,479,3506,3188,3188,12555,500,500,
+BOM,YXX,121549145,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3931,3080,14069,483,4041,2822,1118,16627,219,211,
+BOM,YXY,121549314,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3467,2897,12380,455,3226,2964,1260,13314,352,344,
+BOM,YYB,121549421,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3909,2733,13990,430,3898,2735,1031,16341,213,205,
+BOM,YYC,121549220,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3896,4120,13943,640,3349,4313,905,14784,524,508,
+BOM,YYQ,121549265,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3617,2801,12925,440,3346,2871,1167,13899,340,332,
+BOM,YYR,121549369,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3470,2916,12392,458,3231,2983,1279,13327,354,346,
+BOM,YYT,121549715,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3479,3279,12425,513,2852,3476,3476,10188,543,543,
+BOM,YYZ,54208509,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",3994,4616,14297,715,3522,4798,1390,15169,584,568,
+BOM,ZAG,164693538,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1963,3815,6908,540,1731,3965,557,7681,358,342,
+BOM,ZAM,164702995,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1818,3892,6381,489,1599,4048,4048,5615,509,509,
+BOM,ZAT,164702417,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",1135,3742,4290,420,919,3979,3979,3474,446,446,
+BOM,ZAZ,164694045,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2381,2750,8430,488,1904,2934,1230,6744,520,512,
+BOM,ZCL,164696102,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",4870,2786,17487,480,4820,2795,1091,20203,256,248,
+BOM,ZHY,164694304,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",1279,3580,4868,423,1125,3724,316,4283,439,423,
+BOM,ZIA,164693965,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1666,3919,6427,518,1482,4063,655,5720,537,521,
+BOM,ZNZ,164695799,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1557,4972,5989,477,1323,5221,109,5090,500,476,
+BOM,ZQW,164693658,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2179,2709,7695,465,1808,2862,1158,6386,492,484,
+BOM,ZRH,164694064,ok,15/06/2065,"Reliable
+                              The audit appears to be reliable!",2147,3869,7579,713,1963,3980,572,8743,384,368,
+BOM,ZUH,164694282,ok,13/06/2065,"Reliable
+                              The audit appears to be reliable!",1427,4403,5466,520,1227,4609,1201,4700,544,528,
+BOM,ZYL,164694159,ok,12/06/2065,"Reliable
+                              The audit appears to be reliable!",759,4798,2774,457,637,5055,-57,2330,481,457,
