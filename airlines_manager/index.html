@@ -1,1 +1,184 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BOM Rotation Optimiser</title><link rel="stylesheet" href="css/style.css"></head><body><main><header><div><p class="eyebrow">AIRLINES MANAGER · BOM</p><h1>Rotation Optimiser</h1><p>Passenger-first fleet planning · Browser-based baseline</p></div><span class="pill">v0.1 · Read-only</span></header><section class="metrics"><article><small>Eligible owned routes</small><strong id="routes">—</strong></article><article><small>Aircraft models</small><strong id="models">—</strong></article><article><small>Rotation limit</small><strong>168h</strong></article></section><section class="panel"><h2>Optimisation settings</h2><div class="inputs"><label>Maximum seven-aircraft groups<input id="groups" type="number" min="1" max="300" value="20"></label><label>Minimum Economy payload %<input id="passenger" type="number" min="50" max="95" value="70"></label></div><p class="hint">Each group has seven aircraft. At least one Cargo unit is retained. All four excluded hubs are omitted. Demand is shared across groups.</p><div class="actions"><button id="run" disabled>Run optimiser</button><button id="stop" class="secondary">Stop</button><button id="download" class="secondary" disabled>Export rotations CSV</button></div><p id="status" role="status">Loading route, pricing and aircraft data…</p></section><section class="panel"><h2>Proposed rotations</h2><p class="hint">Exploratory greedy baseline. Configurations are inferred, and no rotations have passed game preflight.</p><div class="scroll"><table><thead><tr><th>Group</th><th>Aircraft</th><th>Configuration</th><th>Hours</th><th>Destinations</th><th>Weekly gross ($)</th></tr></thead><tbody id="results"></tbody></table></div></section><footer>No game purchases, audits, fares or schedules are changed by this application.</footer></main><script type="module" src="js/app.js"></script></body></html>
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Airlines Manager Rotation Optimiser</title>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <main>
+
+    <!-- HEADER -->
+    <header>
+      <div>
+        <p class="eyebrow">AIRLINES MANAGER · BOM</p>
+
+        <h1>Rotation Optimiser</h1>
+
+        <p>
+          Passenger-first fleet planning ·
+          Browser-based baseline
+        </p>
+      </div>
+
+      <span class="pill">v0.2 · Read-only</span>
+    </header>
+
+    <!-- SUMMARY -->
+    <section class="metrics">
+
+      <article>
+        <small>Eligible owned routes</small>
+        <strong id="routes">—</strong>
+      </article>
+
+      <article>
+        <small>Aircraft model</small>
+        <strong>A380-800</strong>
+      </article>
+
+      <article>
+        <small>Rotation limit</small>
+        <strong>168h</strong>
+      </article>
+
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="panel">
+
+      <h2>Optimisation settings</h2>
+
+      <div class="inputs">
+
+        <label>
+          Maximum seven-aircraft groups
+
+          <input
+            id="groups"
+            type="number"
+            min="1"
+            max="300"
+            value="5"
+          >
+        </label>
+
+      </div>
+
+      <h3>Fixed aircraft configuration</h3>
+
+      <div class="inputs">
+
+        <label>
+          Aircraft
+          <input
+            type="text"
+            value="Airbus A380-800"
+            readonly
+          >
+        </label>
+
+        <label>
+          Economy seats
+          <input
+            type="number"
+            value="852"
+            readonly
+          >
+        </label>
+
+        <label>
+          Cargo units
+          <input
+            type="number"
+            value="4"
+            readonly
+          >
+        </label>
+
+      </div>
+
+      <p class="hint">
+        Every A380-800 uses the same fixed configuration:
+        852 Economy + 4 Cargo.
+        Each rotation group contains seven aircraft.
+        BKK, CGK, DEL and MPM are excluded.
+        Daily demand is shared across all groups.
+      </p>
+
+      <div class="actions">
+
+        <button id="run" disabled>
+          Run optimiser
+        </button>
+
+        <button id="stop" class="secondary">
+          Stop
+        </button>
+
+        <button
+          id="download"
+          class="secondary"
+          disabled
+        >
+          Export rotations CSV
+        </button>
+
+      </div>
+
+      <p id="status" role="status">
+        Loading route, pricing and aircraft data…
+      </p>
+
+    </section>
+
+    <!-- RESULTS -->
+    <section class="panel">
+
+      <h2>Proposed rotations</h2>
+
+      <p class="hint">
+        A380-800 only · Fixed 852E + 4C configuration.
+        Exploratory greedy baseline.
+        No rotations have passed game preflight.
+      </p>
+
+      <div class="scroll">
+
+        <table>
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Aircraft</th>
+              <th>Configuration</th>
+              <th>Hours</th>
+              <th>Destinations</th>
+              <th>Weekly gross ($)</th>
+            </tr>
+          </thead>
+
+          <tbody id="results"></tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+    <footer>
+      No game purchases, audits, fares or schedules
+      are changed by this application.
+    </footer>
+
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
