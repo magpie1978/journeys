@@ -1,32 +1,38 @@
 
 /**
- * Airlines Manager BOM Rotation Optimiser
- * ======================================
+ * Airlines Manager Rotation Optimiser
+ * ===================================
  *
  * File: js/engine.js
- * Version: 0.3
+ * Version: 0.4
  *
- * Fixed aircraft:
+ * Hub: BOM
+ * Scenario: REBUILD FROM SCRATCH
+ *
+ * All existing aircraft schedules are treated as
+ * replaceable for planning purposes.
+ *
+ * Existing owned routes are retained.
+ *
+ * Aircraft:
  *   Airbus A380-800
- *   852 Economy
- *   4 Cargo
+ *   852 Economy seats
+ *   4 Cargo units
  *
  * Each rotation group contains seven aircraft.
  *
- * Features:
- * - CSV parsing
- * - Airport category and range validation
- * - Fixed aircraft configuration
- * - Shared daily demand
- * - Multiple services to the same destination
- * - Bounded-knapsack route optimisation
- * - Maximum 168-hour rotations
- * - Weekly revenue estimation
- * - Optimisation diagnostics
- * - CSV export
+ * The optimiser:
+ * - Uses TOTAL daily demand at current fares
+ * - Ignores demand consumed by existing schedules
+ * - Excludes BKK, CGK, DEL and MPM
+ * - Checks airport category and aircraft range
+ * - Allows repeated services when demand permits
+ * - Uses bounded-knapsack optimisation
+ * - Shares demand across newly proposed groups
+ * - Limits each base rotation to 168 hours
  *
- * This is a read-only planning tool.
- * No game actions are performed.
+ * This is a read-only planning simulation.
+ * It does not modify Airlines Manager.
  */
 
 // ============================================================
@@ -46,13 +52,15 @@ export const FIXED_AIRCRAFT = Object.freeze({
   cargo: 4
 });
 
+export const SCENARIO = "REBUILD_FROM_SCRATCH";
+
 export const ROTATION_HOURS = 168;
 
 export const AIRCRAFT_PER_GROUP = 7;
 
 export const ECONOMY_PAYLOAD_TONNES = 0.1;
 
-// Each scheduling unit represents 15 minutes.
+// One scheduling unit represents 15 minutes.
 const QUARTERS = ROTATION_HOURS * 4;
 
 // ============================================================
@@ -66,31 +74,29 @@ export function csv(text) {
   let cell = "";
   let quoted = false;
 
-  // Remove UTF-8 BOM if present.
   text = String(text).replace(/^\uFEFF/, "");
 
   for (let i = 0; i < text.length; i++) {
     const character = text[i];
 
     if (character === '"') {
-      if (
-        quoted &&
-        text[i + 1] === '"'
-      ) {
+      if (quoted && text[i + 1] === '"') {
         cell += '"';
         i++;
       } else {
         quoted = !quoted;
       }
+
     } else if (
       character === "," &&
       !quoted
     ) {
       row.push(cell);
       cell = "";
+
     } else if (
       (character === "\n" ||
-        character === "\r") &&
+       character === "\r") &&
       !quoted
     ) {
       if (
@@ -102,24 +108,19 @@ export function csv(text) {
 
       row.push(cell);
 
-      if (
-        row.some(value => value !== "")
-      ) {
+      if (row.some(value => value !== "")) {
         rows.push(row);
       }
 
       row = [];
       cell = "";
+
     } else {
       cell += character;
     }
   }
 
-  // Handle final row.
-  if (
-    cell !== "" ||
-    row.length > 0
-  ) {
+  if (cell !== "" || row.length > 0) {
     row.push(cell);
     rows.push(row);
   }
@@ -134,8 +135,7 @@ export function csv(text) {
     const record = {};
 
     headers.forEach((header, index) => {
-      record[header.trim()] =
-        values[index] ?? "";
+      record[header.trim()] = values[index] ?? "";
     });
 
     return record;
@@ -180,15 +180,29 @@ function category(value) {
   return number;
 }
 
+function hasValidNumber(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    String(value).trim() === ""
+  ) {
+    return false;
+  }
+
+  return Number.isFinite(
+    Number(String(value).trim())
+  );
+}
+
 // ============================================================
 // 4. FLIGHT DURATION
 // ============================================================
 
 /**
- * Calculate return flight duration.
+ * Calculate return-flight duration.
  *
- * distance = one-way distance in kilometres
- * speed    = aircraft speed in km/h
+ * distance = one-way kilometres
+ * speed = aircraft speed in km/h
  *
  * Formula:
  *
@@ -196,6 +210,7 @@ function category(value) {
  *
  * Round upwards to the nearest 15 minutes.
  */
+
 export function duration(distance, speed) {
   if (
     !(distance > 0) ||
@@ -213,7 +228,7 @@ export function duration(distance, speed) {
 }
 
 // ============================================================
-// 5. PREPARE ROUTES AND AIRCRAFT
+// 5. PREPARE DATA
 // ============================================================
 
 export function prepare(
@@ -222,7 +237,7 @@ export function prepare(
   aircraft
 ) {
   // ----------------------------------------------------------
-  // Build a lookup of successful pricing records.
+  // Build pricing lookup.
   // ----------------------------------------------------------
 
   const pricingByRoute = new Map();
@@ -240,14 +255,16 @@ export function prepare(
       record.route_id ?? ""
     ).trim();
 
-    pricingByRoute.set(
-      routeId,
-      record
-    );
+    if (routeId) {
+      pricingByRoute.set(
+        routeId,
+        record
+      );
+    }
   }
 
   // ----------------------------------------------------------
-  // Prepare eligible owned BOM routes.
+  // Prepare owned BOM routes.
   // ----------------------------------------------------------
 
   const preparedRoutes = [];
@@ -274,7 +291,36 @@ export function prepare(
     ).trim();
 
     const price =
-      pricingByRoute.get(routeId) ?? {};
+      pricingByRoute.get(routeId);
+
+    // --------------------------------------------------------
+    // SCENARIO A:
+    //
+    // Use TOTAL demand at the current fare.
+    //
+    // Do NOT use:
+    // remaining_demand_economy
+    // remaining_demand_cargo
+    //
+    // These reflect existing aircraft schedules,
+    // which are being ignored in this simulation.
+    // --------------------------------------------------------
+
+    const validEconomyDemand =
+      price !== undefined &&
+      hasValidNumber(
+        price.current_demand_economy
+      );
+
+    const validCargoDemand =
+      price !== undefined &&
+      hasValidNumber(
+        price.current_demand_cargo
+      );
+
+    const validPricing =
+      validEconomyDemand &&
+      validCargoDemand;
 
     preparedRoutes.push({
       code: airportCode,
@@ -289,33 +335,41 @@ export function prepare(
         record.category
       ),
 
-      ecoDemand: Math.max(
-        0,
-        numeric(
-          price.remaining_demand_economy
-        )
-      ),
+      ecoDemand: validEconomyDemand
+        ? Math.max(
+            0,
+            numeric(
+              price.current_demand_economy
+            )
+          )
+        : 0,
 
-      cargoDemand: Math.max(
-        0,
-        numeric(
-          price.remaining_demand_cargo
-        )
-      ),
+      cargoDemand: validCargoDemand
+        ? Math.max(
+            0,
+            numeric(
+              price.current_demand_cargo
+            )
+          )
+        : 0,
 
       ecoFare: Math.max(
         0,
         numeric(
-          price.current_price_economy
+          price?.current_price_economy
         )
       ),
 
       cargoFare: Math.max(
         0,
         numeric(
-          price.current_price_cargo
+          price?.current_price_cargo
         )
-      )
+      ),
+
+      pricingValid: validPricing,
+
+      demandSource: "TOTAL_CURRENT_DEMAND"
     });
   }
 
@@ -358,9 +412,10 @@ export function prepare(
 
     if (
       aircraftRecord.category === null ||
+      aircraftRecord.range <= 0 ||
       aircraftRecord.speed <= 0 ||
-      aircraftRecord.payload <= 0 ||
-      aircraftRecord.seats <= 0
+      aircraftRecord.seats <= 0 ||
+      aircraftRecord.payload <= 0
     ) {
       continue;
     }
@@ -372,7 +427,8 @@ export function prepare(
 
   return {
     routes: preparedRoutes,
-    aircraft: preparedAircraft
+    aircraft: preparedAircraft,
+    scenario: SCENARIO
   };
 }
 
@@ -414,17 +470,43 @@ export function validateData(data) {
     );
   }
 
+  const missingPricing =
+    data.routes.filter(route => (
+      route.pricingValid === false
+    ));
+
+  const validPricingRoutes =
+    data.routes.filter(route => (
+      route.pricingValid !== false
+    ));
+
+  if (validPricingRoutes.length === 0) {
+    throw new Error(
+      "No routes have valid total-demand data. " +
+      "Check current_demand_economy and " +
+      "current_demand_cargo in pricing.csv."
+    );
+  }
+
   return {
     routeCount: data.routes.length,
 
     aircraftCount: data.aircraft.length,
 
-    invalidCategories: 0
+    invalidCategories: 0,
+
+    missingTotalDemand:
+      missingPricing.length,
+
+    validPricingRoutes:
+      validPricingRoutes.length,
+
+    scenario: SCENARIO
   };
 }
 
 // ============================================================
-// 7. AIRCRAFT / ROUTE ELIGIBILITY
+// 7. AIRCRAFT ELIGIBILITY
 // ============================================================
 
 export function isEligible(
@@ -432,19 +514,14 @@ export function isEligible(
   route
 ) {
   if (
-    !Number.isInteger(
-      route.category
-    ) ||
-    !Number.isInteger(
-      aircraft.category
-    )
+    !Number.isInteger(route.category) ||
+    !Number.isInteger(aircraft.category)
   ) {
     return false;
   }
 
   if (
-    route.category <
-    aircraft.category
+    route.category < aircraft.category
   ) {
     return false;
   }
@@ -464,19 +541,20 @@ export function isEligible(
 }
 
 // ============================================================
-// 8. REVENUE CALCULATION
+// 8. WEEKLY REVENUE
 // ============================================================
 
 /**
- * Each seven-aircraft rotation group is staggered
- * by 24 hours.
+ * Seven aircraft operate the same base rotation,
+ * staggered by 24 hours.
  *
- * One base return flight therefore operates
+ * Each base return flight therefore operates
  * seven times per week.
  *
- * Each return flight carries passengers and cargo
- * in both directions.
+ * Revenue assumes the same passenger and cargo
+ * loads in both directions.
  */
+
 export function calculateLegRevenue(
   route,
   eco,
@@ -506,22 +584,25 @@ export function calculateLegRevenue(
 }
 
 // ============================================================
-// 9. DEMAND VALIDATION
+// 9. DEMAND CHECKING
 // ============================================================
 
 /**
- * Demand figures represent daily remaining demand.
+ * Scenario A starts with total demand.
  *
- * One base return flight in a seven-aircraft group
- * produces one daily return service.
+ * Once a new rotation is selected, its demand
+ * consumption is deducted from the simulation.
  *
- * Daily demand consumed:
+ * The current planning assumption is that one
+ * daily return service consumes:
  *
- * Economy = 2 * economySeats
- * Cargo   = 2 * cargoUnits
+ * Economy = 2 * Economy seats
+ * Cargo   = 2 * Cargo units
  *
- * Multiple services multiply these requirements.
+ * This demand-direction convention still needs
+ * verification against the game's reporting.
  */
+
 export function hasDemand(
   remaining,
   routeId,
@@ -552,36 +633,32 @@ export function hasDemand(
 }
 
 // ============================================================
-// 10. BOUNDED KNAPSACK OPTIMISATION
+// 10. BOUNDED-KNAPSACK ROTATION SEARCH
 // ============================================================
 
 /**
- * Find the highest-revenue combination of return
- * flights that fits within 168 hours.
+ * Find the highest-revenue combination of
+ * return flights within 168 hours.
  *
- * Unlike the previous greedy algorithm:
+ * Supports:
+ * - Multiple visits to one destination
+ * - Demand-based service limits
+ * - 15-minute flight duration increments
+ * - Revenue maximisation
  *
- * - A destination can appear multiple times.
- * - Each route has a maximum number of services.
- * - The maximum is determined by remaining demand.
- * - Flight durations use 15-minute increments.
- * - Revenue, not simply revenue/hour, is maximised.
+ * Binary splitting converts bounded service counts
+ * into 0/1 knapsack bundles.
  *
- * Binary splitting converts bounded quantities into
- * a manageable number of 0/1 knapsack items.
- *
- * Persistent predecessor nodes preserve the selected
- * combination during dynamic programming.
+ * Persistent predecessor nodes preserve the chosen
+ * route combination during dynamic programming.
  */
-function bestCircuit(
-  options,
-  stop
-) {
-  // ----------------------------------------------------------
-  // Convert route capacities into bounded bundles.
-  // ----------------------------------------------------------
 
+function bestCircuit(options, stop) {
   const bundles = [];
+
+  // ----------------------------------------------------------
+  // Create bounded bundles.
+  // ----------------------------------------------------------
 
   for (const option of options) {
     let remainingCount =
@@ -614,7 +691,7 @@ function bestCircuit(
   }
 
   // ----------------------------------------------------------
-  // Initialise dynamic programming arrays.
+  // Initialise dynamic programming.
   // ----------------------------------------------------------
 
   const dp = new Float64Array(
@@ -622,7 +699,6 @@ function bestCircuit(
   );
 
   dp.fill(-Infinity);
-
   dp[0] = 0;
 
   const paths = Array(
@@ -630,7 +706,7 @@ function bestCircuit(
   ).fill(null);
 
   // ----------------------------------------------------------
-  // Process each bounded bundle.
+  // Process each bundle.
   // ----------------------------------------------------------
 
   for (const bundle of bundles) {
@@ -647,9 +723,7 @@ function bestCircuit(
         dp[time - bundle.weight];
 
       if (
-        !Number.isFinite(
-          previousRevenue
-        )
+        !Number.isFinite(previousRevenue)
       ) {
         continue;
       }
@@ -678,7 +752,7 @@ function bestCircuit(
   }
 
   // ----------------------------------------------------------
-  // Find the highest-revenue duration.
+  // Find highest-revenue duration.
   // ----------------------------------------------------------
 
   let bestTime = 0;
@@ -709,14 +783,12 @@ function bestCircuit(
     }
   }
 
-  if (
-    !(dp[bestTime] > 0)
-  ) {
+  if (!(dp[bestTime] > 0)) {
     return null;
   }
 
   // ----------------------------------------------------------
-  // Reconstruct the selected return services.
+  // Reconstruct selected services.
   // ----------------------------------------------------------
 
   const selected = [];
@@ -738,9 +810,7 @@ function bestCircuit(
   }
 
   // ----------------------------------------------------------
-  // Sort the selected services for readable output.
-  //
-  // Ordering does not change total duration or revenue.
+  // Order services for readable output.
   // ----------------------------------------------------------
 
   selected.sort((a, b) => {
@@ -759,7 +829,7 @@ function bestCircuit(
   });
 
   // ----------------------------------------------------------
-  // Build the rotation's ordered flight sequence.
+  // Build rotation legs.
   // ----------------------------------------------------------
 
   let hours = 0;
@@ -806,14 +876,14 @@ export function optimise(
   } = {}
 ) {
   // ----------------------------------------------------------
-  // Validate imported data.
+  // Validate data.
   // ----------------------------------------------------------
 
   const validation =
     validateData(data);
 
   // ----------------------------------------------------------
-  // Select the fixed A380-800 aircraft.
+  // Select fixed A380-800.
   // ----------------------------------------------------------
 
   const aircraft =
@@ -835,7 +905,7 @@ export function optimise(
   } = FIXED_AIRCRAFT;
 
   // ----------------------------------------------------------
-  // Verify the aircraft configuration.
+  // Validate fixed configuration.
   // ----------------------------------------------------------
 
   const requiredPayload =
@@ -855,16 +925,14 @@ export function optimise(
   }
 
   // ----------------------------------------------------------
-  // Validate requested group count.
+  // Validate group count.
   // ----------------------------------------------------------
 
   const requestedGroups =
     Number(groups);
 
   if (
-    !Number.isInteger(
-      requestedGroups
-    ) ||
+    !Number.isInteger(requestedGroups) ||
     requestedGroups < 1
   ) {
     throw new Error(
@@ -873,7 +941,11 @@ export function optimise(
   }
 
   // ----------------------------------------------------------
-  // Initialise remaining daily demand.
+  // SCENARIO A:
+  //
+  // Start with TOTAL demand.
+  //
+  // Existing schedules are NOT deducted.
   // ----------------------------------------------------------
 
   const remaining = new Map();
@@ -894,6 +966,11 @@ export function optimise(
   // ----------------------------------------------------------
 
   const diagnostics = {
+    scenario: SCENARIO,
+
+    demandSource:
+      "current_demand_economy + current_demand_cargo",
+
     totalRoutes:
       data.routes.length,
 
@@ -903,11 +980,14 @@ export function optimise(
 
     initialDemandEligible: 0,
 
+    missingTotalDemand:
+      validation.missingTotalDemand,
+
     groups: []
   };
 
   // ----------------------------------------------------------
-  // Prepare all potentially eligible routes.
+  // Prepare candidate destinations.
   // ----------------------------------------------------------
 
   const candidates = [];
@@ -922,12 +1002,14 @@ export function optimise(
       continue;
     }
 
-    diagnostics
-      .categoryAndRangeEligible++;
+    diagnostics.categoryAndRangeEligible++;
 
-    if (
-      route.ecoFare <= 0
-    ) {
+    // Do not use routes with missing total demand.
+    if (route.pricingValid === false) {
+      continue;
+    }
+
+    if (route.ecoFare <= 0) {
       continue;
     }
 
@@ -970,8 +1052,7 @@ export function optimise(
         cargo
       )
     ) {
-      diagnostics
-        .initialDemandEligible++;
+      diagnostics.initialDemandEligible++;
     }
   }
 
@@ -992,7 +1073,7 @@ export function optimise(
     const options = [];
 
     // --------------------------------------------------------
-    // Calculate how many services each destination supports.
+    // Calculate remaining daily service capacity.
     // --------------------------------------------------------
 
     for (const candidate of candidates) {
@@ -1032,9 +1113,7 @@ export function optimise(
           maxTimeServices
         );
 
-      if (
-        maxServices > 0
-      ) {
+      if (maxServices > 0) {
         options.push({
           ...candidate,
 
@@ -1044,7 +1123,7 @@ export function optimise(
     }
 
     // --------------------------------------------------------
-    // Find the highest-revenue feasible circuit.
+    // Find highest-revenue rotation.
     // --------------------------------------------------------
 
     const circuit =
@@ -1058,7 +1137,7 @@ export function optimise(
     }
 
     // --------------------------------------------------------
-    // Create the rotation group.
+    // Create group.
     // --------------------------------------------------------
 
     const rotation = {
@@ -1081,12 +1160,13 @@ export function optimise(
     };
 
     // --------------------------------------------------------
-    // Consume daily demand across all seven aircraft.
+    // Consume demand from the NEW proposed schedules.
+    //
+    // This prevents subsequent groups from exceeding
+    // the same total daily demand.
     // --------------------------------------------------------
 
-    for (
-      const leg of rotation.legs
-    ) {
+    for (const leg of rotation.legs) {
       const available =
         remaining.get(
           leg.routeId
@@ -1100,7 +1180,7 @@ export function optimise(
     }
 
     // --------------------------------------------------------
-    // Save the rotation.
+    // Save group and update totals.
     // --------------------------------------------------------
 
     rotations.push(
@@ -1109,10 +1189,6 @@ export function optimise(
 
     total +=
       rotation.revenue;
-
-    // --------------------------------------------------------
-    // Save diagnostic information.
-    // --------------------------------------------------------
 
     diagnostics.groups.push({
       id:
@@ -1132,10 +1208,6 @@ export function optimise(
         rotation.hours
     });
 
-    // --------------------------------------------------------
-    // Notify the interface.
-    // --------------------------------------------------------
-
     onProgress({
       completed:
         rotations.length,
@@ -1147,7 +1219,7 @@ export function optimise(
   }
 
   // ----------------------------------------------------------
-  // Return complete optimisation results.
+  // Return results.
   // ----------------------------------------------------------
 
   return {
@@ -1161,8 +1233,13 @@ export function optimise(
 
     diagnostics,
 
+    scenario: SCENARIO,
+
+    demandSource:
+      "TOTAL_CURRENT_DEMAND",
+
     method:
-      "fixed-a380-bounded-knapsack",
+      "fixed-a380-bounded-knapsack-rebuild",
 
     preflight:
       "NOT_RUN"
