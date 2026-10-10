@@ -1,30 +1,32 @@
 
 /**
- * Airlines Manager Rotation Optimiser
- * ===================================
+ * Airlines Manager BOM Rotation Optimiser
+ * ======================================
  *
- * Version: 0.1.1
+ * File: js/engine.js
+ * Version: 0.3
  *
- * Browser-based, read-only optimisation engine.
+ * Fixed aircraft:
+ *   Airbus A380-800
+ *   852 Economy
+ *   4 Cargo
+ *
+ * Each rotation group contains seven aircraft.
  *
  * Features:
  * - CSV parsing
- * - BOM route exclusions
- * - Airport category and aircraft eligibility checks
- * - Economy/Cargo aircraft configurations
- * - Passenger-first payload allocation
- * - Seven-aircraft rotation groups
+ * - Airport category and range validation
+ * - Fixed aircraft configuration
+ * - Shared daily demand
+ * - Multiple services to the same destination
+ * - Bounded-knapsack route optimisation
  * - Maximum 168-hour rotations
- * - Shared daily demand across all rotations
- * - Greedy revenue optimisation
+ * - Weekly revenue estimation
+ * - Optimisation diagnostics
  * - CSV export
  *
- * IMPORTANT:
- * This is a baseline heuristic, not a globally optimal solver.
- * Aircraft configurations are inferred from payload data.
- * Game preflight validation is still required.
- *
- * No game purchases, audits, schedules or fare changes occur.
+ * This is a read-only planning tool.
+ * No game actions are performed.
  */
 
 // ============================================================
@@ -38,22 +40,20 @@ export const EXCLUDED = new Set([
   "MPM"
 ]);
 
-export const FIXED_AIRCRAFT = {
+export const FIXED_AIRCRAFT = Object.freeze({
   model: "A380-800",
   eco: 852,
   cargo: 4
-};
+});
 
 export const ROTATION_HOURS = 168;
+
 export const AIRCRAFT_PER_GROUP = 7;
 
-export const MIN_AIRPORT_CATEGORY = 1;
-export const MAX_AIRPORT_CATEGORY = 10;
-
-export const MIN_CARGO_UNITS = 1;
-
-// Economy passenger payload assumption: 0.1 tonnes per seat.
 export const ECONOMY_PAYLOAD_TONNES = 0.1;
+
+// Each scheduling unit represents 15 minutes.
+const QUARTERS = ROTATION_HOURS * 4;
 
 // ============================================================
 // 2. CSV PARSER
@@ -73,17 +73,24 @@ export function csv(text) {
     const character = text[i];
 
     if (character === '"') {
-      if (quoted && text[i + 1] === '"') {
+      if (
+        quoted &&
+        text[i + 1] === '"'
+      ) {
         cell += '"';
         i++;
       } else {
         quoted = !quoted;
       }
-    } else if (character === "," && !quoted) {
+    } else if (
+      character === "," &&
+      !quoted
+    ) {
       row.push(cell);
       cell = "";
     } else if (
-      (character === "\n" || character === "\r") &&
+      (character === "\n" ||
+        character === "\r") &&
       !quoted
     ) {
       if (
@@ -95,7 +102,9 @@ export function csv(text) {
 
       row.push(cell);
 
-      if (row.some(value => value !== "")) {
+      if (
+        row.some(value => value !== "")
+      ) {
         rows.push(row);
       }
 
@@ -106,7 +115,11 @@ export function csv(text) {
     }
   }
 
-  if (cell !== "" || row.length > 0) {
+  // Handle final row.
+  if (
+    cell !== "" ||
+    row.length > 0
+  ) {
     row.push(cell);
     rows.push(row);
   }
@@ -121,7 +134,8 @@ export function csv(text) {
     const record = {};
 
     headers.forEach((header, index) => {
-      record[header.trim()] = values[index] ?? "";
+      record[header.trim()] =
+        values[index] ?? "";
     });
 
     return record;
@@ -132,7 +146,7 @@ export function csv(text) {
 // 3. NUMERIC UTILITIES
 // ============================================================
 
-function parseNumber(value, fallback = 0) {
+function numeric(value, fallback = 0) {
   if (
     value === null ||
     value === undefined ||
@@ -142,7 +156,9 @@ function parseNumber(value, fallback = 0) {
   }
 
   const number = Number(
-    String(value).replace(/,/g, "").trim()
+    String(value)
+      .replaceAll(",", "")
+      .trim()
   );
 
   return Number.isFinite(number)
@@ -150,26 +166,18 @@ function parseNumber(value, fallback = 0) {
     : fallback;
 }
 
-function parseCategory(value) {
+function category(value) {
+  const number = numeric(value, NaN);
+
   if (
-    value === null ||
-    value === undefined ||
-    String(value).trim() === ""
+    !Number.isInteger(number) ||
+    number < 1 ||
+    number > 10
   ) {
     return null;
   }
 
-  const category = Number(value);
-
-  if (
-    !Number.isInteger(category) ||
-    category < MIN_AIRPORT_CATEGORY ||
-    category > MAX_AIRPORT_CATEGORY
-  ) {
-    return null;
-  }
-
-  return category;
+  return number;
 }
 
 // ============================================================
@@ -177,23 +185,21 @@ function parseCategory(value) {
 // ============================================================
 
 /**
- * Calculate the duration of a return flight.
+ * Calculate return flight duration.
  *
- * distance = one-way kilometres
+ * distance = one-way distance in kilometres
  * speed    = aircraft speed in km/h
  *
  * Formula:
  *
  * 2 * (distance / speed + 1)
  *
- * Rounded upwards to the nearest 15 minutes.
+ * Round upwards to the nearest 15 minutes.
  */
 export function duration(distance, speed) {
   if (
-    !Number.isFinite(distance) ||
-    !Number.isFinite(speed) ||
-    distance <= 0 ||
-    speed <= 0
+    !(distance > 0) ||
+    !(speed > 0)
   ) {
     return Infinity;
   }
@@ -201,38 +207,48 @@ export function duration(distance, speed) {
   const roundTripHours =
     2 * (distance / speed + 1);
 
-  return Math.ceil(roundTripHours * 4) / 4;
+  return Math.ceil(
+    roundTripHours * 4
+  ) / 4;
 }
 
 // ============================================================
-// 5. PREPARE DATA
+// 5. PREPARE ROUTES AND AIRCRAFT
 // ============================================================
 
-/**
- * Convert imported CSV records into optimiser data.
- *
- * The interface is deliberately unchanged:
- *
- * prepare(routes, pricing, aircraft)
- *
- * This maintains compatibility with the existing app.js.
- */
-export function prepare(routes, pricing, aircraft) {
-  const pricingMap = new Map();
+export function prepare(
+  routes,
+  pricing,
+  aircraft
+) {
+  // ----------------------------------------------------------
+  // Build a lookup of successful pricing records.
+  // ----------------------------------------------------------
+
+  const pricingByRoute = new Map();
 
   for (const record of pricing) {
-    if (
-      String(record.status).trim().toLowerCase() !== "ok"
-    ) {
+    const status = String(
+      record.status ?? ""
+    ).trim().toLowerCase();
+
+    if (status !== "ok") {
       continue;
     }
 
-    const routeId = String(record.route_id).trim();
+    const routeId = String(
+      record.route_id ?? ""
+    ).trim();
 
-    if (routeId) {
-      pricingMap.set(routeId, record);
-    }
+    pricingByRoute.set(
+      routeId,
+      record
+    );
   }
+
+  // ----------------------------------------------------------
+  // Prepare eligible owned BOM routes.
+  // ----------------------------------------------------------
 
   const preparedRoutes = [];
 
@@ -257,78 +273,101 @@ export function prepare(routes, pricing, aircraft) {
       record.route_id ?? ""
     ).trim();
 
-    const pricingRecord =
-      pricingMap.get(routeId) ?? {};
+    const price =
+      pricingByRoute.get(routeId) ?? {};
 
     preparedRoutes.push({
       code: airportCode,
+
       id: routeId,
 
-      distance: parseNumber(record.distance_km),
+      distance: numeric(
+        record.distance_km
+      ),
 
-      // Missing or invalid categories remain null.
-      category: parseCategory(record.category),
+      category: category(
+        record.category
+      ),
 
       ecoDemand: Math.max(
         0,
-        parseNumber(
-          pricingRecord.remaining_demand_economy
+        numeric(
+          price.remaining_demand_economy
         )
       ),
 
       cargoDemand: Math.max(
         0,
-        parseNumber(
-          pricingRecord.remaining_demand_cargo
+        numeric(
+          price.remaining_demand_cargo
         )
       ),
 
       ecoFare: Math.max(
         0,
-        parseNumber(
-          pricingRecord.current_price_economy
+        numeric(
+          price.current_price_economy
         )
       ),
 
       cargoFare: Math.max(
         0,
-        parseNumber(
-          pricingRecord.current_price_cargo
+        numeric(
+          price.current_price_cargo
         )
       )
     });
   }
 
+  // ----------------------------------------------------------
+  // Prepare aircraft catalogue.
+  // ----------------------------------------------------------
+
   const preparedAircraft = [];
 
   for (const record of aircraft) {
     const aircraftRecord = {
-      id: String(record.aircraft_id ?? "").trim(),
-      model: String(record.model ?? "").trim(),
+      id: String(
+        record.aircraft_id ?? ""
+      ).trim(),
 
-      category: parseCategory(record.category),
+      model: String(
+        record.model ?? ""
+      ).trim(),
 
-      range: parseNumber(record.range_km),
-      speed: parseNumber(record.speed_kmh),
-
-      seats: Math.floor(
-        parseNumber(record.max_seats)
+      category: category(
+        record.category
       ),
 
-      payload: parseNumber(record.payload_tonnes)
+      range: numeric(
+        record.range_km
+      ),
+
+      speed: numeric(
+        record.speed_kmh
+      ),
+
+      seats: Math.floor(
+        numeric(record.max_seats)
+      ),
+
+      payload: numeric(
+        record.payload_tonnes
+      )
     };
 
     if (
       aircraftRecord.category === null ||
-      aircraftRecord.range <= 0 ||
       aircraftRecord.speed <= 0 ||
-      aircraftRecord.seats <= 0 ||
-      aircraftRecord.payload <= 0
+      aircraftRecord.payload <= 0 ||
+      aircraftRecord.seats <= 0
     ) {
       continue;
     }
 
-    preparedAircraft.push(aircraftRecord);
+    preparedAircraft.push(
+      aircraftRecord
+    );
   }
 
   return {
@@ -338,98 +377,86 @@ export function prepare(routes, pricing, aircraft) {
 }
 
 // ============================================================
-// 6. VALIDATE INPUT DATA
+// 6. DATA VALIDATION
 // ============================================================
 
 export function validateData(data) {
-  if (!data || !Array.isArray(data.routes)) {
+  if (
+    !Array.isArray(data?.routes) ||
+    data.routes.length === 0
+  ) {
     throw new Error(
-      "Route data is missing or invalid."
+      "No eligible owned routes loaded."
     );
   }
 
-  if (!Array.isArray(data.aircraft)) {
+  if (
+    !Array.isArray(data?.aircraft) ||
+    data.aircraft.length === 0
+  ) {
     throw new Error(
-      "Aircraft data is missing or invalid."
+      "No usable aircraft models loaded."
     );
   }
 
-  if (data.routes.length === 0) {
-    throw new Error(
-      "No eligible owned routes were loaded."
-    );
-  }
-
-  if (data.aircraft.length === 0) {
-    throw new Error(
-      "No usable aircraft models were loaded."
-    );
-  }
-
-  const invalidCategories = data.routes.filter(
-    route => (
+  const invalidCategories =
+    data.routes.filter(route => (
       !Number.isInteger(route.category) ||
-      route.category < MIN_AIRPORT_CATEGORY ||
-      route.category > MAX_AIRPORT_CATEGORY
-    )
-  );
+      route.category < 1 ||
+      route.category > 10
+    ));
 
   if (invalidCategories.length > 0) {
     throw new Error(
       `${invalidCategories.length} of ` +
-      `${data.routes.length} routes have missing or ` +
-      `invalid airport categories. ` +
-      `Repair the category column in routes.csv ` +
-      `before running the optimiser.`
-    );
-  }
-
-  const validRoutes = data.routes.filter(route => (
-    route.distance > 0 &&
-    route.ecoFare > 0 &&
-    route.ecoDemand > 0
-  ));
-
-  if (validRoutes.length === 0) {
-    throw new Error(
-      "No routes have positive Economy fares, " +
-      "Economy demand and valid distances."
+      `${data.routes.length} routes have ` +
+      "missing or invalid airport categories."
     );
   }
 
   return {
     routeCount: data.routes.length,
+
     aircraftCount: data.aircraft.length,
-    validPassengerRoutes: validRoutes.length,
-    invalidCategories: invalidCategories.length
+
+    invalidCategories: 0
   };
 }
 
 // ============================================================
-// 7. AIRCRAFT ELIGIBILITY
+// 7. AIRCRAFT / ROUTE ELIGIBILITY
 // ============================================================
 
-export function isEligible(aircraft, route) {
+export function isEligible(
+  aircraft,
+  route
+) {
   if (
-    !Number.isInteger(aircraft.category) ||
-    !Number.isInteger(route.category)
+    !Number.isInteger(
+      route.category
+    ) ||
+    !Number.isInteger(
+      aircraft.category
+    )
   ) {
     return false;
   }
 
-  if (route.category < aircraft.category) {
-    return false;
-  }
-
-  // Aircraft range is compared to one-way distance.
-  if (route.distance > aircraft.range) {
+  if (
+    route.category <
+    aircraft.category
+  ) {
     return false;
   }
 
   if (
     route.distance <= 0 ||
-    aircraft.speed <= 0
+    route.distance > aircraft.range
   ) {
+    return false;
+  }
+
+  if (aircraft.speed <= 0) {
     return false;
   }
 
@@ -437,338 +464,754 @@ export function isEligible(aircraft, route) {
 }
 
 // ============================================================
-// 8. AIRCRAFT CONFIGURATION
+// 8. REVENUE CALCULATION
 // ============================================================
 
 /**
- * Calculate Economy capacity for a given Cargo allocation.
+ * Each seven-aircraft rotation group is staggered
+ * by 24 hours.
  *
- * Payload assumptions:
- * Economy seat = 0.1 tonnes
- * Cargo unit   = 1 tonne
+ * One base return flight therefore operates
+ * seven times per week.
  *
- * These assumptions are supported by three manually
- * checked aircraft examples but are not yet verified
- * across the entire aircraft catalogue.
- */
-export function getConfiguration(aircraft, cargo) {
-  if (
-    !Number.isInteger(cargo) ||
-    cargo < MIN_CARGO_UNITS ||
-    cargo > aircraft.payload
-  ) {
-    return null;
-  }
-
-  const remainingPayload =
-    aircraft.payload - cargo;
-
-  const economySeats = Math.min(
-    aircraft.seats,
-    Math.floor(
-      remainingPayload /
-      ECONOMY_PAYLOAD_TONNES + 1e-7
-    )
-  );
-
-  if (economySeats <= 0) {
-    return null;
-  }
-
-  const economyPayload =
-    economySeats * ECONOMY_PAYLOAD_TONNES;
-
-  const passengerPayloadPercent =
-    (economyPayload / aircraft.payload) * 100;
-
-  return {
-    eco: economySeats,
-    cargo,
-    passengerPayloadPercent
-  };
-}
-
-// ============================================================
-// 9. REVENUE CALCULATION
-// ============================================================
-
-/**
- * Revenue from one return service in a seven-aircraft
- * rotation group.
- *
- * Each group operates the same base sequence on seven
- * aircraft, staggered by 24 hours.
- *
- * One base return service therefore produces seven
- * return services per week.
+ * Each return flight carries passengers and cargo
+ * in both directions.
  */
 export function calculateLegRevenue(
   route,
-  economySeats,
-  cargoUnits
+  eco,
+  cargo
 ) {
   const economyRevenue =
-    7 * 2 * economySeats * route.ecoFare;
+    AIRCRAFT_PER_GROUP *
+    2 *
+    eco *
+    route.ecoFare;
 
   const cargoRevenue =
-    7 * 2 * cargoUnits * route.cargoFare;
+    AIRCRAFT_PER_GROUP *
+    2 *
+    cargo *
+    route.cargoFare;
 
   return {
     economyRevenue,
+
     cargoRevenue,
-    totalRevenue: economyRevenue + cargoRevenue
+
+    totalRevenue:
+      economyRevenue +
+      cargoRevenue
   };
 }
 
 // ============================================================
-// 10. DEMAND CHECKING
+// 9. DEMAND VALIDATION
 // ============================================================
 
 /**
- * Remaining demand is daily.
+ * Demand figures represent daily remaining demand.
  *
- * One base return service in a seven-aircraft group
- * produces one return service per day.
+ * One base return flight in a seven-aircraft group
+ * produces one daily return service.
  *
- * Therefore daily consumption is:
+ * Daily demand consumed:
  *
  * Economy = 2 * economySeats
  * Cargo   = 2 * cargoUnits
  *
- * The factor of seven belongs in weekly revenue,
- * not daily demand consumption.
+ * Multiple services multiply these requirements.
  */
 export function hasDemand(
   remaining,
   routeId,
-  economySeats,
-  cargoUnits,
-  additionalServices = 1
+  eco,
+  cargo,
+  services = 1
 ) {
-  const available = remaining.get(routeId);
+  const available =
+    remaining.get(routeId);
 
   if (!available) {
     return false;
   }
 
   const economyRequired =
-    additionalServices * 2 * economySeats;
+    services * 2 * eco;
 
   const cargoRequired =
-    additionalServices * 2 * cargoUnits;
+    services * 2 * cargo;
 
   return (
-    available.eco >= economyRequired &&
-    available.cargo >= cargoRequired
+    available.eco + 1e-8 >=
+      economyRequired &&
+
+    available.cargo + 1e-8 >=
+      cargoRequired
   );
 }
 
 // ============================================================
-// 11. ROTATION OPTIMISER
+// 10. BOUNDED KNAPSACK OPTIMISATION
 // ============================================================
 
-
-export function optimise(
-  data,
-  {
-    groups = 20,
-    passengerMin = 70,
-    onProgress = () => {},
-    stop = () => false
-  } = {}
+/**
+ * Find the highest-revenue combination of return
+ * flights that fits within 168 hours.
+ *
+ * Unlike the previous greedy algorithm:
+ *
+ * - A destination can appear multiple times.
+ * - Each route has a maximum number of services.
+ * - The maximum is determined by remaining demand.
+ * - Flight durations use 15-minute increments.
+ * - Revenue, not simply revenue/hour, is maximised.
+ *
+ * Binary splitting converts bounded quantities into
+ * a manageable number of 0/1 knapsack items.
+ *
+ * Persistent predecessor nodes preserve the selected
+ * combination during dynamic programming.
+ */
+function bestCircuit(
+  options,
+  stop
 ) {
-  const validation = validateData(data);
+  // ----------------------------------------------------------
+  // Convert route capacities into bounded bundles.
+  // ----------------------------------------------------------
 
-  const aircraft = data.aircraft.find(
-    item => item.model === FIXED_AIRCRAFT.model
-  );
+  const bundles = [];
 
-  if (!aircraft) {
-    throw new Error(
-      `${FIXED_AIRCRAFT.model} was not found in aircraft.csv.`
-    );
-  }
+  for (const option of options) {
+    let remainingCount =
+      option.maxServices;
 
-  const eco = FIXED_AIRCRAFT.eco;
-  const cargo = FIXED_AIRCRAFT.cargo;
-
-  if (eco > aircraft.seats) {
-    throw new Error(
-      `The A380-800 cannot accommodate ${eco} Economy seats.`
-    );
-  }
-
-  const payloadRequired =
-    eco * ECONOMY_PAYLOAD_TONNES + cargo;
-
-  if (payloadRequired > aircraft.payload + 1e-7) {
-    throw new Error(
-      `The fixed configuration exceeds the A380-800 payload.`
-    );
-  }
-
-  const remaining = new Map(
-    data.routes.map(route => [
-      route.id,
-      {
-        eco: route.ecoDemand,
-        cargo: route.cargoDemand
-      }
-    ])
-  );
-
-  const rotations = [];
-  let total = 0;
-
-  for (
-    let groupIndex = 0;
-    groupIndex < groups && !stop();
-    groupIndex++
-  ) {
-    const options = [];
-
-    for (const route of data.routes) {
-      if (!isEligible(aircraft, route)) {
-        continue;
-      }
-
-      if (route.ecoFare <= 0) {
-        continue;
-      }
-
-      const flightHours = duration(
-        route.distance,
-        aircraft.speed
+    for (
+      let size = 1;
+      remainingCount > 0;
+      size *= 2
+    ) {
+      const take = Math.min(
+        size,
+        remainingCount
       );
 
-      if (flightHours > ROTATION_HOURS) {
-        continue;
-      }
+      bundles.push({
+        option,
+
+        count: take,
+
+        weight:
+          option.quarters * take,
+
+        value:
+          option.revenue * take
+      });
+
+      remainingCount -= take;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Initialise dynamic programming arrays.
+  // ----------------------------------------------------------
+
+  const dp = new Float64Array(
+    QUARTERS + 1
+  );
+
+  dp.fill(-Infinity);
+
+  dp[0] = 0;
+
+  const paths = Array(
+    QUARTERS + 1
+  ).fill(null);
+
+  // ----------------------------------------------------------
+  // Process each bounded bundle.
+  // ----------------------------------------------------------
+
+  for (const bundle of bundles) {
+    if (stop()) {
+      return null;
+    }
+
+    for (
+      let time = QUARTERS;
+      time >= bundle.weight;
+      time--
+    ) {
+      const previousRevenue =
+        dp[time - bundle.weight];
 
       if (
-        !hasDemand(
-          remaining,
-          route.id,
-          eco,
-          cargo
+        !Number.isFinite(
+          previousRevenue
         )
       ) {
         continue;
       }
 
-      const revenue = calculateLegRevenue(
+      const candidateRevenue =
+        previousRevenue +
+        bundle.value;
+
+      if (
+        candidateRevenue >
+        dp[time] + 1e-7
+      ) {
+        dp[time] =
+          candidateRevenue;
+
+        paths[time] = {
+          bundle,
+
+          previous:
+            paths[
+              time - bundle.weight
+            ]
+        };
+      }
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Find the highest-revenue duration.
+  // ----------------------------------------------------------
+
+  let bestTime = 0;
+
+  for (
+    let time = 1;
+    time <= QUARTERS;
+    time++
+  ) {
+    const betterRevenue =
+      dp[time] >
+      dp[bestTime] + 1e-7;
+
+    const equalRevenue =
+      Math.abs(
+        dp[time] -
+        dp[bestTime]
+      ) <= 1e-7;
+
+    if (
+      betterRevenue ||
+      (
+        equalRevenue &&
+        time > bestTime
+      )
+    ) {
+      bestTime = time;
+    }
+  }
+
+  if (
+    !(dp[bestTime] > 0)
+  ) {
+    return null;
+  }
+
+  // ----------------------------------------------------------
+  // Reconstruct the selected return services.
+  // ----------------------------------------------------------
+
+  const selected = [];
+
+  let node = paths[bestTime];
+
+  while (node) {
+    for (
+      let i = 0;
+      i < node.bundle.count;
+      i++
+    ) {
+      selected.push(
+        node.bundle.option
+      );
+    }
+
+    node = node.previous;
+  }
+
+  // ----------------------------------------------------------
+  // Sort the selected services for readable output.
+  //
+  // Ordering does not change total duration or revenue.
+  // ----------------------------------------------------------
+
+  selected.sort((a, b) => {
+    const ratioA =
+      a.revenue / a.quarters;
+
+    const ratioB =
+      b.revenue / b.quarters;
+
+    return (
+      ratioB - ratioA ||
+      a.route.code.localeCompare(
+        b.route.code
+      )
+    );
+  });
+
+  // ----------------------------------------------------------
+  // Build the rotation's ordered flight sequence.
+  // ----------------------------------------------------------
+
+  let hours = 0;
+
+  const legs = [];
+
+  for (const option of selected) {
+    legs.push({
+      code: option.route.code,
+
+      routeId: option.route.id,
+
+      start: hours,
+
+      duration: option.hours,
+
+      revenue: option.revenue
+    });
+
+    hours += option.hours;
+  }
+
+  return {
+    hours,
+
+    revenue: dp[bestTime],
+
+    legs
+  };
+}
+
+// ============================================================
+// 11. MAIN OPTIMISER
+// ============================================================
+
+export function optimise(
+  data,
+  {
+    groups = 20,
+
+    onProgress = () => {},
+
+    stop = () => false
+  } = {}
+) {
+  // ----------------------------------------------------------
+  // Validate imported data.
+  // ----------------------------------------------------------
+
+  const validation =
+    validateData(data);
+
+  // ----------------------------------------------------------
+  // Select the fixed A380-800 aircraft.
+  // ----------------------------------------------------------
+
+  const aircraft =
+    data.aircraft.find(
+      item =>
+        item.model ===
+        FIXED_AIRCRAFT.model
+    );
+
+  if (!aircraft) {
+    throw new Error(
+      "A380-800 is missing from usable aircraft.csv records."
+    );
+  }
+
+  const {
+    eco,
+    cargo
+  } = FIXED_AIRCRAFT;
+
+  // ----------------------------------------------------------
+  // Verify the aircraft configuration.
+  // ----------------------------------------------------------
+
+  const requiredPayload =
+    eco *
+    ECONOMY_PAYLOAD_TONNES +
+    cargo;
+
+  if (
+    eco > aircraft.seats ||
+    requiredPayload >
+      aircraft.payload + 1e-7
+  ) {
+    throw new Error(
+      "Fixed 852E + 4C exceeds the " +
+      "A380-800 seat or payload limit."
+    );
+  }
+
+  // ----------------------------------------------------------
+  // Validate requested group count.
+  // ----------------------------------------------------------
+
+  const requestedGroups =
+    Number(groups);
+
+  if (
+    !Number.isInteger(
+      requestedGroups
+    ) ||
+    requestedGroups < 1
+  ) {
+    throw new Error(
+      "Group count must be a positive integer."
+    );
+  }
+
+  // ----------------------------------------------------------
+  // Initialise remaining daily demand.
+  // ----------------------------------------------------------
+
+  const remaining = new Map();
+
+  for (const route of data.routes) {
+    remaining.set(
+      route.id,
+      {
+        eco: route.ecoDemand,
+
+        cargo: route.cargoDemand
+      }
+    );
+  }
+
+  // ----------------------------------------------------------
+  // Initialise diagnostics.
+  // ----------------------------------------------------------
+
+  const diagnostics = {
+    totalRoutes:
+      data.routes.length,
+
+    categoryAndRangeEligible: 0,
+
+    fareEligible: 0,
+
+    initialDemandEligible: 0,
+
+    groups: []
+  };
+
+  // ----------------------------------------------------------
+  // Prepare all potentially eligible routes.
+  // ----------------------------------------------------------
+
+  const candidates = [];
+
+  for (const route of data.routes) {
+    if (
+      !isEligible(
+        aircraft,
+        route
+      )
+    ) {
+      continue;
+    }
+
+    diagnostics
+      .categoryAndRangeEligible++;
+
+    if (
+      route.ecoFare <= 0
+    ) {
+      continue;
+    }
+
+    diagnostics.fareEligible++;
+
+    const hours = duration(
+      route.distance,
+      aircraft.speed
+    );
+
+    if (
+      hours > ROTATION_HOURS
+    ) {
+      continue;
+    }
+
+    const revenue =
+      calculateLegRevenue(
         route,
         eco,
         cargo
+      ).totalRevenue;
+
+    candidates.push({
+      route,
+
+      hours,
+
+      quarters:
+        Math.round(hours * 4),
+
+      revenue
+    });
+
+    if (
+      hasDemand(
+        remaining,
+        route.id,
+        eco,
+        cargo
+      )
+    ) {
+      diagnostics
+        .initialDemandEligible++;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Generate rotation groups.
+  // ----------------------------------------------------------
+
+  const rotations = [];
+
+  let total = 0;
+
+  for (
+    let groupIndex = 0;
+    groupIndex < requestedGroups &&
+      !stop();
+    groupIndex++
+  ) {
+    const options = [];
+
+    // --------------------------------------------------------
+    // Calculate how many services each destination supports.
+    // --------------------------------------------------------
+
+    for (const candidate of candidates) {
+      const available =
+        remaining.get(
+          candidate.route.id
+        );
+
+      const maxEconomyServices =
+        Math.floor(
+          (
+            available.eco +
+            1e-8
+          ) /
+          (2 * eco)
+        );
+
+      const maxCargoServices =
+        Math.floor(
+          (
+            available.cargo +
+            1e-8
+          ) /
+          (2 * cargo)
+        );
+
+      const maxTimeServices =
+        Math.floor(
+          QUARTERS /
+          candidate.quarters
+        );
+
+      const maxServices =
+        Math.min(
+          maxEconomyServices,
+          maxCargoServices,
+          maxTimeServices
+        );
+
+      if (
+        maxServices > 0
+      ) {
+        options.push({
+          ...candidate,
+
+          maxServices
+        });
+      }
+    }
+
+    // --------------------------------------------------------
+    // Find the highest-revenue feasible circuit.
+    // --------------------------------------------------------
+
+    const circuit =
+      bestCircuit(
+        options,
+        stop
       );
 
-      options.push({
-        route,
-        hours: flightHours,
-        revenue: revenue.totalRevenue,
-        ratio: revenue.totalRevenue / flightHours
-      });
-    }
-
-    options.sort(
-      (a, b) => b.ratio - a.ratio
-    );
-
-    const legs = [];
-    let hours = 0;
-    let revenue = 0;
-
-    for (const option of options) {
-      if (
-        hours + option.hours >
-        ROTATION_HOURS + 1e-7
-      ) {
-        continue;
-      }
-
-      legs.push({
-        code: option.route.code,
-        routeId: option.route.id,
-        start: hours,
-        duration: option.hours,
-        revenue: option.revenue
-      });
-
-      hours += option.hours;
-      revenue += option.revenue;
-    }
-
-    if (legs.length === 0) {
+    if (!circuit) {
       break;
     }
 
-    for (const leg of legs) {
-      const available = remaining.get(
-        leg.routeId
-      );
-
-      available.eco -= 2 * eco;
-      available.cargo -= 2 * cargo;
-    }
+    // --------------------------------------------------------
+    // Create the rotation group.
+    // --------------------------------------------------------
 
     const rotation = {
-      id: `BOM-${String(groupIndex + 1).padStart(3, "0")}`,
-      model: aircraft.model,
-      aircraftId: aircraft.id,
+      id:
+        `BOM-${String(
+          groupIndex + 1
+        ).padStart(3, "0")}`,
+
+      model:
+        aircraft.model,
+
+      aircraftId:
+        aircraft.id,
+
       eco,
+
       cargo,
-      hours,
-      revenue,
-      legs
+
+      ...circuit
     };
 
-    rotations.push(rotation);
-    total += revenue;
+    // --------------------------------------------------------
+    // Consume daily demand across all seven aircraft.
+    // --------------------------------------------------------
+
+    for (
+      const leg of rotation.legs
+    ) {
+      const available =
+        remaining.get(
+          leg.routeId
+        );
+
+      available.eco -=
+        2 * eco;
+
+      available.cargo -=
+        2 * cargo;
+    }
+
+    // --------------------------------------------------------
+    // Save the rotation.
+    // --------------------------------------------------------
+
+    rotations.push(
+      rotation
+    );
+
+    total +=
+      rotation.revenue;
+
+    // --------------------------------------------------------
+    // Save diagnostic information.
+    // --------------------------------------------------------
+
+    diagnostics.groups.push({
+      id:
+        rotation.id,
+
+      eligibleDestinations:
+        options.length,
+
+      services:
+        rotation.legs.length,
+
+      hours:
+        rotation.hours,
+
+      unusedHours:
+        ROTATION_HOURS -
+        rotation.hours
+    });
+
+    // --------------------------------------------------------
+    // Notify the interface.
+    // --------------------------------------------------------
 
     onProgress({
-      completed: groupIndex + 1,
+      completed:
+        rotations.length,
+
       total,
+
       rotation
     });
   }
 
+  // ----------------------------------------------------------
+  // Return complete optimisation results.
+  // ----------------------------------------------------------
+
   return {
     rotations,
+
     total,
+
     remaining,
+
     validation,
-    method: "fixed-a380-greedy",
-    preflight: "NOT_RUN"
+
+    diagnostics,
+
+    method:
+      "fixed-a380-bounded-knapsack",
+
+    preflight:
+      "NOT_RUN"
   };
 }
-
 
 // ============================================================
 // 12. CSV EXPORT
 // ============================================================
 
 export function exportCSV(rows) {
-  if (!Array.isArray(rows) || rows.length === 0) {
+  if (
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ) {
     return "";
   }
 
-  const keys = Object.keys(rows[0]);
+  const keys =
+    Object.keys(rows[0]);
 
   function escapeCSV(value) {
-    const text = String(value ?? "");
+    const text =
+      String(value ?? "");
 
-    return `"${text.replaceAll('"', '""')}"`;
+    return (
+      '"' +
+      text.replaceAll(
+        '"',
+        '""'
+      ) +
+      '"'
+    );
   }
 
-  const header = keys
-    .map(escapeCSV)
-    .join(",");
+  const header =
+    keys.map(
+      escapeCSV
+    ).join(",");
 
-  const lines = rows.map(row =>
-    keys
-      .map(key => escapeCSV(row[key]))
-      .join(",")
-  );
+  const lines =
+    rows.map(row =>
+      keys.map(
+        key =>
+          escapeCSV(
+            row[key]
+          )
+      ).join(",")
+    );
 
   return [
     header,
