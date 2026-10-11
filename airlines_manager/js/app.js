@@ -465,11 +465,12 @@ function runOptimiser() {
         const fleetText = Object.values(
           optimisationResult.fleetSummary ?? {}
         )
+          .filter(item => item.groups > 0)
           .map(item =>
             `${item.model}: ${item.groups} groups`
           )
           .join(" · ");
-
+        
         setStatus(
           `Completed ${completed} groups · ` +
           `${fleetText} · ` +
