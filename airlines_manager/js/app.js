@@ -16,7 +16,7 @@ import {
   csv,
   prepare,
   exportCSV,
-  getSupportedAircraft
+  FIXED_AIRCRAFT
 } from "./engine.js";
 
 const HUB = "BOM";
