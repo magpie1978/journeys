@@ -16,7 +16,7 @@ import {
   csv,
   prepare,
   exportCSV,
-  FIXED_AIRCRAFT
+  getSupportedAircraft
 } from "./engine.js";
 
 const HUB = "BOM";
@@ -42,7 +42,7 @@ function $(id) {
   return document.getElementById(id);
 }
 
-function setStatus(message) {
+function message) {
   const element = $("status");
 
   if (element) {
@@ -141,42 +141,7 @@ function getConfiguredFleet() {
     return [];
   }
 
-  return Object.entries(FIXED_AIRCRAFT).map(
-    ([model, config]) => {
-      const aircraft = preparedData.aircraft.find(
-        item => item.model === model
-      );
-
-      if (!aircraft) {
-        throw new Error(
-          `${model} is missing from the usable aircraft catalogue.`
-        );
-      }
-
-      const payloadRequired =
-        config.eco * ECONOMY_PAYLOAD_TONNES +
-        config.cargo;
-
-      if (config.eco > aircraft.seats) {
-        throw new Error(
-          `${model} requires ${config.eco} seats, ` +
-          `but only ${aircraft.seats} are available.`
-        );
-      }
-
-      if (payloadRequired > aircraft.payload + 1e-7) {
-        throw new Error(
-          `${model} requires ${payloadRequired} tonnes ` +
-          `but only ${aircraft.payload} are available.`
-        );
-      }
-
-      return {
-        ...aircraft,
-        ...config
-      };
-    }
-  );
+  return getSupportedAircraft(preparedData);
 }
 
 function renderConfigurations(fleet) {
@@ -424,12 +389,12 @@ function runOptimiser() {
     groups === null
       ? "unlimited groups"
       : `up to ${groups} groups`;
-
+  
   setStatus(
-    `Optimising ${groupDescription} using A380-800 ` +
-    "and A350-900ULR…"
+    `Optimising ${groupDescription} across ` +
+    `${getConfiguredFleet().length} aircraft models…`
   );
-
+  
   try {
     const activeWorker = new Worker(
       "./js/worker.js",
@@ -623,6 +588,8 @@ function downloadRotations() {
         .map(leg => leg.code)
         .join(","),
 
+      configuration_mode: rotation.configurationMode,
+      
       configuration_status:
         `FIXED_${rotation.eco}E_${rotation.cargo}C`,
 
