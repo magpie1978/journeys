@@ -1257,6 +1257,215 @@ export function optimise(
     });
   }
 
+  
+  // ==========================================================
+  // v0.7 — NETWORK IMPROVEMENT
+  // ==========================================================
+
+  const improvement = improveRotations(
+    rotations,
+    remaining,
+    aircraftList,
+    fleetCandidates,
+    stop,
+    3
+  );
+
+  total = improvement.improvedTotal;
+
+  // Recalculate fleet totals after accepted replacements.
+  for (const summary of Object.values(fleetSummary)) {
+    summary.groups = 0;
+    summary.aircraftCount = 0;
+    summary.weeklyRevenue = 0;
+    summary.services = 0;
+    summary.scheduledHours = 0;
+  }
+
+  for (const rotation of rotations) {
+    const summary = fleetSummary[rotation.model];
+
+    summary.groups++;
+    summary.aircraftCount += AIRCRAFT_PER_GROUP;
+    summary.weeklyRevenue += rotation.revenue;
+    summary.services += rotation.legs.length;
+    summary.scheduledHours += rotation.hours;
+  }
+
+  // Refresh diagnostics for the final accepted schedule.
+  diagnostics.groups = rotations.map(rotation => ({
+    id: rotation.id,
+    model: rotation.model,
+    services: rotation.legs.length,
+    hours: rotation.hours,
+    unusedHours: ROTATION_HOURS - rotation.hours,
+    weeklyRevenue: rotation.revenue
+  }));
+
+  diagnostics.improvement = improvement;
+```
+
+Then find the `return` statement at the end of `optimise()`.
+
+Change its beginning from:
+
+```javascript
+return {
+  rotations,
+  total,
+```
+
+to:
+
+```javascript
+return {
+  rotations,
+  total,
+  improvement,
+```
+
+And update the `method` field to:
+
+```javascript
+method: "greedy-knapsack-with-pairwise-improvement",
+```
+
+## 3. Display the improvement in `app.js`
+
+In `js/app.js`, find the completion status message inside the `type === "result"` handler.
+
+Replace its `setStatus(...)` call with:
+
+<CodeBlock language="javascript" editable>
+const improvement = optimisationResult.improvement;
+
+const improvementText = improvement
+  ? (
+      ` · Baseline $${formatBillions(
+        improvement.baselineTotal
+      )}bn/week` +
+      ` · Improvement +$${formatMoney(
+        improvement.gain
+      )}/week` +
+      ` · ${improvement.improvements} accepted changes` +
+      ` · ${improvement.pairsTested} pairs tested`
+    )
+  : "";
+
+setStatus(
+  `Completed ${completed} groups` +
+  ` · ${fleetText}` +
+  ` · Final $${formatBillions(
+    optimisationResult.total
+  )}bn/week` +
+  improvementText +
+  ` · NOT game validated`
+);
+
+  // ==========================================================
+  // v0.7 — NETWORK IMPROVEMENT
+  // ==========================================================
+
+  const improvement = improveRotations(
+    rotations,
+    remaining,
+    aircraftList,
+    fleetCandidates,
+    stop,
+    3
+  );
+
+  total = improvement.improvedTotal;
+
+  // Recalculate fleet totals after accepted replacements.
+  for (const summary of Object.values(fleetSummary)) {
+    summary.groups = 0;
+    summary.aircraftCount = 0;
+    summary.weeklyRevenue = 0;
+    summary.services = 0;
+    summary.scheduledHours = 0;
+  }
+
+  for (const rotation of rotations) {
+    const summary = fleetSummary[rotation.model];
+
+    summary.groups++;
+    summary.aircraftCount += AIRCRAFT_PER_GROUP;
+    summary.weeklyRevenue += rotation.revenue;
+    summary.services += rotation.legs.length;
+    summary.scheduledHours += rotation.hours;
+  }
+
+  // Refresh diagnostics for the final accepted schedule.
+  diagnostics.groups = rotations.map(rotation => ({
+    id: rotation.id,
+    model: rotation.model,
+    services: rotation.legs.length,
+    hours: rotation.hours,
+    unusedHours: ROTATION_HOURS - rotation.hours,
+    weeklyRevenue: rotation.revenue
+  }));
+
+  diagnostics.improvement = improvement;
+```
+
+Then find the `return` statement at the end of `optimise()`.
+
+Change its beginning from:
+
+```javascript
+return {
+  rotations,
+  total,
+```
+
+to:
+
+```javascript
+return {
+  rotations,
+  total,
+  improvement,
+```
+
+And update the `method` field to:
+
+```javascript
+method: "greedy-knapsack-with-pairwise-improvement",
+```
+
+## 3. Display the improvement in `app.js`
+
+In `js/app.js`, find the completion status message inside the `type === "result"` handler.
+
+Replace its `setStatus(...)` call with:
+
+<CodeBlock language="javascript" editable>
+const improvement = optimisationResult.improvement;
+
+const improvementText = improvement
+  ? (
+      ` · Baseline $${formatBillions(
+        improvement.baselineTotal
+      )}bn/week` +
+      ` · Improvement +$${formatMoney(
+        improvement.gain
+      )}/week` +
+      ` · ${improvement.improvements} accepted changes` +
+      ` · ${improvement.pairsTested} pairs tested`
+    )
+  : "";
+
+setStatus(
+  `Completed ${completed} groups` +
+  ` · ${fleetText}` +
+  ` · Final $${formatBillions(
+    optimisationResult.total
+  )}bn/week` +
+  improvementText +
+  ` · NOT game validated`
+);
+
   let startingEconomy = 0;
   let startingCargo = 0;
   let remainingEconomy = 0;
