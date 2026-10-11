@@ -8,9 +8,13 @@
  * A380-800: fixed 852E + 4C
  * A350-900ULR: fixed 430E + 1C
  *
- * All other valid models:
+ * Other passenger aircraft:
  * - Maximise Economy seats
  * - Allocate remaining payload to whole Cargo units
+ *
+ * Dedicated freighters:
+ * - Zero Economy seats
+ * - Cargo capacity based on whole tonnes of payload
  *
  * One model and configuration per seven-aircraft group.
  * Maximum base rotation: 168 hours.
@@ -241,7 +245,7 @@ export function prepare(routes, pricing, aircraft) {
       item.category === null ||
       item.range <= 0 ||
       item.speed <= 0 ||
-      item.seats <= 0 ||
+      item.seats < 0 ||
       item.payload <= 0
     ) {
       continue;
@@ -273,6 +277,9 @@ export function prepare(routes, pricing, aircraft) {
  * Cargo = whole tonnes left after Economy.
  *
  * Fixed exceptions always take precedence.
+ *
+ * Freighters with zero passenger seats use
+ * their payload for whole Cargo units.
  */
 
 export function configureAircraft(aircraft) {
@@ -284,6 +291,10 @@ export function configureAircraft(aircraft) {
   if (fixed) {
     eco = fixed.eco;
     cargo = fixed.cargo;
+  } else if (aircraft.seats === 0) {
+    // Dedicated freighters carry cargo only.
+    eco = 0;
+    cargo = Math.floor(aircraft.payload + EPSILON);
   } else {
     eco = Math.min(
       Math.floor(aircraft.seats),
@@ -308,8 +319,10 @@ export function configureAircraft(aircraft) {
     eco * ECONOMY_PAYLOAD_TONNES + cargo;
 
   if (
-    eco < 1 ||
+    eco < 0 ||
     eco > aircraft.seats ||
+    (aircraft.seats > 0 && eco === 0) ||
+    (eco === 0 && cargo === 0) ||
     cargo < 0 ||
     requiredPayload > aircraft.payload + EPSILON
   ) {
@@ -326,7 +339,9 @@ export function configureAircraft(aircraft) {
     requiredPayload,
     configurationMode: fixed
       ? "FIXED"
-      : "AUTO_ECONOMY_FIRST"
+      : aircraft.seats === 0
+        ? "AUTO_CARGO_ONLY"
+        : "AUTO_ECONOMY_FIRST"
   };
 }
 
@@ -497,10 +512,12 @@ function maximumServices(
     return 0;
   }
 
-  const economyLimit = Math.floor(
-    (available.eco + EPSILON) /
-    (2 * aircraft.eco)
-  );
+  const economyLimit = aircraft.eco > 0
+    ? Math.floor(
+        (available.eco + EPSILON) /
+        (2 * aircraft.eco)
+      )
+    : Infinity;
 
   // Zero-cargo configurations do not require
   // any cargo demand.
@@ -545,7 +562,11 @@ function buildCandidates(routes, aircraft) {
 
     stats.categoryAndRangeEligible++;
 
-    if (!route.pricingValid || route.ecoFare <= 0) {
+    if (
+      !route.pricingValid ||
+      (aircraft.eco > 0 && route.ecoFare <= 0) ||
+      (aircraft.cargo > 0 && route.cargoFare <= 0)
+    ) {
       continue;
     }
 
@@ -583,7 +604,8 @@ function buildCandidates(routes, aircraft) {
     });
 
     if (
-      route.ecoDemand + EPSILON >= 2 * aircraft.eco &&
+      (aircraft.eco === 0 ||
+        route.ecoDemand + EPSILON >= 2 * aircraft.eco) &&
       (
         aircraft.cargo === 0 ||
         route.cargoDemand + EPSILON >=
