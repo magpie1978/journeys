@@ -274,8 +274,12 @@ function renderFleetSummary() {
   let totalServices = 0;
   let totalRevenue = 0;
 
-  for (const item of Object.values(summary)) {
-    appendRow(tbody, [
+const allocatedFleet = Object.values(summary)
+  .filter(item => item.groups > 0)
+  .sort((a, b) => b.weeklyRevenue - a.weeklyRevenue);
+
+for (const item of allocatedFleet) {
+  appendRow(tbody, [
       item.model,
       `${item.eco}E + ${item.cargo}C`,
       formatNumber(item.groups),
@@ -462,13 +466,13 @@ function runOptimiser() {
         const completed =
           optimisationResult.rotations.length;
 
-        const fleetText = Object.values(
+        const allocatedFleet = Object.values(
           optimisationResult.fleetSummary ?? {}
-        )
-          .filter(item => item.groups > 0)
-          .map(item =>
-            `${item.model}: ${item.groups} groups`
-          )
+        ).filter(item => item.groups > 0);
+        
+        const fleetText = allocatedFleet
+          .sort((a, b) => b.weeklyRevenue - a.weeklyRevenue)
+          .map(item => `${item.model}: ${item.groups} groups`)
           .join(" · ");
         
         setStatus(
