@@ -16,7 +16,7 @@
         <h1>Rotation Optimiser</h1>
         <p>Mixed-fleet planning · Browser-based baseline</p>
       </div>
-      <span class="pill">v0.5 · Read-only</span>
+      <span class="pill">v0.6 · Read-only</span>
     </header>
 
     <section class="metrics">
@@ -26,7 +26,7 @@
       </article>
       <article>
         <small>Aircraft models</small>
-        <strong id="models">2</strong>
+        <strong id="models">—</strong>
       </article>
       <article>
         <small>Rotation limit</small>
@@ -88,13 +88,21 @@
 
       <p class="hint">
         Scenario A: Complete BOM schedule rebuild.
-        Existing flight allocations are ignored.
-        Owned routes are retained, except BKK, CGK, DEL and MPM.
-        Each rotation group contains seven identical aircraft
-        using the same fixed configuration.
+        All usable aircraft models are evaluated.
+      
+        A380-800 uses fixed 852E + 4C.
+        A350-900ULR uses fixed 430E + 1C.
+      
+        Other aircraft use automatic Economy-first
+        configurations based on their seat and payload limits.
+      
+        Every rotation group contains seven identical aircraft
+        with the same configuration.
+      
         Total daily demand is shared across all proposed groups.
+        BKK, CGK, DEL and MPM remain excluded.
       </p>
-
+      
       <div class="actions">
         <button id="run" disabled>Run optimiser</button>
         <button id="stop" class="secondary" disabled>Stop</button>
