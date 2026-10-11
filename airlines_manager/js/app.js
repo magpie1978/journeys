@@ -42,7 +42,7 @@ function $(id) {
   return document.getElementById(id);
 }
 
-function message) {
+function setStatus(message) {
   const element = $("status");
 
   if (element) {
