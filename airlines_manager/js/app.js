@@ -13,7 +13,6 @@
 import {
   csv,
   prepare,
-  exportCSV,
   getSupportedAircraft
 } from "./engine.js";
 
@@ -560,95 +559,48 @@ function stopOptimiser() {
   updateButtons();
 }
 
-// ============================================================
-// EXPORT CSV
-// ============================================================
 
-function downloadRotations() {
-  if (!optimisationResult?.rotations?.length) {
-    return;
+  // ============================================================
+  // EXPORT CIRCUITS FOR TESTING
+  // ============================================================
+
+  function downloadRotations() {
+    if (!optimisationResult?.rotations?.length) {
+      return;
+    }
+
+    const lines = optimisationResult.rotations.map(
+      (rotation, index) => {
+        const circuitId = `${HUB}-C${1001 + index}`;
+
+        const destinations = rotation.legs
+          .map(leg => leg.code)
+          .join(",");
+
+        return (
+          `${HUB} | ${rotation.model} | ` +
+          `${circuitId} | ${destinations}`
+        );
+      }
+    );
+
+    const blob = new Blob(
+      [lines.join("\n") + "\n"],
+      { type: "text/plain;charset=utf-8" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "BOM_Circuits_For_Testing.txt";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-
-  const rows = optimisationResult.rotations.map(
-    rotation => ({
-      hub: HUB,
-
-      rotation: rotation.id,
-
-      aircraft_model: rotation.model,
-      aircraft_id: rotation.aircraftId,
-
-      aircraft_count: AIRCRAFT_PER_GROUP,
-
-      economy_one_way: rotation.eco,
-      cargo_one_way: rotation.cargo,
-
-      base_hours: rotation.hours,
-
-      weekly_gross_revenue: rotation.revenue,
-
-      route_sequence: rotation.legs
-        .map(leg => leg.code)
-        .join(","),
-
-      configuration_mode: rotation.configurationMode,
-
-      configuration_status:
-        `${rotation.configurationMode}_${rotation.eco}E_${rotation.cargo}C`,
-
-      scenario: "REBUILD_FROM_SCRATCH",
-
-      preflight_status: "NOT_RUN"
-    })
-  );
-
-  const csvText = exportCSV(rows);
-
-  const blob = new Blob(
-    [csvText],
-    {
-      type: "text/csv;charset=utf-8"
-    }
-  );
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-
-function downloadRotations() {
-  if (!optimisationResult?.rotations?.length) return;
-
-  const lines = optimisationResult.rotations.map(
-    (rotation, index) => {
-      const hub = "BOM";
-      const model = rotation.model;
-      const circuitId = `BOM-C${1001 + index}`;
-      const destinations = rotation.legs
-        .map(leg => leg.code)
-        .join(",");
-
-      return `${hub} | ${model} | ${circuitId} | ${destinations}`;
-    }
-  );
-
-  const blob = new Blob(
-    [lines.join("\n") + "\n"],
-    { type: "text/plain;charset=utf-8" }
-  );
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-
-  a.href = url;
-  a.download = "BOM_Circuits_For_Testing.txt";
-
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 // ============================================================
 // EVENTS AND INITIALISATION
