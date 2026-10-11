@@ -1,76 +1,55 @@
 
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <title>Airlines Manager Rotation Optimiser</title>
-
   <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
   <main>
-
-    <!-- HEADER -->
     <header>
       <div>
         <p class="eyebrow">AIRLINES MANAGER · BOM</p>
         <h1>Rotation Optimiser</h1>
-        <p>
-          Mixed-fleet planning · Browser-based baseline
-        </p>
+        <p>Mixed-fleet planning · Browser-based baseline</p>
       </div>
-
       <span class="pill">v0.5 · Read-only</span>
     </header>
 
-    <!-- SUMMARY METRICS -->
     <section class="metrics">
-
       <article>
         <small>Eligible owned routes</small>
         <strong id="routes">—</strong>
       </article>
-
       <article>
         <small>Aircraft models</small>
-        <strong id="aircraft-model-count">2</strong>
+        <strong id="models">2</strong>
       </article>
-
       <article>
         <small>Rotation limit</small>
         <strong>168h</strong>
       </article>
-
     </section>
 
-    <!-- OPTIMISATION SETTINGS -->
     <section class="panel">
-
       <h2>Optimisation settings</h2>
 
       <div class="inputs">
         <label>
-          Maximum seven-aircraft groups
-
+          Maximum seven-aircraft groups (blank = unlimited)
           <input
             id="groups"
             type="number"
             min="1"
             step="1"
-            placeholder="Unlimited"
             value="5"
+            placeholder="Unlimited"
           >
         </label>
       </div>
-
-      <p class="hint">
-        Enter a maximum number of groups, or leave
-        this field blank for unlimited optimisation.
-      </p>
 
       <h3>Fixed aircraft configurations</h3>
 
@@ -86,8 +65,7 @@
               <th>Speed (km/h)</th>
             </tr>
           </thead>
-
-          <tbody id="aircraft-configurations">
+          <tbody id="fleet-configurations">
             <tr>
               <td>A380-800</td>
               <td>852</td>
@@ -96,7 +74,6 @@
               <td>—</td>
               <td>—</td>
             </tr>
-
             <tr>
               <td>A350-900ULR</td>
               <td>430</td>
@@ -111,33 +88,17 @@
 
       <p class="hint">
         Scenario A: Complete BOM schedule rebuild.
-        Existing flight allocations are ignored,
-        while owned routes are retained.
-        BKK, CGK, DEL and MPM are excluded.
-        Each rotation group contains seven identical
-        aircraft using one fixed configuration.
-        All proposed groups share the same total
-        daily demand.
+        Existing flight allocations are ignored.
+        Owned routes are retained, except BKK, CGK, DEL and MPM.
+        Each rotation group contains seven identical aircraft
+        using the same fixed configuration.
+        Total daily demand is shared across all proposed groups.
       </p>
 
       <div class="actions">
-        <button id="run" disabled>
-          Run optimiser
-        </button>
-
-        <button
-          id="stop"
-          class="secondary"
-          disabled
-        >
-          Stop
-        </button>
-
-        <button
-          id="download"
-          class="secondary"
-          disabled
-        >
+        <button id="run" disabled>Run optimiser</button>
+        <button id="stop" class="secondary" disabled>Stop</button>
+        <button id="download" class="secondary" disabled>
           Export rotations CSV
         </button>
       </div>
@@ -145,18 +106,12 @@
       <p id="status" role="status">
         Loading route, pricing and aircraft data…
       </p>
-
     </section>
 
-    <!-- FLEET SUMMARY -->
     <section class="panel">
-
       <h2>Fleet allocation</h2>
-
       <p class="hint">
-        Number of seven-aircraft groups assigned
-        to each model, with provisional weekly
-        gross revenue.
+        Seven aircraft per group. Revenue is provisional weekly gross.
       </p>
 
       <div class="scroll">
@@ -167,31 +122,21 @@
               <th>Configuration</th>
               <th>Groups</th>
               <th>Aircraft used</th>
-              <th>Return services/day</th>
+              <th>Services</th>
               <th>Weekly gross ($)</th>
             </tr>
           </thead>
-
-          <tbody id="fleet-results">
-            <tr>
-              <td colspan="6">
-                Run the optimiser to see fleet allocation.
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="fleet-results"></tbody>
         </table>
       </div>
-
     </section>
 
-    <!-- REMAINING DEMAND -->
     <section class="panel">
-
       <h2>Network demand</h2>
-
       <p class="hint">
-        Total daily demand remaining after all
-        proposed rotations have been allocated.
+        Daily demand before and after proposed schedules.
+        Demand calculations follow the engine's current
+        two-direction return-service assumption.
       </p>
 
       <div class="scroll">
@@ -205,29 +150,16 @@
               <th>Remaining %</th>
             </tr>
           </thead>
-
-          <tbody id="demand-results">
-            <tr>
-              <td colspan="5">
-                Run the optimiser to see demand allocation.
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="demand-results"></tbody>
         </table>
       </div>
-
     </section>
 
-    <!-- ROTATION RESULTS -->
     <section class="panel">
-
       <h2>Proposed rotations</h2>
-
       <p class="hint">
-        A380-800 (852E + 4C) and A350-900ULR
-        (430E + 1C). Each group uses one aircraft
-        model and configuration.
-        Exploratory revenue-first greedy optimiser.
+        A380-800 and A350-900ULR · Fixed configuration per model.
+        Exploratory greedy baseline.
         No rotations have passed game preflight.
       </p>
 
@@ -243,21 +175,17 @@
               <th>Weekly gross ($)</th>
             </tr>
           </thead>
-
           <tbody id="results"></tbody>
         </table>
       </div>
-
     </section>
 
     <footer>
       No game purchases, audits, fares or schedules
       are changed by this application.
     </footer>
-
   </main>
 
   <script type="module" src="js/app.js"></script>
 </body>
-
 </html>
