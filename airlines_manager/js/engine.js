@@ -832,6 +832,185 @@ function bestCircuit(options, stop) {
   };
 }
 
+
+
+/**
+ * v0.7 — Pairwise network improvement
+ *
+ * Rebuilds pairs of existing rotations using the demand
+ * released by those two rotations.
+ *
+ * A replacement is accepted only when:
+ * - Both rotations remain feasible
+ * - Total revenue increases
+ * - Aircraft group count remains unchanged
+ *
+ * This is a bounded local search, not a global optimum.
+ */
+
+function improveRotations(
+  rotations,
+  remaining,
+  aircraftList,
+  fleetCandidates,
+  stop = () => false,
+  maxPasses = 3
+) {
+  const aircraftByModel = new Map(
+    aircraftList.map(a => [a.model, a])
+  );
+
+  const baselineTotal = rotations.reduce(
+    (sum, r) => sum + r.revenue,
+    0
+  );
+
+  let improvements = 0;
+  let gain = 0;
+  let pairsTested = 0;
+
+  function adjustDemand(rotation, direction) {
+    for (const leg of rotation.legs) {
+      const available = remaining.get(leg.routeId);
+
+      available.eco += direction * 2 * rotation.eco;
+      available.cargo += direction * 2 * rotation.cargo;
+    }
+  }
+
+  function rebuild(rotation) {
+    const aircraft = aircraftByModel.get(rotation.model);
+
+    if (!aircraft) return null;
+
+    const options = buildOptions(
+      fleetCandidates.get(aircraft.model) ?? [],
+      aircraft,
+      remaining
+    );
+
+    const circuit = bestCircuit(options, stop);
+
+    if (!circuit) return null;
+
+    return {
+      ...rotation,
+      ...circuit
+    };
+  }
+
+  function tryPair(i, j) {
+    const originalA = rotations[i];
+    const originalB = rotations[j];
+
+    const originalRevenue =
+      originalA.revenue + originalB.revenue;
+
+    adjustDemand(originalA, +1);
+    adjustDemand(originalB, +1);
+
+    let bestPair = null;
+    let bestRevenue = originalRevenue;
+
+    // Test both aircraft allocation orders.
+    for (const order of [
+      [originalA, originalB],
+      [originalB, originalA]
+    ]) {
+      if (stop()) break;
+
+      const first = rebuild(order[0]);
+
+      if (!first) continue;
+
+      adjustDemand(first, -1);
+
+      const second = rebuild(order[1]);
+
+      adjustDemand(first, +1);
+
+      if (!second) continue;
+
+      const candidateRevenue =
+        first.revenue + second.revenue;
+
+      if (candidateRevenue > bestRevenue + EPSILON) {
+        bestRevenue = candidateRevenue;
+
+        // Restore original array positions.
+        bestPair =
+          order[0] === originalA
+            ? [first, second]
+            : [second, first];
+      }
+    }
+
+    if (bestPair && !stop()) {
+      adjustDemand(bestPair[0], -1);
+      adjustDemand(bestPair[1], -1);
+
+      rotations[i] = bestPair[0];
+      rotations[j] = bestPair[1];
+
+      improvements++;
+      gain += bestRevenue - originalRevenue;
+
+      return true;
+    }
+
+    // No improvement: restore original allocation.
+    adjustDemand(originalA, -1);
+    adjustDemand(originalB, -1);
+
+    return false;
+  }
+
+  // Concentrate on the lower-revenue tail where
+  // demand fragmentation is most significant.
+  const windowSize = Math.min(80, rotations.length);
+  const firstIndex = rotations.length - windowSize;
+
+  for (let pass = 0; pass < maxPasses; pass++) {
+    if (stop()) break;
+
+    let changed = false;
+
+    for (let i = firstIndex; i < rotations.length - 1; i++) {
+      if (stop()) break;
+
+      // Test nearby pairs and more widely separated pairs.
+      for (const offset of [1, 2, 5, 10]) {
+        const j = i + offset;
+
+        if (j >= rotations.length) continue;
+
+        pairsTested++;
+
+        if (tryPair(i, j)) {
+          changed = true;
+        }
+      }
+    }
+
+    if (!changed) break;
+  }
+
+  const improvedTotal = rotations.reduce(
+    (sum, r) => sum + r.revenue,
+    0
+  );
+
+  return {
+    baselineTotal,
+    improvedTotal,
+    gain: improvedTotal - baselineTotal,
+    improvements,
+    pairsTested
+  };
+}
+
+
+
 // ============================================================
 // MAIN OPTIMISER
 // ============================================================
