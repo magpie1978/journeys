@@ -51,7 +51,7 @@
         </label>
       </div>
 
-      <h3>Fixed aircraft configurations</h3>
+      <h3>Aircraft configurations — all models</h3>
 
       <div class="scroll">
         <table>
@@ -65,43 +65,20 @@
               <th>Speed (km/h)</th>
             </tr>
           </thead>
-          <tbody id="fleet-configurations">
-            <tr>
-              <td>A380-800</td>
-              <td>852</td>
-              <td>4</td>
-              <td>—</td>
-              <td>—</td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td>A350-900ULR</td>
-              <td>430</td>
-              <td>1</td>
-              <td>7</td>
-              <td>18,000</td>
-              <td>911</td>
-            </tr>
-          </tbody>
+          <tbody id="fleet-configurations"></tbody>
         </table>
       </div>
 
       <p class="hint">
-        Scenario A: Complete BOM schedule rebuild.
-        All usable aircraft models are evaluated.
+        All eligible aircraft models are considered.
       
-        A380-800 uses fixed 852E + 4C.
-        A350-900ULR uses fixed 430E + 1C.
+        A380-800 and A350-900ULR retain fixed
+        configurations. Other models use automatic
+        Economy-first configurations.
       
-        Other aircraft use automatic Economy-first
-        configurations based on their seat and payload limits.
-      
-        Every rotation group contains seven identical aircraft
-        with the same configuration.
-      
-        Total daily demand is shared across all proposed groups.
-        BKK, CGK, DEL and MPM remain excluded.
-      </p>
+        Exploratory greedy optimisation.
+        No rotations have passed game preflight.
+      </p>    
       
       <div class="actions">
         <button id="run" disabled>Run optimiser</button>
