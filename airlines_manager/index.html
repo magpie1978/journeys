@@ -70,16 +70,23 @@
       </div>
 
       <p class="hint">
-        All eligible aircraft models are considered.
-      
-        A380-800 and A350-900ULR retain fixed
-        configurations. Other models use automatic
-        Economy-first configurations.
-      
-        Exploratory greedy optimisation.
-        No rotations have passed game preflight.
-      </p>    
-      
+        Scenario A: Complete BOM schedule rebuild.
+        All usable aircraft models are evaluated.
+
+        A380-800 uses fixed 852E + 4C.
+        A350-900ULR uses fixed 430E + 1C.
+
+        Other passenger aircraft use automatic Economy-first
+        configurations. Dedicated freighters use cargo-only
+        configurations based on whole tonnes of payload.
+
+        Every rotation group contains seven identical aircraft
+        with the same configuration.
+
+        Total daily demand is shared across all proposed groups.
+        BKK, CGK, DEL and MPM remain excluded.
+      </p>
+
       <div class="actions">
         <button id="run" disabled>Run optimiser</button>
         <button id="stop" class="secondary" disabled>Stop</button>
@@ -143,7 +150,7 @@
     <section class="panel">
       <h2>Proposed rotations</h2>
       <p class="hint">
-        A380-800 and A350-900ULR · Fixed configuration per model.
+        All passenger and dedicated cargo aircraft are considered.
         Exploratory greedy baseline.
         No rotations have passed game preflight.
       </p>
