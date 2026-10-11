@@ -3,15 +3,9 @@
  * Airlines Manager Rotation Optimiser
  * app.js v0.6
  *
- * BOM all-aircraft fleet optimiser.
+ * BOM mixed-fleet interface.
  *
- * All valid aircraft models from aircraft.csv.
- *
- * A380-800 and A350-900ULR retain
- * their fixed configurations.
- *
- * Other models use automatic
- * Economy-first configuration.
+ * All 149 catalogue models, including cargo-only freighters.
  *
  * Scenario A: Rebuild schedules from scratch.
  */
@@ -393,12 +387,12 @@ function runOptimiser() {
     groups === null
       ? "unlimited groups"
       : `up to ${groups} groups`;
-  
+
   setStatus(
     `Optimising ${groupDescription} across ` +
     `${getConfiguredFleet().length} aircraft models…`
   );
-  
+
   try {
     const activeWorker = new Worker(
       "./js/worker.js",
@@ -593,10 +587,10 @@ function downloadRotations() {
         .join(","),
 
       configuration_mode: rotation.configurationMode,
-      
+
       configuration_status:
         `${rotation.configurationMode}_${rotation.eco}E_${rotation.cargo}C`,
-      
+
       scenario: "REBUILD_FROM_SCRATCH",
 
       preflight_status: "NOT_RUN"
