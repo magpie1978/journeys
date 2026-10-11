@@ -615,15 +615,39 @@ function downloadRotations() {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = `${HUB}_Mixed_Fleet_Rotations.csv`;
 
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+function downloadRotations() {
+  if (!optimisationResult?.rotations?.length) return;
 
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 1000);
+  const lines = optimisationResult.rotations.map(
+    (rotation, index) => {
+      const hub = "BOM";
+      const model = rotation.model;
+      const circuitId = `BOM-C${1001 + index}`;
+      const destinations = rotation.legs
+        .map(leg => leg.code)
+        .join(",");
+
+      return `${hub} | ${model} | ${circuitId} | ${destinations}`;
+    }
+  );
+
+  const blob = new Blob(
+    [lines.join("\n") + "\n"],
+    { type: "text/plain;charset=utf-8" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "BOM_Circuits_For_Testing.txt";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ============================================================
