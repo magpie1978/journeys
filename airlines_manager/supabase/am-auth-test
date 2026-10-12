@@ -1,0 +1,9514 @@
+/*
+ * AIRLINES MANAGER — SUPABASE EDGE FUNCTION
+ * ==========================================
+ * PURPOSE
+ *   Authenticates to Airlines Manager from a Deno/Supabase Edge Function;
+ *   discovers hubs; collects and validates route audit/pricing pages;
+ *   persists scan state and route data; exposes optimiser and pricing
+ *   diagnostics; and collects planning/aircraft/duration datasets.
+ *
+ * HIGH-LEVEL WORKFLOW
+ *   1. Load environment credentials and initialise Supabase client.
+ *   2. Dispatch incoming HTTP requests by action.
+ *   3. For scanning: log in, discover hubs, create scan records, fetch
+ *      batches, parse/validate pages, persist results, refresh counts.
+ *   4. For optimiser/price status: read stored records and/or inspect
+ *      authenticated live pages, including form/lock diagnostics.
+ *   5. For planning: retrieve planning data, normalise and upsert it.
+ *
+ * DATA & SAFETY
+ *   Uses AM_USERNAME, AM_PASSWORD, SUPABASE_URL and
+ *   AM_SERVICE_ROLE_KEY from environment variables. The service-role
+ *   key is privileged: secure endpoint access and secret configuration.
+ *   Scanning and status retrieval read AM pages, but the function also
+ *   writes scan, planning and update-log records to Supabase. Treat
+ *   pricing-related actions separately; review their actual dispatch
+ *   before exposing the endpoint publicly. CORS '*' is not access control.
+ *   Cookie diagnostics avoid returning cookie values.
+ *
+ * NOTES
+ *   This is TypeScript for the Deno Edge runtime, not a browser userscript.
+ *   All documentation additions are comments only; operational logic,
+ *   SQL table names, request shapes and control flow are unchanged.
+ */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+
+
+
+
+/* ============================================================
+
+   CONFIGURATION
+
+============================================================ */
+
+
+
+const AM_BASE =
+
+  "https://tycoon.airlines-manager.com";
+
+
+
+/*
+ * Hub IDs/codes and page totals are discovered dynamically from the
+ * ordinary Airlines Manager Price Management / Route Audit pages.
+ *
+ * No hub is hard-coded here.
+ */
+const AUDIT_NORMAL_PAGE_SIZE = 30;
+const PRICING_NORMAL_PAGE_SIZE = 20;
+
+
+
+const DEFAULT_BATCH_SIZE = 5;
+
+const MAX_BATCH_SIZE = 10;
+
+
+
+const REQUEST_DELAY_MS = 1000;
+
+const MAX_ATTEMPTS = 3;
+
+
+
+
+
+/* ============================================================
+
+   ENVIRONMENT
+
+============================================================ */
+
+
+
+const AM_USERNAME =
+
+  Deno.env.get("AM_USERNAME");
+
+
+
+const AM_PASSWORD =
+
+  Deno.env.get("AM_PASSWORD");
+
+
+
+const SUPABASE_URL =
+
+  Deno.env.get("SUPABASE_URL");
+
+
+
+const AM_SERVICE_ROLE_KEY =
+
+  Deno.env.get("AM_SERVICE_ROLE_KEY");
+
+
+
+
+
+if (
+
+  !AM_USERNAME ||
+
+  !AM_PASSWORD ||
+
+  !SUPABASE_URL ||
+
+  !AM_SERVICE_ROLE_KEY
+
+) {
+
+  throw new Error(
+
+    "Missing required environment variables"
+
+  );
+
+}
+
+
+
+
+
+
+
+const corsHeaders = {
+
+  "Access-Control-Allow-Origin": "*",
+
+  "Access-Control-Allow-Headers":
+
+    "authorization, x-client-info, apikey, content-type",
+
+  "Access-Control-Allow-Methods":
+
+    "GET, POST, OPTIONS",
+
+};
+
+
+
+
+
+/* ============================================================
+
+   SUPABASE
+
+============================================================ */
+
+
+
+const supabase =
+
+  createClient(
+
+    SUPABASE_URL,
+
+    AM_SERVICE_ROLE_KEY,
+
+    {
+
+      auth: {
+
+        persistSession: false,
+
+        autoRefreshToken: false,
+
+      },
+
+    }
+
+  );
+
+
+
+
+
+/* ============================================================
+
+   GENERAL HELPERS
+
+============================================================ */
+
+
+
+/**
+ * sleep()
+ * Waits for a specified number of milliseconds; used to space requests and retry attempts.
+ */
+function sleep(ms: number) {
+
+  return new Promise(
+
+    resolve =>
+
+      setTimeout(resolve, ms)
+
+  );
+
+}
+
+
+
+
+
+/**
+ * jsonResponse()
+ * Serialises an API result as indented JSON with the requested HTTP status and CORS headers.
+ */
+function jsonResponse(
+
+  body: unknown,
+
+  status = 200
+
+) {
+
+  return new Response(
+
+    JSON.stringify(
+
+      body,
+
+      null,
+
+      2
+
+    ),
+
+    {
+
+      status,
+
+      headers: {
+
+        ...corsHeaders,
+
+
+
+        "Content-Type":
+
+          "application/json; charset=utf-8",
+
+      },
+
+    }
+
+  );
+
+}
+
+
+
+/* ============================================================
+
+   HTML HELPERS
+
+
+
+   These deliberately follow the structure of the parser that
+
+   successfully parsed the live AM Audit/Pricing pages.
+
+============================================================ */
+
+
+
+/**
+ * decodeEntities()
+ * Normalises HTML entity representations before extracting readable page text.
+ */
+function decodeEntities(
+
+  value: string
+
+) {
+
+  return value
+
+    .replace(/ /gi, " ")
+
+    .replace(/ /gi, " ")
+
+    .replace(/ /gi, " ")
+
+    .replace(/&/gi, "&")
+
+    .replace(/"/gi, '"')
+
+    .replace(/"/gi, '"')
+
+    .replace(/'/gi, "'")
+
+    .replace(/'/gi, "'")
+
+    .replace(/</gi, "<")
+
+    .replace(/>/gi, ">");
+
+}
+
+
+
+
+
+/**
+ * cleanText()
+ * Removes script/style blocks and HTML tags, decodes entities, and collapses whitespace.
+ */
+function cleanText(
+
+  value: string
+
+) {
+
+  return decodeEntities(
+
+    value
+
+      .replace(
+
+        new RegExp("<script\\b[^>]*>[\\s\\S]*?</script>", "gi"),
+
+        " "
+
+      )
+
+      .replace(
+
+        new RegExp("<style\\b[^>]*>[\\s\\S]*?</style>", "gi"),
+
+        " "
+
+      )
+
+      .replace(
+
+        /<[^>]+>/g,
+
+        " "
+
+      )
+
+  )
+
+    .replace(/\u00a0/g, " ")
+
+    .replace(/\s+/g, " ")
+
+    .trim();
+
+}
+
+
+
+
+
+/** Type: HtmlRow — Representation of an HTML table row with raw markup and cleaned text. */
+type HtmlRow = {
+
+  html: string;
+
+  text: string;
+
+};
+
+
+
+
+
+/**
+ * getRows()
+ * Extracts table-row HTML and corresponding cleaned text for downstream parsers.
+ */
+function getRows(
+
+  html: string
+
+) {
+
+  const rows: HtmlRow[] = [];
+
+
+
+  const regex =
+
+    new RegExp("<tr\\b[^>]*>([\\s\\S]*?)</tr>", "gi");
+
+
+
+  let match:
+
+    RegExpExecArray | null;
+
+
+
+
+
+  while (
+
+    (match = regex.exec(html)) !== null
+
+  ) {
+
+    rows.push({
+
+      html:
+
+        match[0],
+
+
+
+      text:
+
+        cleanText(
+
+          match[1]
+
+        ),
+
+    });
+
+  }
+
+
+
+
+
+  return rows;
+
+}
+
+
+
+
+
+/**
+ * parseNumber()
+ * Converts formatted numeric text into a finite number, or null when unparseable.
+ */
+function parseNumber(
+
+  value:
+
+    | string
+
+    | null
+
+    | undefined
+
+) {
+
+  if (
+
+    value === null ||
+
+    value === undefined
+
+  ) {
+
+    return null;
+
+  }
+
+
+
+
+
+  const cleaned =
+
+    value
+
+      .replace(
+
+        /[\s,\u00a0]/g,
+
+        ""
+
+      )
+
+      .replace(
+
+        /[^\d.-]/g,
+
+        ""
+
+      );
+
+
+
+
+
+  if (
+
+    cleaned === "" ||
+
+    cleaned === "-" ||
+
+    cleaned === "."
+
+  ) {
+
+    return null;
+
+  }
+
+
+
+
+
+  const result =
+
+    Number(cleaned);
+
+
+
+
+
+  return Number.isFinite(result)
+
+    ? result
+
+    : null;
+
+}
+
+
+
+
+
+/*
+
+ * Extract a route anywhere in a row.
+
+ *
+
+ * Examples:
+
+ *
+
+ * BKK / KAN
+
+ * BKK/KAN
+
+ * KAN / BKK
+
+ *
+
+ * For this scanner BKK is canonicalised first.
+
+ */
+
+/**
+ * canonicalRoute()
+ * Recognises an airport-pair string and puts the selected hub first where possible.
+ */
+function canonicalRoute(
+  value: string,
+  hubCode: string
+) {
+  const match =
+    value
+      .toUpperCase()
+      .match(
+        /\b([A-Z0-9]{3})\s*\/\s*([A-Z0-9]{3})\b/
+      );
+
+  if (!match) {
+    return null;
+  }
+
+  const a = match[1];
+  const b = match[2];
+  const hub = hubCode.toUpperCase();
+
+  if (b === hub) {
+    return `${hub}/${a}`;
+  }
+
+  if (a === hub) {
+    return `${hub}/${b}`;
+  }
+
+  /*
+   * Keep the source order if AM presents a route that does not contain
+   * the expected hub code. Validation can then expose the mismatch
+   * rather than silently rewriting it.
+   */
+  return `${a}/${b}`;
+}
+
+
+/* ============================================================
+
+   COOKIE JAR
+
+============================================================ */
+
+
+
+/** CookieJar: keeps session cookies in memory across AM requests. */
+class CookieJar {
+
+
+
+  cookies =
+
+    new Map<string, string>();
+
+
+
+
+
+  /** store() — Reads Set-Cookie headers, filters invalid SameSite=None cookies, and stores name/value pairs. */
+  store(
+
+    response: Response
+
+  ) {
+
+    let setCookies:
+
+      string[] = [];
+
+
+
+
+
+    const headersAny =
+
+      response.headers as any;
+
+
+
+
+
+    if (
+
+      typeof headersAny.getSetCookie ===
+
+      "function"
+
+    ) {
+
+      setCookies =
+
+        headersAny.getSetCookie();
+
+
+
+    } else {
+
+      const fallback =
+
+        response.headers.get(
+
+          "set-cookie"
+
+        );
+
+
+
+      if (fallback) {
+
+        setCookies =
+
+          [fallback];
+
+      }
+
+    }
+
+
+
+
+
+    for (
+
+      const cookieString
+
+      of setCookies
+
+    ) {
+
+      // Match modern browser cookie acceptance for SameSite=None.
+      // Browsers reject SameSite=None cookies unless Secure is also present.
+      // This matters here because a server-side cookie jar would otherwise
+      // retain cookies that Chrome silently rejects and never sends back.
+      const cookieParts =
+
+        cookieString
+          .split(";")
+          .map(part => part.trim());
+
+
+
+      const firstPart =
+
+        cookieParts[0] || "";
+
+
+
+      const attributes =
+
+        cookieParts
+          .slice(1)
+          .map(part => part.toLowerCase());
+
+
+
+      const sameSiteNone =
+
+        attributes.some(attribute =>
+          /^samesite\s*=\s*none$/i.test(attribute)
+        );
+
+
+
+      const secure =
+
+        attributes.some(attribute =>
+          attribute === "secure"
+        );
+
+
+
+      if (sameSiteNone && !secure) {
+        continue;
+      }
+
+
+
+      const separator =
+
+        firstPart.indexOf("=");
+
+
+
+
+
+      if (separator <= 0) {
+
+        continue;
+
+      }
+
+
+
+
+
+      const name =
+
+        firstPart
+
+          .slice(
+
+            0,
+
+            separator
+
+          )
+
+          .trim();
+
+
+
+      const value =
+
+        firstPart
+
+          .slice(
+
+            separator + 1
+
+          )
+
+          .trim();
+
+
+
+
+
+      this.cookies.set(
+
+        name,
+
+        value
+
+      );
+
+    }
+
+  }
+
+
+
+
+
+  /** header() — Serialises saved cookies into the HTTP Cookie request header. */
+  header() {
+
+    return Array.from(
+
+      this.cookies.entries()
+
+    )
+
+      .map(
+
+        ([name, value]) =>
+
+          `${name}=${value}`
+
+      )
+
+      .join("; ");
+
+  }
+
+}
+
+
+
+
+/** Type: CookieStage — In-memory snapshot of session cookies at a named diagnostic stage. */
+type CookieStage = {
+  stage: string;
+  cookies: Map<string, string>;
+};
+
+/**
+ * captureCookieStage()
+ * Snapshots cookie names and values in memory for later session-change diagnostics.
+ */
+function captureCookieStage(
+  stages: CookieStage[],
+  stage: string,
+  jar: CookieJar
+) {
+  // Copy values only in memory so we can detect changes.
+  // Values are never returned by the diagnostic endpoint.
+  stages.push({
+    stage,
+    cookies: new Map(jar.cookies),
+  });
+}
+
+/**
+ * safeCookieStageReport()
+ * Reports cookie names and added/changed/removed names without returning cookie values.
+ */
+function safeCookieStageReport(stages: CookieStage[]) {
+  return stages.map((current, index) => {
+    const previous = index > 0 ? stages[index - 1] : null;
+    const currentNames = Array.from(current.cookies.keys()).sort();
+
+    if (!previous) {
+      return {
+        stage: current.stage,
+        cookieNames: currentNames,
+        count: currentNames.length,
+        added: currentNames,
+        changed: [],
+        removed: [],
+      };
+    }
+
+    const previousNames = new Set(previous.cookies.keys());
+    const currentNameSet = new Set(current.cookies.keys());
+
+    const added = currentNames.filter(name => !previousNames.has(name));
+    const removed = Array.from(previousNames)
+      .filter(name => !currentNameSet.has(name))
+      .sort();
+    const changed = currentNames
+      .filter(name =>
+        previous.cookies.has(name) &&
+        previous.cookies.get(name) !== current.cookies.get(name)
+      )
+      .sort();
+
+    return {
+      stage: current.stage,
+      cookieNames: currentNames,
+      count: currentNames.length,
+      added,
+      changed,
+      removed,
+    };
+  });
+}
+
+
+/* ============================================================
+
+   COMMON AM HEADERS
+
+============================================================ */
+
+
+
+const USER_AGENT =
+
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+
+  "AppleWebKit/537.36 (KHTML, like Gecko) " +
+
+  "Chrome/154.0.0.0 Safari/537.36";
+
+
+
+
+
+/**
+ * normalHeaders()
+ * Builds browser-like headers including the current authenticated session cookies.
+ */
+function normalHeaders(
+
+  jar: CookieJar,
+
+  referer: string
+
+) {
+
+  return {
+
+    "User-Agent":
+
+      USER_AGENT,
+
+
+
+    "Accept":
+
+      "text/html,application/xhtml+xml,application/xml;q=0.9," +
+
+      "image/avif,image/webp,image/apng,*/*;q=0.8",
+
+
+
+    "Accept-Language":
+
+      "en-GB,en-US;q=0.9,en;q=0.8",
+
+
+
+    "Cache-Control":
+
+      "no-cache",
+
+
+
+    "Pragma":
+
+      "no-cache",
+
+
+
+    "Referer":
+
+      referer,
+
+
+
+    "Cookie":
+
+      jar.header(),
+
+  };
+
+}
+
+
+
+
+
+/* ============================================================
+
+   AM AUTHENTICATION
+
+============================================================ */
+
+
+
+/**
+ * createAmSession()
+ * Opens the login page, extracts its CSRF token, submits credentials, and returns an authenticated cookie jar.
+ */
+async function createAmSession(
+  cookieStages: CookieStage[] | null = null
+) {
+
+
+
+  const jar =
+
+    new CookieJar();
+
+
+
+
+
+  /* ----------------------------------------------------------
+
+     LOGIN PAGE
+
+  ---------------------------------------------------------- */
+
+
+
+  const loginPageResponse =
+
+    await fetch(
+
+      `${AM_BASE}/login`,
+
+      {
+
+        method: "GET",
+
+        redirect: "manual",
+
+
+
+        headers: {
+
+          "User-Agent":
+
+            USER_AGENT,
+
+
+
+          "Accept":
+
+            "text/html,application/xhtml+xml,application/xml;q=0.9," +
+
+            "image/avif,image/webp,image/apng,*/*;q=0.8",
+
+
+
+          "Accept-Language":
+
+            "en-GB,en-US;q=0.9,en;q=0.8",
+
+
+
+          "Cache-Control":
+
+            "no-cache",
+
+
+
+          "Pragma":
+
+            "no-cache",
+
+        },
+
+      }
+
+    );
+
+
+
+
+
+  jar.store(
+
+    loginPageResponse
+
+  );
+
+  if (cookieStages) {
+    captureCookieStage(
+      cookieStages,
+      "afterLoginPage",
+      jar
+    );
+  }
+
+
+
+
+
+  const loginHtml =
+
+    await loginPageResponse.text();
+
+
+
+
+
+  const csrfMatch =
+
+    loginHtml.match(
+
+      /name=["']_csrf_token["'][^>]*value=["']([^"']+)["']/i
+
+    );
+
+
+
+
+
+  if (!csrfMatch) {
+
+    throw new Error(
+
+      "Could not find AM login CSRF token"
+
+    );
+
+  }
+
+
+
+
+
+  const csrfToken =
+
+    csrfMatch[1];
+
+
+
+
+
+  /* ----------------------------------------------------------
+
+     LOGIN POST
+
+  ---------------------------------------------------------- */
+
+
+
+  const form =
+
+    new URLSearchParams();
+
+
+
+
+
+  form.set(
+
+    "_remember_me",
+
+    "on"
+
+  );
+
+
+
+  form.set(
+
+    "_username",
+
+    AM_USERNAME!
+
+  );
+
+
+
+  form.set(
+
+    "_password",
+
+    AM_PASSWORD!
+
+  );
+
+
+
+  form.set(
+
+    "_csrf_token",
+
+    csrfToken
+
+  );
+
+
+
+
+
+  const loginResponse =
+
+    await fetch(
+
+      `${AM_BASE}/login_check`,
+
+      {
+
+        method: "POST",
+
+        redirect: "manual",
+
+
+
+        headers: {
+
+          "User-Agent":
+
+            USER_AGENT,
+
+
+
+          "Accept":
+
+            "text/html,application/xhtml+xml,application/xml;q=0.9," +
+
+            "image/avif,image/webp,image/apng,*/*;q=0.8",
+
+
+
+          "Accept-Language":
+
+            "en-GB,en-US;q=0.9,en;q=0.8",
+
+
+
+          "Content-Type":
+
+            "application/x-www-form-urlencoded",
+
+
+
+          "Origin":
+
+            AM_BASE,
+
+
+
+          "Referer":
+
+            `${AM_BASE}/login`,
+
+
+
+          "Cache-Control":
+
+            "no-cache",
+
+
+
+          "Pragma":
+
+            "no-cache",
+
+
+
+          "Cookie":
+
+            jar.header(),
+
+        },
+
+
+
+        body:
+
+          form.toString(),
+
+      }
+
+    );
+
+
+
+
+
+  jar.store(
+
+    loginResponse
+
+  );
+
+  if (cookieStages) {
+    captureCookieStage(
+      cookieStages,
+      "afterLogin",
+      jar
+    );
+  }
+
+
+
+
+
+  const loginLocation =
+
+    loginResponse.headers.get(
+
+      "location"
+
+    );
+
+
+
+
+
+  if (
+
+    loginResponse.status !== 302 ||
+
+    !loginLocation ||
+
+    loginLocation === "/login" ||
+
+    loginLocation.includes(
+
+      "/login?"
+
+    )
+
+  ) {
+
+    throw new Error(
+
+      `Airlines Manager authentication failed. ` +
+
+      `Status=${loginResponse.status}, ` +
+
+      `redirect=${loginLocation}`
+
+    );
+
+  }
+
+
+
+
+
+  return {
+
+    jar,
+
+
+
+    loginStatus:
+
+      loginResponse.status,
+
+
+
+    loginRedirect:
+
+      loginLocation,
+
+  };
+
+}
+
+
+
+
+
+/* ============================================================
+
+   AUTHENTICATED AM GET
+
+============================================================ */
+
+
+
+/**
+ * fetchAmPage()
+ * Fetches an authenticated AM page with retry/backoff, redirect and login-form checks.
+ */
+async function fetchAmPage(
+
+  jar: CookieJar,
+
+  url: string,
+
+  referer: string
+
+) {
+
+
+
+  let lastStatus:
+
+    number | null = null;
+
+
+
+  let lastError:
+
+    string | null = null;
+
+
+
+
+
+  for (
+
+    let attempt = 1;
+
+    attempt <= MAX_ATTEMPTS;
+
+    attempt++
+
+  ) {
+
+
+
+    try {
+
+
+
+      const response =
+
+        await fetch(
+
+          url,
+
+          {
+
+            method: "GET",
+
+            redirect: "manual",
+
+
+
+            headers:
+
+              normalHeaders(
+
+                jar,
+
+                referer
+
+              ),
+
+          }
+
+        );
+
+
+
+
+
+      jar.store(
+
+        response
+
+      );
+
+
+
+
+
+      lastStatus =
+
+        response.status;
+
+
+
+
+
+      if (
+
+        response.status === 302
+
+      ) {
+
+        const location =
+
+          response.headers.get(
+
+            "location"
+
+          );
+
+
+
+
+
+        if (
+
+          location &&
+
+          location.includes(
+
+            "/login"
+
+          )
+
+        ) {
+
+          throw new Error(
+
+            "AM authentication was lost"
+
+          );
+
+        }
+
+      }
+
+
+
+
+
+      /*
+
+       * Transient statuses we've already seen or
+
+       * should treat as retryable.
+
+       */
+
+      if (
+
+        response.status === 204 ||
+
+        response.status === 429 ||
+
+        response.status >= 500
+
+      ) {
+
+
+
+        if (
+
+          attempt <
+
+          MAX_ATTEMPTS
+
+        ) {
+
+          await sleep(
+
+            attempt * 3000
+
+          );
+
+
+
+          continue;
+
+        }
+
+      }
+
+
+
+
+
+      if (
+
+        response.status !== 200
+
+      ) {
+
+        return {
+
+          ok: false,
+
+          status:
+
+            response.status,
+
+          attempts:
+
+            attempt,
+
+          html: "",
+
+          error:
+
+            `HTTP ${response.status}`,
+
+        };
+
+      }
+
+
+
+
+
+      const html =
+
+        await response.text();
+
+
+
+
+
+      /*
+
+       * Don't mistake a login page with HTTP 200
+
+       * for an authenticated page.
+
+       */
+
+      if (
+
+        /name=["']_username["']/i
+
+          .test(html) &&
+
+        /name=["']_password["']/i
+
+          .test(html)
+
+      ) {
+
+        throw new Error(
+
+          "AM returned the login form"
+
+        );
+
+      }
+
+
+
+
+
+      return {
+
+        ok: true,
+
+        status: 200,
+
+        attempts:
+
+          attempt,
+
+        html,
+
+        error: null,
+
+      };
+
+
+
+    } catch (error) {
+
+
+
+      lastError =
+
+        error instanceof Error
+
+          ? error.message
+
+          : String(error);
+
+
+
+
+
+      if (
+
+        attempt <
+
+        MAX_ATTEMPTS
+
+      ) {
+
+        await sleep(
+
+          attempt * 3000
+
+        );
+
+
+
+        continue;
+
+      }
+
+    }
+
+  }
+
+
+
+
+
+  return {
+
+    ok: false,
+
+    status:
+
+      lastStatus,
+
+    attempts:
+
+      MAX_ATTEMPTS,
+
+    html: "",
+
+    error:
+
+      lastError ||
+
+      "Unknown fetch error",
+
+  };
+
+}
+
+/* ============================================================
+
+   AUDIT PARSER
+
+============================================================ */
+
+
+
+/**
+ * parseAuditPage()
+ * Parses audit list rows and adjacent current-price rows into route IDs and four-class price records.
+ */
+function parseAuditPage(
+  html: string,
+  sourcePage: number,
+  hubCode: string
+) {
+
+
+
+  const rows =
+
+    getRows(html);
+
+
+
+  const routes: any[] = [];
+
+
+
+
+
+  for (
+
+    let i = 0;
+
+    i < rows.length;
+
+    i++
+
+  ) {
+
+
+
+    const row =
+
+      rows[i];
+
+
+
+
+
+    /*
+
+     * Example route row:
+
+     *
+
+     * BKK/SNU - $5,078 $6,753 $11,679 $18,244 ...
+
+     */
+
+
+
+    const route =
+
+      canonicalRoute(
+        row.text,
+        hubCode
+      );
+
+
+
+
+
+    if (!route) {
+
+      continue;
+
+    }
+
+
+
+
+
+    /*
+
+     * Four ideal/audit prices.
+
+     */
+
+
+
+    const moneyMatches =
+
+      Array.from(
+
+        row.text.matchAll(
+
+          /\$\s*([\d\s,]+)/g
+
+        )
+
+      );
+
+
+
+
+
+    if (
+
+      moneyMatches.length < 4
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const auditPrices =
+
+      moneyMatches
+
+        .slice(
+
+          0,
+
+          4
+
+        )
+
+        .map(
+
+          match =>
+
+            parseNumber(
+
+              match[1]
+
+            )
+
+        );
+
+
+
+
+
+    if (
+
+      auditPrices.some(
+
+        value =>
+
+          value === null
+
+      )
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    /*
+
+     * Route ID.
+
+     */
+
+
+
+/*
+ * Route ID.
+ *
+ * Audited routes normally contain an /internalaudit/{id} link.
+ * Routes displaying "No audit" may not have that link, but AM
+ * still provides the route ID as the <tr id="..."> attribute.
+ */
+    const linkIdMatch =
+      row.html.match(
+        /\/marketing\/internalaudit\/(\d+)/i
+      );
+
+    const rowIdMatch =
+      row.html.match(
+        /<tr\b[^>]*\bid=["'](\d+)["']/i
+      );
+
+    const routeId =
+      linkIdMatch
+        ? Number(linkIdMatch[1])
+        : rowIdMatch
+          ? Number(rowIdMatch[1])
+          : null;
+
+    if (
+      routeId === null ||
+      !Number.isFinite(routeId)
+    ) {
+      continue;
+    }
+
+
+
+
+    /*
+
+     * Next row should contain Current price.
+
+     */
+
+
+
+    const nextRow =
+
+      rows[i + 1];
+
+
+
+
+
+    if (!nextRow) {
+
+      continue;
+
+    }
+
+
+
+
+
+    if (
+
+      !/^Current price\b/i.test(
+
+        nextRow.text
+
+      )
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const currentMatches =
+
+      Array.from(
+
+        nextRow.text.matchAll(
+
+          /\$\s*([\d\s,]+)/g
+
+        )
+
+      );
+
+
+
+
+
+    if (
+
+      currentMatches.length < 4
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const currentPrices =
+
+      currentMatches
+
+        .slice(
+
+          0,
+
+          4
+
+        )
+
+        .map(
+
+          match =>
+
+            parseNumber(
+
+              match[1]
+
+            )
+
+        );
+
+
+
+
+
+    if (
+
+      currentPrices.some(
+
+        value =>
+
+          value === null
+
+      )
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    routes.push({
+
+
+
+      scan_id:
+
+        null,
+
+
+
+      route_id:
+        routeId,
+
+
+      route,
+
+
+
+      source_page:
+
+        sourcePage,
+
+
+
+      audit_economy:
+
+        auditPrices[0],
+
+
+
+      audit_business:
+
+        auditPrices[1],
+
+
+
+      audit_first:
+
+        auditPrices[2],
+
+
+
+      audit_cargo:
+
+        auditPrices[3],
+
+
+
+      current_economy:
+
+        currentPrices[0],
+
+
+
+      current_business:
+
+        currentPrices[1],
+
+
+
+      current_first:
+
+        currentPrices[2],
+
+
+
+      current_cargo:
+
+        currentPrices[3],
+
+    });
+
+  }
+
+
+
+
+
+  return routes;
+
+}
+
+
+
+
+
+/* ============================================================
+
+   PRICING PARSER
+
+============================================================ */
+
+
+
+/**
+ * parsePricingPage()
+ * Parses pricing list rows and remaining-demand rows, calculating capacity as demand minus remaining demand.
+ */
+function parsePricingPage(
+  html: string,
+  sourcePage: number,
+  hubCode: string
+) {
+
+
+
+  const rows =
+
+    getRows(html);
+
+
+
+  const routes: any[] = [];
+
+
+
+
+
+  for (
+
+    let i = 0;
+
+    i < rows.length;
+
+    i++
+
+  ) {
+
+
+
+    const row =
+
+      rows[i];
+
+
+
+
+
+    const route =
+
+      canonicalRoute(
+        row.text,
+        hubCode
+      );
+
+
+
+
+
+    if (!route) {
+
+      continue;
+
+    }
+
+
+
+
+
+    /*
+
+     * Route rows contain:
+
+     *
+
+     * /marketing/pricing/{routeId}
+
+     */
+
+
+
+    const idMatch =
+
+      row.html.match(
+
+        /\/marketing\/pricing\/(\d+)/i
+
+      );
+
+
+
+
+
+    if (!idMatch) {
+
+      continue;
+
+    }
+
+
+
+
+
+    /*
+
+     * Example:
+
+     *
+
+     * BKK / KAN - 9,930 km
+
+     * 5 873 Pax
+
+     * 230 Pax
+
+     * 24 Pax
+
+     * 632 Tonnes
+
+     */
+
+
+
+    const distanceMatch =
+
+      row.text.match(
+
+        /([\d\s,]+)\s*km\b/i
+
+      );
+
+
+
+
+
+    const paxMatches =
+
+      Array.from(
+
+        row.text.matchAll(
+
+          /(-?[\d\s,]+)\s*Pax\b/gi
+
+        )
+
+      );
+
+
+
+
+
+    const cargoMatch =
+
+      row.text.match(
+
+        /(-?[\d\s,]+)\s*Tonnes?\b/i
+
+      );
+
+
+
+
+
+    if (
+
+      paxMatches.length < 3 ||
+
+      !cargoMatch
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const demandEconomy =
+
+      parseNumber(
+
+        paxMatches[0][1]
+
+      );
+
+
+
+    const demandBusiness =
+
+      parseNumber(
+
+        paxMatches[1][1]
+
+      );
+
+
+
+    const demandFirst =
+
+      parseNumber(
+
+        paxMatches[2][1]
+
+      );
+
+
+
+    const demandCargo =
+
+      parseNumber(
+
+        cargoMatch[1]
+
+      );
+
+
+
+
+
+    if (
+
+      demandEconomy === null ||
+
+      demandBusiness === null ||
+
+      demandFirst === null ||
+
+      demandCargo === null
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    /*
+
+     * Next row:
+
+     *
+
+     * Remaining demand -119 Pax ...
+
+     */
+
+
+
+    const nextRow =
+
+      rows[i + 1];
+
+
+
+
+
+    if (
+
+      !nextRow ||
+
+      !/^Remaining demand\b/i.test(
+
+        nextRow.text
+
+      )
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const remainingPax =
+
+      Array.from(
+
+        nextRow.text.matchAll(
+
+          /(-?[\d\s,]+)\s*Pax\b/gi
+
+        )
+
+      );
+
+
+
+
+
+    const remainingCargo =
+
+      nextRow.text.match(
+
+        /(-?[\d\s,]+)\s*Tonnes?\b/i
+
+      );
+
+
+
+
+
+    if (
+
+      remainingPax.length < 3 ||
+
+      !remainingCargo
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const remainingEconomy =
+
+      parseNumber(
+
+        remainingPax[0][1]
+
+      );
+
+
+
+    const remainingBusiness =
+
+      parseNumber(
+
+        remainingPax[1][1]
+
+      );
+
+
+
+    const remainingFirst =
+
+      parseNumber(
+
+        remainingPax[2][1]
+
+      );
+
+
+
+    const remainingCargoValue =
+
+      parseNumber(
+
+        remainingCargo[1]
+
+      );
+
+
+
+
+
+    if (
+
+      remainingEconomy === null ||
+
+      remainingBusiness === null ||
+
+      remainingFirst === null ||
+
+      remainingCargoValue === null
+
+    ) {
+
+      continue;
+
+    }
+
+
+
+
+
+    const capacityEconomy =
+
+      demandEconomy -
+
+      remainingEconomy;
+
+
+
+    const capacityBusiness =
+
+      demandBusiness -
+
+      remainingBusiness;
+
+
+
+    const capacityFirst =
+
+      demandFirst -
+
+      remainingFirst;
+
+
+
+    const capacityCargo =
+
+      demandCargo -
+
+      remainingCargoValue;
+
+
+
+
+
+    routes.push({
+
+
+
+      scan_id:
+
+        null,
+
+
+
+      route_id:
+
+        Number(
+
+          idMatch[1]
+
+        ),
+
+
+
+      route,
+
+
+
+      source_page:
+
+        sourcePage,
+
+
+
+      distance_km:
+
+        distanceMatch
+
+          ? parseNumber(
+
+              distanceMatch[1]
+
+            )
+
+          : null,
+
+
+
+      demand_economy:
+
+        demandEconomy,
+
+
+
+      demand_business:
+
+        demandBusiness,
+
+
+
+      demand_first:
+
+        demandFirst,
+
+
+
+      demand_cargo:
+
+        demandCargo,
+
+
+
+      remaining_economy:
+
+        remainingEconomy,
+
+
+
+      remaining_business:
+
+        remainingBusiness,
+
+
+
+      remaining_first:
+
+        remainingFirst,
+
+
+
+      remaining_cargo:
+
+        remainingCargoValue,
+
+
+
+      capacity_economy:
+
+        capacityEconomy,
+
+
+
+      capacity_business:
+
+        capacityBusiness,
+
+
+
+      capacity_first:
+
+        capacityFirst,
+
+
+
+      capacity_cargo:
+
+        capacityCargo,
+
+    });
+
+  }
+
+
+
+
+
+  return routes;
+
+}
+
+
+
+
+
+/* ============================================================
+
+   PAGE VALIDATION
+
+============================================================ */
+
+
+
+/**
+ * expectedRouteCount()
+ * Computes the expected route count for a page, using page size and known total where available.
+ */
+function expectedRouteCount(
+  mode: "audit" | "pricing",
+  page: number,
+  totalPages: number,
+  expectedTotalRoutes: number | null
+) {
+  const normalPageSize =
+    mode === "audit"
+      ? AUDIT_NORMAL_PAGE_SIZE
+      : PRICING_NORMAL_PAGE_SIZE;
+
+  if (page < totalPages) {
+    return normalPageSize;
+  }
+
+  if (
+    page === totalPages &&
+    expectedTotalRoutes !== null &&
+    expectedTotalRoutes >= 0
+  ) {
+    const remainder = expectedTotalRoutes % normalPageSize;
+    return remainder === 0 && expectedTotalRoutes > 0
+      ? normalPageSize
+      : remainder;
+  }
+
+  return null;
+}
+
+
+/**
+ * validateParsedPage()
+ * Rejects unexpected parsed page counts; prevents incomplete pages from being marked complete.
+ */
+function validateParsedPage(
+  mode: "audit" | "pricing",
+  page: number,
+  routes: any[],
+  totalPages: number,
+  expectedTotalRoutes: number | null
+) {
+  const expected =
+    expectedRouteCount(
+      mode,
+      page,
+      totalPages,
+      expectedTotalRoutes
+    );
+
+  if (expected !== null) {
+    if (routes.length !== expected) {
+      return {
+        valid: false,
+        expected,
+        error:
+          `${mode} page ${page}: parsed ${routes.length} routes, expected ${expected}`,
+      };
+    }
+
+    return {
+      valid: true,
+      expected,
+      error: null,
+    };
+  }
+
+  if (routes.length === 0) {
+    return {
+      valid: false,
+      expected: null,
+      error:
+        `${mode} page ${page}: parsed zero routes`,
+    };
+  }
+
+  return {
+    valid: true,
+    expected: null,
+    error: null,
+  };
+}
+
+
+/* ============================================================
+   HUB DISCOVERY
+============================================================ */
+
+/** Type: DiscoveredHub — Hub identity and expected audit/pricing workload discovered from AM. */
+type DiscoveredHub = {
+  hub_id: number;
+  hub_code: string;
+  hub_name: string | null;
+  audit_routes: number;
+  audit_total_pages: number;
+  pricing_routes: number | null;
+  pricing_total_pages: number;
+};
+
+/**
+ * extractSelectHtml()
+ * Locates a select element by ID in raw HTML for dropdown parsing.
+ */
+function extractSelectHtml(html: string, id: string) {
+  const safe = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(
+    new RegExp(
+      `<select\\b[^>]*\\bid=["']${safe}["'][^>]*>[\\s\\S]*?<\\/select>`,
+      "i"
+    )
+  );
+  return match ? match[0] : null;
+}
+
+/**
+ * parseHubOptions()
+ * Reads hub IDs, codes, names and optional audit route counts from the hub dropdown.
+ */
+function parseHubOptions(
+  html: string,
+  mode: "audit" | "pricing"
+) {
+  const select = extractSelectHtml(html, "hubDropdown");
+  if (!select) {
+    throw new Error(
+      `Could not find #hubDropdown on the ${mode} page.`
+    );
+  }
+
+  const options: any[] = [];
+  const optionRegex =
+    /<option\b[^>]*value=["']([^"']+)["'][^>]*>([\s\S]*?)<\/option>/gi;
+
+  let match: RegExpExecArray | null;
+
+  while ((match = optionRegex.exec(select)) !== null) {
+    const value = decodeEntities(match[1]);
+    const text = cleanText(match[2]);
+
+    const airportMatch = value.match(/[?&]airport=(\d+)/i);
+    if (!airportMatch) continue;
+
+    const hubId = Number(airportMatch[1]);
+    if (!Number.isInteger(hubId) || hubId <= 0) continue;
+
+    const codeMatch = text.match(/^([A-Z0-9]{3})\s*-\s*/i);
+    if (!codeMatch) continue;
+
+    const hubCode = codeMatch[1].toUpperCase();
+
+    let routeCount: number | null = null;
+    let hubNameText = text;
+
+    if (mode === "audit") {
+      const countMatch = text.match(/\((\d+)\)\s*$/);
+      if (countMatch) {
+        routeCount = Number(countMatch[1]);
+        hubNameText = text.replace(/\s*\(\d+\)\s*$/, "");
+      }
+    }
+
+    const hubName =
+      hubNameText
+        .replace(/^[A-Z0-9]{3}\s*-\s*/i, "")
+        .trim() || null;
+
+    options.push({
+      hub_id: hubId,
+      hub_code: hubCode,
+      hub_name: hubName,
+      route_count: routeCount,
+      value,
+    });
+  }
+
+  return options;
+}
+
+/**
+ * maxPageNumber()
+ * Finds the highest pagination page number advertised in HTML links.
+ */
+function maxPageNumber(html: string) {
+  let maxPage = 1;
+  for (const match of html.matchAll(/[?&](?:amp;)?page=(\d+)/gi)) {
+    const page = Number(match[1]);
+    if (Number.isInteger(page) && page > maxPage) {
+      maxPage = page;
+    }
+  }
+  return maxPage;
+}
+
+/**
+ * discoverHubs()
+ * Authenticates, reads pricing and audit hub selectors, and determines each hub’s page totals.
+ */
+async function discoverHubs() {
+  const session = await createAmSession();
+
+  const pricingIndex = await fetchAmPage(
+    session.jar,
+    `${AM_BASE}/marketing/pricing/?airport=0&page=1`,
+    `${AM_BASE}/marketing/pricing/`
+  );
+
+  if (!pricingIndex.ok) {
+    throw new Error(
+      pricingIndex.error ||
+      `Hub discovery Pricing HTTP ${pricingIndex.status}`
+    );
+  }
+
+  const auditIndex = await fetchAmPage(
+    session.jar,
+    `${AM_BASE}/marketing/internalaudit/linelist`,
+    `${AM_BASE}/marketing/pricing/`
+  );
+
+  if (!auditIndex.ok) {
+    throw new Error(
+      auditIndex.error ||
+      `Hub discovery Audit HTTP ${auditIndex.status}`
+    );
+  }
+
+  const pricingHubs =
+    parseHubOptions(pricingIndex.html, "pricing");
+
+  const auditHubs =
+    parseHubOptions(auditIndex.html, "audit");
+
+  if (pricingHubs.length === 0) {
+    throw new Error("Price Management returned no hubs.");
+  }
+
+  const auditById =
+    new Map(
+      auditHubs.map(hub => [
+        Number(hub.hub_id),
+        hub
+      ])
+    );
+
+  const hubs: DiscoveredHub[] = [];
+
+  for (let i = 0; i < pricingHubs.length; i++) {
+    const pricingHub = pricingHubs[i];
+    const auditHub = auditById.get(Number(pricingHub.hub_id));
+
+    const pricingPage = await fetchAmPage(
+      session.jar,
+      `${AM_BASE}/marketing/pricing/?airport=${pricingHub.hub_id}&page=1`,
+      `${AM_BASE}/marketing/pricing/`
+    );
+
+    if (!pricingPage.ok) {
+      throw new Error(
+        `Could not inspect Pricing for ${pricingHub.hub_code}: ` +
+        (pricingPage.error || `HTTP ${pricingPage.status}`)
+      );
+    }
+
+    const firstPricingRoutes =
+      parsePricingPage(
+        pricingPage.html,
+        1,
+        pricingHub.hub_code
+      );
+
+    const pricingTotalPages =
+      firstPricingRoutes.length === 0
+        ? 0
+        : maxPageNumber(pricingPage.html);
+
+    const auditRoutes =
+      auditHub?.route_count ?? 0;
+
+    const auditTotalPages =
+      auditRoutes > 0
+        ? Math.ceil(auditRoutes / AUDIT_NORMAL_PAGE_SIZE)
+        : 0;
+
+    hubs.push({
+      hub_id: Number(pricingHub.hub_id),
+      hub_code: pricingHub.hub_code,
+      hub_name: pricingHub.hub_name,
+      audit_routes: auditRoutes,
+      audit_total_pages: auditTotalPages,
+      pricing_routes: null,
+      pricing_total_pages: pricingTotalPages,
+    });
+
+    if (i < pricingHubs.length - 1) {
+      await sleep(REQUEST_DELAY_MS);
+    }
+  }
+
+  return {
+    authentication: {
+      loginStatus: session.loginStatus,
+      loginRedirect: session.loginRedirect,
+    },
+    hubs,
+  };
+}
+
+
+/* ============================================================
+   DATABASE / SCAN STATE
+============================================================ */
+
+/**
+ * createScan()
+ * Creates a multi-hub scan and associated hub-state records in Supabase.
+ */
+async function createScan() {
+  const discovery = await discoverHubs();
+
+  if (discovery.hubs.length === 0) {
+    throw new Error("No hubs were discovered.");
+  }
+
+  const primaryHub = discovery.hubs[0];
+
+  const auditTotalPages =
+    discovery.hubs.reduce(
+      (sum, hub) => sum + hub.audit_total_pages,
+      0
+    );
+
+  const pricingTotalPages =
+    discovery.hubs.reduce(
+      (sum, hub) => sum + hub.pricing_total_pages,
+      0
+    );
+
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from("am_scans")
+      .insert({
+        /*
+         * Retained only for backward compatibility with the existing
+         * am_scans schema. The actual scan is multi-hub.
+         */
+        hub_id: primaryHub.hub_id,
+        hub_code: primaryHub.hub_code,
+        status: "running",
+        audit_total_pages: auditTotalPages,
+        pricing_total_pages: pricingTotalPages,
+        hubs_discovered: discovery.hubs.length,
+        hubs_complete: 0,
+      })
+      .select()
+      .single();
+
+  if (error) {
+    throw new Error(
+      `Could not create scan: ${error.message}`
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const hubRows =
+    discovery.hubs.map(hub => ({
+      scan_id: data.id,
+      hub_id: hub.hub_id,
+      hub_code: hub.hub_code,
+      hub_name: hub.hub_name,
+      status:
+        hub.audit_total_pages === 0 &&
+        hub.pricing_total_pages === 0
+          ? "zero_routes"
+          : "pending",
+      audit_total_pages: hub.audit_total_pages,
+      pricing_total_pages: hub.pricing_total_pages,
+      audit_pages_complete: 0,
+      pricing_pages_complete: 0,
+      audit_routes: 0,
+      pricing_routes: 0,
+      started_at: null,
+      completed_at:
+        hub.audit_total_pages === 0 &&
+        hub.pricing_total_pages === 0
+          ? now
+          : null,
+      updated_at: now,
+    }));
+
+  const { error: hubError } =
+    await supabase
+      .from("am_scan_hubs")
+      .upsert(
+        hubRows,
+        {
+          onConflict: "scan_id,hub_id",
+        }
+      );
+
+  if (hubError) {
+    await supabase
+      .from("am_scans")
+      .delete()
+      .eq("id", data.id);
+
+    throw new Error(
+      `Could not save discovered hubs: ${hubError.message}`
+    );
+  }
+
+  return {
+    ...data,
+    hubs: discovery.hubs,
+    authentication: discovery.authentication,
+  };
+}
+
+
+/* ============================================================
+   GET SCAN
+============================================================ */
+
+/**
+ * getScan()
+ * Loads the main scan record by scan ID.
+ */
+async function getScan(scanId: string) {
+  const { data, error } =
+    await supabase
+      .from("am_scans")
+      .select("*")
+      .eq("id", scanId)
+      .single();
+
+  if (error) {
+    throw new Error(
+      `Could not load scan: ${error.message}`
+    );
+  }
+
+  return data;
+}
+
+
+/**
+ * getScanHubs()
+ * Loads hub progress records for a scan in hub-code order.
+ */
+async function getScanHubs(scanId: string) {
+  const { data, error } =
+    await supabase
+      .from("am_scan_hubs")
+      .select("*")
+      .eq("scan_id", scanId)
+      .order("hub_code", { ascending: true });
+
+  if (error) {
+    throw new Error(
+      `Could not load scan hubs: ${error.message}`
+    );
+  }
+
+  return data || [];
+}
+
+
+/* ============================================================
+   GET LATEST COMPLETED SCAN
+============================================================ */
+
+/**
+ * getLatestCompletedScan()
+ * Finds the most recently completed scan, if one exists.
+ */
+async function getLatestCompletedScan() {
+  const { data, error } =
+    await supabase
+      .from("am_scans")
+      .select("*")
+      .eq("status", "complete")
+      .not("completed_at", "is", null)
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Could not load latest completed scan: ${error.message}`
+    );
+  }
+
+  return data;
+}
+
+
+/* ============================================================
+   SAVE PAGE STATUS
+============================================================ */
+
+/**
+ * savePageStatus()
+ * Upserts a page’s success/failure, HTTP status, attempt count and parse details.
+ */
+async function savePageStatus(
+  scanId: string,
+  hubId: number,
+  hubCode: string,
+  mode: "audit" | "pricing",
+  pageNumber: number,
+  status: "complete" | "failed",
+  httpStatus: number | null,
+  attempts: number,
+  routesParsed: number,
+  errorMessage: string | null
+) {
+  const { error } =
+    await supabase
+      .from("am_scan_pages")
+      .upsert(
+        {
+          scan_id: scanId,
+          hub_id: hubId,
+          hub_code: hubCode,
+          mode,
+          page_number: pageNumber,
+          status,
+          http_status: httpStatus,
+          attempts,
+          routes_parsed: routesParsed,
+          error_message: errorMessage,
+          scanned_at: new Date().toISOString(),
+        },
+        {
+          onConflict:
+            "scan_id,hub_id,mode,page_number",
+        }
+      );
+
+  if (error) {
+    throw new Error(
+      `Could not save page status: ${error.message}`
+    );
+  }
+}
+
+
+/* ============================================================
+   SAVE SUCCESSFULLY VALIDATED ROUTES
+============================================================ */
+
+/**
+ * saveValidatedRoutes()
+ * Upserts successfully parsed audit or pricing routes for a particular scan and hub.
+ */
+async function saveValidatedRoutes(
+  scanId: string,
+  hubId: number,
+  hubCode: string,
+  mode: "audit" | "pricing",
+  routes: any[]
+) {
+  if (routes.length === 0) {
+    return;
+  }
+
+  const rows =
+    routes.map(route => ({
+      ...route,
+      scan_id: scanId,
+      hub_id: hubId,
+      hub_code: hubCode,
+    }));
+
+  const table =
+    mode === "audit"
+      ? "am_audit_routes"
+      : "am_pricing_routes";
+
+  const { error } =
+    await supabase
+      .from(table)
+      .upsert(
+        rows,
+        {
+          onConflict:
+            "scan_id,hub_id,route_id",
+        }
+      );
+
+  if (error) {
+    throw new Error(
+      `Could not save ${mode} routes: ${error.message}`
+    );
+  }
+}
+
+
+/* ============================================================
+   REFRESH SCAN COUNTS
+============================================================ */
+
+/**
+ * refreshScanCounts()
+ * Recounts completed pages/routes per hub and updates aggregate scan completion state.
+ */
+async function refreshScanCounts(scanId: string) {
+  const hubs = await getScanHubs(scanId);
+  const now = new Date().toISOString();
+
+  let totalAuditPages = 0;
+  let totalPricingPages = 0;
+  let auditPages = 0;
+  let pricingPages = 0;
+  let auditRoutes = 0;
+  let pricingRoutes = 0;
+  let hubsComplete = 0;
+
+  const refreshedHubs: any[] = [];
+
+  for (const hub of hubs) {
+    const hubId = Number(hub.hub_id);
+
+    const [
+      auditPagesResult,
+      pricingPagesResult,
+      auditRoutesResult,
+      pricingRoutesResult,
+    ] =
+      await Promise.all([
+        supabase
+          .from("am_scan_pages")
+          .select("*", { count: "exact", head: true })
+          .eq("scan_id", scanId)
+          .eq("hub_id", hubId)
+          .eq("mode", "audit")
+          .eq("status", "complete"),
+
+        supabase
+          .from("am_scan_pages")
+          .select("*", { count: "exact", head: true })
+          .eq("scan_id", scanId)
+          .eq("hub_id", hubId)
+          .eq("mode", "pricing")
+          .eq("status", "complete"),
+
+        supabase
+          .from("am_audit_routes")
+          .select("*", { count: "exact", head: true })
+          .eq("scan_id", scanId)
+          .eq("hub_id", hubId),
+
+        supabase
+          .from("am_pricing_routes")
+          .select("*", { count: "exact", head: true })
+          .eq("scan_id", scanId)
+          .eq("hub_id", hubId),
+      ]);
+
+    for (const result of [
+      auditPagesResult,
+      pricingPagesResult,
+      auditRoutesResult,
+      pricingRoutesResult,
+    ]) {
+      if (result.error) {
+        throw new Error(
+          `Could not refresh ${hub.hub_code} counts: ${result.error.message}`
+        );
+      }
+    }
+
+    const hubAuditPages =
+      auditPagesResult.count || 0;
+    const hubPricingPages =
+      pricingPagesResult.count || 0;
+    const hubAuditRoutes =
+      auditRoutesResult.count || 0;
+    const hubPricingRoutes =
+      pricingRoutesResult.count || 0;
+
+    const hubAuditTotalPages =
+      Number(hub.audit_total_pages || 0);
+    const hubPricingTotalPages =
+      Number(hub.pricing_total_pages || 0);
+
+    const hubComplete =
+      hubAuditPages === hubAuditTotalPages &&
+      hubPricingPages === hubPricingTotalPages;
+
+    const zeroRoutes =
+      hubAuditTotalPages === 0 &&
+      hubPricingTotalPages === 0;
+
+    const hubStatus =
+      zeroRoutes
+        ? "zero_routes"
+        : hubComplete
+          ? "complete"
+          : hub.status === "failed"
+            ? "failed"
+            : hubAuditPages > 0 || hubPricingPages > 0
+              ? "scanning"
+              : "pending";
+
+    const hubUpdate: any = {
+      audit_pages_complete: hubAuditPages,
+      pricing_pages_complete: hubPricingPages,
+      audit_routes: hubAuditRoutes,
+      pricing_routes: hubPricingRoutes,
+      status: hubStatus,
+      updated_at: now,
+    };
+
+    if (
+      (hubComplete || zeroRoutes) &&
+      !hub.completed_at
+    ) {
+      hubUpdate.completed_at = now;
+    }
+
+    if (
+      (hubAuditPages > 0 || hubPricingPages > 0) &&
+      !hub.started_at
+    ) {
+      hubUpdate.started_at = now;
+    }
+
+    const { error: hubUpdateError } =
+      await supabase
+        .from("am_scan_hubs")
+        .update(hubUpdate)
+        .eq("scan_id", scanId)
+        .eq("hub_id", hubId);
+
+    if (hubUpdateError) {
+      throw new Error(
+        `Could not update ${hub.hub_code} progress: ${hubUpdateError.message}`
+      );
+    }
+
+    totalAuditPages += hubAuditTotalPages;
+    totalPricingPages += hubPricingTotalPages;
+    auditPages += hubAuditPages;
+    pricingPages += hubPricingPages;
+    auditRoutes += hubAuditRoutes;
+    pricingRoutes += hubPricingRoutes;
+
+    if (hubComplete || zeroRoutes) {
+      hubsComplete++;
+    }
+
+    refreshedHubs.push({
+      ...hub,
+      ...hubUpdate,
+      complete: hubComplete || zeroRoutes,
+    });
+  }
+
+  const complete =
+    hubs.length > 0 &&
+    hubsComplete === hubs.length;
+
+  const existingScan =
+    await getScan(scanId);
+
+  const updateData: any = {
+    audit_total_pages: totalAuditPages,
+    pricing_total_pages: totalPricingPages,
+    audit_pages_complete: auditPages,
+    pricing_pages_complete: pricingPages,
+    audit_routes: auditRoutes,
+    pricing_routes: pricingRoutes,
+    hubs_discovered: hubs.length,
+    hubs_complete: hubsComplete,
+    status: complete ? "complete" : "running",
+  };
+
+  if (complete && !existingScan.completed_at) {
+    updateData.completed_at = now;
+  }
+
+  const { error } =
+    await supabase
+      .from("am_scans")
+      .update(updateData)
+      .eq("id", scanId);
+
+  if (error) {
+    throw new Error(
+      `Could not update scan counts: ${error.message}`
+    );
+  }
+
+  return {
+    auditPages,
+    pricingPages,
+    auditRoutes,
+    pricingRoutes,
+    auditTotalPages: totalAuditPages,
+    pricingTotalPages: totalPricingPages,
+    hubsDiscovered: hubs.length,
+    hubsComplete,
+    hubs: refreshedHubs,
+    complete,
+    completedAt:
+      existingScan.completed_at ||
+      updateData.completed_at ||
+      null,
+  };
+}
+
+
+/* ============================================================
+   RECORD LAST ERROR
+============================================================ */
+
+/**
+ * recordScanError()
+ * Stores the latest error on the scan and optionally on a specific hub.
+ */
+async function recordScanError(
+  scanId: string,
+  message: string | null,
+  hubId?: number
+) {
+  const { error } =
+    await supabase
+      .from("am_scans")
+      .update({ last_error: message })
+      .eq("id", scanId);
+
+  if (error) {
+    console.error(
+      "Could not record scan error:",
+      error.message
+    );
+  }
+
+  if (hubId !== undefined) {
+    await supabase
+      .from("am_scan_hubs")
+      .update({
+        last_error: message,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("scan_id", scanId)
+      .eq("hub_id", hubId);
+  }
+}
+
+
+/* ============================================================
+
+   FIND NEXT INCOMPLETE PAGE
+
+============================================================ */
+
+
+
+/**
+ * findNextPageForHub()
+ * Returns the first page in a hub/mode not yet recorded as complete.
+ */
+async function findNextPageForHub(
+  scanId: string,
+  hubId: number,
+  mode: "audit" | "pricing",
+  totalPages: number
+) {
+  if (totalPages <= 0) {
+    return null;
+  }
+
+  const { data, error } =
+    await supabase
+      .from("am_scan_pages")
+      .select("page_number,status")
+      .eq("scan_id", scanId)
+      .eq("hub_id", hubId)
+      .eq("mode", mode)
+      .eq("status", "complete");
+
+  if (error) {
+    throw new Error(
+      `Could not determine scan progress: ${error.message}`
+    );
+  }
+
+  const completed =
+    new Set(
+      (data || []).map(
+        row => Number(row.page_number)
+      )
+    );
+
+  for (let page = 1; page <= totalPages; page++) {
+    if (!completed.has(page)) {
+      return page;
+    }
+  }
+
+  return null;
+}
+
+
+/**
+ * findNextWork()
+ * Selects the next incomplete hub/page, respecting a preferred mode before falling back.
+ */
+async function findNextWork(
+  scanId: string,
+  preferredMode?: "audit" | "pricing" | null
+) {
+  const hubs = await getScanHubs(scanId);
+
+  const modes: Array<"audit" | "pricing"> =
+    preferredMode
+      ? [preferredMode]
+      : ["audit", "pricing"];
+
+  for (const mode of modes) {
+    for (const hub of hubs) {
+      const totalPages =
+        Number(
+          mode === "audit"
+            ? hub.audit_total_pages
+            : hub.pricing_total_pages
+        ) || 0;
+
+      const page =
+        await findNextPageForHub(
+          scanId,
+          Number(hub.hub_id),
+          mode,
+          totalPages
+        );
+
+      if (page !== null) {
+        return {
+          hub,
+          mode,
+          page,
+          totalPages,
+        };
+      }
+    }
+  }
+
+  /*
+   * If the caller preferred one mode and it is finished everywhere,
+   * automatically continue into the other mode.
+   */
+  if (preferredMode) {
+    const other =
+      preferredMode === "audit"
+        ? "pricing"
+        : "audit";
+
+    return findNextWork(scanId, other);
+  }
+
+  return null;
+}
+
+
+/* ============================================================
+   SCAN ONE BATCH
+============================================================ */
+
+/**
+ * scanBatch()
+ * Processes a bounded batch of pages with authentication, parsing, validation and database persistence.
+ */
+async function scanBatch(
+  scanId: string,
+  requestedMode: "audit" | "pricing" | null,
+  _requestedStartPage: number | null,
+  batchSize: number
+) {
+  const work =
+    await findNextWork(
+      scanId,
+      requestedMode
+    );
+
+  if (!work) {
+    return {
+      mode: requestedMode,
+      alreadyComplete: true,
+      pages: [],
+    };
+  }
+
+  const hub = work.hub;
+  const hubId = Number(hub.hub_id);
+  const hubCode = String(hub.hub_code);
+  const mode = work.mode;
+  const totalPages = work.totalPages;
+  const startPage = work.page;
+
+  const endPage =
+    Math.min(
+      startPage + batchSize - 1,
+      totalPages
+    );
+
+    /*
+    * audit_routes is the number of routes already saved during this scan,
+    * not the expected total number of routes for the hub.
+    *
+    * Therefore it must not be used to calculate the expected size of the
+    * final Audit page.
+    */
+    const expectedTotalRoutes = null;
+
+  const session =
+    await createAmSession();
+
+  const pageResults: any[] = [];
+
+  await supabase
+    .from("am_scan_hubs")
+    .update({
+      status: "scanning",
+      started_at:
+        hub.started_at ||
+        new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
+    })
+    .eq("scan_id", scanId)
+    .eq("hub_id", hubId);
+
+  for (
+    let page = startPage;
+    page <= endPage;
+    page++
+  ) {
+    const pageUrl =
+      mode === "audit"
+        ? `${AM_BASE}/marketing/internalaudit/linelist?airport=${hubId}&page=${page}&line=`
+        : `${AM_BASE}/marketing/pricing/?airport=${hubId}&page=${page}`;
+
+    const referer =
+      mode === "audit"
+        ? `${AM_BASE}/marketing/internalaudit/linelist?airport=${hubId}&page=1&line=`
+        : `${AM_BASE}/marketing/pricing/?airport=${hubId}&page=1`;
+
+    const fetched =
+      await fetchAmPage(
+        session.jar,
+        pageUrl,
+        referer
+      );
+
+    if (!fetched.ok) {
+      await savePageStatus(
+        scanId,
+        hubId,
+        hubCode,
+        mode,
+        page,
+        "failed",
+        fetched.status,
+        fetched.attempts,
+        0,
+        fetched.error
+      );
+
+      await recordScanError(
+        scanId,
+        `${hubCode} ${mode} page ${page}: ${fetched.error}`,
+        hubId
+      );
+
+      pageResults.push({
+        hubId,
+        hubCode,
+        page,
+        ok: false,
+        status: fetched.status,
+        attempts: fetched.attempts,
+        routesParsed: 0,
+        validationPassed: false,
+        error: fetched.error,
+      });
+
+      break;
+    }
+
+    const routes =
+      mode === "audit"
+        ? parseAuditPage(
+            fetched.html,
+            page,
+            hubCode
+          )
+        : parsePricingPage(
+            fetched.html,
+            page,
+            hubCode
+          );
+
+    const validation =
+      validateParsedPage(
+        mode,
+        page,
+        routes,
+        totalPages,
+        expectedTotalRoutes
+      );
+
+    if (!validation.valid) {
+      await savePageStatus(
+        scanId,
+        hubId,
+        hubCode,
+        mode,
+        page,
+        "failed",
+        fetched.status,
+        fetched.attempts,
+        routes.length,
+        validation.error
+      );
+
+      await recordScanError(
+        scanId,
+        `${hubCode}: ${validation.error}`,
+        hubId
+      );
+
+      pageResults.push({
+        hubId,
+        hubCode,
+        page,
+        ok: false,
+        status: fetched.status,
+        attempts: fetched.attempts,
+        routesParsed: routes.length,
+        expectedRoutes: validation.expected,
+        validationPassed: false,
+        error: validation.error,
+      });
+
+      break;
+    }
+
+    await saveValidatedRoutes(
+      scanId,
+      hubId,
+      hubCode,
+      mode,
+      routes
+    );
+
+    await savePageStatus(
+      scanId,
+      hubId,
+      hubCode,
+      mode,
+      page,
+      "complete",
+      fetched.status,
+      fetched.attempts,
+      routes.length,
+      null
+    );
+
+    await recordScanError(
+      scanId,
+      null,
+      hubId
+    );
+
+    pageResults.push({
+      hubId,
+      hubCode,
+      page,
+      ok: true,
+      status: fetched.status,
+      attempts: fetched.attempts,
+      routesParsed: routes.length,
+      expectedRoutes: validation.expected,
+      validationPassed: true,
+      error: null,
+    });
+
+    if (page < endPage) {
+      await sleep(REQUEST_DELAY_MS);
+    }
+  }
+
+  return {
+    hubId,
+    hubCode,
+    hubName: hub.hub_name || null,
+    mode,
+    startPage,
+    endPage,
+    totalPages,
+    authentication: {
+      loginStatus: session.loginStatus,
+      loginRedirect: session.loginRedirect,
+    },
+    pages: pageResults,
+  };
+}
+
+
+/* ============================================================
+
+   OPTIMISER RESULTS
+
+============================================================ */
+
+
+
+/**
+ * fetchAllRows()
+ * Retrieves multiple pages of database results to avoid a single-response row limit.
+ */
+async function fetchAllRows(
+
+  table: string,
+
+  select: string,
+
+  scanId: string,
+
+  orderColumn = "route_id"
+
+) {
+
+
+
+  const PAGE_SIZE = 1000;
+
+
+
+  const rows: any[] = [];
+
+
+
+  let from = 0;
+
+
+
+
+
+  while (true) {
+
+
+
+    const to =
+
+      from +
+
+      PAGE_SIZE -
+
+      1;
+
+
+
+
+
+    const {
+
+      data,
+
+      error,
+
+    } =
+
+      await supabase
+
+        .from(table)
+
+        .select(select)
+
+        .eq(
+
+          "scan_id",
+
+          scanId
+
+        )
+
+        .order(
+
+          orderColumn,
+
+          {
+
+            ascending: true,
+
+          }
+
+        )
+
+        .range(
+
+          from,
+
+          to
+
+        );
+
+
+
+
+
+    if (error) {
+
+      throw new Error(
+
+        `Failed to read ${table}: ${error.message}`
+
+      );
+
+    }
+
+
+
+
+
+    const batch =
+
+      data || [];
+
+
+
+
+
+    rows.push(
+
+      ...batch
+
+    );
+
+
+
+
+
+    if (
+
+      batch.length <
+
+      PAGE_SIZE
+
+    ) {
+
+      break;
+
+    }
+
+
+
+
+
+    from +=
+
+      PAGE_SIZE;
+
+  }
+
+
+
+
+
+  return rows;
+
+}
+
+
+
+
+
+/* ============================================================
+
+   GET PAGE REFRESH TIMES
+
+============================================================ */
+
+
+
+/**
+ * getPageRefreshTimes()
+ * Obtains refresh timestamps used to assess the freshness of scanned pages.
+ */
+async function getPageRefreshTimes(
+  scanId: string
+) {
+  const { data, error } =
+    await supabase
+      .from("am_scan_pages")
+      .select(
+        "hub_id,hub_code,mode,page_number,scanned_at"
+      )
+      .eq("scan_id", scanId)
+      .eq("status", "complete");
+
+  if (error) {
+    throw new Error(
+      `Could not load page refresh times: ${error.message}`
+    );
+  }
+
+  const audit =
+    new Map<string, string | null>();
+
+  const pricing =
+    new Map<string, string | null>();
+
+  for (const row of data || []) {
+    const key =
+      `${row.hub_id}:${Number(row.page_number)}`;
+
+    if (row.mode === "audit") {
+      audit.set(key, row.scanned_at);
+    } else if (row.mode === "pricing") {
+      pricing.set(key, row.scanned_at);
+    }
+  }
+
+  return { audit, pricing };
+}
+
+
+/**
+ * getOptimiserResults()
+ * Builds route/pricing/audit information for the optimiser from stored scan data.
+ */
+async function getOptimiserResults(
+
+  scanId: string
+
+) {
+
+
+
+  /*
+
+   * Make sure the scan exists and has actually
+
+   * completed before exposing optimiser results.
+
+   */
+
+
+
+  const scan =
+
+    await getScan(
+
+      scanId
+
+    );
+
+
+
+
+
+  const counts =
+
+    await refreshScanCounts(
+
+      scanId
+
+    );
+
+  const scanHubs =
+    await getScanHubs(scanId);
+
+
+
+
+
+  if (
+
+    !counts.complete
+
+  ) {
+
+
+
+    throw new Error(
+
+      "The scan is not complete yet."
+
+    );
+
+  }
+
+
+
+
+
+  /*
+
+   * Joined optimiser routes.
+
+   *
+
+   * am_price_optimiser performs the target-price
+
+   * calculation for all four cabins:
+
+   *
+
+   * Economy
+
+   * Business
+
+   * First
+
+   * Cargo
+
+   */
+
+
+
+  const routes =
+
+    await fetchAllRows(
+
+      "am_price_optimiser",
+
+      `
+
+        scan_id,
+        hub_id,
+        hub_code,
+
+        route_id,
+
+        route,
+
+        distance_km,
+
+        pricing_page,
+
+        audit_page,
+
+
+
+        eco_current_price,
+
+        eco_demand,
+
+        eco_remaining,
+
+        eco_capacity,
+
+        eco_target_price,
+
+        eco_change,
+
+
+
+        bus_current_price,
+
+        bus_demand,
+
+        bus_remaining,
+
+        bus_capacity,
+
+        bus_target_price,
+
+        bus_change,
+
+
+
+        first_current_price,
+
+        first_demand,
+
+        first_remaining,
+
+        first_capacity,
+
+        first_target_price,
+
+        first_change,
+
+
+
+        cargo_current_price,
+
+        cargo_demand,
+
+        cargo_remaining,
+
+        cargo_capacity,
+
+        cargo_target_price,
+
+        cargo_change,
+
+
+
+        audit_route,
+
+        route_codes_match
+
+      `,
+
+      scanId
+
+    );
+
+
+
+
+
+  /*
+
+   * Find Pricing routes which do not have an
+
+   * equivalent Audit record.
+
+   *
+
+   * These are the non-amendable / locked routes.
+
+   */
+
+
+
+  const pricingRoutes =
+
+    await fetchAllRows(
+
+      "am_pricing_routes",
+
+      `
+
+        scan_id,
+        hub_id,
+        hub_code,
+
+        route_id,
+
+        route,
+
+        source_page,
+
+        distance_km,
+
+
+
+        demand_economy,
+
+        remaining_economy,
+
+        capacity_economy,
+
+
+
+        demand_business,
+
+        remaining_business,
+
+        capacity_business,
+
+
+
+        demand_first,
+
+        remaining_first,
+
+        capacity_first,
+
+
+
+        demand_cargo,
+
+        remaining_cargo,
+
+        capacity_cargo
+
+      `,
+
+      scanId
+
+    );
+
+
+
+
+
+const auditRoutes =
+  await fetchAllRows(
+    "am_audit_routes",
+    `
+      scan_id,
+      hub_id,
+      hub_code,
+      route_id,
+      route
+    `,
+    scanId
+  );
+
+
+
+
+  const auditRouteIds =
+
+    new Set(
+
+      auditRoutes.map(
+
+        row =>
+
+          `${row.hub_id}:${row.route_id}`
+
+      )
+
+    );
+
+
+
+
+
+  const lockedRoutes =
+
+    pricingRoutes.filter(
+
+      row =>
+
+        !auditRouteIds.has(
+
+          `${row.hub_id}:${row.route_id}`
+
+        )
+
+    );
+
+
+const lockedRouteIds =
+  new Set(
+    lockedRoutes.map(
+      row =>
+        `${row.hub_id}:${row.route_id}`
+    )
+  );
+
+
+
+
+
+  /*
+
+   * Page-level refresh timestamps.
+
+   *
+
+   * Each route knows which Audit/Pricing page supplied
+
+   * its data, so we can attach the actual refresh time.
+
+   */
+
+
+
+  const pageRefreshTimes =
+
+    await getPageRefreshTimes(
+
+      scanId
+
+    );
+
+
+
+
+
+  for (
+
+    const row
+
+    of routes
+
+  ) {
+
+
+
+    const auditRefreshedAt =
+
+      row.audit_page !== null &&
+
+      row.audit_page !== undefined
+
+
+
+        ? pageRefreshTimes.audit.get(
+            `${row.hub_id}:${Number(row.audit_page)}`
+          ) || null
+
+
+
+        : null;
+
+
+
+
+
+    const pricingRefreshedAt =
+
+      row.pricing_page !== null &&
+
+      row.pricing_page !== undefined
+
+
+
+        ? pageRefreshTimes.pricing.get(
+            `${row.hub_id}:${Number(row.pricing_page)}`
+          ) || null
+
+
+
+        : null;
+
+
+
+
+
+    row.audit_refreshed_at =
+
+      auditRefreshedAt;
+
+
+
+    row.pricing_refreshed_at =
+
+      pricingRefreshedAt;
+
+
+
+
+
+    /*
+
+     * Pricing contains the demand/capacity figures
+
+     * used by the optimiser calculation.
+
+     */
+
+
+
+    row.last_refreshed_at =
+
+      pricingRefreshedAt ||
+
+      auditRefreshedAt ||
+
+      null;
+
+  }
+
+
+
+
+
+  for (
+
+    const row
+
+    of lockedRoutes
+
+  ) {
+
+
+
+    const pricingRefreshedAt =
+
+      row.source_page !== null &&
+
+      row.source_page !== undefined
+
+
+
+        ? pageRefreshTimes.pricing.get(
+            `${row.hub_id}:${Number(row.source_page)}`
+          ) || null
+
+
+
+        : null;
+
+
+
+
+
+    row.pricing_refreshed_at =
+
+      pricingRefreshedAt;
+
+
+
+    row.last_refreshed_at =
+
+      pricingRefreshedAt;
+
+  }
+
+
+
+
+
+const amendableRoutes =
+  routes.filter(
+    row =>
+      !lockedRouteIds.has(
+        `${row.hub_id}:${row.route_id}`
+      )
+  );
+
+
+
+
+  /*
+
+   * Build one cabin summary.
+
+   *
+
+   * This deliberately uses the same classification
+
+   * rules for Economy, Business, First and Cargo.
+
+   */
+
+
+
+  function buildCabinSummary(
+
+    changeField: string,
+
+    capacityField: string
+
+  ) {
+
+
+
+    return {
+
+
+
+      raise:
+
+        amendableRoutes.filter(
+
+          row =>
+
+            Number(
+
+              row[changeField]
+
+            ) > 0
+
+        ).length,
+
+
+
+      reduce:
+
+        amendableRoutes.filter(
+
+          row =>
+
+            Number(
+
+              row[changeField]
+
+            ) < 0
+
+        ).length,
+
+
+
+      unchanged:
+
+        amendableRoutes.filter(
+
+          row =>
+
+            Number(
+
+              row[changeField]
+
+            ) === 0 &&
+
+            Number(
+
+              row[capacityField]
+
+            ) > 0
+
+        ).length,
+
+
+
+      noCapacity:
+
+        amendableRoutes.filter(
+
+          row =>
+
+            Number(
+
+              row[capacityField]
+
+            ) <= 0
+
+        ).length,
+
+
+
+    };
+
+  }
+
+
+
+
+
+  /*
+
+   * Summary figures for the frontend.
+
+   */
+
+
+
+
+  /*
+   * Attach active database-backed 24-hour price locks to the result rows.
+   * This makes locks visible immediately when the optimiser is opened,
+   * not only after the Apply button is clicked.
+   */
+const activePriceLocks =
+  await getActivePriceLocks();
+
+  
+  for (const row of amendableRoutes) {
+const lock =
+  activePriceLocks.get(
+    `${row.hub_id}:${row.route_id}`
+  ) || null;
+
+  
+    row.price_lock_locked =
+      Boolean(lock?.locked);
+
+    row.price_lock_updated_at =
+      lock?.updatedAt || null;
+
+    row.price_lock_until =
+      lock?.unlockAt || null;
+
+    row.price_lock_remaining_ms =
+      lock?.remainingMs || 0;
+
+    row.price_lock_update_id =
+      lock?.id || null;
+  }
+
+
+  const summary = {
+
+
+
+    totalRoutes:
+
+      routes.length,
+
+
+
+    amendableRoutes:
+
+      amendableRoutes.length,
+
+
+
+    lockedRoutes:
+
+      lockedRoutes.length,
+
+
+
+    economy:
+
+      buildCabinSummary(
+
+        "eco_change",
+
+        "eco_capacity"
+
+      ),
+
+
+
+    business:
+
+      buildCabinSummary(
+
+        "bus_change",
+
+        "bus_capacity"
+
+      ),
+
+
+
+    first:
+
+      buildCabinSummary(
+
+        "first_change",
+
+        "first_capacity"
+
+      ),
+
+
+
+    cargo:
+
+      buildCabinSummary(
+
+        "cargo_change",
+
+        "cargo_capacity"
+
+      ),
+
+
+
+  };
+
+
+
+
+
+  return {
+
+
+
+    scan: {
+
+
+
+      id:
+
+        scan.id,
+
+
+
+      hubId:
+
+        scan.hub_id,
+
+
+
+      hubCode:
+
+        scan.hub_code,
+
+
+
+      status:
+
+        "complete",
+
+      hubs:
+        scanHubs.map(hub => ({
+          hubId: Number(hub.hub_id),
+          hubCode: hub.hub_code,
+          hubName: hub.hub_name || null,
+          status: hub.status,
+          auditRoutes: Number(hub.audit_routes || 0),
+          pricingRoutes: Number(hub.pricing_routes || 0),
+        })),
+
+
+
+      startedAt:
+
+        scan.started_at ||
+
+        scan.created_at ||
+
+        null,
+
+
+
+      completedAt:
+
+        counts.completedAt ||
+
+        scan.completed_at ||
+
+        null,
+
+
+
+    },
+
+
+
+    summary,
+
+
+
+    routes,
+
+
+
+    amendableRoutes,
+
+
+
+    lockedRoutes,
+
+
+
+  };
+
+}
+
+
+
+/* ============================================================
+   SINGLE-ROUTE PRICE UPDATES + 24-HOUR LOCK
+============================================================ */
+
+const PRICE_LOCK_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * priceLock()
+ * Interprets a price update timestamp to determine whether a price-change lock remains active.
+ */
+function priceLock(updatedAt: string | null) {
+  if (!updatedAt) return { locked:false, updatedAt:null, unlockAt:null, remainingMs:0 };
+  const changed = new Date(updatedAt).getTime();
+  if (!Number.isFinite(changed)) return { locked:false, updatedAt, unlockAt:null, remainingMs:0 };
+  const unlock = changed + PRICE_LOCK_MS;
+  const remainingMs = Math.max(0, unlock - Date.now());
+  return { locked:remainingMs > 0, updatedAt, unlockAt:new Date(unlock).toISOString(), remainingMs };
+}
+
+/**
+ * latestSuccessfulUpdate()
+ * Looks up the latest successful price update for a route.
+ */
+async function latestSuccessfulUpdate(
+  hubId: number,
+  routeId: number
+) {
+  const { data, error } =
+    await supabase
+      .from("am_price_updates")
+      .select(
+        "id,hub_id,route_id,updated_at"
+      )
+      .eq("hub_id", hubId)
+      .eq("route_id", routeId)
+      .eq("status", "success")
+      .not("updated_at", "is", null)
+      .order(
+        "updated_at",
+        { ascending: false }
+      )
+      .limit(1)
+      .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Could not load price-update history: ${error.message}`
+    );
+  }
+
+  return data;
+}
+
+/**
+ * getActivePriceLocks()
+ * Collects currently active pricing locks from update history.
+ */
+async function getActivePriceLocks() {
+
+  const cutoff =
+    new Date(
+      Date.now() - PRICE_LOCK_MS
+    ).toISOString();
+
+
+  /*
+   * IMPORTANT:
+   *
+   * Price locks are deliberately NOT scan-scoped.
+   *
+   * A successful price change must remain locked
+   * for 24 hours even if a new optimiser scan is
+   * performed during that period.
+   *
+   * Route identity is hub_id + route_id.
+   *
+   * Supabase/PostgREST limits a normal SELECT to
+   * a finite number of rows, so active locks must
+   * be fetched in pages.
+   */
+
+  const PAGE_SIZE = 1000;
+
+  let from = 0;
+
+  const locks =
+    new Map<string, any>();
+
+
+  while (true) {
+
+    const {
+      data,
+      error
+    } =
+      await supabase
+        .from(
+          "am_price_updates"
+        )
+        .select(
+          "id,hub_id,route_id,updated_at"
+        )
+        .eq(
+          "status",
+          "success"
+        )
+        .not(
+          "updated_at",
+          "is",
+          null
+        )
+        .gte(
+          "updated_at",
+          cutoff
+        )
+        .order(
+          "updated_at",
+          {
+            ascending: false
+          }
+        )
+        .range(
+          from,
+          from + PAGE_SIZE - 1
+        );
+
+
+    if (error) {
+
+      throw new Error(
+        `Could not load active price locks: ${error.message}`
+      );
+
+    }
+
+
+    const rows =
+      data || [];
+
+
+    for (
+      const row
+      of rows
+    ) {
+
+      const hubId =
+        Number(
+          row.hub_id
+        );
+
+      const routeId =
+        Number(
+          row.route_id
+        );
+
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0 ||
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+
+        continue;
+
+      }
+
+
+      const key =
+        `${hubId}:${routeId}`;
+
+
+      /*
+       * Results are newest first.
+       *
+       * Therefore the first successful update
+       * encountered for this hub/route is the
+       * newest one.
+       */
+
+      if (
+        !locks.has(key)
+      ) {
+
+        locks.set(
+          key,
+          {
+            id:
+              row.id,
+
+            hubId,
+
+            routeId,
+
+            updatedAt:
+              row.updated_at,
+
+            ...priceLock(
+              row.updated_at
+            ),
+          }
+        );
+
+      }
+
+    }
+
+
+    /*
+     * A short page means we've reached the end.
+     */
+
+    if (
+      rows.length <
+      PAGE_SIZE
+    ) {
+
+      break;
+
+    }
+
+
+    from +=
+      PAGE_SIZE;
+
+  }
+
+
+  return locks;
+
+}
+
+
+/**
+ * getPriceStatus()
+ * Summarises pricing state and lock information for requested routes.
+ */
+async function getPriceStatus(
+  scanId: string,
+  hubId: number,
+  routeId: number
+) {
+  /*
+   * Pricing/optimiser route.
+   *
+   * route_id alone is not globally unique across hubs, so the
+   * scan, hub and route must all match.
+   */
+  const {
+    data: route,
+    error: routeError
+  } =
+    await supabase
+      .from("am_price_optimiser")
+      .select("*")
+      .eq("scan_id", scanId)
+      .eq("hub_id", hubId)
+      .eq("route_id", routeId)
+      .maybeSingle();
+
+  if (routeError) {
+    throw new Error(
+      `Could not load optimiser route: ${routeError.message}`
+    );
+  }
+
+  /*
+   * Audit presence determines whether this route is amendable.
+   *
+   * Again, use the complete scan + hub + route identity.
+   */
+  const {
+    data: audit,
+    error: auditError
+  } =
+    await supabase
+      .from("am_audit_routes")
+      .select(
+        "scan_id,hub_id,hub_code,route_id,route"
+      )
+      .eq("scan_id", scanId)
+      .eq("hub_id", hubId)
+      .eq("route_id", routeId)
+      .maybeSingle();
+
+  if (auditError) {
+    throw new Error(
+      `Could not check route amendability: ${auditError.message}`
+    );
+  }
+
+  /*
+   * Price-update history deliberately isn't scan-scoped.
+   *
+   * A successful update must remain locked for 24 hours even if
+   * a new optimiser scan is performed during that period.
+   */
+  const update =
+    await latestSuccessfulUpdate(
+      hubId,
+      routeId
+    );
+
+  return {
+    route,
+
+    amendable:
+      Boolean(
+        route &&
+        audit
+      ),
+
+    affiliatedLocked:
+      !audit,
+
+    priceLock: {
+      ...priceLock(
+        update?.updated_at ||
+        null
+      ),
+
+      source:
+        update
+          ? "am_price_updates"
+          : null,
+
+      updateId:
+        update?.id ||
+        null
+    }
+  };
+}
+
+
+
+/**
+ * attr()
+ * Extracts a named attribute from an HTML tag string.
+ */
+function attr(tag:string, name:string) {
+  const safe = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = tag.match(new RegExp(`${safe}\\s*=\\s*["']([^"']*)["']`, "i"));
+  return m ? decodeEntities(m[1]) : null;
+}
+
+/**
+ * inputById()
+ * Finds an input element with a particular ID in HTML.
+ */
+function inputById(html:string, id:string) {
+  const safe = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = html.match(new RegExp(`<input\\b[^>]*\\bid=["']${safe}["'][^>]*>`, "i"));
+  return m ? { name:attr(m[0],"name"), value:attr(m[0],"value") || "" } : null;
+}
+
+/**
+ * hasAttr()
+ * Checks whether an HTML tag includes a named attribute.
+ */
+function hasAttr(tag: string, name: string) {
+  return new RegExp(`\\b${name}(?:\\s*=|\\s|>|$)`, "i").test(tag);
+}
+
+/**
+ * safeInputInfo()
+ * Reports selected input properties for diagnostics without exposing secret form values.
+ */
+function safeInputInfo(tag: string | null) {
+  if (!tag) {
+    return {
+      present: false,
+      name: null,
+      type: null,
+      disabled: false,
+      readonly: false
+    };
+  }
+
+  return {
+    present: true,
+    name: attr(tag, "name"),
+    type: attr(tag, "type") || "text",
+    disabled: hasAttr(tag, "disabled"),
+    readonly: hasAttr(tag, "readonly")
+  };
+}
+
+/**
+ * inputTagById()
+ * Extracts the opening input tag for a particular element ID.
+ */
+function inputTagById(html: string, id: string) {
+  const safe = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const m = html.match(
+    new RegExp(
+      `<input\\b[^>]*\\bid=["']${safe}["'][^>]*>`,
+      "i"
+    )
+  );
+
+  return m ? m[0] : null;
+}
+
+/**
+ * pricingFormDiagnostic()
+ * Inspects pricing form structure and editability for troubleshooting.
+ */
+function pricingFormDiagnostic(html: string) {
+
+  // Find the exact form containing the Economy price input.
+  const forms =
+    html.match(/<form\b[\s\S]*?<\/form>/gi) || [];
+
+  const form =
+    forms.find(f =>
+      /id=["']line_priceEco["']/i.test(f)
+    ) || null;
+
+  if (!form) {
+    return {
+      formFound: false
+    };
+  }
+
+  const openingTag =
+    form.match(/<form\b[^>]*>/i)?.[0] || "";
+
+  const ecoTag =
+    inputTagById(form, "line_priceEco");
+
+  const busTag =
+    inputTagById(form, "line_priceBus");
+
+  const firstTag =
+    inputTagById(form, "line_priceFirst");
+
+  const cargoTag =
+    inputTagById(form, "line_priceCargo");
+
+
+  const inputTags =
+    form.match(/<input\b[^>]*>/gi) || [];
+
+
+  // Return every input structurally, but deliberately suppress
+  // values for hidden/password fields so tokens/secrets can never
+  // be exposed by this diagnostic.
+  const allInputs =
+    inputTags.map(tag => {
+
+      const type =
+        (attr(tag, "type") || "text")
+          .toLowerCase();
+
+      const sensitive =
+        type === "hidden" ||
+        type === "password";
+
+      return {
+        name:
+          attr(tag, "name"),
+
+        id:
+          attr(tag, "id"),
+
+        type,
+
+        value:
+          sensitive
+            ? null
+            : attr(tag, "value"),
+
+        valueSuppressed:
+          sensitive,
+
+        disabled:
+          hasAttr(tag, "disabled"),
+
+        readonly:
+          hasAttr(tag, "readonly"),
+
+        checked:
+          hasAttr(tag, "checked")
+      };
+    });
+
+
+  const hiddenInputs =
+    allInputs
+      .filter(input =>
+        input.type === "hidden"
+      )
+      .map(input => ({
+        name: input.name,
+        id: input.id,
+        present: true,
+        valueSuppressed: true,
+        disabled: input.disabled
+      }));
+
+
+  const csrfPresent =
+    hiddenInputs.some(input =>
+      /csrf/i.test(
+        input.name || ""
+      )
+    );
+
+
+  const submitControls: Array<{
+    element: string;
+    name: string | null;
+    value: string | null;
+    type: string;
+    disabled: boolean;
+  }> = [];
+
+
+  for (const tag of inputTags) {
+
+    const type =
+      (attr(tag, "type") || "text")
+        .toLowerCase();
+
+    if (
+      type !== "submit" &&
+      type !== "button"
+    ) {
+      continue;
+    }
+
+    submitControls.push({
+      element: "input",
+      name: attr(tag, "name"),
+      value: attr(tag, "value"),
+      type,
+      disabled: hasAttr(tag, "disabled")
+    });
+  }
+
+
+  const buttonTags =
+    form.match(/<button\b[^>]*>[\s\S]*?<\/button>/gi) || [];
+
+  for (const tag of buttonTags) {
+
+    const openingButton =
+      tag.match(/<button\b[^>]*>/i)?.[0] || "";
+
+    const type =
+      (
+        attr(openingButton, "type") ||
+        "submit"
+      ).toLowerCase();
+
+    const buttonText =
+      cleanText(tag) || null;
+
+    submitControls.push({
+      element: "button",
+      name: attr(openingButton, "name"),
+      value:
+        attr(openingButton, "value") ||
+        buttonText,
+      type,
+      disabled:
+        hasAttr(
+          openingButton,
+          "disabled"
+        )
+    });
+  }
+
+
+  // Selects and textareas can also be successful form controls.
+  // Return names/structure only; do not return textarea contents.
+  const selectControls =
+    (form.match(/<select\b[^>]*>/gi) || [])
+      .map(tag => ({
+        name: attr(tag, "name"),
+        id: attr(tag, "id"),
+        disabled: hasAttr(tag, "disabled"),
+        multiple: hasAttr(tag, "multiple")
+      }));
+
+
+  const textareaControls =
+    (form.match(/<textarea\b[^>]*>/gi) || [])
+      .map(tag => ({
+        name: attr(tag, "name"),
+        id: attr(tag, "id"),
+        disabled: hasAttr(tag, "disabled"),
+        readonly: hasAttr(tag, "readonly"),
+        valueSuppressed: true
+      }));
+
+
+  return {
+    formFound: true,
+
+    form: {
+      action:
+        attr(openingTag, "action"),
+
+      method:
+        (
+          attr(openingTag, "method") ||
+          "GET"
+        ).toUpperCase(),
+
+      id:
+        attr(openingTag, "id"),
+
+      name:
+        attr(openingTag, "name"),
+
+      enctype:
+        attr(openingTag, "enctype") ||
+        "application/x-www-form-urlencoded"
+    },
+
+    inputs: {
+      eco:
+        safeInputInfo(ecoTag),
+
+      bus:
+        safeInputInfo(busTag),
+
+      first:
+        safeInputInfo(firstTag),
+
+      cargo:
+        safeInputInfo(cargoTag)
+    },
+
+    csrfPresent,
+
+    hiddenInputs,
+
+    allInputs,
+
+    selectControls,
+
+    textareaControls,
+
+    submitControls,
+
+    controlCounts: {
+      inputs:
+        inputTags.length,
+      hiddenInputs:
+        hiddenInputs.length,
+      selects:
+        selectControls.length,
+      textareas:
+        textareaControls.length,
+      submitControls:
+        submitControls.length
+    }
+  };
+}
+
+/**
+ * livePricesFromEditableForm()
+ * Extracts the four live prices from editable form inputs.
+ */
+function livePricesFromEditableForm(html:string) {
+  const ids = [
+    "line_priceEco",
+    "line_priceBus",
+    "line_priceFirst",
+    "line_priceCargo"
+  ];
+
+  const values =
+    ids.map(id => {
+      const input =
+        inputById(
+          html,
+          id
+        );
+
+      return input
+        ? parseNumber(
+            input.value
+          )
+        : null;
+    });
+
+  if (
+    values.some(
+      value =>
+        value === null
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    eco:
+      values[0] as number,
+
+    bus:
+      values[1] as number,
+
+    first:
+      values[2] as number,
+
+    cargo:
+      values[3] as number
+  };
+}
+
+
+/**
+ * livePricesFromLockedPage()
+ * Extracts displayed prices when the pricing form is locked.
+ */
+function livePricesFromLockedPage(html:string) {
+  /*
+   * After a successful native price change Airlines Manager removes the
+   * editable pricing form for 24 hours. The four current prices are still
+   * rendered in the route information area as:
+   *
+   *   Current ticket price ...   (Economy)
+   *   Current ticket price ...   (Business)
+   *   Current ticket price ...   (First)
+   *   Current price/tonne ...    (Cargo)
+   *
+   * Work from visible text only. This deliberately does not depend on
+   * CSS classes that may change between editable and locked page states.
+   */
+  const text =
+    cleanText(
+      html
+    );
+
+  const ticketPrices:
+    number[] = [];
+
+  const ticketRegex =
+    /Current\s+ticket\s+price\s*:?\s*\$?\s*([\d][\d,\s\u00a0.]*)/gi;
+
+  let ticketMatch:
+    RegExpExecArray | null;
+
+  while (
+    (
+      ticketMatch =
+        ticketRegex.exec(
+          text
+        )
+    ) !== null
+  ) {
+    const value =
+      parseNumber(
+        ticketMatch[1]
+      );
+
+    if (
+      value !== null
+    ) {
+      ticketPrices.push(
+        value
+      );
+    }
+
+    if (
+      ticketPrices.length === 3
+    ) {
+      break;
+    }
+  }
+
+  const cargoMatch =
+    text.match(
+      /Current\s+price\s*\/\s*tonne\s*:?\s*\$?\s*([\d][\d,\s\u00a0.]*)/i
+    );
+
+  const cargo =
+    cargoMatch
+      ? parseNumber(
+          cargoMatch[1]
+        )
+      : null;
+
+  if (
+    ticketPrices.length !== 3 ||
+    cargo === null
+  ) {
+    return null;
+  }
+
+  return {
+    eco:
+      ticketPrices[0],
+
+    bus:
+      ticketPrices[1],
+
+    first:
+      ticketPrices[2],
+
+    cargo
+  };
+}
+
+
+/**
+ * livePrices()
+ * Chooses the appropriate live-price extraction strategy for the returned page.
+ */
+function livePrices(html:string) {
+  /*
+   * Editable routes expose the native form inputs.
+   * Recently changed routes expose only the locked-page price display.
+   */
+  return (
+    livePricesFromEditableForm(
+      html
+    ) ??
+    livePricesFromLockedPage(
+      html
+    )
+  );
+}
+
+/**
+ * pricingForm()
+ * Builds the pricing form payload using supplied Economy, Business, First and Cargo prices.
+ */
+function pricingForm(html:string, prices:{eco:number;bus:number;first:number;cargo:number}) {
+  /*
+   * Scope submission fields to the actual pricing form rather than the whole
+   * document. This preserves Symfony hidden fields such as line[_token]
+   * without ever exposing their values outside this function.
+   */
+  const forms = html.match(/<form\b[\s\S]*?<\/form>/gi) || [];
+  const pricingHtml =
+    forms.find(formHtml => /id=["']line_priceEco["']/i.test(formHtml));
+
+  if (!pricingHtml) {
+    throw new Error("Could not find AM pricing form.");
+  }
+
+  const form = new URLSearchParams();
+
+  for (const m of pricingHtml.matchAll(/<input\b[^>]*>/gi)) {
+    const tag = m[0];
+    const type = (attr(tag,"type") || "text").toLowerCase();
+    const name = attr(tag,"name");
+
+    if (
+      name &&
+      type === "hidden" &&
+      !hasAttr(tag,"disabled")
+    ) {
+      form.set(name, attr(tag,"value") || "");
+    }
+  }
+
+  /*
+   * Airlines Manager currently uses Symfony's line[_token] hidden field.
+   * Fail closed if it is absent/empty rather than attempting a write.
+   */
+  const formToken = form.get("line[_token]");
+  if (!formToken) {
+    throw new Error("AM pricing form token line[_token] is missing or empty.");
+  }
+
+  const wanted:[string,number][] = [
+    ["line_priceEco",prices.eco],["line_priceBus",prices.bus],
+    ["line_priceFirst",prices.first],["line_priceCargo",prices.cargo]
+  ];
+
+  for (const [id,value] of wanted) {
+    const inputTag = inputTagById(pricingHtml,id);
+    if (!inputTag) throw new Error(`Could not find AM pricing input ${id}`);
+    const inputName = attr(inputTag,"name");
+    if (!inputName) throw new Error(`AM pricing input ${id} has no name`);
+    if (hasAttr(inputTag,"disabled")) throw new Error(`AM pricing input ${id} is disabled`);
+    form.set(inputName,String(value));
+  }
+
+  return form;
+}
+
+
+/**
+ * amPageLooksLocked()
+ * Detects HTML indications that a pricing page is locked against changes.
+ */
+function amPageLooksLocked(html: string) {
+  const t = cleanText(html);
+
+  const currentLockPatterns = [
+    /a\s+period\s+of\s+24\s+hours?\s+is\s+required\s+between\s+each\s+price\s+change/i,
+
+    /remaining\s+time\s*:?\s*\d+\s*h/i,
+
+    /(?:cannot|can't|unable to|may not)\s+(?:change|modify|update)\s+(?:the\s+)?(?:price|prices)/i,
+
+    /(?:price|prices)\s+(?:cannot|can't)\s+be\s+(?:changed|modified|updated)/i,
+
+    /(?:must|need to)\s+wait[^.]{0,100}before[^.]{0,100}(?:change|modify|update)/i,
+
+    /(?:change|modify|update)[^.]{0,80}(?:available|possible)[^.]{0,80}(?:in|after)\s+\d+/i,
+
+    /(?:locked|blocked)[^.]{0,80}(?:price|prices)/i,
+
+    /(?:price|prices)[^.]{0,80}(?:locked|blocked)/i
+  ];
+
+  return currentLockPatterns.some(
+    pattern => pattern.test(t)
+  );
+}
+
+
+
+/**
+ * logUpdate()
+ * Inserts a price-update audit-log entry in Supabase.
+ */
+async function logUpdate(row:Record<string,unknown>) {
+  const { data,error }=await supabase.from("am_price_updates").insert(row).select("id").single();
+  if(error) throw new Error(`Could not create price-update log: ${error.message}`);
+  return data.id as string;
+}
+/**
+ * patchUpdate()
+ * Updates an existing price-update audit-log entry.
+ */
+async function patchUpdate(id:string,row:Record<string,unknown>) {
+  const { error }=await supabase.from("am_price_updates").update(row).eq("id",id);
+  if(error) throw new Error(`Could not update price-update log: ${error.message}`);
+}
+
+
+/**
+ * getLivePriceStatus()
+ * Fetches current pricing information and returns status details from the live AM page.
+ */
+async function getLivePriceStatus(
+  scanId: string,
+  hubId: number,
+  routeId: number
+) {
+  // First perform our normal stored/database checks.
+  const state = await getPriceStatus(
+    scanId,
+    hubId,
+    routeId
+  );
+
+  if (!state.route) {
+    throw new Error(
+      "Route is not present in this optimiser scan."
+    );
+  }
+
+  // Create an authenticated Airlines Manager session.
+  const { jar } =
+    await createAmSession();
+
+  const pricingUrl =
+    `${AM_BASE}/marketing/pricing/${routeId}`;
+
+  // GET only. This does NOT submit or change prices.
+  const page =
+    await fetchAmPage(
+      jar,
+      pricingUrl,
+`${AM_BASE}/marketing/pricing/?airport=${hubId}&page=1`
+    );
+
+  if (!page.ok) {
+    throw new Error(
+      page.error ||
+      `Pricing page HTTP ${page.status}`
+    );
+  }
+
+  // Extract the four prices currently shown by AM.
+  const prices =
+    livePrices(
+      page.html
+    );
+
+  if (!prices) {
+    throw new Error(
+      "Could not parse live Airlines Manager prices."
+    );
+  }
+
+  const stored: any =
+    state.route;
+
+  const storedPrices = {
+    eco:
+      Number(
+        stored.eco_current_price
+      ),
+
+    bus:
+      Number(
+        stored.bus_current_price
+      ),
+
+    first:
+      Number(
+        stored.first_current_price
+      ),
+
+    cargo:
+      Number(
+        stored.cargo_current_price
+      ),
+  };
+
+  const targetPrices = {
+    eco:
+      Number(
+        stored.eco_target_price
+      ),
+
+    bus:
+      Number(
+        stored.bus_target_price
+      ),
+
+    first:
+      Number(
+        stored.first_target_price
+      ),
+
+    cargo:
+      Number(
+        stored.cargo_target_price
+      ),
+  };
+
+  const pricesMatchScan =
+    prices.eco === storedPrices.eco &&
+    prices.bus === storedPrices.bus &&
+    prices.first === storedPrices.first &&
+    prices.cargo === storedPrices.cargo;
+
+  return {
+    route:
+      stored.route,
+
+    routeId,
+
+    amendable:
+      state.amendable,
+
+    affiliatedLocked:
+      state.affiliatedLocked,
+
+    databasePriceLock:
+      state.priceLock,
+
+    amPageLooksLocked:
+      amPageLooksLocked(
+        page.html
+      ),
+
+    livePrices:
+      prices,
+      
+    storedPrices,
+
+    targetPrices,
+
+    pricesMatchScan,
+  };
+}
+
+/**
+ * getPricingFormStatus()
+ * Inspects the live pricing form and reports whether required controls are available.
+ */
+async function getPricingFormStatus(
+  scanId: string,
+  hubId: number,
+  routeId: number
+) {
+
+  const status =
+    await getPriceStatus(
+      scanId,
+      hubId,
+      routeId
+    );
+
+  if (!status.route) {
+    return {
+      ok: false,
+      reason: "route_not_found",
+      routeId
+    };
+  }
+
+  if (!status.amendable) {
+    return {
+      ok: false,
+      reason: "route_not_amendable",
+      routeId,
+      route: status.route
+    };
+  }
+
+
+  const session =
+    await createAmSession();
+
+const pricingUrl =
+  `${AM_BASE}/marketing/pricing/${routeId}`;
+
+const page =
+  await fetchAmPage(
+    session.jar,
+    pricingUrl,
+`${AM_BASE}/marketing/pricing/?airport=${hubId}&page=1`
+  );
+
+  if (!page.ok) {
+    return {
+      ok: false,
+      reason: "pricing_page_failed",
+      routeId,
+      route: status.route,
+      httpStatus:
+        page.status
+    };
+  }
+
+
+  const diagnostic =
+    pricingFormDiagnostic(
+      page.html
+    );
+
+
+  return {
+    ok: true,
+    action:
+      "pricing-form-status",
+
+    scanId,
+    routeId,
+    route:
+      status.route,
+
+    amendable:
+      status.amendable,
+
+    databasePriceLock:
+      status.priceLock,
+
+    amPageLooksLocked:
+      amPageLooksLocked(
+        page.html
+      ),
+
+    ...diagnostic
+  };
+}
+
+/**
+ * getSessionDiagnostic()
+ * Collects safe session/authentication diagnostics for troubleshooting.
+ */
+async function getSessionDiagnostic(
+  scanId: string,
+  hubId: number,
+  routeId: number
+) {
+  // Validate that this route belongs to the requested completed scan.
+  const state = await getPriceStatus(
+    scanId,
+    hubId,
+    routeId
+  );
+
+  if (!state.route) {
+    return {
+      ok: false,
+      reason: "route_not_found",
+      routeId,
+    };
+  }
+
+  const stages: CookieStage[] = [];
+  const session = await createAmSession(stages);
+
+  const pricingUrl =
+    `${AM_BASE}/marketing/pricing/${routeId}`;
+
+  const page = await fetchAmPage(
+    session.jar,
+    pricingUrl,
+`${AM_BASE}/marketing/pricing/?airport=${hubId}&page=1`
+  );
+
+  // fetchAmPage stores any Set-Cookie headers before returning.
+  captureCookieStage(
+    stages,
+    "afterPricingPage",
+    session.jar
+  );
+
+  return {
+    ok: page.ok,
+    action: "session-diagnostic",
+    scanId,
+    routeId,
+    route: state.route.route,
+    readOnly: true,
+    authentication: {
+      loginStatus: session.loginStatus,
+      loginRedirect: session.loginRedirect,
+    },
+    pricingPage: {
+      ok: page.ok,
+      httpStatus: page.status,
+      attempts: page.attempts,
+      error: page.error,
+    },
+    cookieStages: safeCookieStageReport(stages),
+    note:
+      "Cookie values are intentionally suppressed. Only names and added/changed/removed state are returned.",
+  };
+}
+
+
+
+/**
+ * shortSha256()
+ * Produces a shortened SHA-256 fingerprint for comparing sensitive strings without revealing them.
+ */
+async function shortSha256(value: string | null | undefined) {
+  if (!value) return null;
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .slice(0, 8)
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * pricingFormOpeningTag()
+ * Finds the opening pricing-form tag for diagnostic inspection.
+ */
+function pricingFormOpeningTag(html: string) {
+  const forms = html.match(/<form\b[\s\S]*?<\/form>/gi) || [];
+  const form = forms.find(formHtml => /id=["']line_priceEco["']/i.test(formHtml)) || null;
+  if (!form) return null;
+  const openingTag = form.match(/<form\b[^>]*>/i)?.[0] || "";
+  return {
+    html: form,
+    action: attr(openingTag, "action"),
+    method: (attr(openingTag, "method") || "GET").toUpperCase(),
+    enctype: attr(openingTag, "enctype") || "application/x-www-form-urlencoded",
+  };
+}
+
+/**
+ * pricingCsrfToken()
+ * Extracts a pricing-form CSRF token from HTML.
+ */
+function pricingCsrfToken(html: string) {
+  const info = pricingFormOpeningTag(html);
+  if (!info) return null;
+  for (const match of info.html.matchAll(/<input\b[^>]*>/gi)) {
+    const tag = match[0];
+    if (attr(tag, "name") === "line[_token]") {
+      return attr(tag, "value") || "";
+    }
+  }
+  return null;
+}
+
+/**
+ * getSessionCsrfDiagnostic()
+ * Compares session and CSRF state across authenticated page requests.
+ */
+async function getSessionCsrfDiagnostic(
+  scanId: string,
+  hubId: number,
+  routeId: number
+) {
+  const state = await getPriceStatus(
+    scanId,
+    hubId,
+    routeId
+  );
+    if (!state.route) {
+    return { ok:false, action:"session-csrf-diagnostic", reason:"route_not_found", routeId, readOnly:true };
+  }
+  if (!state.amendable) {
+    return { ok:false, action:"session-csrf-diagnostic", reason:"route_not_amendable", routeId, route:state.route.route, readOnly:true };
+  }
+
+  const stages: CookieStage[] = [];
+  const session = await createAmSession(stages);
+  const url = `${AM_BASE}/marketing/pricing/${routeId}`;
+  const referer = `${AM_BASE}/marketing/pricing/?airport=${Number(state.route.hub_id)}&page=1`;
+
+  const first = await fetchAmPage(session.jar, url, referer);
+  captureCookieStage(stages, "afterPricingGet1", session.jar);
+  if (!first.ok) {
+    return {
+      ok:false, action:"session-csrf-diagnostic", reason:"pricing_get_1_failed",
+      scanId, routeId, route:state.route.route, readOnly:true,
+      httpStatus:first.status, cookieStages:safeCookieStageReport(stages)
+    };
+  }
+
+  const token1 = pricingCsrfToken(first.html);
+  const form1 = pricingFormOpeningTag(first.html);
+  const php1 = session.jar.cookies.get("PHPSESSID") || null;
+  const remember1 = session.jar.cookies.get("REMEMBERME") || null;
+
+  const second = await fetchAmPage(session.jar, url, url);
+  captureCookieStage(stages, "afterPricingGet2", session.jar);
+  if (!second.ok) {
+    return {
+      ok:false, action:"session-csrf-diagnostic", reason:"pricing_get_2_failed",
+      scanId, routeId, route:state.route.route, readOnly:true,
+      httpStatus:second.status, cookieStages:safeCookieStageReport(stages)
+    };
+  }
+
+  const token2 = pricingCsrfToken(second.html);
+  const form2 = pricingFormOpeningTag(second.html);
+  const php2 = session.jar.cookies.get("PHPSESSID") || null;
+  const remember2 = session.jar.cookies.get("REMEMBERME") || null;
+
+  const r:any = state.route;
+  const target = {
+    eco:Number(r.eco_target_price), bus:Number(r.bus_target_price),
+    first:Number(r.first_target_price), cargo:Number(r.cargo_target_price)
+  };
+  const encodedForm = pricingForm(second.html, target);
+  const encodedBody = encodedForm.toString();
+  const entries = Array.from(encodedForm.entries());
+  const encodedToken = encodedForm.get("line[_token]");
+  const roundTrip = new URLSearchParams(encodedBody).get("line[_token]");
+
+  return {
+    ok:true,
+    action:"session-csrf-diagnostic",
+    scanId,
+    routeId,
+    route:state.route.route,
+    readOnly:true,
+    pricingGets:{
+      first:{httpStatus:first.status, attempts:first.attempts},
+      second:{httpStatus:second.status, attempts:second.attempts}
+    },
+    csrf:{
+      first:{present:token1 !== null, length:token1?.length ?? 0, fingerprint:await shortSha256(token1)},
+      second:{present:token2 !== null, length:token2?.length ?? 0, fingerprint:await shortSha256(token2)},
+      sameAcrossGets:token1 !== null && token2 !== null && token1 === token2,
+      encodedTokenMatchesExtracted:token2 !== null && encodedToken === token2,
+      roundTripTokenMatchesExtracted:token2 !== null && roundTrip === token2
+    },
+    sessionCookies:{
+      phpSession:{firstFingerprint:await shortSha256(php1), secondFingerprint:await shortSha256(php2), sameAcrossGets:Boolean(php1 && php2 && php1 === php2)},
+      rememberMe:{firstFingerprint:await shortSha256(remember1), secondFingerprint:await shortSha256(remember2), sameAcrossGets:Boolean(remember1 && remember2 && remember1 === remember2)}
+    },
+    form:{
+      first:{action:form1?.action || null, method:form1?.method || null, enctype:form1?.enctype || null},
+      second:{action:form2?.action || null, method:form2?.method || null, enctype:form2?.enctype || null},
+      sameAction:Boolean(form1 && form2 && form1.action === form2.action),
+      sameMethod:Boolean(form1 && form2 && form1.method === form2.method),
+      encodedBodyLength:encodedBody.length,
+      fieldOrder:entries.map(([name]) => name),
+      fieldCount:entries.length
+    },
+    cookieStages:safeCookieStageReport(stages),
+    note:"Read-only diagnostic. Token and cookie values are never returned; only lengths, short SHA-256 fingerprints, equality checks, and form structure are exposed."
+  };
+}
+
+
+/**
+ * recordBrowserSuccess()
+ * Records and verifies a browser-originated pricing success in the update log.
+ */
+async function recordBrowserSuccess(
+  scanId: string,
+  hubId: number,
+  routeId: number,
+  suppliedHubCode: string | null = null
+) {
+  const state =
+    await getPriceStatus(
+      scanId,
+      hubId,
+      routeId
+    );
+
+  if (!state.route) {
+    throw new Error(
+      "Route is not present in this optimiser scan."
+    );
+  }
+
+  const r: any =
+    state.route;
+
+  /*
+   * The stored optimiser row is authoritative.
+   * Ensure the requested hub matches it.
+   */
+  const storedHubId =
+    Number(r.hub_id);
+
+  if (
+    !Number.isInteger(storedHubId) ||
+    storedHubId <= 0 ||
+    storedHubId !== hubId
+  ) {
+    throw new Error(
+      "The supplied hub does not match the optimiser route."
+    );
+  }
+
+  const storedHubCode =
+    String(
+      r.hub_code || ""
+    )
+      .trim()
+      .toUpperCase();
+
+  const incomingHubCode =
+    suppliedHubCode
+      ? String(suppliedHubCode)
+          .trim()
+          .toUpperCase()
+      : null;
+
+  /*
+   * hubCode is useful for diagnostics/history, but hubId is
+   * the actual identity. If a hubCode was supplied by the
+   * browser, make sure it agrees with the stored route.
+   */
+  if (
+    incomingHubCode &&
+    storedHubCode &&
+    incomingHubCode !== storedHubCode
+  ) {
+    throw new Error(
+      "The supplied hubCode does not match the optimiser route."
+    );
+  }
+
+  if (!state.amendable) {
+    return {
+      ok: false,
+      recorded: false,
+      reason: "route_locked",
+      message:
+        "This route is not amendable.",
+      hubId,
+      hubCode:
+        storedHubCode || null,
+      routeId
+    };
+  }
+
+  /*
+   * Idempotency:
+   *
+   * If this exact hub/route has already been recorded as
+   * successful within the active 24-hour window, return the
+   * existing lock rather than inserting another update.
+   */
+  if (state.priceLock.locked) {
+    return {
+      ok: true,
+      recorded: false,
+      alreadyRecorded: true,
+      hubId,
+      hubCode:
+        storedHubCode || null,
+      routeId,
+      priceLock:
+        state.priceLock
+    };
+  }
+
+  const old = {
+    eco:
+      Number(
+        r.eco_current_price
+      ),
+
+    bus:
+      Number(
+        r.bus_current_price
+      ),
+
+    first:
+      Number(
+        r.first_current_price
+      ),
+
+    cargo:
+      Number(
+        r.cargo_current_price
+      )
+  };
+
+  const target = {
+    eco:
+      Number(
+        r.eco_target_price
+      ),
+
+    bus:
+      Number(
+        r.bus_target_price
+      ),
+
+    first:
+      Number(
+        r.first_target_price
+      ),
+
+    cargo:
+      Number(
+        r.cargo_target_price
+      )
+  };
+
+  if (
+    [
+      ...Object.values(old),
+      ...Object.values(target)
+    ].some(
+      value =>
+        !Number.isFinite(value)
+    )
+  ) {
+    throw new Error(
+      "Stored current/target prices are incomplete."
+    );
+  }
+
+  /*
+   * Read-only verification against Airlines Manager.
+   *
+   * This action NEVER posts a price change to AM.
+   */
+  const { jar } =
+    await createAmSession();
+
+  const url =
+    `${AM_BASE}/marketing/pricing/${routeId}`;
+
+  const page =
+    await fetchAmPage(
+      jar,
+      url,
+      `${AM_BASE}/marketing/pricing/?airport=${hubId}&page=1`
+    );
+
+  if (!page.ok) {
+    throw new Error(
+      page.error ||
+      `Pricing page HTTP ${page.status}`
+    );
+  }
+
+  const live =
+    livePrices(
+      page.html
+    );
+
+  if (!live) {
+    throw new Error(
+      "Could not parse live Airlines Manager prices."
+    );
+  }
+
+  const pricesMatchTarget =
+    live.eco === target.eco &&
+    live.bus === target.bus &&
+    live.first === target.first &&
+    live.cargo === target.cargo;
+
+  const locked =
+    amPageLooksLocked(
+      page.html
+    );
+
+  /*
+   * We only record success when BOTH conditions are true:
+   *
+   * 1. AM now shows exactly the stored target prices.
+   * 2. AM shows the genuine post-change price lock.
+   *
+   * Anything else remains unverified and must not create a
+   * successful history row.
+   */
+  if (
+    !pricesMatchTarget ||
+    !locked
+  ) {
+    return {
+      ok: false,
+      recorded: false,
+      reason:
+        "browser_update_not_verified",
+      message:
+        "The browser update could not be conclusively verified from Airlines Manager.",
+      hubId,
+      hubCode:
+        storedHubCode || null,
+      routeId,
+      livePrices:
+        live,
+      targetPrices:
+        target,
+      amPageLooksLocked:
+        locked
+    };
+  }
+
+  const now =
+    new Date().toISOString();
+
+  /*
+   * Permanent successful-update history.
+   *
+   * hub_id + route_id is the route identity.
+   */
+  const updateId =
+    await logUpdate({
+      scan_id:
+        scanId,
+
+      hub_id:
+        hubId,
+
+      hub_code:
+        storedHubCode || null,
+
+      route_id:
+        routeId,
+
+      route:
+        r.route,
+
+      eco_old:
+        old.eco,
+
+      eco_new:
+        target.eco,
+
+      bus_old:
+        old.bus,
+
+      bus_new:
+        target.bus,
+
+      first_old:
+        old.first,
+
+      first_new:
+        target.first,
+
+      cargo_old:
+        old.cargo,
+
+      cargo_new:
+        target.cargo,
+
+      status:
+        "success",
+
+      http_status:
+        200,
+
+      response_message:
+        "Verified after native Chrome/Tampermonkey form submission.",
+
+      attempted_at:
+        now,
+
+      updated_at:
+        now
+    });
+
+  return {
+    ok: true,
+    recorded: true,
+    hubId,
+    hubCode:
+      storedHubCode || null,
+    routeId,
+    updateId,
+    livePrices:
+      live,
+
+    priceLock: {
+      ...priceLock(now),
+      source:
+        "am_price_updates",
+      updateId
+    }
+  };
+}
+
+/* ============================================================
+   PLANNING DATA SCANNER
+
+   READS Airlines Manager planning data and UPSERTS:
+
+   public.am_planning_routes
+   public.am_aircraft_types
+
+   Airlines Manager access is READ ONLY.
+   No schedules, aircraft, routes or other AM data are changed.
+
+   Supabase behaviour is deliberately conservative:
+   - UPSERT only
+   - no deletions
+   - no pruning of old rows
+============================================================ */
+
+/** Type: PlanningHub — Normalised hub record for planning extraction. */
+type PlanningHub = {
+  planningId: number;
+  hubAirportId: number;
+  hubCode: string;
+  frozen: boolean;
+};
+
+
+/** Type: PlanningAircraftType — Normalised aircraft-type record for planning extraction. */
+type PlanningAircraftType = {
+  aircraft_type: string;
+  speed_kmh: number;
+  range_km: number;
+  aircraft_category: number;
+  updated_at: string;
+};
+
+/** Type: PlanningRouteDuration — Normalised aircraft/route duration record. */
+type PlanningRouteDuration = {
+  hub_id: number;
+  line_id: number;
+  aircraft_type: string;
+  duration_seconds: number;
+  updated_at: string;
+};
+
+/* ------------------------------------------------------------
+   Extract the hub code from the Planning HTML.
+
+   The button itself gives us:
+
+       id="airport_49"
+       data-hubId="16017461"
+
+   The visible button content contains the airport code.
+------------------------------------------------------------ */
+
+/**
+ * extractPlanningHubCode()
+ * Derives a hub airport code from planning-page data.
+ */
+function extractPlanningHubCode(
+  tag: string,
+  nearbyHtml: string
+) {
+
+  /*
+   * First try useful attributes on the button itself.
+   */
+
+  const candidates = [
+    tag.match(
+      /\bdata-airport-code=["']([A-Z0-9]{3})["']/i
+    )?.[1],
+
+    tag.match(
+      /\bdata-code=["']([A-Z0-9]{3})["']/i
+    )?.[1],
+
+    tag.match(
+      /\btitle=["'][^"']*\b([A-Z0-9]{3})\b[^"']*["']/i
+    )?.[1]
+  ]
+    .filter(Boolean)
+    .map(
+      value =>
+        String(value).toUpperCase()
+    );
+
+
+  if (candidates.length > 0) {
+    return candidates[0];
+  }
+
+
+  /*
+   * Then inspect a small amount of HTML around the button.
+   */
+
+  const text =
+    cleanText(
+      nearbyHtml
+    )
+      .toUpperCase();
+
+
+  const airportMatch =
+    text.match(
+      /\b([A-Z0-9]{3})\b/
+    );
+
+
+  return airportMatch
+    ? airportMatch[1]
+    : null;
+}
+
+
+/* ------------------------------------------------------------
+   Extract all Planning hub buttons.
+
+   Important distinction:
+
+       hubAirportId = airport ID, e.g. 49
+       planningId   = data-hubId, e.g. 16017461
+------------------------------------------------------------ */
+
+/**
+ * extractPlanningHubs()
+ * Discovers hubs represented in the planning dataset.
+ */
+function extractPlanningHubs(
+  html: string
+) {
+
+  const hubs:
+    PlanningHub[] = [];
+
+
+  const regex =
+    /<[^>]*class=["'][^"']*\bplanninghubBtn\b[^"']*["'][^>]*>/gi;
+
+
+  for (
+    const match of
+    html.matchAll(regex)
+  ) {
+
+    const tag =
+      match[0];
+
+
+    const planningIdMatch =
+      tag.match(
+        /\bdata-hubId=["'](\d+)["']/i
+      );
+
+
+    const airportIdMatch =
+      tag.match(
+        /\bid=["']airport_(\d+)["']/i
+      );
+
+
+    if (
+      !planningIdMatch ||
+      !airportIdMatch
+    ) {
+      continue;
+    }
+
+
+    const planningId =
+      Number(
+        planningIdMatch[1]
+      );
+
+
+    const hubAirportId =
+      Number(
+        airportIdMatch[1]
+      );
+
+
+    if (
+      !Number.isInteger(planningId) ||
+      planningId <= 0 ||
+      !Number.isInteger(hubAirportId) ||
+      hubAirportId <= 0
+    ) {
+      continue;
+    }
+
+
+    /*
+     * Capture some HTML after the opening tag so that the
+     * visible airport code can be inspected.
+     */
+
+    const start =
+      match.index ?? 0;
+
+
+    const nearbyHtml =
+      html.slice(
+        start,
+        Math.min(
+          html.length,
+          start + 1000
+        )
+      );
+
+
+    const hubCode =
+      extractPlanningHubCode(
+        tag,
+        nearbyHtml
+      );
+
+
+    if (!hubCode) {
+      throw new Error(
+        `Could not determine airport code for Planning hub airport ID ${hubAirportId}`
+      );
+    }
+
+
+    hubs.push({
+
+      planningId,
+
+      hubAirportId,
+
+      hubCode,
+
+      frozen:
+        /\bfrozenhub\b/i.test(
+          tag
+        )
+
+    });
+  }
+
+
+  /*
+   * Defensive duplicate detection.
+   */
+
+  const planningIds =
+    new Set<number>();
+
+  const airportIds =
+    new Set<number>();
+
+
+  for (
+    const hub of
+    hubs
+  ) {
+
+    if (
+      planningIds.has(
+        hub.planningId
+      )
+    ) {
+      throw new Error(
+        `Duplicate Planning ID ${hub.planningId}`
+      );
+    }
+
+
+    if (
+      airportIds.has(
+        hub.hubAirportId
+      )
+    ) {
+      throw new Error(
+        `Duplicate Planning airport ID ${hub.hubAirportId}`
+      );
+    }
+
+
+    planningIds.add(
+      hub.planningId
+    );
+
+    airportIds.add(
+      hub.hubAirportId
+    );
+  }
+
+
+  return hubs;
+}
+
+
+/* ------------------------------------------------------------
+   Authenticated Planning JSON fetch.
+
+   Uses the existing authenticated GET helper, so cookie and
+   retry behaviour remains consistent with the existing scanner.
+------------------------------------------------------------ */
+
+/**
+ * fetchPlanningDataset()
+ * Fetches authenticated planning data and checks the response before parsing.
+ */
+async function fetchPlanningDataset(
+  jar: CookieJar,
+  planningId: number
+) {
+
+  const url =
+    `${AM_BASE}/network/planning/load/${planningId}`;
+
+
+  /*
+   * Diagnostic fetch for the Planning JSON endpoint.
+   *
+   * Unlike fetchAmPage(), we deliberately inspect a 302 here
+   * rather than following it or treating it as a generic error.
+   */
+
+  const response =
+    await fetch(
+      url,
+      {
+        method: "GET",
+        redirect: "manual",
+
+        headers: {
+          ...normalHeaders(
+            jar,
+            `${AM_BASE}/network/planning`
+          ),
+
+          /*
+           * This endpoint is requested by AM's JavaScript as JSON,
+           * rather than as a normal document navigation.
+           */
+          "Accept":
+            "application/json, text/javascript, */*; q=0.01",
+
+          "X-Requested-With":
+            "XMLHttpRequest"
+        }
+      }
+    );
+
+
+  /*
+   * Preserve any cookies AM sends back.
+   */
+
+  jar.store(
+    response
+  );
+
+
+  if (
+    response.status === 302
+  ) {
+
+    const location =
+      response.headers.get(
+        "location"
+      );
+
+
+    throw new Error(
+      `Planning dataset ${planningId} returned HTTP 302` +
+      (
+        location
+          ? ` -> ${location}`
+          : " with no Location header"
+      )
+    );
+  }
+
+
+  if (
+    response.status !== 200
+  ) {
+
+    throw new Error(
+      `Planning dataset ${planningId} returned HTTP ${response.status}`
+    );
+  }
+
+
+  const text =
+    await response.text();
+
+
+  /*
+   * Protect against an authentication failure masquerading
+   * as a successful HTML response.
+   */
+
+  if (
+    /name=["']_username["']/i.test(
+      text
+    ) &&
+    /name=["']_password["']/i.test(
+      text
+    )
+  ) {
+
+    throw new Error(
+      `Planning dataset ${planningId} returned the AM login form`
+    );
+  }
+
+
+  let data: any;
+
+
+  try {
+
+    data =
+      JSON.parse(
+        text
+      );
+
+  } catch {
+
+    throw new Error(
+      `Planning dataset ${planningId} returned HTTP 200 but was not valid JSON`
+    );
+  }
+
+
+  if (
+    !data ||
+    typeof data !== "object"
+  ) {
+
+    throw new Error(
+      `Planning dataset ${planningId} returned an invalid JSON object`
+    );
+  }
+
+
+  if (
+    !Array.isArray(
+      data.lineDataArray
+    )
+  ) {
+
+    throw new Error(
+      `Planning dataset ${planningId} has no lineDataArray`
+    );
+  }
+
+
+  if (
+    !Array.isArray(
+      data.aircraftDataArray
+    )
+  ) {
+
+    throw new Error(
+      `Planning dataset ${planningId} has no aircraftDataArray`
+    );
+  }
+
+
+  return {
+
+    data,
+
+    httpStatus:
+      response.status,
+
+    attempts:
+      1
+
+  };
+}
+
+/* ------------------------------------------------------------
+   Convert AM route JSON into am_planning_routes rows.
+------------------------------------------------------------ */
+
+/**
+ * buildPlanningRouteRows()
+ * Transforms planning route data into rows suitable for Supabase storage.
+ */
+function buildPlanningRouteRows(
+  hub: PlanningHub,
+  data: any,
+  now: string
+) {
+
+  const rows: any[] =
+    [];
+
+
+  for (
+    const route of
+    data.lineDataArray
+  ) {
+
+    if (
+      !route ||
+      typeof route !== "object"
+    ) {
+      continue;
+    }
+
+
+    const lineId =
+      Number(
+        route.id
+      );
+
+
+    const distance =
+      Number(
+        route.distance
+      );
+
+
+    const category =
+      Number(
+        route.category
+      );
+
+
+    const airportOneId =
+      route.airportOneId === null ||
+      route.airportOneId === undefined
+        ? null
+        : Number(
+            route.airportOneId
+          );
+
+
+    const airportTwoId =
+      route.airportTwoId === null ||
+      route.airportTwoId === undefined
+        ? null
+        : Number(
+            route.airportTwoId
+          );
+
+
+    if (
+      !Number.isInteger(lineId) ||
+      lineId <= 0
+    ) {
+
+      throw new Error(
+        `${hub.hubCode}: Planning route has invalid line ID`
+      );
+    }
+
+
+    if (
+      !Number.isFinite(distance) ||
+      distance <= 0
+    ) {
+
+      throw new Error(
+        `${hub.hubCode}: line ${lineId} has invalid distance`
+      );
+    }
+
+
+    if (
+      !Number.isInteger(category) ||
+      category <= 0
+    ) {
+
+      throw new Error(
+        `${hub.hubCode}: line ${lineId} has invalid route category`
+      );
+    }
+
+
+    /*
+     * AM names Planning routes in the form:
+     *
+     *     BKK / ATL
+     */
+
+    const name =
+      String(
+        route.name || ""
+      )
+        .toUpperCase()
+        .trim();
+
+
+    const routeMatch =
+      name.match(
+        /\b([A-Z0-9]{3})\s*\/\s*([A-Z0-9]{3})\b/
+      );
+
+
+    if (!routeMatch) {
+
+      throw new Error(
+        `${hub.hubCode}: could not parse route name for line ${lineId}: ${name}`
+      );
+    }
+
+
+    const first =
+      routeMatch[1];
+
+    const second =
+      routeMatch[2];
+
+
+    let destinationCode:
+      string;
+
+
+    if (
+      first === hub.hubCode
+    ) {
+
+      destinationCode =
+        second;
+
+    } else if (
+      second === hub.hubCode
+    ) {
+
+      destinationCode =
+        first;
+
+    } else {
+
+      throw new Error(
+        `${hub.hubCode}: line ${lineId} (${name}) does not contain the expected hub`
+      );
+    }
+
+
+    rows.push({
+
+      hub_id:
+        hub.hubAirportId,
+
+      hub_code:
+        hub.hubCode,
+
+      line_id:
+        lineId,
+
+      destination_code:
+        destinationCode,
+
+      distance_km:
+        Math.round(
+          distance
+        ),
+
+      route_category:
+        category,
+
+      airport_one_id:
+        Number.isInteger(
+          airportOneId
+        )
+          ? airportOneId
+          : null,
+
+      airport_two_id:
+        Number.isInteger(
+          airportTwoId
+        )
+          ? airportTwoId
+          : null,
+
+      updated_at:
+        now
+
+    });
+  }
+
+
+  return rows;
+}
+
+
+/* ------------------------------------------------------------
+   Extract aircraft type specifications.
+
+   We intentionally collapse individual aircraft into one
+   authoritative specification per aircraftListName.
+------------------------------------------------------------ */
+
+/**
+ * buildPlanningAircraftTypes()
+ * Extracts and normalises aircraft-type records from planning data.
+ */
+function buildPlanningAircraftTypes(
+  data: any,
+  now: string
+) {
+
+  const types =
+    new Map<
+      string,
+      PlanningAircraftType
+    >();
+
+
+  for (
+    const aircraft of
+    data.aircraftDataArray
+  ) {
+
+    if (
+      !aircraft ||
+      typeof aircraft !== "object"
+    ) {
+      continue;
+    }
+
+
+    const aircraftType =
+      String(
+        aircraft.aircraftListName || ""
+      )
+        .trim();
+
+
+    if (!aircraftType) {
+      continue;
+    }
+
+
+    const speed =
+      Number(
+        aircraft.speed
+      );
+
+
+    const range =
+      Number(
+        aircraft.range
+      );
+
+
+    const category =
+      Number(
+        aircraft.category
+      );
+
+
+    if (
+      !Number.isFinite(speed) ||
+      speed <= 0 ||
+      !Number.isFinite(range) ||
+      range <= 0 ||
+      !Number.isInteger(category) ||
+      category <= 0
+    ) {
+
+      throw new Error(
+        `Invalid specification for aircraft type ${aircraftType}`
+      );
+    }
+
+
+    const candidate:
+      PlanningAircraftType = {
+
+        aircraft_type:
+          aircraftType,
+
+        speed_kmh:
+          Math.round(
+            speed
+          ),
+
+        range_km:
+          Math.round(
+            range
+          ),
+
+        aircraft_category:
+          category,
+
+        updated_at:
+          now
+
+      };
+
+
+    const existing =
+      types.get(
+        aircraftType
+      );
+
+
+    if (existing) {
+
+      if (
+        existing.speed_kmh !==
+          candidate.speed_kmh ||
+
+        existing.range_km !==
+          candidate.range_km ||
+
+        existing.aircraft_category !==
+          candidate.aircraft_category
+      ) {
+
+        throw new Error(
+          `Inconsistent AM specification for ${aircraftType}`
+        );
+      }
+
+
+      continue;
+    }
+
+
+    types.set(
+      aircraftType,
+      candidate
+    );
+  }
+
+
+  return Array.from(
+    types.values()
+  );
+}
+
+
+/**
+ * buildPlanningRouteDurations()
+ * Extracts route-duration records for aircraft/route planning combinations.
+ */
+function buildPlanningRouteDurations(
+  hub: PlanningHub,
+  data: any,
+  now: string
+) {
+
+  /*
+   * Many individual aircraft of the same type can report
+   * the same route duration.
+   *
+   * Reduce those observations to one authoritative record:
+   *
+   * hub + line + aircraft type
+   */
+
+  const durations =
+    new Map<
+      string,
+      PlanningRouteDuration
+    >();
+
+
+  const aircraftArray =
+    Array.isArray(
+      data.aircraftDataArray
+    )
+      ? data.aircraftDataArray
+      : [];
+
+
+  for (
+    const aircraft of
+    aircraftArray
+  ) {
+
+    if (
+      !aircraft ||
+      typeof aircraft !== "object"
+    ) {
+      continue;
+    }
+
+
+    const aircraftType =
+      String(
+        aircraft.aircraftListName ||
+        ""
+      ).trim();
+
+
+    if (!aircraftType) {
+      continue;
+    }
+
+
+    const lineList =
+      Array.isArray(
+        aircraft.lineList
+      )
+        ? aircraft.lineList
+        : [];
+
+
+    for (
+      const observation of
+      lineList
+    ) {
+
+      if (
+        !observation ||
+        typeof observation !== "object"
+      ) {
+        continue;
+      }
+
+
+      const lineId =
+        Number(
+          observation.id
+        );
+
+
+      const duration =
+        Number(
+          observation.duration
+        );
+
+
+      if (
+        !Number.isInteger(lineId) ||
+        lineId <= 0
+      ) {
+        continue;
+      }
+
+
+      if (
+        !Number.isInteger(duration) ||
+        duration <= 0
+      ) {
+        continue;
+      }
+
+
+      const key =
+        `${hub.hubAirportId}:${lineId}:${aircraftType}`;
+
+
+      const existing =
+        durations.get(
+          key
+        );
+
+
+      /*
+       * If two aircraft of the same type report different
+       * durations for the same route, stop rather than
+       * silently choosing one.
+       */
+
+      if (existing) {
+
+        if (
+          existing.duration_seconds !==
+          duration
+        ) {
+
+          throw new Error(
+            `${hub.hubCode}: conflicting AM durations for ` +
+            `line ${lineId}, ${aircraftType}: ` +
+            `${existing.duration_seconds} vs ${duration}`
+          );
+        }
+
+
+        continue;
+      }
+
+
+      durations.set(
+        key,
+        {
+          hub_id:
+            hub.hubAirportId,
+
+          line_id:
+            lineId,
+
+          aircraft_type:
+            aircraftType,
+
+          duration_seconds:
+            duration,
+
+          updated_at:
+            now
+        }
+      );
+    }
+  }
+
+
+  return Array.from(
+    durations.values()
+  );
+}
+
+
+/* ------------------------------------------------------------
+   UPSERT planning routes.
+------------------------------------------------------------ */
+
+/**
+ * upsertPlanningRoutes()
+ * Upserts parsed planning routes into the planning-route table.
+ */
+async function upsertPlanningRoutes(
+  rows: any[]
+) {
+
+  if (
+    rows.length === 0
+  ) {
+    return 0;
+  }
+
+
+  /*
+   * Keep batches comfortably below request-size limits.
+   */
+
+  const chunkSize =
+    500;
+
+
+  let saved =
+    0;
+
+
+  for (
+    let offset = 0;
+    offset < rows.length;
+    offset += chunkSize
+  ) {
+
+    const chunk =
+      rows.slice(
+        offset,
+        offset + chunkSize
+      );
+
+
+    const {
+      error
+    } =
+      await supabase
+        .from(
+          "am_planning_routes"
+        )
+        .upsert(
+          chunk,
+          {
+            onConflict:
+              "hub_id,line_id"
+          }
+        );
+
+
+    if (error) {
+
+      throw new Error(
+        `Could not save Planning routes: ${error.message}`
+      );
+    }
+
+
+    saved +=
+      chunk.length;
+  }
+
+
+  return saved;
+}
+
+
+/* ------------------------------------------------------------
+   UPSERT aircraft types.
+------------------------------------------------------------ */
+
+/**
+ * upsertPlanningAircraftTypes()
+ * Upserts aircraft-type metadata derived from planning data.
+ */
+async function upsertPlanningAircraftTypes(
+  rows:
+    PlanningAircraftType[]
+) {
+
+  if (
+    rows.length === 0
+  ) {
+    return 0;
+  }
+
+
+  const {
+    error
+  } =
+    await supabase
+      .from(
+        "am_aircraft_types"
+      )
+      .upsert(
+        rows,
+        {
+          onConflict:
+            "aircraft_type"
+        }
+      );
+
+
+  if (error) {
+
+    throw new Error(
+      `Could not save aircraft types: ${error.message}`
+    );
+  }
+
+
+  return rows.length;
+}
+
+/**
+ * upsertPlanningRouteDurations()
+ * Upserts route-duration data derived from planning data.
+ */
+async function upsertPlanningRouteDurations(
+  rows: PlanningRouteDuration[]
+) {
+
+  if (
+    rows.length === 0
+  ) {
+    return;
+  }
+
+
+  const chunkSize = 500;
+
+
+  for (
+    let offset = 0;
+    offset < rows.length;
+    offset += chunkSize
+  ) {
+
+    const chunk =
+      rows.slice(
+        offset,
+        offset + chunkSize
+      );
+
+
+    const {
+      error
+    } =
+      await supabase
+        .from(
+          "am_planning_route_durations"
+        )
+        .upsert(
+          chunk,
+          {
+            onConflict:
+              "hub_id,line_id,aircraft_type"
+          }
+        );
+
+
+    if (error) {
+
+      throw new Error(
+        `Could not upsert planning route durations: ${error.message}`
+      );
+    }
+  }
+}
+
+/* ------------------------------------------------------------
+   MAIN PLANNING SCAN
+------------------------------------------------------------ */
+
+/**
+ * scanPlanning()
+ * Orchestrates the planning-data collection and database update workflow.
+ */
+async function scanPlanning() {
+
+  const startedAt =
+    new Date().toISOString();
+
+
+  /*
+   * One authenticated AM session for the complete Planning scan.
+   */
+
+  const session =
+    await createAmSession();
+
+
+  const planningPage =
+    await fetchAmPage(
+      session.jar,
+      `${AM_BASE}/network/planning`,
+      AM_BASE
+    );
+
+
+  if (!planningPage.ok) {
+
+    throw new Error(
+      planningPage.error ||
+      `Planning page HTTP ${planningPage.status}`
+    );
+  }
+
+
+  const hubs =
+    extractPlanningHubs(
+      planningPage.html
+    );
+
+
+  if (
+    hubs.length === 0
+  ) {
+
+    throw new Error(
+      "No Planning hubs were discovered."
+    );
+  }
+
+
+  /*
+   * Build everything in memory first.
+   *
+   * We deliberately do not write anything to Supabase until
+   * every AM Planning dataset has passed validation.
+   */
+
+const allRouteRows:
+  any[] = [];
+
+
+const allDurationRows:
+  PlanningRouteDuration[] = [];
+
+
+const allAircraftTypes =
+  new Map<
+    string,
+    PlanningAircraftType
+  >();
+
+
+const hubResults:
+  any[] = [];
+
+  for (
+    let index = 0;
+    index < hubs.length;
+    index++
+  ) {
+
+    const hub =
+      hubs[index];
+
+
+    const fetched =
+      await fetchPlanningDataset(
+        session.jar,
+        hub.planningId
+      );
+
+
+    const data =
+      fetched.data;
+
+
+    const returnedHubAirportId =
+      Number(
+        data.hubAirportId
+      );
+
+
+    /*
+     * This is an important safety check.
+     *
+     * The airport ID encoded in the HTML button must agree
+     * with the JSON dataset returned for its planning ID.
+     */
+
+    if (
+      returnedHubAirportId !==
+        hub.hubAirportId
+    ) {
+
+      throw new Error(
+        `${hub.hubCode}: Planning dataset mismatch. ` +
+        `Expected hubAirportId ${hub.hubAirportId}, ` +
+        `received ${returnedHubAirportId}.`
+      );
+    }
+
+
+    const now =
+      new Date().toISOString();
+
+
+    const routeRows =
+      buildPlanningRouteRows(
+        hub,
+        data,
+        now
+      );
+
+
+    const aircraftTypes =
+      buildPlanningAircraftTypes(
+        data,
+        now
+      );
+
+    const durationRows =
+  buildPlanningRouteDurations(
+    hub,
+    data,
+    now
+  );
+
+
+    /*
+     * Validate aircraft specifications across hubs before
+     * anything is written to Supabase.
+     */
+
+    for (
+      const aircraftType of
+      aircraftTypes
+    ) {
+
+      const existing =
+        allAircraftTypes.get(
+          aircraftType.aircraft_type
+        );
+
+
+      if (existing) {
+
+        if (
+          existing.speed_kmh !==
+            aircraftType.speed_kmh ||
+
+          existing.range_km !==
+            aircraftType.range_km ||
+
+          existing.aircraft_category !==
+            aircraftType.aircraft_category
+        ) {
+
+          throw new Error(
+            `Aircraft specification mismatch across hubs for ` +
+            aircraftType.aircraft_type
+          );
+        }
+
+
+      } else {
+
+        allAircraftTypes.set(
+          aircraftType.aircraft_type,
+          aircraftType
+        );
+      }
+    }
+
+
+allRouteRows.push(
+  ...routeRows
+);
+
+
+allDurationRows.push(
+  ...durationRows
+);
+
+
+hubResults.push({
+      hubCode:
+        hub.hubCode,
+
+      hubAirportId:
+        hub.hubAirportId,
+
+      planningId:
+        hub.planningId,
+
+      frozen:
+        hub.frozen,
+
+      httpStatus:
+        fetched.httpStatus,
+
+      attempts:
+        fetched.attempts,
+
+      routes:
+        routeRows.length,
+
+      aircraft:
+        data.aircraftDataArray.length,
+
+aircraftTypes:
+  aircraftTypes.length,
+
+durationRecords:
+  durationRows.length
+
+});
+
+    if (
+      index <
+      hubs.length - 1
+    ) {
+
+      await sleep(
+        REQUEST_DELAY_MS
+      );
+    }
+  }
+
+
+  /*
+   * Detect duplicate route keys before UPSERT.
+   */
+
+  const routeKeys =
+    new Set<string>();
+
+
+  for (
+    const route of
+    allRouteRows
+  ) {
+
+    const key =
+      `${route.hub_id}:${route.line_id}`;
+
+
+    if (
+      routeKeys.has(
+        key
+      )
+    ) {
+
+      throw new Error(
+        `Duplicate Planning route key ${key}`
+      );
+    }
+
+
+    routeKeys.add(
+      key
+    );
+  }
+
+/*
+ * Detect duplicate duration keys before UPSERT.
+ */
+
+const durationKeys =
+  new Set<string>();
+
+
+for (
+  const row of
+  allDurationRows
+) {
+
+  const key =
+    `${row.hub_id}:${row.line_id}:${row.aircraft_type}`;
+
+
+  if (
+    durationKeys.has(
+      key
+    )
+  ) {
+
+    throw new Error(
+      `Duplicate Planning duration key ${key}`
+    );
+  }
+
+
+  durationKeys.add(
+    key
+  );
+}
+
+  /*
+   * All AM data has now passed validation.
+   *
+   * Supabase writes begin here.
+   */
+
+  const routesUpserted =
+    await upsertPlanningRoutes(
+      allRouteRows
+    );
+
+
+  const aircraftTypeRows =
+    Array.from(
+      allAircraftTypes.values()
+    );
+
+
+const aircraftTypesUpserted =
+  await upsertPlanningAircraftTypes(
+    aircraftTypeRows
+  );
+
+
+const routeDurationsUpserted =
+  await upsertPlanningRouteDurations(
+    allDurationRows
+  );
+
+
+const completedAt =    new Date().toISOString();
+
+
+  return {
+
+    ok: true,
+
+    action:
+      "scan-planning",
+
+    airlinesManagerReadOnly:
+      true,
+
+    databaseMode:
+      "upsert-only",
+
+    startedAt,
+
+    completedAt,
+
+    hubsFound:
+      hubs.length,
+
+    hubsScanned:
+      hubResults.length,
+
+routesUpserted,
+
+aircraftTypesUpserted,
+
+routeDurationsUpserted,
+
+hubs:
+  hubResults
+  
+  };
+}
+
+/* ============================================================
+   MAIN
+============================================================ */
+
+
+
+/**
+ * HTTP ENTRY POINT
+ * Routes incoming API actions to scanning, progress, optimiser, pricing
+ * diagnostics/update logging, and planning workflows. Returns JSON
+ * responses with CORS headers and reports exceptions as HTTP 500.
+ * Carefully restrict invocation because the Supabase client uses a
+ * service-role credential and the function authenticates to AM.
+ */
+Deno.serve(
+
+  async (
+
+    request
+
+  ) => {
+
+
+
+    /* ======================================================
+
+       CORS PREFLIGHT
+
+    ====================================================== */
+
+
+
+    if (
+
+      request.method === "OPTIONS"
+
+    ) {
+
+      return new Response(
+
+        "ok",
+
+        {
+
+          status: 200,
+
+          headers:
+
+            corsHeaders,
+
+        }
+
+      );
+
+    }
+
+
+
+
+
+    try {
+
+            const url =
+
+        new URL(
+
+          request.url
+
+        );
+
+
+
+
+
+      /*
+
+       * ACTIONS
+
+       *
+
+       * start
+
+       * latest
+
+       * batch
+
+       * status
+
+       * results
+
+       */
+
+
+
+      const action =
+
+        (
+
+          url.searchParams.get(
+
+            "action"
+
+          ) ||
+
+          "status"
+
+        )
+
+          .toLowerCase();
+
+
+
+/* ======================================================
+   PLANNING DATA SCAN
+
+   Airlines Manager: READ ONLY
+   Supabase: UPSERT ONLY
+====================================================== */
+
+if (
+  action ===
+    "scan-planning"
+) {
+
+  try {
+
+    const result =
+      await scanPlanning();
+
+
+    return jsonResponse(
+      result,
+      200
+    );
+
+
+  } catch (error) {
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
+
+
+    console.error(
+      "Planning scan failed:",
+      message
+    );
+
+
+    return jsonResponse(
+      {
+        ok: false,
+
+        action:
+          "scan-planning",
+
+        airlinesManagerReadOnly:
+          true,
+
+        databaseMode:
+          "upsert-only",
+
+        error:
+          message
+      },
+      500
+    );
+  }
+}
+      /* ======================================================
+
+         START
+
+      ====================================================== */
+
+
+
+      if (
+
+        action === "start"
+
+      ) {
+
+
+
+        const scan =
+
+          await createScan();
+
+
+
+        return jsonResponse({
+
+          ok: true,
+
+
+
+          action:
+
+            "start",
+
+
+
+          scan,
+
+
+
+          next: {
+
+            action:
+
+              "batch",
+
+
+
+            scanId:
+
+              scan.id,
+
+
+
+            mode:
+
+              null,
+
+
+
+            startPage:
+
+              null,
+
+
+
+            batchSize:
+
+              DEFAULT_BATCH_SIZE,
+
+          },
+
+        });
+
+      }
+
+
+
+
+
+/* ======================================================
+
+   LATEST COMPLETED SCAN
+
+====================================================== */
+
+
+
+if (
+
+  action === "latest"
+
+) {
+
+
+
+  const latestScan =
+
+    await getLatestCompletedScan();
+
+
+
+
+
+  if (!latestScan) {
+
+
+
+    return jsonResponse({
+
+
+
+      ok: true,
+
+
+
+      action:
+
+        "latest",
+
+
+
+      scan:
+
+        null,
+
+
+
+      hasCompletedScan:
+
+        false,
+
+    });
+
+  }
+
+
+
+
+
+  return jsonResponse({
+
+
+
+    ok: true,
+
+
+
+    action:
+
+      "latest",
+
+
+
+    hasCompletedScan:
+
+      true,
+
+
+
+    scan: {
+
+
+
+      id:
+
+        latestScan.id,
+
+
+
+      hubId:
+
+        latestScan.hub_id,
+
+
+
+      hubCode:
+
+        latestScan.hub_code,
+
+
+
+      hubsDiscovered:
+        latestScan.hubs_discovered || 1,
+
+      hubsComplete:
+        latestScan.hubs_complete || 0,
+
+      status:
+
+        latestScan.status,
+
+
+
+      startedAt:
+
+        latestScan.started_at ||
+
+        latestScan.created_at ||
+
+        null,
+
+
+
+      completedAt:
+
+        latestScan.completed_at,
+
+
+
+      auditRoutes:
+
+        latestScan.audit_routes,
+
+
+
+      pricingRoutes:
+
+        latestScan.pricing_routes,
+
+
+
+      auditPagesComplete:
+
+        latestScan.audit_pages_complete,
+
+
+
+      pricingPagesComplete:
+
+        latestScan.pricing_pages_complete,
+
+    },
+
+  });
+
+}
+
+      /*
+
+       * STATUS and BATCH need an existing scan.
+
+       */
+
+
+
+      const scanId =
+
+        url.searchParams.get(
+
+          "scanId"
+
+        );
+
+
+
+
+
+      if (!scanId) {
+
+        return jsonResponse(
+
+          {
+
+            ok: false,
+
+            error:
+
+              "scanId is required",
+
+          },
+
+          400
+
+        );
+
+      }
+
+
+
+
+
+      /*
+
+       * Also verifies that the supplied UUID actually
+
+       * belongs to a scan.
+
+       */
+
+      const scan =
+
+        await getScan(
+
+          scanId
+
+        );
+
+
+    /* ======================================================
+       PRICE STATUS
+    ====================================================== */
+
+    if (action === "price-status") {
+
+      const hubId =
+        Number(
+          url.searchParams.get("hubId")
+        );
+
+      const routeId =
+        Number(
+          url.searchParams.get("routeId")
+        );
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid hubId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid routeId is required"
+          },
+          400
+        );
+      }
+
+      const state =
+        await getPriceStatus(
+          scanId,
+          hubId,
+          routeId
+        );
+
+      return jsonResponse({
+        ok: true,
+        action: "price-status",
+        scanId,
+        hubId,
+        hubCode:
+          state.route?.hub_code || null,
+        routeId,
+        route:
+          state.route?.route || null,
+        amendable:
+          state.amendable,
+        affiliatedLocked:
+          state.affiliatedLocked,
+        priceLock:
+          state.priceLock
+      });
+    }
+
+
+    /* ======================================================
+       LIVE PRICE STATUS
+       READ ONLY
+    ====================================================== */
+
+    if (
+      action === "live-price-status"
+    ) {
+
+      const hubId =
+        Number(
+          url.searchParams.get("hubId")
+        );
+
+      const routeId =
+        Number(
+          url.searchParams.get("routeId")
+        );
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid hubId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid routeId is required"
+          },
+          400
+        );
+      }
+
+      const result =
+        await getLivePriceStatus(
+          scanId,
+          hubId,
+          routeId
+        );
+
+      return jsonResponse({
+        ok: true,
+        action:
+          "live-price-status",
+        scanId,
+        hubId,
+        hubCode:
+          result?.route?.hub_code ||
+          null,
+        routeId,
+        ...result
+      });
+    }
+
+
+    /* ========================================================
+       PRICING FORM STATUS
+       READ ONLY
+    ======================================================== */
+
+    if (
+      action ===
+      "pricing-form-status"
+    ) {
+
+      const hubId =
+        Number(
+          url.searchParams.get("hubId")
+        );
+
+      const routeId =
+        Number(
+          url.searchParams.get("routeId")
+        );
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid hubId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid routeId is required"
+          },
+          400
+        );
+      }
+
+      const result =
+        await getPricingFormStatus(
+          scanId,
+          hubId,
+          routeId
+        );
+
+      return jsonResponse(
+        {
+          action:
+            "pricing-form-status",
+          scanId,
+          hubId,
+          routeId,
+          ...result
+        },
+        result.ok ? 200 : 400
+      );
+    }
+
+
+    /* ========================================================
+       SESSION / CSRF DIAGNOSTIC
+       READ ONLY - NO PRICE POST
+    ======================================================== */
+
+    if (
+      action ===
+      "session-csrf-diagnostic"
+    ) {
+
+      const hubId =
+        Number(
+          url.searchParams.get("hubId")
+        );
+
+      const routeId =
+        Number(
+          url.searchParams.get("routeId")
+        );
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid hubId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid routeId is required"
+          },
+          400
+        );
+      }
+
+      const result =
+        await getSessionCsrfDiagnostic(
+          scanId,
+          hubId,
+          routeId
+        );
+
+      return jsonResponse(
+        {
+          action:
+            "session-csrf-diagnostic",
+          scanId,
+          hubId,
+          routeId,
+          ...result
+        },
+        result.ok ? 200 : 409
+      );
+    }
+
+
+    /* ========================================================
+       SESSION / COOKIE DIAGNOSTIC
+       READ ONLY - NO PRICE POST
+    ======================================================== */
+
+    if (
+      action ===
+      "session-diagnostic"
+    ) {
+
+      const hubId =
+        Number(
+          url.searchParams.get("hubId")
+        );
+
+      const routeId =
+        Number(
+          url.searchParams.get("routeId")
+        );
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid hubId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid routeId is required"
+          },
+          400
+        );
+      }
+
+      const result =
+        await getSessionDiagnostic(
+          scanId,
+          hubId,
+          routeId
+        );
+
+      return jsonResponse(
+        {
+          action:
+            "session-diagnostic",
+          scanId,
+          hubId,
+          routeId,
+          ...result
+        },
+        result.ok ? 200 : 400
+      );
+    }
+
+
+    /* ========================================================
+       RECORD VERIFIED BROWSER SUCCESS
+    ======================================================== */
+
+    if (
+      action ===
+      "record-browser-success"
+    ) {
+
+      if (
+        request.method !== "POST"
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "record-browser-success requires POST"
+          },
+          405
+        );
+      }
+
+      let body: any = {};
+
+      try {
+        body =
+          await request.json();
+      } catch {
+        body = {};
+      }
+
+      const hubId =
+        Number(
+          body.hubId ??
+          url.searchParams.get("hubId")
+        );
+
+      const routeId =
+        Number(
+          body.routeId ??
+          url.searchParams.get("routeId")
+        );
+
+      const suppliedHubCodeRaw =
+        body.hubCode ??
+        url.searchParams.get("hubCode");
+
+      const suppliedHubCode =
+        suppliedHubCodeRaw === null ||
+        suppliedHubCodeRaw === undefined ||
+        String(suppliedHubCodeRaw).trim() === ""
+          ? null
+          : String(suppliedHubCodeRaw)
+              .trim()
+              .toUpperCase();
+
+      if (
+        !Number.isInteger(hubId) ||
+        hubId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid hubId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        !Number.isInteger(routeId) ||
+        routeId <= 0
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "A valid routeId is required"
+          },
+          400
+        );
+      }
+
+      if (
+        suppliedHubCode !== null &&
+        !/^[A-Z0-9]{3}$/.test(
+          suppliedHubCode
+        )
+      ) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "hubCode must be a valid three-character hub code"
+          },
+          400
+        );
+      }
+
+      const result =
+        await recordBrowserSuccess(
+          scanId,
+          hubId,
+          routeId,
+          suppliedHubCode
+        );
+
+      return jsonResponse(
+        {
+          action:
+            "record-browser-success",
+          scanId,
+          hubId,
+          hubCode:
+            result.hubCode ||
+            suppliedHubCode ||
+            null,
+          routeId,
+          ...result
+        },
+        result.ok ? 200 : 409
+      );
+    }
+
+    
+      /* ======================================================
+
+      RESULTS
+
+    ====================================================== */
+
+
+
+    if (
+
+      action === "results"
+
+    ) {
+
+
+
+      const results =
+
+        await getOptimiserResults(
+
+          scanId
+
+        );
+
+
+
+
+
+      return jsonResponse({
+
+        ok: true,
+
+
+
+        action:
+
+          "results",
+
+
+
+        scanId,
+
+
+
+        ...results,
+
+      });
+
+    }
+
+
+
+      /* ======================================================
+
+         STATUS
+
+      ====================================================== */
+
+
+
+      if (
+        action === "status"
+      ) {
+        const counts =
+          await refreshScanCounts(scanId);
+
+        const nextWork =
+          await findNextWork(scanId);
+
+        return jsonResponse({
+          ok: true,
+          action: "status",
+          scanId,
+          status:
+            counts.complete
+              ? "complete"
+              : scan.status,
+          progress: {
+            audit: {
+              pagesComplete: counts.auditPages,
+              totalPages: counts.auditTotalPages,
+              routes: counts.auditRoutes,
+            },
+            pricing: {
+              pagesComplete: counts.pricingPages,
+              totalPages: counts.pricingTotalPages,
+              routes: counts.pricingRoutes,
+            },
+            hubs: {
+              complete: counts.hubsComplete,
+              total: counts.hubsDiscovered,
+              items: counts.hubs,
+            },
+          },
+          next:
+            nextWork
+              ? {
+                  hubId: Number(nextWork.hub.hub_id),
+                  hubCode: nextWork.hub.hub_code,
+                  mode: nextWork.mode,
+                  page: nextWork.page,
+                }
+              : null,
+          lastError: scan.last_error,
+          complete: counts.complete,
+        });
+      }
+
+
+      /* ======================================================
+         BATCH
+      ====================================================== */
+
+      if (
+        action === "batch"
+      ) {
+        let mode =
+          (
+            url.searchParams.get("mode") ||
+            ""
+          ).toLowerCase();
+
+        let requestedMode:
+          | "audit"
+          | "pricing"
+          | null = null;
+
+        if (mode) {
+          if (
+            mode !== "audit" &&
+            mode !== "pricing"
+          ) {
+            return jsonResponse(
+              {
+                ok: false,
+                error:
+                  "mode must be audit or pricing",
+              },
+              400
+            );
+          }
+
+          requestedMode =
+            mode as "audit" | "pricing";
+        }
+
+        const startPageRaw =
+          url.searchParams.get("startPage");
+
+        let requestedStartPage:
+          number | null = null;
+
+        if (
+          startPageRaw !== null &&
+          startPageRaw !== ""
+        ) {
+          const parsed =
+            Number.parseInt(
+              startPageRaw,
+              10
+            );
+
+          if (!Number.isFinite(parsed)) {
+            return jsonResponse(
+              {
+                ok: false,
+                error:
+                  "startPage must be an integer",
+              },
+              400
+            );
+          }
+
+          requestedStartPage = parsed;
+        }
+
+        const batchSizeRaw =
+          Number.parseInt(
+            url.searchParams.get("batchSize") ||
+            String(DEFAULT_BATCH_SIZE),
+            10
+          );
+
+        const batchSize =
+          Math.min(
+            Math.max(
+              Number.isFinite(batchSizeRaw)
+                ? batchSizeRaw
+                : DEFAULT_BATCH_SIZE,
+              1
+            ),
+            MAX_BATCH_SIZE
+          );
+
+        /*
+         * Hub selection is deliberately server-side.
+         * Existing frontends can continue sending mode/startPage;
+         * the scanner always resumes the first incomplete hub/page.
+         */
+        const result =
+          await scanBatch(
+            scanId,
+            requestedMode,
+            requestedStartPage,
+            batchSize
+          );
+
+        const counts =
+          await refreshScanCounts(scanId);
+
+        const nextWork =
+          await findNextWork(scanId);
+
+        const failedPage =
+          result.pages.find(
+            (page: any) => !page.ok
+          ) || null;
+
+        return jsonResponse({
+          ok: !failedPage,
+          action: "batch",
+          scanId,
+          batch: result,
+          progress: {
+            audit: {
+              pagesComplete: counts.auditPages,
+              totalPages: counts.auditTotalPages,
+              routes: counts.auditRoutes,
+            },
+            pricing: {
+              pagesComplete: counts.pricingPages,
+              totalPages: counts.pricingTotalPages,
+              routes: counts.pricingRoutes,
+            },
+            hubs: {
+              complete: counts.hubsComplete,
+              total: counts.hubsDiscovered,
+              items: counts.hubs,
+            },
+          },
+          complete: counts.complete,
+          failedPage,
+          next:
+            counts.complete || !nextWork
+              ? null
+              : {
+                  action: "batch",
+                  hubId: Number(nextWork.hub.hub_id),
+                  hubCode: nextWork.hub.hub_code,
+                  mode: nextWork.mode,
+                  startPage: nextWork.page,
+                  batchSize,
+                },
+        });
+      }
+
+
+      /* ======================================================
+
+         UNKNOWN ACTION
+
+      ====================================================== */
+
+
+
+      return jsonResponse(
+
+        {
+
+          ok: false,
+
+          error:
+
+            "Unknown action",
+
+        },
+
+        400
+
+      );
+
+
+
+    } catch (
+
+      error
+
+    ) {
+
+
+
+      console.error(
+
+        error
+
+      );
+
+
+
+
+
+      return jsonResponse(
+
+        {
+
+          ok: false,
+
+
+
+          error:
+
+            error instanceof Error
+
+              ? error.message
+
+              : String(error),
+
+        },
+
+        500
+
+      );
+
+    }
+
+  }
+
+);
