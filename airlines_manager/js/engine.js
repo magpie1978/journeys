@@ -1,7 +1,7 @@
 
 /**
  * Airlines Manager Rotation Optimiser
- * engine.js v0.6
+ * engine.js v0.7
  *
  * Scenario A: Rebuild BOM schedules from total demand.
  *
@@ -266,10 +266,8 @@ export function prepare(routes, pricing, aircraft) {
   const preparedAircraft = [];
 
   for (const record of aircraft) {
-    // Exclude coin-restricted aircraft before building the usable fleet.
-    if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(record.aircraft_id ?? "").trim())) {
-      continue;
-    }
+    // Coin-unlock aircraft are not eligible for optimisation.
+    if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(record.aircraft_id ?? "").trim())) continue;
     const item = {
       id: String(record.aircraft_id ?? "").trim(),
       model: String(record.model ?? "").trim(),
@@ -389,10 +387,8 @@ export function getSupportedAircraft(data) {
   const byModel = new Map();
 
   for (const record of data.aircraft) {
-    // Defence in depth for callers that bypass prepare().
-    if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(record.id ?? record.aircraft_id ?? "").trim())) {
-      continue;
-    }
+    // Protect callers that bypass prepare().
+    if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(record.id ?? record.aircraft_id ?? "").trim())) continue;
     if (!record.model) {
       continue;
     }
@@ -491,11 +487,7 @@ export function validateData(data) {
 // ============================================================
 
 export function isEligible(aircraft, route) {
-  // Last-line protection even if a caller supplies an unfiltered fleet.
-  if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(aircraft.id ?? aircraft.aircraft_id ?? "").trim())) {
-    return false;
-  }
-
+  if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(aircraft.id ?? aircraft.aircraft_id ?? "").trim())) return false;
   return (
     route.category !== null &&
     aircraft.category !== null &&
@@ -1352,168 +1344,6 @@ export function optimise(
   }));
 
   diagnostics.improvement = improvement;
-```
-
-Then find the `return` statement at the end of `optimise()`.
-
-Change its beginning from:
-
-```javascript
-return {
-  rotations,
-  total,
-```
-
-to:
-
-```javascript
-return {
-  rotations,
-  total,
-  improvement,
-```
-
-And update the `method` field to:
-
-```javascript
-method: "greedy-knapsack-with-pairwise-improvement",
-```
-
-## 3. Display the improvement in `app.js`
-
-In `js/app.js`, find the completion status message inside the `type === "result"` handler.
-
-Replace its `setStatus(...)` call with:
-
-<CodeBlock language="javascript" editable>
-const improvement = optimisationResult.improvement;
-
-const improvementText = improvement
-  ? (
-      ` · Baseline $${formatBillions(
-        improvement.baselineTotal
-      )}bn/week` +
-      ` · Improvement +$${formatMoney(
-        improvement.gain
-      )}/week` +
-      ` · ${improvement.improvements} accepted changes` +
-      ` · ${improvement.pairsTested} pairs tested`
-    )
-  : "";
-
-setStatus(
-  `Completed ${completed} groups` +
-  ` · ${fleetText}` +
-  ` · Final $${formatBillions(
-    optimisationResult.total
-  )}bn/week` +
-  improvementText +
-  ` · NOT game validated`
-);
-
-  // ==========================================================
-  // v0.7 — NETWORK IMPROVEMENT
-  // ==========================================================
-
-  const improvement = improveRotations(
-    rotations,
-    remaining,
-    aircraftList,
-    fleetCandidates,
-    stop,
-    3
-  );
-
-  total = improvement.improvedTotal;
-
-  // Recalculate fleet totals after accepted replacements.
-  for (const summary of Object.values(fleetSummary)) {
-    summary.groups = 0;
-    summary.aircraftCount = 0;
-    summary.weeklyRevenue = 0;
-    summary.services = 0;
-    summary.scheduledHours = 0;
-  }
-
-  for (const rotation of rotations) {
-    const summary = fleetSummary[rotation.model];
-
-    summary.groups++;
-    summary.aircraftCount += AIRCRAFT_PER_GROUP;
-    summary.weeklyRevenue += rotation.revenue;
-    summary.services += rotation.legs.length;
-    summary.scheduledHours += rotation.hours;
-  }
-
-  // Refresh diagnostics for the final accepted schedule.
-  diagnostics.groups = rotations.map(rotation => ({
-    id: rotation.id,
-    model: rotation.model,
-    services: rotation.legs.length,
-    hours: rotation.hours,
-    unusedHours: ROTATION_HOURS - rotation.hours,
-    weeklyRevenue: rotation.revenue
-  }));
-
-  diagnostics.improvement = improvement;
-```
-
-Then find the `return` statement at the end of `optimise()`.
-
-Change its beginning from:
-
-```javascript
-return {
-  rotations,
-  total,
-```
-
-to:
-
-```javascript
-return {
-  rotations,
-  total,
-  improvement,
-```
-
-And update the `method` field to:
-
-```javascript
-method: "greedy-knapsack-with-pairwise-improvement",
-```
-
-## 3. Display the improvement in `app.js`
-
-In `js/app.js`, find the completion status message inside the `type === "result"` handler.
-
-Replace its `setStatus(...)` call with:
-
-<CodeBlock language="javascript" editable>
-const improvement = optimisationResult.improvement;
-
-const improvementText = improvement
-  ? (
-      ` · Baseline $${formatBillions(
-        improvement.baselineTotal
-      )}bn/week` +
-      ` · Improvement +$${formatMoney(
-        improvement.gain
-      )}/week` +
-      ` · ${improvement.improvements} accepted changes` +
-      ` · ${improvement.pairsTested} pairs tested`
-    )
-  : "";
-
-setStatus(
-  `Completed ${completed} groups` +
-  ` · ${fleetText}` +
-  ` · Final $${formatBillions(
-    optimisationResult.total
-  )}bn/week` +
-  improvementText +
-  ` · NOT game validated`
-);
 
   let startingEconomy = 0;
   let startingCargo = 0;
@@ -1533,6 +1363,7 @@ setStatus(
   return {
     rotations,
     total,
+    improvement,
     remaining,
     validation,
     diagnostics,
@@ -1552,7 +1383,7 @@ setStatus(
     scenario: SCENARIO,
     demandSource: "TOTAL_CURRENT_DEMAND",
     method:
-      "automatic-economy-first-fleet-greedy-knapsack",
+      "greedy-knapsack-with-pairwise-improvement",
     preflight: "NOT_RUN"
   };
 }
