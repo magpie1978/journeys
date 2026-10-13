@@ -1,22 +1,77 @@
 
 /**
- * BOM Rotation Optimiser — engine.js v0.7
+ * Airlines Manager Rotation Optimiser
+ * engine.js v0.6
  *
- * Objective: maximum weekly gross revenue.
- * No aircraft acquisition budget.
- * Seven aircraft per group.
- * Maximum rotation: 168 hours.
+ * Scenario A: Rebuild BOM schedules from total demand.
  *
- * Greedy baseline + conservative pairwise improvement.
+ * A380-800: fixed 852E + 4C
+ * A350-900ULR: fixed 430E + 1C
+ *
+ * Other passenger aircraft:
+ * - Maximise Economy seats
+ * - Allocate remaining payload to whole Cargo units
+ *
+ * Dedicated freighters:
+ * - Zero Economy seats
+ * - Cargo capacity based on whole tonnes of payload
+ *
+ * One model and configuration per seven-aircraft group.
+ * Maximum base rotation: 168 hours.
+ *
+ * Selection: highest weekly gross revenue per group.
+ * This is a greedy fleet optimiser, not a global optimum.
  */
 
 export const EXCLUDED = new Set([
   "BKK", "CGK", "DEL", "MPM"
 ]);
 
+/**
+ * Coin-restricted aircraft IDs (27 models), verified against the game's
+ * aircraft.csv catalogue. These are never eligible for optimisation.
+ * IDs are strings because prepare() normalises aircraft_id to String.
+ * Fail closed: do not rely on model-name fuzzy matching.
+ */
+export const COIN_RESTRICTED_AIRCRAFT_IDS = new Set([
+  "116", // 747-300
+  "115", // Cargo 747-200F
+  "114", // 747-200B
+  "64", // Concorde
+  "62", // MD-11
+  "113", // 747-100B
+  "151", // 747SP
+  "198", // DC-10-30
+  "178", // L-1011-200
+  "158", // L-1011-500
+  "201", // L-1011-100
+  "109", // 707-320C
+  "121", // Cargo DC8-73AF
+  "120", // DC8-73
+  "207", // VC10
+  "203", // Il-86
+  "122", // Cargo DC8-55CF
+  "123", // DC8-55
+  "202", // 727-200
+  "61", // B727-100
+  "63", // Caravelle 12
+  "157", // L-100
+  "98", // F-100
+  "209", // DH Comet 4
+  "179", // L-1049G
+  "206", // L-188C
+  "77", // DC-3
+]);
+
 export const FIXED_AIRCRAFT = Object.freeze({
-  "A380-800": { eco: 852, cargo: 4 },
-  "A350-900ULR": { eco: 430, cargo: 1 }
+  "A380-800": Object.freeze({
+    eco: 852,
+    cargo: 4
+  }),
+  "A350-900ULR": Object.freeze({
+    eco: 430,
+    cargo: 1
+  })
 });
 
 export const SCENARIO = "REBUILD_FROM_SCRATCH";
@@ -28,64 +83,79 @@ const QUARTERS = ROTATION_HOURS * 4;
 const EPSILON = 1e-7;
 
 // ============================================================
-// CSV
+// CSV PARSING
 // ============================================================
 
 export function csv(text) {
-  text = String(text).replace(/^\uFEFF/, "");
-
   const rows = [];
-  let current = [];
-  let value = "";
+  let row = [];
+  let cell = "";
   let quoted = false;
 
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
+  text = String(text).replace(/^\uFEFF/, "");
 
-    if (c === '"') {
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    if (char === '"') {
       if (quoted && text[i + 1] === '"') {
-        value += '"';
+        cell += '"';
         i++;
       } else {
         quoted = !quoted;
       }
-    } else if (c === "," && !quoted) {
-      current.push(value);
-      value = "";
-    } else if ((c === "\n" || c === "\r") && !quoted) {
-      if (c === "\r" && text[i + 1] === "\n") i++;
-      current.push(value);
+    } else if (char === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if (
+      (char === "\n" || char === "\r") &&
+      !quoted
+    ) {
+      if (char === "\r" && text[i + 1] === "\n") {
+        i++;
+      }
 
-      if (current.some(x => x !== "")) rows.push(current);
+      row.push(cell);
 
-      current = [];
-      value = "";
+      if (row.some(value => value !== "")) {
+        rows.push(row);
+      }
+
+      row = [];
+      cell = "";
     } else {
-      value += c;
+      cell += char;
     }
   }
 
-  if (value !== "" || current.length) {
-    current.push(value);
-    rows.push(current);
+  if (cell !== "" || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
   }
 
-  if (!rows.length) return [];
+  if (rows.length === 0) {
+    return [];
+  }
 
   const [headers, ...records] = rows;
 
-  return records.map(values =>
-    Object.fromEntries(
-      headers.map((header, i) => [
-        header.trim(),
-        values[i] ?? ""
-      ])
-    )
-  );
+  return records.map(values => {
+    const record = {};
+
+    headers.forEach((header, index) => {
+      record[header.trim()] = values[index] ?? "";
+    });
+
+    return record;
+  });
 }
 
 function numeric(value, fallback = 0) {
-  if (value == null || String(value).trim() === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    String(value).trim() === ""
+  ) {
     return fallback;
   }
 
@@ -96,89 +166,118 @@ function numeric(value, fallback = 0) {
   return Number.isFinite(result) ? result : fallback;
 }
 
+function category(value) {
+  const result = numeric(value, NaN);
+
+  return Number.isInteger(result) &&
+    result >= 1 &&
+    result <= 10
+      ? result
+      : null;
+}
+
 function validNumber(value) {
   return Number.isFinite(numeric(value, NaN));
 }
 
-function category(value) {
-  const n = numeric(value, NaN);
-  return Number.isInteger(n) && n >= 1 && n <= 10
-    ? n
-    : null;
-}
-
 // ============================================================
-// PREPARE DATA
+// DATA PREPARATION
 // ============================================================
 
 export function prepare(routes, pricing, aircraft) {
   const pricingByRoute = new Map();
 
-  for (const p of pricing) {
-    if (String(p.status ?? "").trim().toLowerCase() !== "ok") {
+  for (const record of pricing) {
+    if (
+      String(record.status ?? "")
+        .trim()
+        .toLowerCase() !== "ok"
+    ) {
       continue;
     }
 
-    const id = String(p.route_id ?? "").trim();
+    const id = String(record.route_id ?? "").trim();
 
-    if (id) pricingByRoute.set(id, p);
+    if (id) {
+      pricingByRoute.set(id, record);
+    }
   }
 
   const preparedRoutes = [];
 
-  for (const r of routes) {
+  for (const record of routes) {
     const ownership = String(
-      r.ownership_status ?? ""
+      record.ownership_status ?? ""
     ).trim().toLowerCase();
 
     const code = String(
-      r.airport_code ?? ""
+      record.airport_code ?? ""
     ).trim().toUpperCase();
 
-    if (ownership !== "owned" || EXCLUDED.has(code)) {
+    if (
+      ownership !== "owned" ||
+      EXCLUDED.has(code)
+    ) {
       continue;
     }
 
-    const id = String(r.route_id ?? "").trim();
-    const p = pricingByRoute.get(id);
+    const id = String(record.route_id ?? "").trim();
+    const price = pricingByRoute.get(id);
 
     const pricingValid =
-      !!p &&
-      validNumber(p.current_demand_economy) &&
-      validNumber(p.current_demand_cargo);
+      price !== undefined &&
+      validNumber(price.current_demand_economy) &&
+      validNumber(price.current_demand_cargo);
 
     preparedRoutes.push({
       id,
       code,
-      distance: numeric(r.distance_km),
-      category: category(r.category),
+      distance: numeric(record.distance_km),
+      category: category(record.category),
+
       ecoDemand: pricingValid
-        ? Math.max(0, numeric(p.current_demand_economy))
+        ? Math.max(
+            0,
+            numeric(price.current_demand_economy)
+          )
         : 0,
+
       cargoDemand: pricingValid
-        ? Math.max(0, numeric(p.current_demand_cargo))
+        ? Math.max(
+            0,
+            numeric(price.current_demand_cargo)
+          )
         : 0,
+
       ecoFare: Math.max(
-        0, numeric(p?.current_price_economy)
+        0,
+        numeric(price?.current_price_economy)
       ),
+
       cargoFare: Math.max(
-        0, numeric(p?.current_price_cargo)
+        0,
+        numeric(price?.current_price_cargo)
       ),
+
       pricingValid
     });
   }
 
   const preparedAircraft = [];
 
-  for (const a of aircraft) {
+  for (const record of aircraft) {
+    // Exclude coin-restricted aircraft before building the usable fleet.
+    if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(record.aircraft_id ?? "").trim())) {
+      continue;
+    }
     const item = {
-      id: String(a.aircraft_id ?? "").trim(),
-      model: String(a.model ?? "").trim(),
-      category: category(a.category),
-      range: numeric(a.range_km),
-      speed: numeric(a.speed_kmh),
-      seats: Math.floor(numeric(a.max_seats)),
-      payload: numeric(a.payload_tonnes)
+      id: String(record.aircraft_id ?? "").trim(),
+      model: String(record.model ?? "").trim(),
+      category: category(record.category),
+      range: numeric(record.range_km),
+      speed: numeric(record.speed_kmh),
+      seats: Math.floor(numeric(record.max_seats)),
+      payload: numeric(record.payload_tonnes)
     };
 
     if (
@@ -203,40 +302,57 @@ export function prepare(routes, pricing, aircraft) {
 }
 
 // ============================================================
-// AIRCRAFT CONFIGURATIONS
+// AIRCRAFT CONFIGURATION
 // ============================================================
 
-export function configureAircraft(a) {
-  const fixed = FIXED_AIRCRAFT[a.model];
+/**
+ * Exported so app.js can display the exact
+ * same fleet configurations as the engine.
+ *
+ * Automatic Economy-first:
+ *
+ * Economy = minimum of maximum seats and
+ *           seats supported by payload.
+ *
+ * Cargo = whole tonnes left after Economy.
+ *
+ * Fixed exceptions always take precedence.
+ *
+ * Freighters with zero passenger seats use
+ * their payload for whole Cargo units.
+ */
+
+export function configureAircraft(aircraft) {
+  const fixed = FIXED_AIRCRAFT[aircraft.model];
 
   let eco;
   let cargo;
-  let configurationMode;
 
   if (fixed) {
     eco = fixed.eco;
     cargo = fixed.cargo;
-    configurationMode = "FIXED";
-  } else if (a.seats === 0) {
+  } else if (aircraft.seats === 0) {
+    // Dedicated freighters carry cargo only.
     eco = 0;
-    cargo = Math.floor(a.payload + EPSILON);
-    configurationMode = "AUTO_CARGO_ONLY";
+    cargo = Math.floor(aircraft.payload + EPSILON);
   } else {
     eco = Math.min(
-      a.seats,
+      Math.floor(aircraft.seats),
       Math.floor(
-        (a.payload + EPSILON) / ECONOMY_PAYLOAD_TONNES
+        (
+          aircraft.payload + EPSILON
+        ) / ECONOMY_PAYLOAD_TONNES
       )
     );
 
     cargo = Math.max(
       0,
       Math.floor(
-        a.payload - eco * ECONOMY_PAYLOAD_TONNES + EPSILON
+        aircraft.payload -
+        eco * ECONOMY_PAYLOAD_TONNES +
+        EPSILON
       )
     );
-
-    configurationMode = "AUTO_ECONOMY_FIRST";
   }
 
   const requiredPayload =
@@ -244,54 +360,84 @@ export function configureAircraft(a) {
 
   if (
     eco < 0 ||
-    eco > a.seats ||
-    (a.seats > 0 && eco === 0) ||
+    eco > aircraft.seats ||
+    (aircraft.seats > 0 && eco === 0) ||
     (eco === 0 && cargo === 0) ||
     cargo < 0 ||
-    requiredPayload > a.payload + EPSILON
+    requiredPayload > aircraft.payload + EPSILON
   ) {
     throw new Error(
-      `Invalid aircraft configuration: ${a.model}`
+      `Invalid configuration for ${aircraft.model}: ` +
+      `${eco}E + ${cargo}C.`
     );
   }
 
   return {
-    ...a,
+    ...aircraft,
     eco,
     cargo,
     requiredPayload,
-    configurationMode
+    configurationMode: fixed
+      ? "FIXED"
+      : aircraft.seats === 0
+        ? "AUTO_CARGO_ONLY"
+        : "AUTO_ECONOMY_FIRST"
   };
 }
 
 export function getSupportedAircraft(data) {
-  const models = new Map();
+  const byModel = new Map();
 
-  for (const a of data.aircraft) {
-    if (models.has(a.model)) {
-      const old = models.get(a.model);
-
-      for (const field of [
-        "category", "range", "speed", "seats", "payload"
-      ]) {
-        if (old[field] !== a[field]) {
-          throw new Error(
-            `Conflicting aircraft specifications: ${a.model}`
-          );
-        }
-      }
-    } else {
-      models.set(a.model, a);
+  for (const record of data.aircraft) {
+    // Defence in depth for callers that bypass prepare().
+    if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(record.id ?? record.aircraft_id ?? "").trim())) {
+      continue;
     }
+    if (!record.model) {
+      continue;
+    }
+
+    // A model must have one unambiguous set of specs.
+    if (byModel.has(record.model)) {
+      const previous = byModel.get(record.model);
+
+      const fields = [
+        "category",
+        "range",
+        "speed",
+        "seats",
+        "payload"
+      ];
+
+      if (
+        fields.some(
+          field => previous[field] !== record[field]
+        )
+      ) {
+        throw new Error(
+          `Conflicting catalogue specifications for ` +
+          `${record.model}.`
+        );
+      }
+
+      continue;
+    }
+
+    byModel.set(record.model, record);
   }
 
   for (const model of Object.keys(FIXED_AIRCRAFT)) {
-    if (!models.has(model)) {
-      throw new Error(`Missing fixed aircraft: ${model}`);
+    if (!byModel.has(model)) {
+      throw new Error(
+        `Required fixed aircraft ${model} is missing ` +
+        "from the usable catalogue."
+      );
     }
   }
 
-  return [...models.values()].map(configureAircraft);
+  return Array.from(byModel.values()).map(
+    configureAircraft
+  );
 }
 
 // ============================================================
@@ -299,34 +445,35 @@ export function getSupportedAircraft(data) {
 // ============================================================
 
 export function validateData(data) {
-  if (!data?.routes?.length) {
-    throw new Error("No eligible owned routes.");
+  if (!Array.isArray(data?.routes) ||
+      data.routes.length === 0) {
+    throw new Error("No eligible owned routes loaded.");
   }
 
-  if (!data?.aircraft?.length) {
-    throw new Error("No usable aircraft.");
+  if (!Array.isArray(data?.aircraft) ||
+      data.aircraft.length === 0) {
+    throw new Error("No usable aircraft loaded.");
   }
 
-  if (data.routes.some(r => r.category === null)) {
-    throw new Error("Invalid route airport category.");
+  const invalidCategories = data.routes.filter(
+    route => route.category === null
+  );
+
+  if (invalidCategories.length > 0) {
+    throw new Error(
+      `${invalidCategories.length} routes have ` +
+      "invalid airport categories."
+    );
   }
 
-  const missingTotalDemand =
-    data.routes.filter(r => !r.pricingValid).length;
+  const missingTotalDemand = data.routes.filter(
+    route => !route.pricingValid
+  ).length;
 
   if (missingTotalDemand === data.routes.length) {
-    throw new Error("No valid pricing/demand records.");
-  }
-
-  const routeIds = new Set();
-
-  for (const route of data.routes) {
-    if (!route.id || routeIds.has(route.id)) {
-      throw new Error(
-        `Missing or duplicate route ID: ${route.id}`
-      );
-    }
-    routeIds.add(route.id);
+    throw new Error(
+      "No valid total-demand records in pricing.csv."
+    );
   }
 
   return {
@@ -340,17 +487,22 @@ export function validateData(data) {
 }
 
 // ============================================================
-// ROUTE ELIGIBILITY AND REVENUE
+// ELIGIBILITY, DURATION, REVENUE
 // ============================================================
 
-export function isEligible(a, r) {
+export function isEligible(aircraft, route) {
+  // Last-line protection even if a caller supplies an unfiltered fleet.
+  if (COIN_RESTRICTED_AIRCRAFT_IDS.has(String(aircraft.id ?? aircraft.aircraft_id ?? "").trim())) {
+    return false;
+  }
+
   return (
-    r.category !== null &&
-    a.category !== null &&
-    r.category >= a.category &&
-    r.distance > 0 &&
-    r.distance <= a.range &&
-    a.speed > 0
+    route.category !== null &&
+    aircraft.category !== null &&
+    route.category >= aircraft.category &&
+    route.distance > 0 &&
+    route.distance <= aircraft.range &&
+    aircraft.speed > 0
   );
 }
 
@@ -364,12 +516,16 @@ export function duration(distance, speed) {
   ) / 4;
 }
 
-export function calculateLegRevenue(r, eco, cargo) {
+export function calculateLegRevenue(
+  route,
+  eco,
+  cargo
+) {
   const economyRevenue =
-    AIRCRAFT_PER_GROUP * 2 * eco * r.ecoFare;
+    AIRCRAFT_PER_GROUP * 2 * eco * route.ecoFare;
 
   const cargoRevenue =
-    AIRCRAFT_PER_GROUP * 2 * cargo * r.cargoFare;
+    AIRCRAFT_PER_GROUP * 2 * cargo * route.cargoFare;
 
   return {
     economyRevenue,
@@ -379,40 +535,64 @@ export function calculateLegRevenue(r, eco, cargo) {
 }
 
 export function hasDemand(
-  remaining, routeId, eco, cargo, services = 1
+  remaining,
+  routeId,
+  eco,
+  cargo,
+  services = 1
 ) {
-  const d = remaining.get(routeId);
+  const available = remaining.get(routeId);
 
-  return !!d &&
-    d.eco + EPSILON >= services * 2 * eco &&
-    d.cargo + EPSILON >= services * 2 * cargo;
+  return !!available &&
+    available.eco + EPSILON >= services * 2 * eco &&
+    available.cargo + EPSILON >= services * 2 * cargo;
 }
 
-function maximumServices(d, a, quarters) {
-  if (!d || quarters <= 0 || quarters > QUARTERS) {
+function maximumServices(
+  available,
+  aircraft,
+  quarters
+) {
+  if (
+    !available ||
+    quarters <= 0 ||
+    quarters > QUARTERS
+  ) {
     return 0;
   }
 
-  const ecoLimit = a.eco > 0
-    ? Math.floor((d.eco + EPSILON) / (2 * a.eco))
+  const economyLimit = aircraft.eco > 0
+    ? Math.floor(
+        (available.eco + EPSILON) /
+        (2 * aircraft.eco)
+      )
     : Infinity;
 
-  const cargoLimit = a.cargo > 0
-    ? Math.floor((d.cargo + EPSILON) / (2 * a.cargo))
+  // Zero-cargo configurations do not require
+  // any cargo demand.
+  const cargoLimit = aircraft.cargo > 0
+    ? Math.floor(
+        (available.cargo + EPSILON) /
+        (2 * aircraft.cargo)
+      )
     : Infinity;
+
+  const timeLimit = Math.floor(
+    QUARTERS / quarters
+  );
 
   return Math.max(
     0,
     Math.min(
-      ecoLimit,
+      economyLimit,
       cargoLimit,
-      Math.floor(QUARTERS / quarters)
+      timeLimit
     )
   );
 }
 
 // ============================================================
-// CANDIDATES
+// PRECOMPUTE ROUTES PER MODEL
 // ============================================================
 
 function buildCandidates(routes, aircraft) {
@@ -425,7 +605,9 @@ function buildCandidates(routes, aircraft) {
   };
 
   for (const route of routes) {
-    if (!isEligible(aircraft, route)) continue;
+    if (!isEligible(aircraft, route)) {
+      continue;
+    }
 
     stats.categoryAndRangeEligible++;
 
@@ -438,38 +620,76 @@ function buildCandidates(routes, aircraft) {
     }
 
     const hours = duration(
-      route.distance, aircraft.speed
+      route.distance,
+      aircraft.speed
     );
 
-    if (hours > ROTATION_HOURS) continue;
+    if (
+      !Number.isFinite(hours) ||
+      hours > ROTATION_HOURS
+    ) {
+      continue;
+    }
 
     stats.fareEligible++;
 
+    const quarters = Math.round(hours * 4);
+
     const revenue = calculateLegRevenue(
-      route, aircraft.eco, aircraft.cargo
+      route,
+      aircraft.eco,
+      aircraft.cargo
     ).totalRevenue;
 
-    if (!(revenue > 0)) continue;
+    if (revenue <= 0) {
+      continue;
+    }
 
     candidates.push({
       route,
       hours,
-      quarters: Math.round(hours * 4),
+      quarters,
       revenue
     });
 
     if (
-      route.ecoDemand + EPSILON >= 2 * aircraft.eco &&
-      route.cargoDemand + EPSILON >= 2 * aircraft.cargo
+      (aircraft.eco === 0 ||
+        route.ecoDemand + EPSILON >= 2 * aircraft.eco) &&
+      (
+        aircraft.cargo === 0 ||
+        route.cargoDemand + EPSILON >=
+          2 * aircraft.cargo
+      )
     ) {
       stats.demandEligible++;
     }
   }
 
-  return { candidates, stats };
+  return {
+    candidates,
+    stats
+  };
 }
 
-function buildOptions(candidates, aircraft, remaining) {
+// ============================================================
+// BUILD OPTIONS AND REVENUE UPPER BOUND
+// ============================================================
+
+/**
+ * The fractional-knapsack upper bound is optimistic.
+ * It cannot underestimate the best bounded-knapsack
+ * revenue for the same candidate options.
+ *
+ * Therefore, if the upper bound cannot beat the
+ * current best rotation, we can safely skip
+ * that aircraft's expensive DP search.
+ */
+
+function buildOptions(
+  candidates,
+  aircraft,
+  remaining
+) {
   const options = [];
 
   for (const candidate of candidates) {
@@ -480,16 +700,15 @@ function buildOptions(candidates, aircraft, remaining) {
     );
 
     if (maxServices > 0) {
-      options.push({ ...candidate, maxServices });
+      options.push({
+        ...candidate,
+        maxServices
+      });
     }
   }
 
   return options;
 }
-
-// ============================================================
-// FRACTIONAL UPPER BOUND
-// ============================================================
 
 function revenueUpperBound(options) {
   const sorted = [...options].sort(
@@ -499,43 +718,51 @@ function revenueUpperBound(options) {
   );
 
   let capacity = QUARTERS;
-  let revenue = 0;
+  let upperBound = 0;
 
   for (const option of sorted) {
-    if (capacity <= 0) break;
+    if (capacity <= 0) {
+      break;
+    }
+
+    const availableWeight =
+      option.quarters * option.maxServices;
 
     const weight = Math.min(
       capacity,
-      option.quarters * option.maxServices
+      availableWeight
     );
 
-    revenue +=
-      weight / option.quarters * option.revenue;
+    upperBound +=
+      (weight / option.quarters) *
+      option.revenue;
 
     capacity -= weight;
   }
 
-  return revenue;
+  return upperBound;
 }
 
 // ============================================================
-// BOUNDED KNAPSACK
+// BOUNDED-KNAPSACK SEARCH
 // ============================================================
 
-function bestCircuit(options, stop = () => false) {
-  if (!options.length) return null;
+function bestCircuit(options, stop) {
+  if (options.length === 0) {
+    return null;
+  }
 
   const bundles = [];
 
   for (const option of options) {
-    let remainingCount = option.maxServices;
+    let count = option.maxServices;
 
     for (
       let size = 1;
-      remainingCount > 0;
+      count > 0;
       size *= 2
     ) {
-      const take = Math.min(size, remainingCount);
+      const take = Math.min(size, count);
 
       bundles.push({
         option,
@@ -544,7 +771,7 @@ function bestCircuit(options, stop = () => false) {
         value: option.revenue * take
       });
 
-      remainingCount -= take;
+      count -= take;
     }
   }
 
@@ -552,30 +779,37 @@ function bestCircuit(options, stop = () => false) {
   dp.fill(-Infinity);
   dp[0] = 0;
 
-  // Immutable path nodes preserve the correct
-  // knapsack reconstruction as dp changes.
   const paths = Array(QUARTERS + 1).fill(null);
 
   for (const bundle of bundles) {
-    if (stop()) return null;
+    if (stop()) {
+      return null;
+    }
 
     for (
-      let t = QUARTERS;
-      t >= bundle.weight;
-      t--
+      let time = QUARTERS;
+      time >= bundle.weight;
+      time--
     ) {
-      const previous = dp[t - bundle.weight];
+      const previousRevenue =
+        dp[time - bundle.weight];
 
-      if (!Number.isFinite(previous)) continue;
+      if (!Number.isFinite(previousRevenue)) {
+        continue;
+      }
 
-      const value = previous + bundle.value;
+      const candidateRevenue =
+        previousRevenue + bundle.value;
 
-      if (value > dp[t] + EPSILON) {
-        dp[t] = value;
+      if (
+        candidateRevenue >
+        dp[time] + EPSILON
+      ) {
+        dp[time] = candidateRevenue;
 
-        paths[t] = {
+        paths[time] = {
           bundle,
-          previous: paths[t - bundle.weight]
+          previous: paths[time - bundle.weight]
         };
       }
     }
@@ -583,25 +817,35 @@ function bestCircuit(options, stop = () => false) {
 
   let bestTime = 0;
 
-  for (let t = 1; t <= QUARTERS; t++) {
+  for (let time = 1; time <= QUARTERS; time++) {
+    if (!Number.isFinite(dp[time])) {
+      continue;
+    }
+
     if (
-      dp[t] > dp[bestTime] + EPSILON ||
+      dp[time] > dp[bestTime] + EPSILON ||
       (
-        Math.abs(dp[t] - dp[bestTime]) <= EPSILON &&
-        t > bestTime
+        Math.abs(dp[time] - dp[bestTime]) <= EPSILON &&
+        time > bestTime
       )
     ) {
-      bestTime = t;
+      bestTime = time;
     }
   }
 
-  if (!(dp[bestTime] > 0)) return null;
+  if (!(dp[bestTime] > 0)) {
+    return null;
+  }
 
   const selected = [];
   let node = paths[bestTime];
 
   while (node) {
-    for (let i = 0; i < node.bundle.count; i++) {
+    for (
+      let i = 0;
+      i < node.bundle.count;
+      i++
+    ) {
       selected.push(node.bundle.option);
     }
 
@@ -615,8 +859,8 @@ function bestCircuit(options, stop = () => false) {
       a.route.code.localeCompare(b.route.code)
   );
 
-  const legs = [];
   let hours = 0;
+  const legs = [];
 
   for (const option of selected) {
     legs.push({
@@ -637,58 +881,21 @@ function bestCircuit(options, stop = () => false) {
   };
 }
 
-// ============================================================
-// DEMAND ALLOCATION
-// ============================================================
 
-function adjustDemand(remaining, rotation, direction) {
-  for (const leg of rotation.legs) {
-    const d = remaining.get(leg.routeId);
 
-    if (!d) {
-      throw new Error(
-        `Unknown route in rotation: ${leg.routeId}`
-      );
-    }
-
-    d.eco += direction * 2 * rotation.eco;
-    d.cargo += direction * 2 * rotation.cargo;
-  }
-}
-
-function canAllocate(remaining, rotation) {
-  const required = new Map();
-
-  for (const leg of rotation.legs) {
-    const current = required.get(leg.routeId) ?? {
-      eco: 0,
-      cargo: 0
-    };
-
-    current.eco += 2 * rotation.eco;
-    current.cargo += 2 * rotation.cargo;
-
-    required.set(leg.routeId, current);
-  }
-
-  for (const [id, need] of required) {
-    const available = remaining.get(id);
-
-    if (
-      !available ||
-      available.eco + EPSILON < need.eco ||
-      available.cargo + EPSILON < need.cargo
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-// ============================================================
-// v0.7 PAIRWISE IMPROVEMENT
-// ============================================================
+/**
+ * v0.7 — Pairwise network improvement
+ *
+ * Rebuilds pairs of existing rotations using the demand
+ * released by those two rotations.
+ *
+ * A replacement is accepted only when:
+ * - Both rotations remain feasible
+ * - Total revenue increases
+ * - Aircraft group count remains unchanged
+ *
+ * This is a bounded local search, not a global optimum.
+ */
 
 function improveRotations(
   rotations,
@@ -703,28 +910,42 @@ function improveRotations(
   );
 
   const baselineTotal = rotations.reduce(
-    (sum, r) => sum + r.revenue, 0
+    (sum, r) => sum + r.revenue,
+    0
   );
 
   let improvements = 0;
+  let gain = 0;
   let pairsTested = 0;
 
-  function rebuild(original) {
-    const aircraft = aircraftByModel.get(original.model);
+  function adjustDemand(rotation, direction) {
+    for (const leg of rotation.legs) {
+      const available = remaining.get(leg.routeId);
+
+      available.eco += direction * 2 * rotation.eco;
+      available.cargo += direction * 2 * rotation.cargo;
+    }
+  }
+
+  function rebuild(rotation) {
+    const aircraft = aircraftByModel.get(rotation.model);
 
     if (!aircraft) return null;
 
     const options = buildOptions(
-      fleetCandidates.get(original.model) ?? [],
+      fleetCandidates.get(aircraft.model) ?? [],
       aircraft,
       remaining
     );
 
     const circuit = bestCircuit(options, stop);
 
-    return circuit
-      ? { ...original, ...circuit }
-      : null;
+    if (!circuit) return null;
+
+    return {
+      ...rotation,
+      ...circuit
+    };
   }
 
   function tryPair(i, j) {
@@ -734,91 +955,67 @@ function improveRotations(
     const originalRevenue =
       originalA.revenue + originalB.revenue;
 
-    // Release both rotations into available demand.
-    adjustDemand(remaining, originalA, +1);
-    adjustDemand(remaining, originalB, +1);
+    adjustDemand(originalA, +1);
+    adjustDemand(originalB, +1);
 
     let bestPair = null;
     let bestRevenue = originalRevenue;
 
-    try {
-      const orders = [
-        [originalA, originalB],
-        [originalB, originalA]
-      ];
+    // Test both aircraft allocation orders.
+    for (const order of [
+      [originalA, originalB],
+      [originalB, originalA]
+    ]) {
+      if (stop()) break;
 
-      for (const order of orders) {
-        if (stop()) break;
+      const first = rebuild(order[0]);
 
-        const first = rebuild(order[0]);
+      if (!first) continue;
 
-        if (
-          !first ||
-          !canAllocate(remaining, first)
-        ) {
-          continue;
-        }
+      adjustDemand(first, -1);
 
-        adjustDemand(remaining, first, -1);
+      const second = rebuild(order[1]);
 
-        let second;
+      adjustDemand(first, +1);
 
-        try {
-          second = rebuild(order[1]);
-        } finally {
-          adjustDemand(remaining, first, +1);
-        }
+      if (!second) continue;
 
-        if (!second) continue;
+      const candidateRevenue =
+        first.revenue + second.revenue;
 
-        // Check the pair together, not just each
-        // rotation independently.
-        adjustDemand(remaining, first, -1);
+      if (candidateRevenue > bestRevenue + EPSILON) {
+        bestRevenue = candidateRevenue;
 
-        const secondFits = canAllocate(
-          remaining, second
-        );
-
-        adjustDemand(remaining, first, +1);
-
-        if (!secondFits) continue;
-
-        const candidateRevenue =
-          first.revenue + second.revenue;
-
-        if (candidateRevenue > bestRevenue + EPSILON) {
-          bestRevenue = candidateRevenue;
-
-          bestPair = order[0] === originalA
+        // Restore original array positions.
+        bestPair =
+          order[0] === originalA
             ? [first, second]
             : [second, first];
-        }
       }
-
-      if (bestPair && !stop()) {
-        adjustDemand(remaining, bestPair[0], -1);
-        adjustDemand(remaining, bestPair[1], -1);
-
-        rotations[i] = bestPair[0];
-        rotations[j] = bestPair[1];
-
-        improvements++;
-        return true;
-      }
-
-      // No improvement: restore original demand.
-      adjustDemand(remaining, originalA, -1);
-      adjustDemand(remaining, originalB, -1);
-
-      return false;
-    } catch (error) {
-      // Restore demand before propagating errors.
-      adjustDemand(remaining, originalA, -1);
-      adjustDemand(remaining, originalB, -1);
-      throw error;
     }
+
+    if (bestPair && !stop()) {
+      adjustDemand(bestPair[0], -1);
+      adjustDemand(bestPair[1], -1);
+
+      rotations[i] = bestPair[0];
+      rotations[j] = bestPair[1];
+
+      improvements++;
+      gain += bestRevenue - originalRevenue;
+
+      return true;
+    }
+
+    // No improvement: restore original allocation.
+    adjustDemand(originalA, -1);
+    adjustDemand(originalB, -1);
+
+    return false;
   }
 
+  // Concentrate on the lower-revenue tail where
+  // demand fragmentation is most significant.
   const windowSize = Math.min(80, rotations.length);
   const firstIndex = rotations.length - windowSize;
 
@@ -827,13 +1024,10 @@ function improveRotations(
 
     let changed = false;
 
-    for (
-      let i = firstIndex;
-      i < rotations.length - 1;
-      i++
-    ) {
+    for (let i = firstIndex; i < rotations.length - 1; i++) {
       if (stop()) break;
 
+      // Test nearby pairs and more widely separated pairs.
       for (const offset of [1, 2, 5, 10]) {
         const j = i + offset;
 
@@ -841,7 +1035,9 @@ function improveRotations(
 
         pairsTested++;
 
-        if (tryPair(i, j)) changed = true;
+        if (tryPair(i, j)) {
+          changed = true;
+        }
       }
     }
 
@@ -849,7 +1045,8 @@ function improveRotations(
   }
 
   const improvedTotal = rotations.reduce(
-    (sum, r) => sum + r.revenue, 0
+    (sum, r) => sum + r.revenue,
+    0
   );
 
   return {
@@ -860,6 +1057,8 @@ function improveRotations(
     pairsTested
   };
 }
+
+
 
 // ============================================================
 // MAIN OPTIMISER
@@ -894,6 +1093,7 @@ export function optimise(
     );
   }
 
+  // Total demand: Scenario A.
   const remaining = new Map();
 
   for (const route of data.routes) {
@@ -903,13 +1103,15 @@ export function optimise(
     });
   }
 
+  // Candidate routes are precomputed once.
   const fleetCandidates = new Map();
-  const fleetSummary = {};
   const aircraftDiagnostics = {};
+  const fleetSummary = {};
 
   for (const aircraft of aircraftList) {
     const prepared = buildCandidates(
-      data.routes, aircraft
+      data.routes,
+      aircraft
     );
 
     fleetCandidates.set(
@@ -952,10 +1154,6 @@ export function optimise(
   const rotations = [];
   let total = 0;
 
-  // ==========================================================
-  // GREEDY BASELINE
-  // ==========================================================
-
   for (
     let groupIndex = 0;
     groupIndex < requestedGroups && !stop();
@@ -963,7 +1161,13 @@ export function optimise(
   ) {
     const evaluations = [];
 
+    // Compute feasible options and optimistic revenue
+    // for every aircraft type.
     for (const aircraft of aircraftList) {
+      if (stop()) {
+        break;
+      }
+
       const candidates =
         fleetCandidates.get(aircraft.model) ?? [];
 
@@ -973,7 +1177,9 @@ export function optimise(
         remaining
       );
 
-      if (!options.length) continue;
+      if (options.length === 0) {
+        continue;
+      }
 
       evaluations.push({
         aircraft,
@@ -982,6 +1188,7 @@ export function optimise(
       });
     }
 
+    // Search promising models first.
     evaluations.sort(
       (a, b) => b.upperBound - a.upperBound
     );
@@ -989,7 +1196,9 @@ export function optimise(
     let bestChoice = null;
 
     for (const evaluation of evaluations) {
-      if (stop()) break;
+      if (stop()) {
+        break;
+      }
 
       if (
         bestChoice &&
@@ -1000,10 +1209,13 @@ export function optimise(
       }
 
       const circuit = bestCircuit(
-        evaluation.options, stop
+        evaluation.options,
+        stop
       );
 
-      if (!circuit) continue;
+      if (!circuit) {
+        continue;
+      }
 
       if (
         !bestChoice ||
@@ -1011,7 +1223,8 @@ export function optimise(
           bestChoice.circuit.revenue + EPSILON ||
         (
           Math.abs(
-            circuit.revenue - bestChoice.circuit.revenue
+            circuit.revenue -
+            bestChoice.circuit.revenue
           ) <= EPSILON &&
           circuit.hours > bestChoice.circuit.hours
         )
@@ -1025,14 +1238,22 @@ export function optimise(
       }
     }
 
-    if (stop() || !bestChoice) break;
+    if (stop() || !bestChoice) {
+      break;
+    }
 
-    const { aircraft, circuit } = bestChoice;
+    const {
+      aircraft,
+      circuit,
+      eligibleDestinations
+    } = bestChoice;
 
     const rotation = {
-      id: `BOM-${String(
-        groupIndex + 1
-      ).padStart(3, "0")}`,
+      id:
+        `BOM-${String(
+          groupIndex + 1
+        ).padStart(3, "0")}`,
+
       model: aircraft.model,
       aircraftId: aircraft.id,
       eco: aircraft.eco,
@@ -1041,26 +1262,53 @@ export function optimise(
       ...circuit
     };
 
-    if (!canAllocate(remaining, rotation)) {
-      throw new Error(
-        `Demand exceeded by ${rotation.id}`
+    // Deduct daily demand from this new group.
+    for (const leg of rotation.legs) {
+      const available = remaining.get(leg.routeId);
+
+      available.eco = Math.max(
+        0,
+        available.eco - 2 * aircraft.eco
+      );
+
+      available.cargo = Math.max(
+        0,
+        available.cargo - 2 * aircraft.cargo
       );
     }
-
-    adjustDemand(remaining, rotation, -1);
 
     rotations.push(rotation);
     total += rotation.revenue;
 
+    const summary = fleetSummary[aircraft.model];
+
+    summary.groups++;
+    summary.aircraftCount += AIRCRAFT_PER_GROUP;
+    summary.weeklyRevenue += rotation.revenue;
+    summary.services += rotation.legs.length;
+    summary.scheduledHours += rotation.hours;
+
+    diagnostics.groups.push({
+      id: rotation.id,
+      model: aircraft.model,
+      eligibleDestinations,
+      services: rotation.legs.length,
+      hours: rotation.hours,
+      unusedHours: ROTATION_HOURS - rotation.hours,
+      weeklyRevenue: rotation.revenue
+    });
+
     onProgress({
       completed: rotations.length,
       total,
-      rotation
+      rotation,
+      fleetSummary
     });
   }
 
+  
   // ==========================================================
-  // PAIRWISE NETWORK IMPROVEMENT
+  // v0.7 — NETWORK IMPROVEMENT
   // ==========================================================
 
   const improvement = improveRotations(
@@ -1074,9 +1322,14 @@ export function optimise(
 
   total = improvement.improvedTotal;
 
-  // ==========================================================
-  // REBUILD FLEET SUMMARY
-  // ==========================================================
+  // Recalculate fleet totals after accepted replacements.
+  for (const summary of Object.values(fleetSummary)) {
+    summary.groups = 0;
+    summary.aircraftCount = 0;
+    summary.weeklyRevenue = 0;
+    summary.services = 0;
+    summary.scheduledHours = 0;
+  }
 
   for (const rotation of rotations) {
     const summary = fleetSummary[rotation.model];
@@ -1088,6 +1341,7 @@ export function optimise(
     summary.scheduledHours += rotation.hours;
   }
 
+  // Refresh diagnostics for the final accepted schedule.
   diagnostics.groups = rotations.map(rotation => ({
     id: rotation.id,
     model: rotation.model,
@@ -1098,10 +1352,168 @@ export function optimise(
   }));
 
   diagnostics.improvement = improvement;
+```
+
+Then find the `return` statement at the end of `optimise()`.
+
+Change its beginning from:
+
+```javascript
+return {
+  rotations,
+  total,
+```
+
+to:
+
+```javascript
+return {
+  rotations,
+  total,
+  improvement,
+```
+
+And update the `method` field to:
+
+```javascript
+method: "greedy-knapsack-with-pairwise-improvement",
+```
+
+## 3. Display the improvement in `app.js`
+
+In `js/app.js`, find the completion status message inside the `type === "result"` handler.
+
+Replace its `setStatus(...)` call with:
+
+<CodeBlock language="javascript" editable>
+const improvement = optimisationResult.improvement;
+
+const improvementText = improvement
+  ? (
+      ` · Baseline $${formatBillions(
+        improvement.baselineTotal
+      )}bn/week` +
+      ` · Improvement +$${formatMoney(
+        improvement.gain
+      )}/week` +
+      ` · ${improvement.improvements} accepted changes` +
+      ` · ${improvement.pairsTested} pairs tested`
+    )
+  : "";
+
+setStatus(
+  `Completed ${completed} groups` +
+  ` · ${fleetText}` +
+  ` · Final $${formatBillions(
+    optimisationResult.total
+  )}bn/week` +
+  improvementText +
+  ` · NOT game validated`
+);
 
   // ==========================================================
-  // DEMAND SUMMARY
+  // v0.7 — NETWORK IMPROVEMENT
   // ==========================================================
+
+  const improvement = improveRotations(
+    rotations,
+    remaining,
+    aircraftList,
+    fleetCandidates,
+    stop,
+    3
+  );
+
+  total = improvement.improvedTotal;
+
+  // Recalculate fleet totals after accepted replacements.
+  for (const summary of Object.values(fleetSummary)) {
+    summary.groups = 0;
+    summary.aircraftCount = 0;
+    summary.weeklyRevenue = 0;
+    summary.services = 0;
+    summary.scheduledHours = 0;
+  }
+
+  for (const rotation of rotations) {
+    const summary = fleetSummary[rotation.model];
+
+    summary.groups++;
+    summary.aircraftCount += AIRCRAFT_PER_GROUP;
+    summary.weeklyRevenue += rotation.revenue;
+    summary.services += rotation.legs.length;
+    summary.scheduledHours += rotation.hours;
+  }
+
+  // Refresh diagnostics for the final accepted schedule.
+  diagnostics.groups = rotations.map(rotation => ({
+    id: rotation.id,
+    model: rotation.model,
+    services: rotation.legs.length,
+    hours: rotation.hours,
+    unusedHours: ROTATION_HOURS - rotation.hours,
+    weeklyRevenue: rotation.revenue
+  }));
+
+  diagnostics.improvement = improvement;
+```
+
+Then find the `return` statement at the end of `optimise()`.
+
+Change its beginning from:
+
+```javascript
+return {
+  rotations,
+  total,
+```
+
+to:
+
+```javascript
+return {
+  rotations,
+  total,
+  improvement,
+```
+
+And update the `method` field to:
+
+```javascript
+method: "greedy-knapsack-with-pairwise-improvement",
+```
+
+## 3. Display the improvement in `app.js`
+
+In `js/app.js`, find the completion status message inside the `type === "result"` handler.
+
+Replace its `setStatus(...)` call with:
+
+<CodeBlock language="javascript" editable>
+const improvement = optimisationResult.improvement;
+
+const improvementText = improvement
+  ? (
+      ` · Baseline $${formatBillions(
+        improvement.baselineTotal
+      )}bn/week` +
+      ` · Improvement +$${formatMoney(
+        improvement.gain
+      )}/week` +
+      ` · ${improvement.improvements} accepted changes` +
+      ` · ${improvement.pairsTested} pairs tested`
+    )
+  : "";
+
+setStatus(
+  `Completed ${completed} groups` +
+  ` · ${fleetText}` +
+  ` · Final $${formatBillions(
+    optimisationResult.total
+  )}bn/week` +
+  improvementText +
+  ` · NOT game validated`
+);
 
   let startingEconomy = 0;
   let startingCargo = 0;
@@ -1114,27 +1526,13 @@ export function optimise(
 
     const available = remaining.get(route.id);
 
-    if (
-      available.eco < -EPSILON ||
-      available.cargo < -EPSILON
-    ) {
-      throw new Error(
-        `Negative demand remaining on ${route.code}`
-      );
-    }
-
     remainingEconomy += available.eco;
     remainingCargo += available.cargo;
   }
 
-  // ==========================================================
-  // FINAL RESULTS
-  // ==========================================================
-
   return {
     rotations,
     total,
-    improvement,
     remaining,
     validation,
     diagnostics,
@@ -1153,7 +1551,8 @@ export function optimise(
 
     scenario: SCENARIO,
     demandSource: "TOTAL_CURRENT_DEMAND",
-    method: "greedy-knapsack-with-pairwise-improvement",
+    method:
+      "automatic-economy-first-fleet-greedy-knapsack",
     preflight: "NOT_RUN"
   };
 }
@@ -1163,19 +1562,21 @@ export function optimise(
 // ============================================================
 
 export function exportCSV(rows) {
-  if (!Array.isArray(rows) || !rows.length) return "";
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return "";
+  }
 
   const keys = Object.keys(rows[0]);
 
-  const escape = value =>
+  const escapeCSV = value =>
     '"' +
     String(value ?? "").replaceAll('"', '""') +
     '"';
 
   return [
-    keys.map(escape).join(","),
+    keys.map(escapeCSV).join(","),
     ...rows.map(row =>
-      keys.map(key => escape(row[key])).join(",")
+      keys.map(key => escapeCSV(row[key])).join(",")
     )
   ].join("\r\n");
 }
