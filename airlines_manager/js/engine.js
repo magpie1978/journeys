@@ -71,6 +71,10 @@ export const FIXED_AIRCRAFT = Object.freeze({
   "A350-900ULR": Object.freeze({
     eco: 430,
     cargo: 1
+  }),
+  "X380Plus": Object.freeze({
+    eco: 930,
+    cargo: 1
   })
 });
 
@@ -1067,6 +1071,12 @@ export function optimise(
   const validation = validateData(data);
   const aircraftList = getSupportedAircraft(data);
 
+  // X380Plus is rare: only ten owned, permitting one complete seven-aircraft group.
+  // Increase this number when the owned fleet changes.
+  const OWNED_X380PLUS = 10;
+  const MAX_X380PLUS_GROUPS = Math.floor(OWNED_X380PLUS / AIRCRAFT_PER_GROUP);
+  let allocatedX380PlusGroups = 0;
+
   const unlimited = groups === null || groups === "";
 
   const requestedGroups = unlimited
@@ -1156,6 +1166,7 @@ export function optimise(
     // Compute feasible options and optimistic revenue
     // for every aircraft type.
     for (const aircraft of aircraftList) {
+      if (aircraft.model === "X380Plus" && allocatedX380PlusGroups >= MAX_X380PLUS_GROUPS) continue;
       if (stop()) {
         break;
       }
@@ -1268,6 +1279,8 @@ export function optimise(
         available.cargo - 2 * aircraft.cargo
       );
     }
+
+    if (rotation.model === "X380Plus") allocatedX380PlusGroups++;
 
     rotations.push(rotation);
     total += rotation.revenue;
