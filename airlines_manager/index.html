@@ -37,15 +37,13 @@
     <section class="panel">
       <h2>Optimisation settings</h2>
 
-
       <div class="inputs">
         <label>
           Hub
-          <select id="hub-select">
-            <option value="BOM">BOM — Mumbai</option>
+          <select id="hub-select" disabled aria-label="Select hub">
+            <option value="BOM">BOM</option>
           </select>
         </label>
-      
         <label>
           Maximum seven-aircraft groups (blank = unlimited)
           <input
@@ -78,7 +76,7 @@
       </div>
 
       <p class="hint">
-        Scenario A: Complete BOM schedule rebuild.
+        Scenario A: Complete selected-hub schedule rebuild.
         All usable aircraft models are evaluated.
 
         A380-800 uses fixed 852E + 4C.
@@ -92,7 +90,7 @@
         with the same configuration.
 
         Total daily demand is shared across all proposed groups.
-        BKK, CGK, DEL and MPM remain excluded.
+        BKK, CGK, DEL and MPM remain excluded as destinations.
       </p>
 
       <div class="actions">
