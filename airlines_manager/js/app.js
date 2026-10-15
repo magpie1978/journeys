@@ -282,10 +282,19 @@ async function fetchSupabaseView(view) {
 
 async function loadSupabaseData() {
   const [routes, pricing, aircraft] = await Promise.all([
-    fetchSupabaseView("am_optimizer_routes"),
-    fetchSupabaseView("am_optimizer_pricing"),
-    fetchSupabaseView("am_optimizer_aircraft")
+
+    url.searchParams.set("select", "*");
+
+    const orderColumn =
+      view === "am_optimizer_aircraft"
+      ? "id"
+      : "route_id";
+
+    url.searchParams.set("order", `${orderColumn}.asc`);
+    url.searchParams.set("limit", String(PAGE_SIZE));
+    url.searchParams.set("offset", String(offset));
   ]);
+  
   if (!routes.length || !pricing.length || !aircraft.length) {
     throw new Error("Supabase returned an empty optimiser dataset");
   }
