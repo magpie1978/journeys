@@ -16,7 +16,7 @@
         <h1>Rotation Optimiser</h1>
         <p>Mixed-fleet planning · Browser-based baseline</p>
       </div>
-      <span class="pill">v0.7 · Read-only</span>
+      <span class="pill">v0.8 · Read-only</span>
     </header>
 
     <section class="metrics">
@@ -90,14 +90,14 @@
         with the same configuration.
 
         Total daily demand is shared across all proposed groups.
-        BKK, CGK, DEL and MPM remain excluded as destinations.
+        BKK, CGK and DEL remain excluded as destinations. BOM and MPM are selectable hubs; their demand is optimised separately.
       </p>
 
       <div class="actions">
         <button id="run" disabled>Run optimiser</button>
         <button id="stop" class="secondary" disabled>Stop</button>
         <button id="download" class="secondary" disabled>
-          Export rotations CSV
+          Export rotations TXT
         </button>
       </div>
 
