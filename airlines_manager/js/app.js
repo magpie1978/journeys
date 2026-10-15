@@ -489,11 +489,19 @@ console.info(
   "[Rotation Optimiser] Route destinations and distances validated."
 );
   
-    // Validate aircraft records independently.
-  if (!candidate.aircraft.length) {
-    throw new Error("Supabase returned no aircraft");
+    
+  // Guard against an incomplete aircraft catalogue.
+  // The current validated catalogue contains 150 records.
+  const MIN_AIRCRAFT_RECORDS = 150;
+  
+  if (candidate.aircraft.length < MIN_AIRCRAFT_RECORDS) {
+    throw new Error(
+      `Incomplete aircraft catalogue — ` +
+      `${candidate.aircraft.length} records received; ` +
+      `minimum ${MIN_AIRCRAFT_RECORDS} expected`
+    );
   }
-
+  
   const aircraftIds = new Set();
 
   for (const aircraft of candidate.aircraft) {
@@ -527,6 +535,32 @@ console.info(
 
     if (!prepared?.routes?.length) {
       throw new Error(`${hub}: no prepared routes`);
+    }
+
+    if (prepared.routes.length !== routes.length) {
+      throw new Error(
+        `${hub}: route preparation mismatch — ` +
+        `${routes.length} owned routes received, ` +
+        `${prepared.routes.length} prepared`
+      );
+    }
+
+    const expectedPricedRoutes = routes.filter(route =>
+      pricingKeys.has(
+        `${normaliseHub(route.hub)}:${String(route.route_id)}`
+      )
+    ).length;
+    
+    const actualPricedRoutes = prepared.routes.filter(
+      route => route.pricingValid
+    ).length;
+    
+    if (actualPricedRoutes !== expectedPricedRoutes) {
+      throw new Error(
+        `${hub}: pricing preparation mismatch — ` +
+        `${expectedPricedRoutes} routes expected to be priced, ` +
+        `${actualPricedRoutes} recognised by engine`
+      );
     }
 
     if (!getSupportedAircraft(prepared).length) {
