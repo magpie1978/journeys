@@ -351,6 +351,9 @@ function validateSupabaseData(candidate) {
   const keyOf = row =>
     `${normaliseHub(row.hub)}:${String(row.route_id)}`;
 
+  const excludedDestinationsForPricing =
+  new Set(["BKK", "CGK", "DEL"]);
+  
   // Validate route records.
   for (const route of candidate.routes) {
     const hub = normaliseHub(route.hub);
@@ -371,12 +374,24 @@ function validateSupabaseData(candidate) {
     routeKeys.add(key);
 
     if (
-      !Number.isSafeInteger(Number(route.route_id)) ||
+(route.route_id === null ||
+ route.route_id === undefined ||
+ String(route.route_id).trim() === "" ||
+ !Number.isSafeInteger(Number(route.route_id))) ||
       Number(route.route_id) <= 0 ||
-      !Number.isFinite(Number(route.distance_km)) ||
+     (route.distance_km === null ||
+ route.distance_km === undefined ||
+ String(route.distance_km).trim() === "" ||
+ !Number.isFinite(Number(route.distance_km))) ||
+      
       Number(route.distance_km) <= 0 ||
       !String(route.airport_code ?? "").trim() ||
-      !Number.isFinite(Number(route.category))
+      (route.category === null ||
+       route.category === undefined ||
+       String(route.category).trim() === "" ||
+       !Number.isInteger(Number(route.category))) ||
+      Number(route.category) < 1 ||
+        Number(route.category) > 10
     ) {
       throw new Error(`Invalid route data: ${key}`);
     }
@@ -391,6 +406,47 @@ function validateSupabaseData(candidate) {
     const hub = normaliseHub(price.hub);
     const key = keyOf(price);
 
+    if (
+  price.route_id === null ||
+  price.route_id === undefined ||
+  String(price.route_id).trim() === "" ||
+  !Number.isSafeInteger(Number(price.route_id)) ||
+  Number(price.route_id) <= 0
+) {
+  throw new Error(
+    `Invalid pricing route ID: ${price.route_id}`
+  );
+}
+
+    if (
+  price.distance_km === null ||
+  price.distance_km === undefined ||
+  String(price.distance_km).trim() === "" ||
+  !Number.isFinite(Number(price.distance_km)) ||
+  Number(price.distance_km) <= 0
+) {
+  throw new Error(
+    `Invalid pricing distance: ${key}`
+  );
+}
+
+    const pricingDestination = String(
+  price.airport_code ?? ""
+).trim().toUpperCase();
+
+const expectedRoute = `${hub}/${pricingDestination}`;
+
+if (
+  !/^[A-Z0-9]{3,5}$/.test(pricingDestination) ||
+  String(price.route ?? "").trim().toUpperCase() !== expectedRoute
+) {
+  throw new Error(
+    `Invalid pricing destination or route: ${key}`
+  );
+}
+
+    
+
     if (!requiredHubs.includes(hub)) {
       throw new Error(`Unexpected pricing hub: ${hub}`);
     }
@@ -398,6 +454,13 @@ function validateSupabaseData(candidate) {
     if (!price.scan_id) {
       throw new Error(`Missing scan ID for pricing ${key}`);
     }
+
+    if (String(price.status ?? "").trim().toLowerCase() !== "ok") {
+      throw new Error(
+        `Invalid pricing status for ${key}: ${price.status}`
+      );
+    }
+        
     scanIds.add(price.scan_id);
 
     if (pricingKeys.has(key)) {
@@ -405,13 +468,23 @@ function validateSupabaseData(candidate) {
     }
     pricingKeys.add(key);
 
-    const values = [
-      price.current_price_economy,
-      price.current_price_cargo,
-      price.current_demand_economy,
-      price.current_demand_cargo
-    ].map(Number);
+const rawValues = [
+  price.current_price_economy,
+  price.current_price_cargo,
+  price.current_demand_economy,
+  price.current_demand_cargo
+];
 
+if (rawValues.some(value =>
+  value === null ||
+  value === undefined ||
+  String(value).trim() === ""
+)) {
+  throw new Error(`Missing pricing values: ${key}`);
+}
+
+const values = rawValues.map(Number);
+    
     if (
       values.some(value => !Number.isFinite(value)) ||
       values[0] <= 0 ||
@@ -439,13 +512,30 @@ function validateSupabaseData(candidate) {
       .toUpperCase();
 
     const key = `${hub}:${String(route.route_id)}`;
+
+    const routeDestination = String(
+  route.airport_code ?? ""
+).trim().toUpperCase();
+
+const expectedRoute = `${hub}/${routeDestination}`;
+
+if (
+  !/^[A-Z0-9]{3,5}$/.test(routeDestination) ||
+  String(route.route ?? "").trim().toUpperCase() !== expectedRoute
+) {
+  throw new Error(
+    `Invalid owned-route destination or route: ${key}`
+  );
+}
+    
     const routeName = `${hub}:${destination}`;
 
-    if (
-      !pricingKeys.has(key) &&
-      !allowedUnpricedRoutes.has(routeName)
-    ) {
-      throw new Error(
+if (
+  !excludedDestinationsForPricing.has(destination) &&
+  !pricingKeys.has(key) &&
+  !allowedUnpricedRoutes.has(routeName)
+) {
+  throw new Error(
         `Missing pricing for owned route ${hub}/${destination} ` +
         `(route ID ${route.route_id})`
       );
@@ -515,6 +605,43 @@ console.info(
       throw new Error(`Duplicate aircraft ID: ${id}`);
     }
 
+const rawAircraftValues = [
+  aircraft.category,
+  aircraft.range_km,
+  aircraft.speed_kmh,
+  aircraft.max_seats,
+  aircraft.payload_tonnes
+];
+
+if (rawAircraftValues.some(value =>
+  value === null ||
+  value === undefined ||
+  String(value).trim() === ""
+)) {
+  throw new Error(
+    `Missing aircraft specifications: ${id}`
+  );
+}
+
+const aircraftValues = rawAircraftValues.map(Number);
+    
+    if (
+      !String(aircraft.model ?? "").trim() ||
+      aircraftValues.some(value => !Number.isFinite(value)) ||
+      !Number.isInteger(aircraftValues[0]) ||
+      aircraftValues[0] < 1 ||
+      aircraftValues[0] > 10 ||
+      aircraftValues[1] <= 0 ||
+      aircraftValues[2] <= 0 ||
+      !Number.isInteger(aircraftValues[3]) ||
+      aircraftValues[3] < 0 ||
+      aircraftValues[4] <= 0
+    ) {
+      throw new Error(
+        `Invalid aircraft specifications: ${id}`
+      );
+    }
+    
     aircraftIds.add(id);
   }
   
@@ -537,19 +664,44 @@ console.info(
       throw new Error(`${hub}: no prepared routes`);
     }
 
-    if (prepared.routes.length !== routes.length) {
-      throw new Error(
-        `${hub}: route preparation mismatch — ` +
-        `${routes.length} owned routes received, ` +
-        `${prepared.routes.length} prepared`
-      );
-    }
+
+
+  const excludedDestinations = new Set(["BKK", "CGK", "DEL"]);
+  
+  const expectedPreparedRoutes = routes.filter(route =>
+    !excludedDestinations.has(
+      String(route.airport_code ?? "").trim().toUpperCase()
+    )
+  ).length;
+  
+  if (prepared.routes.length !== expectedPreparedRoutes) {
+    throw new Error(
+      `${hub}: route preparation mismatch — ` +
+      `${expectedPreparedRoutes} eligible routes expected, ` +
+      `${prepared.routes.length} prepared`
+    );
+  }
+
+const validPricingKeys = new Set(
+  pricing
+    .filter(price =>
+      String(price.status ?? "").trim().toLowerCase() === "ok"
+    )
+    .map(price =>
+      `${normaliseHub(price.hub)}:${String(price.route_id)}`
+    )
+);
 
     const expectedPricedRoutes = routes.filter(route =>
-      pricingKeys.has(
+      !excludedDestinations.has(
+        String(route.airport_code ?? "").trim().toUpperCase()
+      ) &&
+      validPricingKeys.has(
         `${normaliseHub(route.hub)}:${String(route.route_id)}`
       )
     ).length;
+
+
     
     const actualPricedRoutes = prepared.routes.filter(
       route => route.pricingValid
