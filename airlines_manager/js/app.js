@@ -259,47 +259,65 @@ const PAGE_SIZE = 1000;
 
 async function fetchSupabaseView(view) {
   const all = [];
+
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const url = new URL(`${SUPABASE_URL}/rest/v1/${view}`);
+
     url.searchParams.set("select", "*");
+
+    const orderColumns =
+      view === "am_optimizer_aircraft"
+        ? "aircraft_id.asc"
+        : "route_id.asc,hub_code.asc";
+
+    url.searchParams.set("order", orderColumns);
     url.searchParams.set("limit", String(PAGE_SIZE));
     url.searchParams.set("offset", String(offset));
+
     const response = await fetch(url, {
       cache: "no-store",
-      headers: { apikey: SUPABASE_KEY, Accept: "application/json" }
+      headers: {
+        apikey: SUPABASE_KEY,
+        Accept: "application/json"
+      }
     });
+
     if (!response.ok) {
       const detail = (await response.text()).slice(0, 240);
-      throw new Error(`${view}: HTTP ${response.status}: ${detail}`);
+      throw new Error(
+        `${view}: HTTP ${response.status}: ${detail}`
+      );
     }
+
     const batch = await response.json();
-    if (!Array.isArray(batch)) throw new Error(`${view}: unexpected response`);
+
+    if (!Array.isArray(batch)) {
+      throw new Error(`${view}: unexpected response`);
+    }
+
     all.push(...batch);
+
     if (batch.length < PAGE_SIZE) break;
   }
+
   return all;
 }
 
 async function loadSupabaseData() {
   const [routes, pricing, aircraft] = await Promise.all([
-
-    url.searchParams.set("select", "*");
-      
-      const orderColumn =
-        view === "am_optimizer_aircraft"
-          ? "aircraft_id"
-          : "route_id";
-  
-    url.searchParams.set("order", `${orderColumn}.asc`);
-    url.searchParams.set("limit", String(PAGE_SIZE));
-    url.searchParams.set("offset", String(offset));
+    fetchSupabaseView("am_optimizer_routes"),
+    fetchSupabaseView("am_optimizer_pricing"),
+    fetchSupabaseView("am_optimizer_aircraft")
   ]);
   
   if (!routes.length || !pricing.length || !aircraft.length) {
     throw new Error("Supabase returned an empty optimiser dataset");
   }
   return {
+
     routes: routes.map(r => ({
+      scan_id: r.scan_id,
+      route: r.route,
       hub: r.hub_code,
       airport_code: r.destination_code,
       ownership_status: r.ownership_status,
@@ -308,6 +326,9 @@ async function loadSupabaseData() {
       category: r.destination_category
     })),
     pricing: pricing.map(p => ({
+      scan_id: p.scan_id,
+      route: p.route,
+      distance_km: p.distance_km,
       hub: p.hub_code,
       airport_code: String(p.route ?? "").split("/")[1] ?? "",
       route_id: p.route_id,
@@ -321,60 +342,228 @@ async function loadSupabaseData() {
   };
 }
 
-function verifyPreparedParity(candidate, baseline) {
-  const hubs = discoverHubs(baseline.routes, baseline.pricing);
-  const candidateHubs = discoverHubs(candidate.routes, candidate.pricing);
-  if (JSON.stringify(candidateHubs) !== JSON.stringify(hubs)) {
-    throw new Error(`Hub mismatch: Supabase ${candidateHubs.join(",")} vs CSV ${hubs.join(",")}`);
-  }
+function validateSupabaseData(candidate) {
+  const requiredHubs = ["BOM", "MPM"];
+  const routeKeys = new Set();
+  const pricingKeys = new Set();
+  const scanIds = new Set();
 
-  for (const hub of hubs) {
-    const pick = dataset => prepare(
-      dataset.routes.filter(r => normaliseHub(r.hub) === hub),
-      dataset.pricing.filter(r => normaliseHub(r.hub) === hub),
-      dataset.aircraft
-    );
-    const current = pick(candidate);
-    const baselinePrepared = pick(baseline);
+  const keyOf = row =>
+    `${normaliseHub(row.hub)}:${String(row.route_id)}`;
 
-    // Scan-dependent fares and demand legitimately change over time.
-    // Compare identity, geography and whether each route has usable pricing.
-    const signature = data => new Map(data.routes.map(r => [String(r.id), JSON.stringify([
-      r.code, r.distance, r.category, r.pricingValid
-    ])]));
-    const currentRoutes = signature(current);
-    const oldRoutes = signature(baselinePrepared);
-    const missingOrDifferent = [...oldRoutes].filter(
-      ([id, value]) => currentRoutes.get(id) !== value
-    ).length;
-    const unexpected = [...currentRoutes.keys()].filter(id => !oldRoutes.has(id)).length;
-    if (currentRoutes.size !== oldRoutes.size || missingOrDifferent || unexpected) {
-      throw new Error(`${hub}: Supabase/CSV structural parity failed ` +
-        `(${currentRoutes.size} vs ${oldRoutes.size}; ` +
-        `${missingOrDifferent} missing/different, ${unexpected} unexpected)`);
+  // Validate route records.
+  for (const route of candidate.routes) {
+    const hub = normaliseHub(route.hub);
+    const key = keyOf(route);
+
+    if (!requiredHubs.includes(hub)) {
+      throw new Error(`Unexpected route hub: ${hub}`);
     }
 
-    // Validate all eligible priced routes in the new scan; do not compare
-    // their numeric values with an older snapshot.
-    for (const route of current.routes) {
+    if (!route.scan_id) {
+      throw new Error(`Missing scan ID for route ${key}`);
+    }
+    scanIds.add(route.scan_id);
+
+    if (routeKeys.has(key)) {
+      throw new Error(`Duplicate route: ${key}`);
+    }
+    routeKeys.add(key);
+
+    if (
+      !Number.isSafeInteger(Number(route.route_id)) ||
+      Number(route.route_id) <= 0 ||
+      !Number.isFinite(Number(route.distance_km)) ||
+      Number(route.distance_km) <= 0 ||
+      !String(route.airport_code ?? "").trim() ||
+      !Number.isFinite(Number(route.category))
+    ) {
+      throw new Error(`Invalid route data: ${key}`);
+    }
+
+    if (route.ownership_status !== "owned") {
+      throw new Error(`Non-owned route: ${key}`);
+    }
+  }
+
+  // Validate pricing records and scan consistency.
+  for (const price of candidate.pricing) {
+    const hub = normaliseHub(price.hub);
+    const key = keyOf(price);
+
+    if (!requiredHubs.includes(hub)) {
+      throw new Error(`Unexpected pricing hub: ${hub}`);
+    }
+
+    if (!price.scan_id) {
+      throw new Error(`Missing scan ID for pricing ${key}`);
+    }
+    scanIds.add(price.scan_id);
+
+    if (pricingKeys.has(key)) {
+      throw new Error(`Duplicate pricing: ${key}`);
+    }
+    pricingKeys.add(key);
+
+    const values = [
+      price.current_price_economy,
+      price.current_price_cargo,
+      price.current_demand_economy,
+      price.current_demand_cargo
+    ].map(Number);
+
+    if (
+      values.some(value => !Number.isFinite(value)) ||
+      values[0] <= 0 ||
+      values[1] <= 0 ||
+      values[2] < 0 ||
+      values[3] < 0
+    ) {
+      throw new Error(`Invalid pricing: ${key}`);
+    }
+  }
+
+  if (scanIds.size !== 1) {
+    throw new Error(
+      `Inconsistent Supabase scan IDs: ${[...scanIds].join(", ")}`
+    );
+  }
+
+    // Every owned route must have pricing, except BOM/MPM.
+  const allowedUnpricedRoutes = new Set(["BOM:MPM"]);
+
+  for (const route of candidate.routes) {
+    const hub = normaliseHub(route.hub);
+    const destination = String(route.airport_code ?? "")
+      .trim()
+      .toUpperCase();
+
+    const key = `${hub}:${String(route.route_id)}`;
+    const routeName = `${hub}:${destination}`;
+
+    if (
+      !pricingKeys.has(key) &&
+      !allowedUnpricedRoutes.has(routeName)
+    ) {
+      throw new Error(
+        `Missing pricing for owned route ${hub}/${destination} ` +
+        `(route ID ${route.route_id})`
+      );
+    }
+  }
+
+  // The known exception must not hide other pricing problems.
+  console.info(
+    "[Rotation Optimiser] Route-to-pricing consistency validated."
+  );
+
+  // Verify that each pricing record matches its owned route.
+const routesByKey = new Map(
+  candidate.routes.map(route => [
+    `${normaliseHub(route.hub)}:${String(route.route_id)}`,
+    route
+  ])
+);
+
+for (const price of candidate.pricing) {
+  const key =
+    `${normaliseHub(price.hub)}:${String(price.route_id)}`;
+
+  const route = routesByKey.get(key);
+
+  // Pricing may include affiliated routes excluded from
+  // the owned-route dataset.
+  if (!route) continue;
+
+  if (
+    route.route !== price.route ||
+    Number(route.distance_km) !== Number(price.distance_km)
+  ) {
+    throw new Error(
+      `Route/pricing mismatch: ${key}`
+    );
+  }
+}
+
+console.info(
+  "[Rotation Optimiser] Route destinations and distances validated."
+);
+  
+    // Validate aircraft records independently.
+  if (!candidate.aircraft.length) {
+    throw new Error("Supabase returned no aircraft");
+  }
+
+  const aircraftIds = new Set();
+
+  for (const aircraft of candidate.aircraft) {
+    const id = String(aircraft.aircraft_id ?? "").trim();
+
+    if (!id) {
+      throw new Error("Aircraft record has no aircraft_id");
+    }
+
+    if (aircraftIds.has(id)) {
+      throw new Error(`Duplicate aircraft ID: ${id}`);
+    }
+
+    aircraftIds.add(id);
+  }
+  
+  // Validate the prepared datasets using the existing engine.
+  for (const hub of requiredHubs) {
+    const routes = candidate.routes.filter(
+      r => normaliseHub(r.hub) === hub
+    );
+    const pricing = candidate.pricing.filter(
+      p => normaliseHub(p.hub) === hub
+    );
+
+    if (!routes.length || !pricing.length) {
+      throw new Error(`${hub}: missing routes or pricing`);
+    }
+
+    const prepared = prepare(routes, pricing, candidate.aircraft);
+
+    if (!prepared?.routes?.length) {
+      throw new Error(`${hub}: no prepared routes`);
+    }
+
+    if (!getSupportedAircraft(prepared).length) {
+      throw new Error(`${hub}: no supported aircraft`);
+    }
+
+    for (const route of prepared.routes) {
       if (!route.pricingValid) continue;
-      if (![route.ecoDemand, route.cargoDemand, route.ecoFare, route.cargoFare]
-        .every(Number.isFinite) ||
-          route.ecoDemand < 0 || route.cargoDemand < 0 ||
-          route.ecoFare <= 0 || route.cargoFare <= 0) {
-        throw new Error(`${hub}: invalid Supabase pricing for route ${route.id}`);
+
+      if (
+        ![
+          route.ecoDemand,
+          route.cargoDemand,
+          route.ecoFare,
+          route.cargoFare
+        ].every(Number.isFinite) ||
+        route.ecoDemand < 0 ||
+        route.cargoDemand < 0 ||
+        route.ecoFare <= 0 ||
+        route.cargoFare <= 0
+      ) {
+        throw new Error(
+          `${hub}: invalid prepared pricing for route ${route.id}`
+        );
       }
     }
 
-    const fleetSignature = data => JSON.stringify(getSupportedAircraft(data)
-      .map(x => [x.id, x.model, x.category, x.range, x.speed, x.seats, x.payload, x.eco, x.cargo])
-      .sort((x, y) => String(x[1]).localeCompare(String(y[1]))));
-    if (fleetSignature(current) !== fleetSignature(baselinePrepared)) {
-      throw new Error(`${hub}: Supabase/CSV aircraft parity failed`);
-    }
-    console.info(`[Rotation Optimiser] ${hub}: structural, pricing and aircraft validation passed ` +
-      `(${currentRoutes.size} routes; ${current.routes.filter(r => r.pricingValid).length} priced).`);
+    console.info(
+      `[Rotation Optimiser] ${hub}: independent Supabase validation passed ` +
+      `(${prepared.routes.length} routes; ` +
+      `${prepared.routes.filter(r => r.pricingValid).length} priced).`
+    );
   }
+
+  console.info(
+    `[Rotation Optimiser] Validated Supabase scan: ${[...scanIds][0]}`
+  );
 }
 
 function getConfiguredFleet() {
@@ -408,40 +597,78 @@ function renderConfigurations(fleet) {
 
 async function loadData() {
   const generation = ++loadGeneration;
+
   preparedData = null;
   optimisationResult = null;
   clearResults();
   updateButtons();
-  setStatus("Loading and validating Supabase data against CSV baseline…");
+
+  setStatus("Loading and validating Supabase data…");
+
   try {
-    // Keep the CSV baseline during migration; do not trust counts alone.
-    const [csvRoutes, csvPricing, csvAircraft] = await Promise.all(DATA_FILES.map(loadCSVFile));
-    const baseline = { routes: csvRoutes, pricing: csvPricing, aircraft: csvAircraft };
-    let dataset = baseline;
-    let sourceMessage = "CSV baseline";
+    let dataset;
+    let sourceMessage;
+
     try {
+      // Supabase is now the primary data source.
       const candidate = await loadSupabaseData();
-      verifyPreparedParity(candidate, baseline);
+
+      validateSupabaseData(candidate);
+
       dataset = candidate;
       activeDataSource = "Supabase";
-      sourceMessage = "Supabase (CSV parity verified)";
+      sourceMessage = "Supabase (independently validated)";
+
     } catch (error) {
+      console.warn(
+        "[Rotation Optimiser] Supabase validation failed:",
+        error
+      );
+
+      // CSV is retained as an emergency fallback.
+      setStatus("Supabase unavailable. Loading CSV fallback…");
+
+      const [csvRoutes, csvPricing, csvAircraft] =
+        await Promise.all(DATA_FILES.map(loadCSVFile));
+
+      dataset = {
+        routes: csvRoutes,
+        pricing: csvPricing,
+        aircraft: csvAircraft
+      };
+
       activeDataSource = "CSV";
-      sourceMessage = `CSV fallback — Supabase validation failed: ${error.message}`;
-      console.warn("[Rotation Optimiser] Supabase not activated:", error);
+      sourceMessage =
+        `CSV fallback — Supabase validation failed: ${error.message}`;
     }
+
     if (generation !== loadGeneration) return;
+
     rawRoutes = dataset.routes;
     rawPricing = dataset.pricing;
     rawAircraft = dataset.aircraft;
+
     availableHubs = discoverHubs(rawRoutes, rawPricing);
-    if (!availableHubs.length) throw new Error("No matching hubs in route and pricing data");
-    HUB = availableHubs.includes(HUB) ? HUB : availableHubs[0];
+
+    if (!availableHubs.length) {
+      throw new Error("No matching hubs in route and pricing data");
+    }
+
+    HUB = availableHubs.includes(HUB)
+      ? HUB
+      : availableHubs[0];
+
     activateHub(HUB);
+
     const normalStatus = $("status")?.textContent ?? "";
     setStatus(`${sourceMessage}. ${normalStatus}`);
+
   } catch (error) {
-    console.error("[Rotation Optimiser] Data loading failed:", error);
+    console.error(
+      "[Rotation Optimiser] Data loading failed:",
+      error
+    );
+
     preparedData = null;
     setStatus(`Data loading error: ${error.message}`);
     updateButtons();
