@@ -16,7 +16,7 @@
         <h1>Rotation Optimiser</h1>
         <p>Mixed-fleet planning · Browser-based baseline</p>
       </div>
-      <span class="pill">v0.9 · Read-only</span>
+      <span class="pill">v1.0 · Read-only</span>
     </header>
 
     <section class="metrics">
@@ -90,8 +90,15 @@
         with the same configuration.
 
         Total daily demand is shared across all proposed groups.
-        BKK, CGK and DEL remain excluded as destinations. BOM and MPM are selectable hubs; their demand is optimised separately.
+        BKK, CGK and DEL remain excluded as destinations. Hubs are discovered automatically from the route and pricing datasets; demand is optimised separately for each hub.
       </p>
+
+      <h3>Shared X380Plus allocation</h3>
+      <p id="x380-status" class="hint">10 X380Plus aircraft available globally (one seven-aircraft group). No confirmed reservation.</p>
+      <div class="actions">
+        <button id="confirm-x380" class="secondary" disabled>Confirm X380Plus for selected hub</button>
+        <button id="release-x380" class="secondary" disabled>Release X380Plus reservation</button>
+      </div>
 
       <div class="actions">
         <button id="run" disabled>Run optimiser</button>
