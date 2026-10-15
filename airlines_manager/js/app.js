@@ -284,12 +284,12 @@ async function loadSupabaseData() {
   const [routes, pricing, aircraft] = await Promise.all([
 
     url.searchParams.set("select", "*");
-
-    const orderColumn =
-      view === "am_optimizer_aircraft"
-      ? "id"
-      : "route_id";
-
+      
+      const orderColumn =
+        view === "am_optimizer_aircraft"
+          ? "aircraft_id"
+          : "route_id";
+  
     url.searchParams.set("order", `${orderColumn}.asc`);
     url.searchParams.set("limit", String(PAGE_SIZE));
     url.searchParams.set("offset", String(offset));
