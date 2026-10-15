@@ -16,7 +16,80 @@ import {
   getSupportedAircraft
 } from "./engine.js";
 
-const HUB = "BOM";
+let HUB = "BOM";
+let rawRoutes = [];
+let rawPricing = [];
+let rawAircraft = [];
+let availableHubs = [];
+let loadGeneration = 0;
+
+function normaliseHub(value) {
+  return String(value ?? "").trim().toUpperCase();
+}
+
+function updateHubHeading() {
+  if ($("active-hub")) $("active-hub").textContent = HUB;
+}
+
+function discoverHubs(routes, pricing) {
+  const routeHubs = new Set(routes.map(row => normaliseHub(row.hub)).filter(Boolean));
+  const pricingHubs = new Set(pricing.map(row => normaliseHub(row.hub)).filter(Boolean));
+  // A hub is usable only if it appears in both datasets.
+  return [...routeHubs].filter(hub => pricingHubs.has(hub)).sort();
+}
+
+function renderHubOptions() {
+  const select = $("hub-select");
+  if (!select) return;
+  select.replaceChildren();
+  for (const hub of availableHubs) {
+    const option = document.createElement("option");
+    option.value = hub;
+    option.textContent = hub;
+    select.appendChild(option);
+  }
+  select.value = HUB;
+  select.disabled = availableHubs.length < 2 || isRunning;
+}
+
+function activateHub(hub) {
+  if (isRunning) return;
+  const selected = normaliseHub(hub);
+  if (!availableHubs.includes(selected)) return;
+  HUB = selected;
+  updateHubHeading();
+  optimisationResult = null;
+  preparedData = null;
+  clearResults();
+  const routes = rawRoutes.filter(row => normaliseHub(row.hub) === HUB);
+  const pricing = rawPricing.filter(row => normaliseHub(row.hub) === HUB);
+  try {
+    preparedData = prepare(routes, pricing, rawAircraft);
+    if (!preparedData || !Array.isArray(preparedData.routes) || !Array.isArray(preparedData.aircraft)) {
+      throw new Error("The optimisation engine returned invalid data.");
+    }
+    preparedData.hub = HUB;
+    const fleet = getConfiguredFleet();
+    $("routes").textContent = formatNumber(preparedData.routes.length);
+    $("models").textContent = formatNumber(fleet.length);
+    renderConfigurations(fleet);
+    setStatus(`${HUB}: ${formatNumber(preparedData.routes.length)} eligible owned routes loaded; ${fleet.length} aircraft models ready.`);
+    if (preparedData.routes.length === 0) {
+      preparedData = null;
+      setStatus(`${HUB}: no eligible owned routes found. Check the hub's routes.csv and pricing.csv records.`);
+    }
+  } catch (error) {
+    console.error("[Rotation Optimiser] Hub preparation failed:", error);
+    preparedData = null;
+    $("routes").textContent = "—";
+    $("models").textContent = "—";
+    $("fleet-configurations")?.replaceChildren();
+    setStatus(`Hub ${HUB}: ${error.message}`);
+  }
+  renderHubOptions();
+  updateButtons();
+}
+
 const AIRCRAFT_PER_GROUP = 7;
 const ECONOMY_PAYLOAD_TONNES = 0.1;
 
@@ -98,6 +171,8 @@ function updateButtons() {
   const stopButton = $("stop");
   const downloadButton = $("download");
 
+  if ($("hub-select")) $("hub-select").disabled = isRunning || availableHubs.length < 2;
+
   if (runButton) {
     runButton.disabled =
       isRunning || preparedData === null;
@@ -163,61 +238,30 @@ function renderConfigurations(fleet) {
 }
 
 async function loadData() {
-  setStatus("Loading route, pricing and aircraft data…");
-
-  try {
-    const [routes, pricing, aircraft] =
-      await Promise.all(
-        DATA_FILES.map(loadCSVFile)
-      );
-
-    preparedData = prepare(
-      routes,
-      pricing,
-      aircraft
-    );
-
-    if (
-      !preparedData ||
-      !Array.isArray(preparedData.routes) ||
-      !Array.isArray(preparedData.aircraft)
-    ) {
-      throw new Error(
-        "The optimisation engine returned invalid data."
-      );
-    }
-
-    const fleet = getConfiguredFleet();
-
-    $("routes").textContent =
-      formatNumber(preparedData.routes.length);
-
-    $("models").textContent =
-      formatNumber(fleet.length);
-
-    renderConfigurations(fleet);
-
-    setStatus(
-      `${HUB}: ${formatNumber(preparedData.routes.length)} ` +
-      `eligible owned routes loaded. ` +
-      `${fleet.map(item => item.model).join(" + ")} ready. ` +
-      "Scenario A: total demand."
-    );
-
-  } catch (error) {
-    console.error(
-      "[Rotation Optimiser] Data loading failed:",
-      error
-    );
-
-    preparedData = null;
-
-    setStatus(
-      `Data loading error: ${error.message}`
-    );
-  }
-
+  const generation = ++loadGeneration;
+  preparedData = null;
+  optimisationResult = null;
+  clearResults();
   updateButtons();
+  setStatus("Loading route, pricing and aircraft data…");
+  try {
+    const [routes, pricing, aircraft] = await Promise.all(DATA_FILES.map(loadCSVFile));
+    if (generation !== loadGeneration) return;
+    rawRoutes = routes;
+    rawPricing = pricing;
+    rawAircraft = aircraft;
+    availableHubs = discoverHubs(routes, pricing);
+    if (!availableHubs.length) {
+      throw new Error("No matching hub codes found in routes.csv and pricing.csv.");
+    }
+    HUB = availableHubs.includes(HUB) ? HUB : availableHubs[0];
+    activateHub(HUB);
+  } catch (error) {
+    console.error("[Rotation Optimiser] Data loading failed:", error);
+    preparedData = null;
+    setStatus(`Data loading error: ${error.message}`);
+    updateButtons();
+  }
 }
 
 // ============================================================
@@ -593,7 +637,7 @@ function stopOptimiser() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "BOM_Circuits_For_Testing.txt";
+    link.download = `${HUB}_Circuits_For_Testing.txt`;
 
     document.body.appendChild(link);
     link.click();
@@ -607,6 +651,7 @@ function stopOptimiser() {
 // ============================================================
 
 function initialiseEvents() {
+  $("hub-select")?.addEventListener("change", event => activateHub(event.target.value));
   $("run")?.addEventListener(
     "click",
     runOptimiser

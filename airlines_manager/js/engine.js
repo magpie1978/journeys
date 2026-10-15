@@ -1068,6 +1068,8 @@ export function optimise(
     stop = () => false
   } = {}
 ) {
+  const hub = String(data?.hub ?? "BOM").trim().toUpperCase();
+  if (!/^[A-Z0-9]{3,5}$/.test(hub)) throw new Error("Invalid hub identifier.");
   const validation = validateData(data);
   const aircraftList = getSupportedAircraft(data);
 
@@ -1253,7 +1255,7 @@ export function optimise(
 
     const rotation = {
       id:
-        `BOM-${String(
+        `${hub}-${String(
           groupIndex + 1
         ).padStart(3, "0")}`,
 
