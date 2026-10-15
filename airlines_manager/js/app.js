@@ -1,9 +1,9 @@
 
 /**
  * Airlines Manager Rotation Optimiser
- * app.js v0.8
+ * app.js v1.0
  *
- * BOM / MPM mixed-fleet interface.
+ * Automatic multi-hub mixed-fleet interface.
  *
  * All 149 catalogue models, including cargo-only freighters.
  *
@@ -22,6 +22,46 @@ let rawPricing = [];
 let rawAircraft = [];
 let availableHubs = [];
 let loadGeneration = 0;
+// In-memory reservation only; a page refresh clears it.
+let confirmedX380Hub = null;
+let resultHub = null;
+
+function x380GroupsInResult() {
+  return optimisationResult?.rotations?.filter(r => r.model === "X380Plus").length ?? 0;
+}
+
+function updateX380Controls() {
+  const status = $("x380-status");
+  if (status) status.textContent = confirmedX380Hub
+    ? `7 of 10 X380Plus aircraft reserved for ${confirmedX380Hub}. The other 3 cannot form a group.`
+    : "10 X380Plus aircraft available globally (one seven-aircraft group). No confirmed reservation.";
+  const confirm = $("confirm-x380");
+  if (confirm) confirm.disabled = isRunning || !optimisationResult || resultHub !== HUB ||
+    x380GroupsInResult() !== 1 || (confirmedX380Hub !== null && confirmedX380Hub !== HUB);
+  const release = $("release-x380");
+  if (release) release.disabled = isRunning || confirmedX380Hub === null;
+}
+
+function confirmX380() {
+  if (isRunning || !optimisationResult || resultHub !== HUB || x380GroupsInResult() !== 1) return;
+  if (confirmedX380Hub && confirmedX380Hub !== HUB) return;
+  confirmedX380Hub = HUB;
+  updateX380Controls();
+  setStatus(`Confirmed: one X380Plus group reserved for ${HUB} this session.`);
+}
+
+function releaseX380() {
+  if (isRunning || !confirmedX380Hub) return;
+  const previous = confirmedX380Hub;
+  confirmedX380Hub = null;
+  // Old proposed rotations must be rerun before they can be confirmed.
+  optimisationResult = null;
+  resultHub = null;
+  clearResults();
+  updateButtons();
+  setStatus(`Released ${previous}'s X380Plus reservation. Run the optimiser again to create a new proposal.`);
+}
+
 
 function normaliseHub(value) {
   return String(value ?? "").trim().toUpperCase();
@@ -35,7 +75,7 @@ function discoverHubs(routes, pricing) {
   const routeHubs = new Set(routes.map(row => normaliseHub(row.hub)).filter(Boolean));
   const pricingHubs = new Set(pricing.map(row => normaliseHub(row.hub)).filter(Boolean));
   // A hub is usable only if it appears in both datasets.
-  return [...routeHubs].filter(hub => ["BOM", "MPM"].includes(hub) && pricingHubs.has(hub)).sort();
+  return [...routeHubs].filter(hub => pricingHubs.has(hub)).sort();
 }
 
 function renderHubOptions() {
@@ -59,6 +99,7 @@ function activateHub(hub) {
   HUB = selected;
   updateHubHeading();
   optimisationResult = null;
+  resultHub = null;
   preparedData = null;
   clearResults();
   const routes = rawRoutes.filter(row => normaliseHub(row.hub) === HUB);
@@ -181,6 +222,8 @@ function updateButtons() {
   if (stopButton) {
     stopButton.disabled = !isRunning;
   }
+
+  updateX380Controls();
 
   if (downloadButton) {
     downloadButton.disabled =
@@ -420,6 +463,7 @@ function runOptimiser() {
   }
 
   optimisationResult = null;
+  resultHub = null;
   clearResults();
 
   if (worker) {
@@ -496,6 +540,7 @@ function runOptimiser() {
 
       if (type === "result") {
         optimisationResult = payload;
+        resultHub = HUB;
 
         isRunning = false;
 
@@ -557,7 +602,8 @@ function runOptimiser() {
       type: "run",
       data: preparedData,
       settings: {
-        groups
+        groups,
+        x380PlusAvailableGroups: confirmedX380Hub && confirmedX380Hub !== HUB ? 0 : 1
       }
     });
 
@@ -652,6 +698,8 @@ function stopOptimiser() {
 
 function initialiseEvents() {
   $("hub-select")?.addEventListener("change", event => activateHub(event.target.value));
+  $("confirm-x380")?.addEventListener("click", confirmX380);
+  $("release-x380")?.addEventListener("click", releaseX380);
   $("run")?.addEventListener(
     "click",
     runOptimiser

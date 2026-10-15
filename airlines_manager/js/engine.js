@@ -1,7 +1,7 @@
 
 /**
  * Airlines Manager Rotation Optimiser
- * engine.js v0.8
+ * engine.js v1.0
  *
  * Scenario A: Rebuild selected-hub schedules from total demand.
  *
@@ -190,8 +190,8 @@ function validNumber(value) {
 
 export function prepare(routes, pricing, aircraft) {
   const routeHubs = new Set(routes.map(r => String(r.hub ?? "").trim().toUpperCase()));
-  if (routeHubs.size !== 1 || !["BOM", "MPM"].includes([...routeHubs][0])) {
-    throw new Error("Preparation requires exactly one supported hub (BOM or MPM).");
+  if (routeHubs.size !== 1 || !/^[A-Z0-9]{3,5}$/.test([...routeHubs][0])) {
+    throw new Error("Preparation requires exactly one valid hub code.");
   }
   const selectedHub = [...routeHubs][0];
   const pricingByRoute = new Map();
@@ -1077,19 +1077,23 @@ export function optimise(
   data,
   {
     groups = null,
+    x380PlusAvailableGroups = 1,
     onProgress = () => {},
     stop = () => false
   } = {}
 ) {
   const hub = String(data?.hub ?? "").trim().toUpperCase();
-  if (!["BOM", "MPM"].includes(hub)) throw new Error("Unsupported hub; select BOM or MPM.");
+  if (!/^[A-Z0-9]{3,5}$/.test(hub)) throw new Error("Invalid hub code.");
   const validation = validateData(data);
   const aircraftList = getSupportedAircraft(data);
 
   // X380Plus is rare: only ten owned, permitting one complete seven-aircraft group.
   // Increase this number when the owned fleet changes.
   const OWNED_X380PLUS = 10;
-  const MAX_X380PLUS_GROUPS = Math.floor(OWNED_X380PLUS / AIRCRAFT_PER_GROUP);
+  const MAX_X380PLUS_GROUPS = Math.min(
+    Math.floor(OWNED_X380PLUS / AIRCRAFT_PER_GROUP),
+    Number(x380PlusAvailableGroups) === 0 ? 0 : 1
+  );
   let allocatedX380PlusGroups = 0;
 
   const unlimited = groups === null || groups === "";
