@@ -1,9 +1,9 @@
 
 /**
  * Airlines Manager Rotation Optimiser
- * engine.js v0.7
+ * engine.js v0.8
  *
- * Scenario A: Rebuild BOM schedules from total demand.
+ * Scenario A: Rebuild selected-hub schedules from total demand.
  *
  * A380-800: fixed 852E + 4C
  * A350-900ULR: fixed 430E + 1C
@@ -24,7 +24,7 @@
  */
 
 export const EXCLUDED = new Set([
-  "BKK", "CGK", "DEL", "MPM"
+  "BKK", "CGK", "DEL"
 ]);
 
 /**
@@ -189,6 +189,11 @@ function validNumber(value) {
 // ============================================================
 
 export function prepare(routes, pricing, aircraft) {
+  const routeHubs = new Set(routes.map(r => String(r.hub ?? "").trim().toUpperCase()));
+  if (routeHubs.size !== 1 || !["BOM", "MPM"].includes([...routeHubs][0])) {
+    throw new Error("Preparation requires exactly one supported hub (BOM or MPM).");
+  }
+  const selectedHub = [...routeHubs][0];
   const pricingByRoute = new Map();
 
   for (const record of pricing) {
@@ -201,13 +206,15 @@ export function prepare(routes, pricing, aircraft) {
     }
 
     const id = String(record.route_id ?? "").trim();
-
-    if (id) {
+    const priceHub = String(record.hub ?? "").trim().toUpperCase();
+    if (id && priceHub === selectedHub) {
+      if (pricingByRoute.has(id)) throw new Error(`Duplicate pricing route ${selectedHub}/${id}`);
       pricingByRoute.set(id, record);
     }
   }
 
   const preparedRoutes = [];
+  const seenRouteIds = new Set();
 
   for (const record of routes) {
     const ownership = String(
@@ -226,7 +233,12 @@ export function prepare(routes, pricing, aircraft) {
     }
 
     const id = String(record.route_id ?? "").trim();
+    if (!id || seenRouteIds.has(id)) throw new Error(`Missing/duplicate route ID in ${selectedHub}: ${id}`);
+    seenRouteIds.add(id);
     const price = pricingByRoute.get(id);
+    if (price && String(price.airport_code ?? "").trim().toUpperCase() !== code) {
+      throw new Error(`Pricing destination mismatch for ${selectedHub}/${id}`);
+    }
 
     const pricingValid =
       price !== undefined &&
@@ -297,6 +309,7 @@ export function prepare(routes, pricing, aircraft) {
   }
 
   return {
+    hub: selectedHub,
     routes: preparedRoutes,
     aircraft: preparedAircraft,
     scenario: SCENARIO
@@ -1068,8 +1081,8 @@ export function optimise(
     stop = () => false
   } = {}
 ) {
-  const hub = String(data?.hub ?? "BOM").trim().toUpperCase();
-  if (!/^[A-Z0-9]{3,5}$/.test(hub)) throw new Error("Invalid hub identifier.");
+  const hub = String(data?.hub ?? "").trim().toUpperCase();
+  if (!["BOM", "MPM"].includes(hub)) throw new Error("Unsupported hub; select BOM or MPM.");
   const validation = validateData(data);
   const aircraftList = getSupportedAircraft(data);
 

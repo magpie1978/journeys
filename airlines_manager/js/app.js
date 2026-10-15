@@ -1,9 +1,9 @@
 
 /**
  * Airlines Manager Rotation Optimiser
- * app.js v0.6
+ * app.js v0.8
  *
- * BOM mixed-fleet interface.
+ * BOM / MPM mixed-fleet interface.
  *
  * All 149 catalogue models, including cargo-only freighters.
  *
@@ -35,7 +35,7 @@ function discoverHubs(routes, pricing) {
   const routeHubs = new Set(routes.map(row => normaliseHub(row.hub)).filter(Boolean));
   const pricingHubs = new Set(pricing.map(row => normaliseHub(row.hub)).filter(Boolean));
   // A hub is usable only if it appears in both datasets.
-  return [...routeHubs].filter(hub => pricingHubs.has(hub)).sort();
+  return [...routeHubs].filter(hub => ["BOM", "MPM"].includes(hub) && pricingHubs.has(hub)).sort();
 }
 
 function renderHubOptions() {
@@ -73,7 +73,7 @@ function activateHub(hub) {
     $("routes").textContent = formatNumber(preparedData.routes.length);
     $("models").textContent = formatNumber(fleet.length);
     renderConfigurations(fleet);
-    setStatus(`${HUB}: ${formatNumber(preparedData.routes.length)} eligible owned routes loaded; ${fleet.length} aircraft models ready.`);
+    setStatus(`${HUB}: ${formatNumber(preparedData.routes.length)} owned routes loaded (${formatNumber(preparedData.routes.filter(r => r.pricingValid).length)} valid pricing); ${fleet.length} aircraft models ready.`);
     if (preparedData.routes.length === 0) {
       preparedData = null;
       setStatus(`${HUB}: no eligible owned routes found. Check the hub's routes.csv and pricing.csv records.`);
@@ -436,7 +436,7 @@ function runOptimiser() {
       : `up to ${groups} groups`;
 
   setStatus(
-    `Optimising ${groupDescription} across ` +
+    `Optimising ${HUB}: ${groupDescription} across ` +
     `${getConfiguredFleet().length} aircraft models…`
   );
 
@@ -468,7 +468,7 @@ function runOptimiser() {
             : `${payload.completed} of ${groups} groups`;
 
         setStatus(
-          `Built ${countDescription} · ` +
+          `${HUB}: built ${countDescription} · ` +
           `provisional $${formatBillions(payload.total)}bn/week`
         );
 
@@ -519,7 +519,7 @@ function runOptimiser() {
           .join(" · ");
         
         setStatus(
-          `Completed ${completed} groups · ` +
+          `${HUB}: completed ${completed} groups · ` +
           `${fleetText} · ` +
           `provisional $${formatBillions(
             optimisationResult.total
