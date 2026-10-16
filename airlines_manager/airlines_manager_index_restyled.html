@@ -1,0 +1,455 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Airlines Manager Rotation Optimiser</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    /* Visual theme matched to airlines_manager.html (Price Optimiser). */
+    :root {
+      --bg: #0b0d10;
+      --panel: #13161b;
+      --panel-2: #181c22;
+      --border: #2a3039;
+      --text: #f5f7fa;
+      --muted: #929aa6;
+      --accent: #ccff00;
+      --accent-dark: #9fc700;
+      --danger: #ff5c6c;
+      --warning: #ffbf47;
+      --success: #72e39a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #171b21 0, var(--bg) 42%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    body > main {
+      width: min(1180px, calc(100% - 40px));
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 42px 0 70px;
+    }
+    main > header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 32px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1.05;
+      letter-spacing: -.035em;
+    }
+    main > header p:not(.eyebrow) {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 0 24px;
+    }
+    .metrics article {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-2);
+      box-shadow: none;
+    }
+    .metrics small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .metrics strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--text);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+    .panel {
+      margin: 0 0 24px;
+      padding: 26px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.025), transparent), var(--panel);
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      color: var(--text);
+    }
+    .panel h2 {
+      margin: 0 0 20px;
+      font-size: 20px;
+      font-weight: 750;
+      letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .panel h3 {
+      margin: 22px 0 10px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 750;
+    }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 0 0 20px;
+    }
+    .inputs label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+    button, input, select { font: inherit; }
+    input, select {
+      width: 100%;
+      min-height: 43px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      outline-color: var(--accent);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    button {
+      min-height: 43px;
+      padding: 9px 18px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      background: var(--accent);
+      color: #0a0c0f;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); background: #d7ff35; }
+    button.secondary {
+      border-color: var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    button.secondary:hover:not(:disabled) { border-color: #4a535f; background: #222831; }
+    button:disabled { opacity: .38; cursor: not-allowed; }
+    #status {
+      padding: 15px 17px;
+      margin: 18px 0 0;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #0d1014;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+    table { width: 100%; border-collapse: collapse; color: var(--text); }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      text-align: left;
+    }
+    th {
+      background: #11151a;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    tbody tr:hover { background: rgba(255,255,255,.025); }
+    tbody tr:last-child td { border-bottom: 0; }
+    #aircraft-configurations-panel > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      list-style: none;
+    }
+    #aircraft-configurations-panel > summary::-webkit-details-marker { display: none; }
+    #aircraft-configurations-panel > summary h2 { margin: 0; }
+    .expand-label {
+      flex: 0 0 auto;
+      padding: 9px 15px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 750;
+    }
+    #aircraft-configurations-panel > summary:hover .expand-label { border-color: var(--accent); }
+    #aircraft-configurations-panel[open] .expand-label { color: var(--accent); }
+    #aircraft-configurations-panel > .config-content { margin-top: 20px; }
+    footer { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 0; }
+    @media (max-width: 760px) {
+      body > main { width: calc(100% - 24px); padding-top: 25px; }
+      main > header { flex-direction: column; gap: 14px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .inputs { grid-template-columns: 1fr; }
+      .panel { padding: 18px; }
+      #aircraft-configurations-panel > summary { align-items: flex-start; }
+    }
+    @media (max-width: 460px) {
+      .metrics { grid-template-columns: 1fr; }
+      #aircraft-configurations-panel > summary { flex-direction: column; }
+    }
+  </style>
+
+</head>
+
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">AIRLINES MANAGER · <span id="active-hub">BOM</span></p>
+        <h1>Rotation Optimiser</h1>
+        <p>Mixed-fleet planning · Browser-based baseline</p>
+      </div>
+      <span class="pill">v1.0 · Read-only</span>
+    </header>
+
+    <section class="metrics">
+      <article>
+        <small>Eligible owned routes</small>
+        <strong id="routes">—</strong>
+      </article>
+      <article>
+        <small>Aircraft models</small>
+        <strong id="models">—</strong>
+      </article>
+      <article>
+        <small>Rotation limit</small>
+        <strong>168h</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Optimisation settings</h2>
+
+      <div class="inputs">
+        <label>
+          Hub
+          <select id="hub-select" disabled aria-label="Select hub">
+            <option value="BOM">BOM</option>
+          </select>
+        </label>
+        <label>
+          Maximum seven-aircraft groups (blank = unlimited)
+          <input
+            id="groups"
+            type="number"
+            min="1"
+            step="1"
+            value=""
+            placeholder="Unlimited"
+          >
+        </label>
+      </div>
+
+      <p class="hint">
+        Scenario A: Complete selected-hub schedule rebuild.
+        All usable aircraft models are evaluated.
+
+        A380-800 uses fixed 852E + 4C.
+        A350-900ULR uses fixed 430E + 1C.
+
+        Other passenger aircraft use automatic Economy-first
+        configurations. Dedicated freighters use cargo-only
+        configurations based on whole tonnes of payload.
+
+        Every rotation group contains seven identical aircraft
+        with the same configuration.
+
+        Total daily demand is shared across all proposed groups.
+        BKK, CGK and DEL remain excluded as destinations. Hubs are discovered automatically from the route and pricing datasets; demand is optimised separately for each hub.
+      </p>
+
+      <h3>Shared X380Plus allocation</h3>
+      <p id="x380-status" class="hint">10 X380Plus aircraft available globally (one seven-aircraft group). No confirmed reservation.</p>
+      <div class="actions">
+        <button id="confirm-x380" class="secondary" disabled>Confirm X380Plus for selected hub</button>
+        <button id="release-x380" class="secondary" disabled>Release X380Plus reservation</button>
+      </div>
+
+      <div class="actions">
+        <button id="run" disabled>Run optimiser</button>
+        <button id="stop" class="secondary" disabled>Stop</button>
+        <button id="download" class="secondary" disabled>
+          Export rotations TXT
+        </button>
+      </div>
+
+      <p id="status" role="status">
+        Loading route, pricing and aircraft data…
+      </p>
+    </section>
+
+    <section class="panel" aria-label="Aircraft configurations — all models">
+      <details id="aircraft-configurations-panel">
+        <summary>
+          <h2>Aircraft configurations — all models</h2>
+          <span class="expand-label" aria-hidden="true">Expand / Collapse</span>
+        </summary>
+        <div class="config-content">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Aircraft</th>
+                <th>Economy</th>
+                <th>Cargo</th>
+                <th>Category</th>
+                <th>Range (km)</th>
+                <th>Speed (km/h)</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-configurations"></tbody>
+          </table>
+        </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>Fleet allocation</h2>
+      <p class="hint">
+        Seven aircraft per group. Revenue is provisional weekly gross.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Aircraft</th>
+              <th>Configuration</th>
+              <th>Groups</th>
+              <th>Aircraft used</th>
+              <th>Services</th>
+              <th>Weekly gross ($)</th>
+            </tr>
+          </thead>
+          <tbody id="fleet-results"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Network demand</h2>
+      <p class="hint">
+        Daily demand before and after proposed schedules.
+        Demand calculations follow the engine's current
+        two-direction return-service assumption.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Demand</th>
+              <th>Starting</th>
+              <th>Allocated</th>
+              <th>Remaining</th>
+              <th>Remaining %</th>
+            </tr>
+          </thead>
+          <tbody id="demand-results"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Proposed rotations</h2>
+      <p class="hint">
+        All passenger and dedicated cargo aircraft are considered.
+        Exploratory greedy baseline.
+        No rotations have passed game preflight.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Aircraft</th>
+              <th>Configuration</th>
+              <th>Hours</th>
+              <th>Destinations</th>
+              <th>Weekly gross ($)</th>
+            </tr>
+          </thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      No game purchases, audits, fares or schedules
+      are changed by this application.
+    </footer>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
