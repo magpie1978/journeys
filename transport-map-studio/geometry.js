@@ -62,5 +62,6 @@ function fromTurns(heading,turns,leg=170){
  for(let i=0;i<=turns.length;i++){p=add(p,mul(V(Math.cos(rad(h)),Math.sin(rad(h))),leg));points.push(p);if(i<turns.length)h+=turns[i]}
  return points;
 }
-Object.assign(root,{build,verify,fromTurns,rad,add,mul,norm,V});
+root.Geometry={build,verify,fromTurns,rad,add,mul,norm,V};
+if(typeof module!=='undefined')Object.assign(module.exports,root.Geometry);
 })(typeof module!=='undefined'?module.exports:window);
