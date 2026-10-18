@@ -1,95 +1,43 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),svg=$('map'),NS='http://www.w3.org/2000/svg';
 const COLORS=['#ff9f22','#f36a38','#eb4566','#19a5cb','#078f8c','#4274c9','#ad79da','#8acb65'];
-const sample=()=>({stations:[{id:'s1',name:'Central',x:100,y:140},{id:'s2',name:'Town Hall',x:280,y:140},{id:'s3',name:'Wynyard',x:440,y:140},{id:'s4',name:'Redfern',x:820,y:400},{id:'s5',name:'Green Square',x:1060,y:400}],routes:[{id:'r1',from:'s1',to:'s5',via:[{x:480,y:140},{x:740,y:400}],frequency:6,colors:[...COLORS.slice(0,6)]}],settings:{grid:20,spacing:8,radius:45,angles:'45',snap:true,showGrid:true}});
-let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v023')||localStorage.getItem('transport-map-studio-v022')||localStorage.getItem('transport-map-studio-v021')||localStorage.getItem('transport-map-studio-v02')||localStorage.getItem('transport-map-studio-v01'))||sample()}catch{data=sample()}
+const sample=()=>({stations:[{id:'s1',name:'Central',x:100,y:140},{id:'s2',name:'Town Hall',x:270,y:140},{id:'s3',name:'Wynyard',x:420,y:140},{id:'s4',name:'Redfern',x:850,y:400},{id:'s5',name:'Green Square',x:1030,y:400}],routes:[{id:'r1',from:'s1',to:'s5',via:[{x:500,y:140},{x:760,y:400}],frequency:6,colors:[...COLORS.slice(0,6)]}],settings:{grid:20,spacing:8,radius:55,angles:'45',snap:true,showGrid:true}});
+
+let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v03'))||sample()}catch{data=sample()}
 let tool='select',selection=null,draw=null,drag=null,view={x:-40,y:-50,w:1100,h:640},undo=[],redo=[];
-const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v023',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
+const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v03',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
 const station=id=>data.stations.find(s=>s.id===id),point=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}),scale=(a,t)=>({x:a.x*t,y:a.y*t}),length=a=>Math.hypot(a.x,a.y),unit=a=>{let l=length(a)||1;return scale(a,1/l)},normal=a=>({x:-a.y,y:a.x}),cross=(a,b)=>a.x*b.y-a.y*b.x,dot=(a,b)=>a.x*b.x+a.y*b.y,dist=(a,b)=>length(point(a,b)),fmt=n=>Number(n.toFixed(3)),pstr=p=>`${fmt(p.x)} ${fmt(p.y)}`;
-// Geometry engine v0.2.3: build ONE rounded centreline, then offset its
-// straight tangents and concentric arcs. Each strand is exactly parallel.
-// Turns of 45, 90 and 135 degrees are allowed; 180-degree reversals are not.
-// Sharp corners are never substituted when a radius is too small.
-function geometryLayout(points, desiredRadius, maxOffset) {
- const clean=[];
- for (const p of points) if(p && (!clean.length || dist(p,clean.at(-1))>0.01)) clean.push(p);
- if(clean.length<2) return {points:clean,segments:[],corners:[],error:'Need two different points.'};
- const segments=clean.slice(1).map((p,i)=>unit(point(p,clean[i])));
- const corners=[];
- const safeRadius=Math.max(0,Number(desiredRadius)||0,maxOffset+8);
- for(let i=1;i<clean.length-1;i++) {
-  const u=segments[i-1],v=segments[i],theta=Math.atan2(cross(u,v),dot(u,v));
-  if(Math.abs(theta)<1e-7){corners.push(null);continue;}
-  if(Math.abs(theta)>=Math.PI-1e-5) return {error:'180° reversals are not supported.'};
-  const halfTan=Math.tan(Math.abs(theta)/2);
-  corners.push({u,v,theta,sign:Math.sign(theta),tan:halfTan,t:safeRadius*halfTan});
+// v0.3: geometry comes exclusively from the verified Geometry module.
+function routeGeometry(r,project=data){
+ const points=[project.stations.find(s=>s.id===r.from),...r.via,project.stations.find(s=>s.id===r.to)].filter(Boolean);
+ if(points.length!==r.via.length+2)return {error:'Missing endpoint station'};
+ const g=Geometry.build({points,spacing:project.settings.spacing,count:Math.max(1,Math.min(24,r.frequency)),radius:project.settings.radius});
+ if(g.error)return g;
+ const errors=Geometry.verify(g);if(errors.length)return {error:errors.join('; ')};
+ if(project.settings.angles!=='free'){
+  const step=project.settings.angles==='30'?Math.PI/6:Math.PI/4;
+  for(const u of g.dirs){const angle=Math.atan2(u.y,u.x);if(Math.abs(angle-Math.round(angle/step)*step)>1e-4)return {error:'Straight segment violates allowed grid angles'};}
  }
- // Fit neighbouring fillets together without changing the geometry per strand.
- // If insufficient room exists for the innermost arc, reject rather than kink.
- for(let pass=0;pass<12;pass++) {
-  let changed=false;
-  for(let i=0;i<segments.length;i++) {
-   const a=i>0?corners[i-1]:null,b=i<corners.length?corners[i]:null;
-   const need=(a?.t||0)+(b?.t||0),available=dist(clean[i],clean[i+1])*.98;
-   if(need>available+1e-7){const f=available/need;if(a)a.t*=f;if(b)b.t*=f;changed=true;}
-  }
-  if(!changed)break;
- }
- for(const c of corners) if(c && c.t/c.tan<=maxOffset+0.5)
-  return {error:'Not enough room for the frequency strands at this corner. Increase segment lengths or reduce spacing.'};
- return {points:clean,segments,corners,error:null};
+ return g;
 }
-function strandPath(layout,d){
- if(layout.error||layout.segments.length===0)return '';
- const {points:pts,segments:seg,corners}=layout,norms=seg.map(normal);
- let path=`M ${pstr(add(pts[0],scale(norms[0],d)))}`;
- for(let i=1;i<pts.length-1;i++){
-  const c=corners[i-1],p=pts[i];
-  if(!c){path+=` L ${pstr(add(p,scale(norms[i],d)))}`;continue;}
-  const a=add(add(p,scale(c.u,-c.t)),scale(norms[i-1],d));
-  const b=add(add(p,scale(c.v,c.t)),scale(norms[i],d));
-  const r=c.t/c.tan-c.sign*d;
-  if(r<=0)throw Error('Invalid inner fillet radius');
-  path+=` L ${pstr(a)} A ${fmt(r)} ${fmt(r)} 0 0 ${c.sign>0?1:0} ${pstr(b)}`;
- }
- return path+` L ${pstr(add(pts.at(-1),scale(norms.at(-1),d)))}`;
-}
-function offsetPath(points,d,R,maxOffset=Math.abs(d)){
- const layout=geometryLayout(points,R,maxOffset);
- return strandPath(layout,d);
-}
-function geometryError(pts){
- const step=data.settings.angles==='30'?Math.PI/6:Math.PI/4;
- const bearings=[];
- for(let i=1;i<pts.length;i++){
-  const v=point(pts[i],pts[i-1]),l=length(v);
-  if(l<.01)return 'Two adjacent route points overlap.';
-  const a=Math.atan2(v.y,v.x);
-  if(data.settings.angles!=='free' && Math.abs(Math.atan2(Math.sin(a-Math.round(a/step)*step),Math.cos(a-Math.round(a/step)*step)))>.012)
-   return 'Route segments must follow permitted grid angles.';
-  bearings.push(a);
- }
- for(let i=1;i<bearings.length;i++){
-  const turn=Math.abs(Math.atan2(Math.sin(bearings[i]-bearings[i-1]),Math.cos(bearings[i]-bearings[i-1])));
-  if(turn>Math.PI-0.012)return '180° reversals are not supported.';
- }
- return null;
-}
-function validRoutes(){for(const r of data.routes){const pts=routePoints(r),error=geometryError(pts);if(error)return error;const maxOff=(Math.max(1,Math.min(24,r.frequency))-1)*data.settings.spacing/2;const layout=geometryLayout(pts,Math.max(data.settings.radius,maxOff+8),maxOff);if(layout.error)return layout.error}return null}
-function notice(message){$('status').textContent=message}
-function editIfValid(change){const before=clone(data);change();const error=validRoutes();if(error){data=before;notice('Edit rejected: '+error);render();return false}commitSnapshot(before);render();return true}
-function commitSnapshot(before){undo.push(before);if(undo.length>80)undo.shift();redo=[]}
+function allValid(){return data.routes.every(r=>!routeGeometry(r).error)}
+function reportInvalid(){const invalid=data.routes.map(r=>({r,g:routeGeometry(r)})).filter(x=>x.g.error);$('status').textContent=invalid.length?`⚠ ${invalid.length} invalid corridor(s): ${invalid[0].g.error}`:'Select a station or corridor to edit it.';return invalid}
 function routePoints(r){return [station(r.from),...r.via,station(r.to)].filter(Boolean)}
 function stationOnRoute(s,r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i++){let a=pts[i],b=pts[i+1],v=point(b,a),l2=dot(v,v);if(!l2)continue;let t=dot(point(s,a),v)/l2;if(t>=-.001&&t<=1.001&&dist(s,add(a,scale(v,t)))<2)return true}return false}
 function render(){save();$('gridValue').textContent=data.settings.grid;$('spacingValue').textContent=data.settings.spacing;$('radiusValue').textContent=data.settings.radius;['grid','spacing','radius','angles','snap','showGrid'].forEach(k=>{let e=$(k);if(e)e[e.type==='checkbox'?'checked':'value']=data.settings[k]});$('gridPattern').setAttribute('width',data.settings.grid);$('gridPattern').setAttribute('height',data.settings.grid);$('gridPath').setAttribute('d',`M ${data.settings.grid} 0 L 0 0 0 ${data.settings.grid}`);$('gridRect').style.display=data.settings.showGrid?'':'none';svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);
 ['routesLayer','stationsLayer','handlesLayer','previewLayer'].forEach(k=>$(k).replaceChildren());
-for(let r of data.routes){let pts=routePoints(r),n=Math.max(1,Math.min(24,r.frequency)),spacing=data.settings.spacing,maxOff=(n-1)*spacing/2;
-// One validated centreline layout for ALL strands. Never use sharp fallbacks.
-let radius=Math.max(data.settings.radius,maxOff+8);
-let layout=geometryLayout(pts,radius,maxOff);
-if(layout.error){el('text',{x:pts[0]?.x||0,y:(pts[0]?.y||0)-30,fill:'#ff7087','font-size':13},$('routesLayer')).textContent=layout.error;continue;}
-for(let i=0;i<n;i++){let d=(i-(n-1)/2)*spacing;el('path',{d:strandPath(layout,d),fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,spacing*.72),'stroke-linejoin':'round','stroke-linecap':'round','pointer-events':'none'},$('routesLayer'))}
-let hit=el('path',{d:strandPath(layout,0),fill:'none',stroke:'transparent','stroke-width':Math.max(18,n*spacing+10),cursor:'pointer','data-route':r.id},$('routesLayer'));hit.addEventListener('pointerdown',e=>{if(tool==='select'||tool==='point'){e.stopPropagation();if(tool==='point'){insertBend(r,toWorld(e));return}selection={type:'route',id:r.id};render()}});hit.addEventListener('dblclick',e=>{e.stopPropagation();insertBend(r,toWorld(e))});if(selection?.type==='route'&&selection.id===r.id)el('path',{d:strandPath(layout,0),fill:'none',stroke:'#f5f5f5','stroke-width':1.3,'stroke-dasharray':'5 6','pointer-events':'none'},$('handlesLayer'))}
+let invalid=[];
+for(let r of data.routes){let g=routeGeometry(r),pts=routePoints(r);
+ if(g.error){invalid.push({r,g});el('path',{d:pts.map((p,i)=>`${i?'L':'M'} ${pstr(p)}`).join(' '),fill:'none',stroke:'#ff5c76','stroke-width':3,'stroke-dasharray':'7 6','pointer-events':'none'},$('routesLayer'));continue}
+ g.strands.forEach((strand,i)=>el('path',{d:strand.path,fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,data.settings.spacing*.72),'stroke-linecap':'round','pointer-events':'none'},$('routesLayer')));
+ let hit=el('path',{d:g.strands[Math.floor(g.strands.length/2)].path,fill:'none',stroke:'transparent','stroke-width':Math.max(18,g.count*g.spacing+10),cursor:'pointer','data-route':r.id},$('routesLayer'));
+ hit.addEventListener('pointerdown',e=>{if(tool==='select'||tool==='point'){e.stopPropagation();if(tool==='point'){insertBend(r,toWorld(e));return}selection={type:'route',id:r.id};render()}});
+ hit.addEventListener('dblclick',e=>{e.stopPropagation();insertBend(r,toWorld(e))});
+ if(selection?.type==='route'&&selection.id===r.id)el('path',{d:g.strands[Math.floor(g.strands.length/2)].path,fill:'none',stroke:'#f5f5f5','stroke-width':1.3,'stroke-dasharray':'5 6','pointer-events':'none'},$('handlesLayer'));
+}
+if(invalid.length)$('status').textContent=`⚠ Invalid corridor: ${invalid[0].g.error}`;
+else if($('status').textContent.startsWith('⚠'))$('status').textContent='Geometry valid. Select a station or corridor.';
+
 for(let s of data.stations){
  let selected=selection?.type==='station'&&selection.id===s.id;
  let associated=data.routes.filter(r=>r.from===s.id||r.to===s.id||routePoints(r).slice(1,-1).some(p=>p.id===s.id)||stationOnRoute(s,r));
@@ -104,10 +52,10 @@ for(let s of data.stations){
  let txt=el('text',{x:lx,y:ly,transform:`rotate(${rot} ${lx} ${ly})`,class:'station-label','font-size':label.size||12,'text-anchor':label.align||'start'},$('stationsLayer'));txt.textContent=s.name;
  if(selected){el('circle',{cx:s.x,cy:s.y,r:3,fill:'#ff5068','pointer-events':'none'},$('handlesLayer'));let lh=el('circle',{cx:lx,cy:ly,r:5,fill:'#ffcb58',stroke:'#101827','stroke-width':2,class:'handle'},$('handlesLayer'));lh.addEventListener('pointerdown',e=>{e.stopPropagation();commit();drag={kind:'label',id:s.id};svg.setPointerCapture(e.pointerId)})}
 }
-if(selection?.type==='route'){let r=data.routes.find(r=>r.id===selection.id);if(r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i++){let mid=scale(add(pts[i],pts[i+1]),.5);let h=el('circle',{cx:mid.x,cy:mid.y,r:5,fill:'#6be0ff',stroke:'#0d1726','stroke-width':2,class:'handle'},$('handlesLayer'));h.addEventListener('pointerdown',e=>{e.stopPropagation();commit();r.via.splice(i,0,snapped(mid));selection={type:'route',id:r.id};drag={kind:'bend',id:r.id,index:i};svg.setPointerCapture(e.pointerId);render()})}}if(r)r.via.forEach((p,i)=>{let h=el('rect',{x:p.x-6,y:p.y-6,width:12,height:12,rx:2,fill:'#fff',stroke:'#e8495c','stroke-width':2,class:'handle'},$('handlesLayer'));h.addEventListener('pointerdown',e=>{e.stopPropagation();commit();drag={kind:'bend',id:r.id,index:i};svg.setPointerCapture(e.pointerId)})})}
-if(draw){let pts=[station(draw.from),...draw.via,draw.cursor].filter(Boolean);el('path',{d:offsetPath(pts,0,Math.max(2,data.settings.radius)),fill:'none',stroke:'#fff','stroke-width':2,'stroke-dasharray':'7 6','pointer-events':'none'},$('previewLayer'))}
+if(selection?.type==='route'){let r=data.routes.find(r=>r.id===selection.id);if(r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i++){let mid=scale(add(pts[i],pts[i+1]),.5);let h=el('circle',{cx:mid.x,cy:mid.y,r:5,fill:'#6be0ff',stroke:'#0d1726','stroke-width':2,class:'handle'},$('handlesLayer'));h.addEventListener('pointerdown',e=>{e.stopPropagation();commit();r.via.splice(i,0,snapped(mid));if(!allValid()){r.via.splice(i,1);undo.pop();$('status').textContent='⚠ Cannot insert bend here.';render();return}selection={type:'route',id:r.id};drag={kind:'bend',id:r.id,index:i};svg.setPointerCapture(e.pointerId);render()})}}if(r)r.via.forEach((p,i)=>{let h=el('rect',{x:p.x-6,y:p.y-6,width:12,height:12,rx:2,fill:'#fff',stroke:'#e8495c','stroke-width':2,class:'handle'},$('handlesLayer'));h.addEventListener('pointerdown',e=>{e.stopPropagation();commit();drag={kind:'bend',id:r.id,index:i};svg.setPointerCapture(e.pointerId)})})}
+if(draw){let pts=[station(draw.from),...draw.via,draw.cursor].filter(Boolean);el('path',{d:pts.map((p,i)=>`${i?'L':'M'} ${pstr(p)}`).join(' '),fill:'none',stroke:'#fff','stroke-width':2,'stroke-dasharray':'7 6','pointer-events':'none'},$('previewLayer'))}
 renderProperties()}
-function renderProperties(){let p=$('properties');p.replaceChildren();if(!selection){p.textContent='Select a station or corridor.';return}let obj=selection.type==='station'?station(selection.id):data.routes.find(r=>r.id===selection.id);if(!obj){selection=null;p.textContent='Nothing selected.';return}function field(name,value,cb,type='text'){let label=document.createElement('label');label.textContent=name;let input=document.createElement('input');input.type=type;input.value=value;input.addEventListener('change',()=>{if(selection.type==='station'&&(name==='X coordinate'||name==='Y coordinate'))editIfValid(()=>cb(input.value));else{commit();cb(input.value);render()}});label.appendChild(input);p.appendChild(label)}if(selection.type==='station'){field('Station name',obj.name,v=>obj.name=v);field('X coordinate',obj.x,v=>obj.x=Number(v),'number');field('Y coordinate',obj.y,v=>obj.y=Number(v),'number');
+function renderProperties(){let p=$('properties');p.replaceChildren();if(!selection){p.textContent='Select a station or corridor.';return}let obj=selection.type==='station'?station(selection.id):data.routes.find(r=>r.id===selection.id);if(!obj){selection=null;p.textContent='Nothing selected.';return}function field(name,value,cb,type='text'){let label=document.createElement('label');label.textContent=name;let input=document.createElement('input');input.type=type;input.value=value;input.addEventListener('change',()=>{commit();let before=clone(data);cb(input.value);if(!allValid()){data=before;undo.pop();$('status').textContent='⚠ Property rejected: invalid route geometry.'}render()});label.appendChild(input);p.appendChild(label)}if(selection.type==='station'){field('Station name',obj.name,v=>obj.name=v);field('X coordinate',obj.x,v=>obj.x=Number(v),'number');field('Y coordinate',obj.y,v=>obj.y=Number(v),'number');
  obj.label ||= {};
  let check=document.createElement('label');check.className='check';let cb=document.createElement('input');cb.type='checkbox';cb.checked=!!obj.interchange;cb.onchange=()=>{commit();obj.interchange=cb.checked;render()};check.append(cb,document.createTextNode(' Interchange marker'));p.appendChild(check);
  field('Label offset X',obj.label.dx??10,v=>{obj.label.dx=Number(v)},'number');field('Label offset Y',obj.label.dy??-12,v=>{obj.label.dy=Number(v)},'number');field('Label rotation (degrees)',obj.label.rotation??0,v=>{obj.label.rotation=Number(v)},'number');field('Label font size',obj.label.size??12,v=>{obj.label.size=Math.max(6,Math.min(40,Number(v)||12))},'number');
@@ -119,16 +67,16 @@ function deleteSelected(){if(!selection)return;commit();if(selection.type==='sta
 function toWorld(e){let rect=svg.getBoundingClientRect();return{x:view.x+(e.clientX-rect.left)*view.w/rect.width,y:view.y+(e.clientY-rect.top)*view.h/rect.height}}
 function snapped(p){let g=data.settings.grid;if(data.settings.snap)return{x:Math.round(p.x/g)*g,y:Math.round(p.y/g)*g};return p}
 function constrain(p,anchor){if(!anchor||data.settings.angles==='free')return p;let dx=p.x-anchor.x,dy=p.y-anchor.y,r=Math.hypot(dx,dy);if(r<.01)return p;let step=data.settings.angles==='30'?Math.PI/6:Math.PI/4,a=Math.round(Math.atan2(dy,dx)/step)*step;return{x:anchor.x+Math.cos(a)*r,y:anchor.y+Math.sin(a)*r}}
-function routeClick(s){if(!draw){draw={from:s.id,via:[],cursor:{x:s.x,y:s.y}};$('status').textContent=`Route started at ${s.name}. Add bends, then click destination station.`;render();return}if(s.id===draw.from&&draw.via.length===0)return;commit();let r={id:'r'+Date.now(),from:draw.from,to:s.id,via:draw.via,frequency:3,colors:COLORS.slice(0,3)};data.routes.push(r);const error=validRoutes();if(error){data.routes.pop();undo.pop();notice('Cannot finish route: '+error+' Add another permitted bend point.');render();return}draw=null;selection={type:'route',id:r.id};$('status').textContent='Corridor created. Edit frequency and strand colours on the right.';render()}
-function insertBend(r,p){commit();let pts=routePoints(r),best=0,min=Infinity;for(let i=0;i<pts.length-1;i++){let a=pts[i],b=pts[i+1],v=point(b,a),t=Math.max(0,Math.min(1,dot(point(p,a),v)/(dot(v,v)||1))),q=add(a,scale(v,t)),d=dist(q,p);if(d<min){min=d;best=i}}r.via.splice(best,0,snapped(p));const error=validRoutes();if(error){r.via.splice(best,1);undo.pop();notice('Bend rejected: '+error);render();return}selection={type:'route',id:r.id};render()}
-function pointerDown(e){if(e.button!==0&&e.button!==1)return;svg.focus();let p=toWorld(e);if(tool==='station'&&e.target===svg||tool==='station'&&['background','gridRect'].includes(e.target.id)){commit();let q=snapped(p),s={id:'s'+Date.now(),name:'New station',...q};data.stations.push(s);selection={type:'station',id:s.id};render();return}if(tool==='route'&&draw&&['background','gridRect'].includes(e.target.id)){let a=draw.via.at(-1)||station(draw.from),q=snapped(constrain(p,a));const check=geometryError([station(draw.from),...draw.via,q]);if(check){notice('Bend rejected: '+check);return}draw.via.push(q);render();return}if(tool==='pan'||e.button===1||e.shiftKey||spaceHeld){drag={kind:'pan',clientX:e.clientX,clientY:e.clientY,view:{...view}};svg.setPointerCapture(e.pointerId);svg.classList.add('dragging');return}if(tool==='select'&&['background','gridRect'].includes(e.target.id)){selection=null;render()}}
-let spaceHeld=false;svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',e=>{let p=toWorld(e);if(drag){if(drag.kind==='pan'){let rect=svg.getBoundingClientRect();view.x=drag.view.x-(e.clientX-drag.clientX)*view.w/rect.width;view.y=drag.view.y-(e.clientY-drag.clientY)*view.h/rect.height;svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)}else if(drag.kind==='station'){let s=station(drag.id);let old={x:s.x,y:s.y};Object.assign(s,snapped(p));let error=validRoutes();if(error){Object.assign(s,old);notice('Move blocked: '+error)}render()}else if(drag.kind==='label'){let st=station(drag.id);st.label ||= {};st.label.dx=p.x-st.x;st.label.dy=p.y-st.y;render()}else if(drag.kind==='bend'){let r=data.routes.find(r=>r.id===drag.id);let old={...r.via[drag.index]};r.via[drag.index]=snapped(p);let error=validRoutes();if(error){r.via[drag.index]=old;notice('Bend blocked: '+error)}render()}return}if(draw){draw.cursor=snapped(constrain(p,draw.via.at(-1)||station(draw.from)));render()}});svg.addEventListener('pointerup',e=>{if(drag){drag=null;svg.classList.remove('dragging');render()}});svg.addEventListener('wheel',e=>{e.preventDefault();let p=toWorld(e),factor=e.deltaY>0?1.12:1/1.12;view.x=p.x-(p.x-view.x)*factor;view.y=p.y-(p.y-view.y)*factor;view.w*=factor;view.h*=factor;svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)},{passive:false});document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.code==='Space'){spaceHeld=true;e.preventDefault()}if(e.key==='Escape'){draw=null;drag=null;render()}if(e.key==='Delete'||e.key==='Backspace')deleteSelected();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();historyMove(e.shiftKey?'redo':'undo')}});document.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false});
+function routeClick(s){if(!draw){draw={from:s.id,via:[],cursor:{x:s.x,y:s.y}};$('status').textContent=`Route started at ${s.name}. Add bends, then click destination station.`;render();return}if(s.id===draw.from&&draw.via.length===0)return;commit();let r={id:'r'+Date.now(),from:draw.from,to:s.id,via:draw.via,frequency:3,colors:COLORS.slice(0,3)};data.routes.push(r);if(!allValid()){data.routes.pop();undo.pop();$('status').textContent='⚠ Corridor rejected: bend radius, straight length or angles invalid.';render();return}draw=null;selection={type:'route',id:r.id};$('status').textContent='Corridor created. Edit frequency and strand colours on the right.';render()}
+function insertBend(r,p){commit();let pts=routePoints(r),best=0,min=Infinity;for(let i=0;i<pts.length-1;i++){let a=pts[i],b=pts[i+1],v=point(b,a),t=Math.max(0,Math.min(1,dot(point(p,a),v)/(dot(v,v)||1))),q=add(a,scale(v,t)),d=dist(q,p);if(d<min){min=d;best=i}}r.via.splice(best,0,snapped(p));if(!allValid()){r.via.splice(best,1);undo.pop();$('status').textContent='⚠ Bend rejected: insufficient space or invalid angle.';render();return}selection={type:'route',id:r.id};render()}
+function pointerDown(e){if(e.button!==0&&e.button!==1)return;svg.focus();let p=toWorld(e);if(tool==='station'&&e.target===svg||tool==='station'&&['background','gridRect'].includes(e.target.id)){commit();let q=snapped(p),s={id:'s'+Date.now(),name:'New station',...q};data.stations.push(s);selection={type:'station',id:s.id};render();return}if(tool==='route'&&draw&&['background','gridRect'].includes(e.target.id)){let a=draw.via.at(-1)||station(draw.from),q=snapped(constrain(p,a));draw.via.push(q);render();return}if(tool==='pan'||e.button===1||e.shiftKey||spaceHeld){drag={kind:'pan',clientX:e.clientX,clientY:e.clientY,view:{...view}};svg.setPointerCapture(e.pointerId);svg.classList.add('dragging');return}if(tool==='select'&&['background','gridRect'].includes(e.target.id)){selection=null;render()}}
+let spaceHeld=false;svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',e=>{let p=toWorld(e);if(drag){if(drag.kind==='pan'){let rect=svg.getBoundingClientRect();view.x=drag.view.x-(e.clientX-drag.clientX)*view.w/rect.width;view.y=drag.view.y-(e.clientY-drag.clientY)*view.h/rect.height;svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)}else if(drag.kind==='station'){let s=station(drag.id);let before={x:s.x,y:s.y};Object.assign(s,snapped(p));if(!allValid()){Object.assign(s,before);$('status').textContent='⚠ Movement blocked: invalid bend or segment.'}render()}else if(drag.kind==='label'){let st=station(drag.id);st.label ||= {};st.label.dx=p.x-st.x;st.label.dy=p.y-st.y;render()}else if(drag.kind==='bend'){let r=data.routes.find(r=>r.id===drag.id);let before={...r.via[drag.index]};r.via[drag.index]=snapped(p);if(!allValid()){r.via[drag.index]=before;$('status').textContent='⚠ Movement blocked: invalid bend or segment.'}render()}return}if(draw){draw.cursor=snapped(constrain(p,draw.via.at(-1)||station(draw.from)));render()}});svg.addEventListener('pointerup',e=>{if(drag){drag=null;svg.classList.remove('dragging');render()}});svg.addEventListener('wheel',e=>{e.preventDefault();let p=toWorld(e),factor=e.deltaY>0?1.12:1/1.12;view.x=p.x-(p.x-view.x)*factor;view.y=p.y-(p.y-view.y)*factor;view.w*=factor;view.h*=factor;svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)},{passive:false});document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.code==='Space'){spaceHeld=true;e.preventDefault()}if(e.key==='Escape'){draw=null;drag=null;render()}if(e.key==='Delete'||e.key==='Backspace')deleteSelected();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();historyMove(e.shiftKey?'redo':'undo')}});document.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false});
 function historyMove(direction){let src=direction==='undo'?undo:redo,dst=direction==='undo'?redo:undo;if(!src.length)return;dst.push(clone(data));data=src.pop();selection=null;draw=null;render()}
 function fitMap(){let pts=[...data.stations,...data.routes.flatMap(r=>r.via)];if(!pts.length){view={x:-40,y:-50,w:1100,h:640};render();return}let minx=Math.min(...pts.map(p=>p.x)),maxx=Math.max(...pts.map(p=>p.x)),miny=Math.min(...pts.map(p=>p.y)),maxy=Math.max(...pts.map(p=>p.y));let rect=svg.getBoundingClientRect(),ratio=rect.width/Math.max(1,rect.height),w=Math.max(280,maxx-minx+180),h=Math.max(200,maxy-miny+160);if(w/h<ratio)w=h*ratio;else h=w/ratio;view={x:(minx+maxx-w)/2,y:(miny+maxy-h)/2,w,h};render()}
 $('fit').onclick=fitMap;
-$('undo').onclick=()=>historyMove('undo');$('redo').onclick=()=>historyMove('redo');document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b));svg.className.baseVal=tool;draw=null;render()});['grid','spacing','radius','angles','snap','showGrid'].forEach(k=>$(k).addEventListener('change',e=>{commit();const old=data.settings[k];data.settings[k]=e.target.type==='checkbox'?e.target.checked:e.target.type==='range'?Number(e.target.value):e.target.value;const error=k==='angles'?validRoutes():null;if(error){data.settings[k]=old;undo.pop();notice('Angle setting rejected: '+error)}render()}));
+$('undo').onclick=()=>historyMove('undo');$('redo').onclick=()=>historyMove('redo');document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b));svg.className.baseVal=tool;draw=null;render()});['grid','spacing','radius','angles','snap','showGrid'].forEach(k=>$(k).addEventListener('change',e=>{commit();let old=data.settings[k];data.settings[k]=e.target.type==='checkbox'?e.target.checked:e.target.type==='range'?Number(e.target.value):e.target.value;if(!allValid()){data.settings[k]=old;undo.pop();$('status').textContent='⚠ Setting rejected: would invalidate a corridor.'}render()}));
 function download(filename,text,type){let a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type}));a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-$('save').onclick=()=>download('transport-map-project.json',JSON.stringify(data,null,2),'application/json');$('load').onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.stations)||!Array.isArray(d.routes)||!d.settings)throw Error('Invalid project structure');commit();data=d;selection=null;draw=null;render()}catch(err){alert('Unable to load project: '+err.message)}e.target.value=''};
+$('save').onclick=()=>download('transport-map-project.json',JSON.stringify(data,null,2),'application/json');$('load').onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.stations)||!Array.isArray(d.routes)||!d.settings)throw Error('Invalid project structure');commit();data=d;if(!allValid()){$('status').textContent='⚠ Imported project contains invalid geometry; affected routes shown dashed.'}selection=null;draw=null;render()}catch(err){alert('Unable to load project: '+err.message)}e.target.value=''};
 $('export').onclick=()=>{let exportSvg=svg.cloneNode(true);exportSvg.removeAttribute('tabindex');exportSvg.setAttribute('xmlns',NS);exportSvg.setAttribute('width','1600');exportSvg.setAttribute('height','930');exportSvg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);exportSvg.querySelector('#handlesLayer')?.remove();exportSvg.querySelector('#previewLayer')?.remove();exportSvg.querySelectorAll('[data-route]').forEach(e=>e.remove());exportSvg.querySelectorAll('.station-hit').forEach(e=>e.remove());let style=el('style');style.textContent='.station-label{font-family:system-ui,sans-serif;fill:#f2f6ff;paint-order:stroke;stroke:#111827;stroke-width:3px;stroke-linejoin:round}';exportSvg.insertBefore(style,exportSvg.firstChild);download('transport-map.svg',new XMLSerializer().serializeToString(exportSvg),'image/svg+xml')};
 $('reset').onclick=()=>{if(confirm('Restore the sample map?')){commit();data=sample();selection=null;draw=null;render()}};$('blank').onclick=()=>{if(confirm('Start a blank map?')){commit();data={stations:[],routes:[],settings:{...data.settings}};selection=null;draw=null;render()}};
 render();})();
