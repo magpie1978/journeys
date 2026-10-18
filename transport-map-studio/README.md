@@ -1,28 +1,20 @@
-# Transport Map Studio v0.1
+# Transport Map Studio v0.2
 
-A static, browser-based schematic transport map editor. No build process, API key or backend is required.
+Static schematic transport map editor. Upload `index.html`, `styles.css`, and `app.js` to the same GitHub Pages folder. No build step.
 
-## Deployment
-Upload `index.html`, `styles.css` and `app.js` together into a GitHub Pages directory. Open `index.html` on the published site.
+## New in v0.2
+- Station tick markers span the width of the largest associated corridor.
+- Interchange stations use a thick white bar (select station → Properties → Interchange marker).
+- Station label X/Y offsets, rotation, size and alignment. Drag the yellow handle when a station is selected.
+- Route midpoint handles (blue) insert draggable bend points; square handles move existing bends.
+- Fit map toolbar button.
+- Autosave storage migrated from v0.1 when no v0.2 save exists.
 
-## Controls
-- Select: drag stations, select a corridor, drag its square bend handles.
-- Add station: click an empty grid location, then rename the station in Properties.
-- Draw corridor: click a starting station, click optional bend positions, then click the ending station. Escape cancels.
-- Add bend point: click an existing corridor; or double-click a corridor in any mode.
-- Pan: drag the canvas, or hold Space while dragging.
-- Mouse wheel: zoom at the pointer.
-- Delete: delete selected station or corridor.
-- Undo/Redo: toolbar or Cmd/Ctrl+Z (Shift for redo).
-- Save JSON / Load JSON: portable project format.
-- Export SVG: exports the current viewport.
+## Editing
+Select station → drag to move; click a route to select it. Draw corridor: click first station, add bend points, click last station. Double-click route to insert bend. Scroll to zoom, Space+drag to pan, Escape to cancel. Save JSON to keep portable backups.
 
-## Geometry
-Parallel strands are offset perpendicular to a shared centreline. Filleted bends use strand-specific concentric circular arcs. The bend radius is increased to prevent the innermost strand from collapsing. Tight segments may reduce radii to fit. The geometry engine is a first iteration; acute junctions, self-crossing paths, and automatic merging/reordering of service strands are not yet supported.
-
-## Known limitations / next steps
-- Route segments are independent; automatic junction routing and service-frequency aggregation are not implemented.
-- Angle snapping applies while placing corridor bends; dragging existing bends is grid-snapped only.
-- The example uses illustrative station placement and frequencies, not verified Sydney timetable data.
-- Export SVG is viewport-based; future versions should offer page bounds and print layouts.
-- Browser localStorage is convenience storage, not a replacement for exported JSON backups.
+## Known limitations
+- Station ticks use the widest associated corridor and do not yet create full multi-service interchange symbols.
+- Shared-corridor strand routing, junction splitting/merging, label collision detection and segment dragging without inserting a bend are future features.
+- Very tight compound bends can still produce imperfect offset geometry.
+- v0.1 local projects migrate to v0.2; existing v0.1 data is not deleted.
