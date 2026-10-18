@@ -3,13 +3,13 @@ const $=id=>document.getElementById(id),svg=$('map'),NS='http://www.w3.org/2000/
 const COLORS=['#ff9f22','#f36a38','#eb4566','#19a5cb','#078f8c','#4274c9','#ad79da','#8acb65'];
 const sample=()=>({stations:[{id:'s1',name:'Central',x:100,y:140},{id:'s2',name:'Town Hall',x:270,y:140},{id:'s3',name:'Wynyard',x:420,y:140},{id:'s4',name:'Redfern',x:850,y:400},{id:'s5',name:'Green Square',x:1030,y:400}],routes:[{id:'r1',from:'s1',to:'s5',via:[{x:500,y:140},{x:760,y:400}],frequency:6,colors:[...COLORS.slice(0,6)]}],settings:{grid:20,spacing:8,radius:55,angles:'45',snap:true,showGrid:true}});
 
-let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v03'))||sample()}catch{data=sample()}
+let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v041'))||JSON.parse(localStorage.getItem('transport-map-studio-v03'))||sample()}catch{data=sample()}
 let tool='select',selection=null,draw=null,drag=null,view={x:-40,y:-50,w:1100,h:640},undo=[],redo=[];
-const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v03',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
+const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v041',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
 const station=id=>data.stations.find(s=>s.id===id),point=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}),scale=(a,t)=>({x:a.x*t,y:a.y*t}),length=a=>Math.hypot(a.x,a.y),unit=a=>{let l=length(a)||1;return scale(a,1/l)},normal=a=>({x:-a.y,y:a.x}),cross=(a,b)=>a.x*b.y-a.y*b.x,dot=(a,b)=>a.x*b.x+a.y*b.y,dist=(a,b)=>length(point(a,b)),fmt=n=>Number(n.toFixed(3)),pstr=p=>`${fmt(p.x)} ${fmt(p.y)}`;
 // v0.3: geometry comes exclusively from the verified Geometry module.
 function routeGeometry(r,project=data){
- const points=[project.stations.find(s=>s.id===r.from),...r.via,project.stations.find(s=>s.id===r.to)].filter(Boolean);
+ const points=[project.stations.find(s=>s.id===r.from),...r.via,project.stations.find(s=>s.id===r.to)].filter(Boolean).map((p,i,arr)=>{if(!p)return p;const offset=i===0?r.fromOffset:i===arr.length-1?r.toOffset:null;return offset?{...p,x:p.x+(offset.x||0),y:p.y+(offset.y||0)}:p});
  if(points.length!==r.via.length+2)return {error:'Missing endpoint station'};
  const g=Geometry.build({points,spacing:project.settings.spacing,count:Math.max(1,Math.min(24,r.frequency)),radius:project.settings.radius});
  if(g.error)return g;
@@ -22,7 +22,7 @@ function routeGeometry(r,project=data){
 }
 function allValid(){return data.routes.every(r=>!routeGeometry(r).error)}
 function reportInvalid(){const invalid=data.routes.map(r=>({r,g:routeGeometry(r)})).filter(x=>x.g.error);$('status').textContent=invalid.length?`⚠ ${invalid.length} invalid corridor(s): ${invalid[0].g.error}`:'Select a station or corridor to edit it.';return invalid}
-function routePoints(r){return [station(r.from),...r.via,station(r.to)].filter(Boolean)}
+function routePoints(r){return [station(r.from)&&{...station(r.from),x:station(r.from).x+(r.fromOffset?.x||0),y:station(r.from).y+(r.fromOffset?.y||0)},...r.via,station(r.to)&&{...station(r.to),x:station(r.to).x+(r.toOffset?.x||0),y:station(r.to).y+(r.toOffset?.y||0)}].filter(Boolean)}
 function stationOnRoute(s,r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i++){let a=pts[i],b=pts[i+1],v=point(b,a),l2=dot(v,v);if(!l2)continue;let t=dot(point(s,a),v)/l2;if(t>=-.001&&t<=1.001&&dist(s,add(a,scale(v,t)))<2)return true}return false}
 function render(){save();$('gridValue').textContent=data.settings.grid;$('spacingValue').textContent=data.settings.spacing;$('radiusValue').textContent=data.settings.radius;['grid','spacing','radius','angles','snap','showGrid'].forEach(k=>{let e=$(k);if(e)e[e.type==='checkbox'?'checked':'value']=data.settings[k]});$('gridPattern').setAttribute('width',data.settings.grid);$('gridPattern').setAttribute('height',data.settings.grid);$('gridPath').setAttribute('d',`M ${data.settings.grid} 0 L 0 0 0 ${data.settings.grid}`);$('gridRect').style.display=data.settings.showGrid?'':'none';svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);
 ['routesLayer','stationsLayer','handlesLayer','previewLayer'].forEach(k=>$(k).replaceChildren());
@@ -44,6 +44,9 @@ for(let s of data.stations){
  let primary=associated.sort((a,b)=>b.frequency-a.frequency)[0],tangent={x:1,y:0};
  if(primary){let pts=routePoints(primary),best=Infinity;for(let j=0;j<pts.length-1;j++){let a=pts[j],b=pts[j+1],v=point(b,a),u=unit(v),q=add(a,scale(u,Math.max(0,Math.min(length(v),dot(point(s,a),u))))),d=dist(q,s);if(d<best){best=d;tangent=u}}}
  let n=primary?Math.max(1,Math.min(24,primary.frequency)):1,half=(n-1)*data.settings.spacing/2+6,perp=normal(tangent),barWidth=s.interchange?9:2.4;
+ const attached=data.routes.filter(r=>r.from===s.id||r.to===s.id);
+ const extras=attached.map(r=>r.from===s.id?r.fromOffset:r.toOffset).filter(Boolean);
+ if(extras.length&&Math.abs(tangent.x)>.8){half=Math.max(half,...extras.map(o=>Math.abs(o.y)+(n-1)*data.settings.spacing/2+6));}
  if(primary){let a=add(s,scale(perp,-half)),b=add(s,scale(perp,half));el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#101827','stroke-width':barWidth+3,'stroke-linecap':'square','pointer-events':'none'},$('stationsLayer'));el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:s.interchange?'#f4f7ff':'#dbe8f6','stroke-width':barWidth,'stroke-linecap':'square','pointer-events':'none'},$('stationsLayer'))}
  else el('circle',{cx:s.x,cy:s.y,r:5,fill:'#f9fafb',stroke:'#172132','stroke-width':2,'pointer-events':'none'},$('stationsLayer'));
  let hit=el('circle',{cx:s.x,cy:s.y,r:Math.max(10,Math.min(17,half)),fill:'transparent',stroke:selected?'#ff5068':'transparent','stroke-width':2,class:'station-hit','data-station':s.id},$('stationsLayer'));
@@ -96,8 +99,8 @@ function deleteSelected(){if(!selection)return;commit();if(selection.type==='sta
 function toWorld(e){let rect=svg.getBoundingClientRect();return{x:view.x+(e.clientX-rect.left)*view.w/rect.width,y:view.y+(e.clientY-rect.top)*view.h/rect.height}}
 function snapped(p){let g=data.settings.grid;if(data.settings.snap)return{x:Math.round(p.x/g)*g,y:Math.round(p.y/g)*g};return p}
 function constrain(p,anchor){if(!anchor||data.settings.angles==='free')return p;let dx=p.x-anchor.x,dy=p.y-anchor.y,r=Math.hypot(dx,dy);if(r<.01)return p;let step=data.settings.angles==='30'?Math.PI/6:Math.PI/4,a=Math.round(Math.atan2(dy,dx)/step)*step;return{x:anchor.x+Math.cos(a)*r,y:anchor.y+Math.sin(a)*r}}
-function autoRoute(from,to){
- const a=station(from),b=station(to),dx=b.x-a.x,dy=b.y-a.y;
+function autoRoute(from,to,fromOffset=null,toOffset=null){
+ const a={...station(from),x:station(from).x+(fromOffset?.x||0),y:station(from).y+(fromOffset?.y||0)},b={...station(to),x:station(to).x+(toOffset?.x||0),y:station(to).y+(toOffset?.y||0)},dx=b.x-a.x,dy=b.y-a.y;
  const unique=new Map(),addCandidate=(via)=>{let key=JSON.stringify(via);if(!unique.has(key))unique.set(key,via)};
  addCandidate([]);
  // Direct, single 45-degree elbow, orthogonal elbows, and two-elbow octilinear routes.
@@ -125,7 +128,7 @@ function autoRoute(from,to){
   let points=[a,...via,b],clean=[points[0]];
   for(let i=1;i<points.length;i++)if(dist(points[i],clean.at(-1))>.1)clean.push(points[i]);
   const intermediate=clean.slice(1,-1);
-  const candidate={id:'preview',from,to,via:intermediate,frequency:1,colors:['#ff9f22']};
+  const candidate={id:'preview',from,to,via:intermediate,frequency:1,colors:['#ff9f22'],fromOffset,toOffset};
   let g=routeGeometry(candidate);if(g.error)continue;
   let lengthTotal=0;for(let i=1;i<clean.length;i++)lengthTotal+=dist(clean[i-1],clean[i]);
   let score=lengthTotal+intermediate.length*24;
@@ -133,20 +136,33 @@ function autoRoute(from,to){
  }
  return best?.via??null;
 }
+function availableStationLane(target,other){
+ // First release: allocate a separate bundle on the lower side of a horizontal occupied corridor.
+ // This is not yet a general intersection/collision solver.
+ const existing=data.routes.filter(r=>r.from===target.id||r.to===target.id||stationOnRoute(target,r));
+ const horizontal=existing.filter(r=>{const pts=routePoints(r);return pts.some((p,i)=>i&&Math.abs(p.y-pts[i-1].y)<.01&&target.x>=Math.min(p.x,pts[i-1].x)-1&&target.x<=Math.max(p.x,pts[i-1].x)+1)});
+ if(!horizontal.length)return null;
+ const maxBelow=Math.max(...horizontal.map(r=>{const pts=routePoints(r);let center=target.y;for(let i=1;i<pts.length;i++)if(Math.abs(pts[i].y-pts[i-1].y)<.01&&target.x>=Math.min(pts[i].x,pts[i-1].x)-1&&target.x<=Math.max(pts[i].x,pts[i-1].x)+1){center=pts[i].y;break}return center+(r.frequency-1)*data.settings.spacing/2}));
+ const newCount=draw?.frequency||1;
+ // Reserve enough room for the full new bundle, not only its centreline.
+ return {x:0,y:maxBelow+data.settings.spacing+(newCount-1)*data.settings.spacing/2-target.y};
+}
 function finishConnection(s){
  if(!draw)return;
  if(s.id===draw.from){$('status').textContent='Choose a different destination station.';return}
- const via=draw.via.length?draw.via:autoRoute(draw.from,s.id);
+ const toOffset=availableStationLane(s,station(draw.from));
+ const fromOffset=availableStationLane(station(draw.from),s);
+ const via=draw.via.length?draw.via:autoRoute(draw.from,s.id,fromOffset,toOffset);
  if(via===null){$('status').textContent='⚠ No valid automatic route at this radius and grid angles. Try a smaller corner radius, or add manual bend points.';return}
  commit();
  const color=draw.color||'#ff9f22',frequency=draw.frequency||1;
- let r={id:'r'+Date.now(),from:draw.from,to:s.id,via,frequency,colors:Array(frequency).fill(color),lineColor:color};
+ let r={id:'r'+Date.now(),from:draw.from,to:s.id,via,frequency,colors:Array(frequency).fill(color),lineColor:color,fromOffset,toOffset};
  data.routes.push(r);
  const err=routeGeometry(r).error;
  if(err){data.routes.pop();undo.pop();$('status').textContent='⚠ Cannot connect: '+err;return}
  draw=null;selection={type:'route',id:r.id};tool='select';
  document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool==='select'));
- $('status').textContent='Connected! Select the corridor to change its colour and frequency.';
+ $('status').textContent=toOffset||fromOffset?'Connected on separate tracks below the existing bundle.':'Connected! Select the corridor to change its colour and frequency.';
  render();
 }
 function routeClick(s){

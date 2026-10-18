@@ -1,0 +1,98 @@
+{
+  "stations": [
+    {
+      "id": "s1",
+      "name": "Central",
+      "x": 100,
+      "y": 140,
+      "label": {}
+    },
+    {
+      "id": "s2",
+      "name": "Town Hall",
+      "x": 270,
+      "y": 140
+    },
+    {
+      "id": "s3",
+      "name": "Wynyard",
+      "x": 420,
+      "y": 140
+    },
+    {
+      "id": "s4",
+      "name": "Redfern",
+      "x": 850,
+      "y": 400
+    },
+    {
+      "id": "s5",
+      "name": "Green Square",
+      "x": 1030,
+      "y": 400
+    },
+    {
+      "id": "s1792337220337",
+      "name": "New station",
+      "x": 500,
+      "y": 280,
+      "label": {},
+      "interchange": true
+    }
+  ],
+  "routes": [
+    {
+      "id": "r1",
+      "from": "s1",
+      "to": "s5",
+      "via": [
+        {
+          "x": 500,
+          "y": 140
+        },
+        {
+          "x": 760,
+          "y": 400
+        }
+      ],
+      "frequency": 6,
+      "colors": [
+        "#ff9f22",
+        "#f36a38",
+        "#eb4566",
+        "#19a5cb",
+        "#078f8c",
+        "#4274c9"
+      ]
+    },
+    {
+      "id": "r1792337985569",
+      "from": "s1792337220337",
+      "to": "s2",
+      "via": [
+        {
+          "x": 392,
+          "y": 172
+        }
+      ],
+      "frequency": 2,
+      "colors": [
+        "#2448ff",
+        "#24ff99"
+      ],
+      "lineColor": "#2448ff",
+      "toOffset": {
+        "x": 0,
+        "y": 32
+      }
+    }
+  ],
+  "settings": {
+    "grid": 20,
+    "spacing": 8,
+    "radius": 55,
+    "angles": "45",
+    "snap": true,
+    "showGrid": true
+  }
+}

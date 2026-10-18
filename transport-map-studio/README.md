@@ -1,20 +1,9 @@
-# Transport Map Studio v0.4 — easy connections
+# Transport Map Studio v0.4.1 — track lanes (preview)
 
-Deploy all four files to `/transport-map-studio/` on GitHub Pages.
+This release includes your corrected project as `transport-map-project-lanes.json`. Load it using **Load JSON** after deploying the four website files. Save your existing project first.
 
-## New workflow
-1. Save JSON to back up your existing project.
-2. Select **Add station**, click the map, then use **Select / move** to rename it.
-3. Select **Connect stations**, click the first station name or bar, then the destination station name or bar.
-4. The editor tests direct and multiple elbow routes using the existing concentric circular geometry engine, choosing the shortest valid candidate.
-5. Select the resulting corridor. Set **Line colour (all strands)** and **Trains per direction / hour** in Properties.
-6. Save JSON. Use Export SVG for an image.
+At Town Hall, the six original tracks stay at y=120,128,136,144,152,160. The two new strands occupy y=168,176. The new route approaches from the south-east with a 45-degree diagonal, rounded into a westbound horizontal segment.
 
-## Notes
-- You may still click intermediate empty grid positions to specify bends manually.
-- Existing v0.3 local storage is reused, so previously saved maps remain available.
-- The automatic router is a candidate-based first version, not an obstacle-avoiding or globally optimal network router.
-- A corridor can connect to a station already on another corridor. It does not automatically split or merge service paths.
-- If no candidate can satisfy the configured grid angles, bend radius and segment lengths, an error is shown.
-- Preserve all four files: index.html, styles.css, app.js, geometry.js.
-- Browser automation was unavailable in this environment. JavaScript syntax was checked; please visually test the new interaction before relying on it for a large map.
+New connections to stations already occupied by a horizontal corridor are assigned a separate lane below the bundle. This is a first implementation, not yet a universal collision solver. The router may still fail or cross other tracks elsewhere, and multi-corridor station bar sizes are provisional.
+
+The old local-storage project remains unchanged; this version uses a separate v0.4.1 storage key. You can always reload your saved JSON.
