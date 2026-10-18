@@ -2,58 +2,62 @@
 const $=id=>document.getElementById(id),svg=$('map'),NS='http://www.w3.org/2000/svg';
 const COLORS=['#ff9f22','#f36a38','#eb4566','#19a5cb','#078f8c','#4274c9','#ad79da','#8acb65'];
 const sample=()=>({stations:[{id:'s1',name:'Central',x:100,y:140},{id:'s2',name:'Town Hall',x:280,y:140},{id:'s3',name:'Wynyard',x:440,y:140},{id:'s4',name:'Redfern',x:820,y:400},{id:'s5',name:'Green Square',x:1060,y:400}],routes:[{id:'r1',from:'s1',to:'s5',via:[{x:480,y:140},{x:740,y:400}],frequency:6,colors:[...COLORS.slice(0,6)]}],settings:{grid:20,spacing:8,radius:45,angles:'45',snap:true,showGrid:true}});
-let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v022')||localStorage.getItem('transport-map-studio-v021')||localStorage.getItem('transport-map-studio-v02')||localStorage.getItem('transport-map-studio-v01'))||sample()}catch{data=sample()}
+let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v023')||localStorage.getItem('transport-map-studio-v022')||localStorage.getItem('transport-map-studio-v021')||localStorage.getItem('transport-map-studio-v02')||localStorage.getItem('transport-map-studio-v01'))||sample()}catch{data=sample()}
 let tool='select',selection=null,draw=null,drag=null,view={x:-40,y:-50,w:1100,h:640},undo=[],redo=[];
-const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v022',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
+const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v023',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
 const station=id=>data.stations.find(s=>s.id===id),point=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}),scale=(a,t)=>({x:a.x*t,y:a.y*t}),length=a=>Math.hypot(a.x,a.y),unit=a=>{let l=length(a)||1;return scale(a,1/l)},normal=a=>({x:-a.y,y:a.x}),cross=(a,b)=>a.x*b.y-a.y*b.x,dot=(a,b)=>a.x*b.x+a.y*b.y,dist=(a,b)=>length(point(a,b)),fmt=n=>Number(n.toFixed(3)),pstr=p=>`${fmt(p.x)} ${fmt(p.y)}`;
-// Build one centreline fillet layout, then offset all strands from the SAME
-// tangent points. At a turn, offset radii differ but tangent locations do not.
-// This is essential: independently choosing a tangent length per strand causes
-// hooks and discontinuities (the v0.2 Wynyard/Redfern problem).
-function offsetPath(points,d,R){
- if(points.length<2)return '';
- let clean=[points[0]];
- for(let i=1;i<points.length;i++)if(dist(points[i],clean.at(-1))>.01)clean.push(points[i]);
- if(clean.length<2)return '';
- const seg=clean.slice(1).map((p,i)=>unit(point(p,clean[i]))),norms=seg.map(normal);
+// Geometry engine v0.2.3: build ONE rounded centreline, then offset its
+// straight tangents and concentric arcs. Each strand is exactly parallel.
+// Turns of 45, 90 and 135 degrees are allowed; 180-degree reversals are not.
+// Sharp corners are never substituted when a radius is too small.
+function geometryLayout(points, desiredRadius, maxOffset) {
+ const clean=[];
+ for (const p of points) if(p && (!clean.length || dist(p,clean.at(-1))>0.01)) clean.push(p);
+ if(clean.length<2) return {points:clean,segments:[],corners:[],error:'Need two different points.'};
+ const segments=clean.slice(1).map((p,i)=>unit(point(p,clean[i])));
  const corners=[];
- for(let i=1;i<clean.length-1;i++){
-  const u=seg[i-1],v=seg[i],turn=cross(u,v),theta=Math.acos(Math.max(-1,Math.min(1,dot(u,v))));
-  if(theta<.0001||Math.abs(Math.PI-theta)<.0001){corners.push(null);continue}
-  const sign=Math.sign(turn),tan=Math.tan(theta/2);
-  corners.push({u,v,sign,tan,t:Math.max(0,R)*tan});
+ const safeRadius=Math.max(0,Number(desiredRadius)||0,maxOffset+8);
+ for(let i=1;i<clean.length-1;i++) {
+  const u=segments[i-1],v=segments[i],theta=Math.atan2(cross(u,v),dot(u,v));
+  if(Math.abs(theta)<1e-7){corners.push(null);continue;}
+  if(Math.abs(theta)>=Math.PI-1e-5) return {error:'180° reversals are not supported.'};
+  const halfTan=Math.tan(Math.abs(theta)/2);
+  corners.push({u,v,theta,sign:Math.sign(theta),tan:halfTan,t:safeRadius*halfTan});
  }
- // Centreline tangent distances must fit every segment. Use a common scale
- // for ALL strands, not strand-specific shrinking.
- for(let pass=0;pass<5;pass++)for(let i=0;i<clean.length-1;i++){
-  const left=i>0?corners[i-1]:null,right=i<corners.length?corners[i]:null;
-  const need=(left?.t||0)+(right?.t||0),available=dist(clean[i],clean[i+1])*.94;
-  if(need>available&&need>0){const f=available/need;if(left)left.t*=f;if(right)right.t*=f}
- }
- let result=`M ${pstr(add(clean[0],scale(norms[0],d)))}`;
- for(let i=1;i<clean.length-1;i++){
-  const c=corners[i-1],p=clean[i],prev=norms[i-1],next=norms[i];
-  if(!c){result+=` L ${pstr(add(p,scale(prev,d)))}`;continue}
-  const r0=c.t/c.tan,offsetRadius=r0-c.sign*d;
-  // If the inner radius is not viable, use a sharp miter instead of
-  // generating a malformed circular arc. The caller chooses R large enough.
-  if(offsetRadius<=.01){
-   const a=add(p,scale(prev,d)),b=add(p,scale(next,d));
-   const denom=cross(c.u,c.v);
-   const t=Math.abs(denom)>1e-8?cross(point(b,a),c.v)/denom:0;
-   result+=` L ${pstr(add(a,scale(c.u,t)))}`;continue;
+ // Fit neighbouring fillets together without changing the geometry per strand.
+ // If insufficient room exists for the innermost arc, reject rather than kink.
+ for(let pass=0;pass<12;pass++) {
+  let changed=false;
+  for(let i=0;i<segments.length;i++) {
+   const a=i>0?corners[i-1]:null,b=i<corners.length?corners[i]:null;
+   const need=(a?.t||0)+(b?.t||0),available=dist(clean[i],clean[i+1])*.98;
+   if(need>available+1e-7){const f=available/need;if(a)a.t*=f;if(b)b.t*=f;changed=true;}
   }
-  // All strands share the SAME tangency station along each straight segment.
-  // Changing the tangent distance per strand creates the visible hooks.
-  const t=c.t;
-  const a=add(add(p,scale(c.u,-t)),scale(prev,d));
-  const b=add(add(p,scale(c.v,t)),scale(next,d));
-  result+=` L ${pstr(a)} A ${fmt(offsetRadius)} ${fmt(offsetRadius)} 0 0 ${c.sign>0?1:0} ${pstr(b)}`;
+  if(!changed)break;
  }
- return result+` L ${pstr(add(clean.at(-1),scale(norms.at(-1),d)))}`;
+ for(const c of corners) if(c && c.t/c.tan<=maxOffset+0.5)
+  return {error:'Not enough room for the frequency strands at this corner. Increase segment lengths or reduce spacing.'};
+ return {points:clean,segments,corners,error:null};
 }
-// A route is valid only when every straight segment uses an allowed compass
-// bearing and consecutive segments turn by no more than one angle increment.
+function strandPath(layout,d){
+ if(layout.error||layout.segments.length===0)return '';
+ const {points:pts,segments:seg,corners}=layout,norms=seg.map(normal);
+ let path=`M ${pstr(add(pts[0],scale(norms[0],d)))}`;
+ for(let i=1;i<pts.length-1;i++){
+  const c=corners[i-1],p=pts[i];
+  if(!c){path+=` L ${pstr(add(p,scale(norms[i],d)))}`;continue;}
+  const a=add(add(p,scale(c.u,-c.t)),scale(norms[i-1],d));
+  const b=add(add(p,scale(c.v,c.t)),scale(norms[i],d));
+  const r=c.t/c.tan-c.sign*d;
+  if(r<=0)throw Error('Invalid inner fillet radius');
+  path+=` L ${pstr(a)} A ${fmt(r)} ${fmt(r)} 0 0 ${c.sign>0?1:0} ${pstr(b)}`;
+ }
+ return path+` L ${pstr(add(pts.at(-1),scale(norms.at(-1),d)))}`;
+}
+function offsetPath(points,d,R,maxOffset=Math.abs(d)){
+ const layout=geometryLayout(points,R,maxOffset);
+ return strandPath(layout,d);
+}
 function geometryError(pts){
  const step=data.settings.angles==='30'?Math.PI/6:Math.PI/4;
  const bearings=[];
@@ -67,11 +71,11 @@ function geometryError(pts){
  }
  for(let i=1;i<bearings.length;i++){
   const turn=Math.abs(Math.atan2(Math.sin(bearings[i]-bearings[i-1]),Math.cos(bearings[i]-bearings[i-1])));
-  if(turn>step+.012 && data.settings.angles!=='free')return 'Turns may not exceed '+Math.round(step*180/Math.PI)+'°.';
+  if(turn>Math.PI-0.012)return '180° reversals are not supported.';
  }
  return null;
 }
-function validRoutes(){for(const r of data.routes){const error=geometryError(routePoints(r));if(error)return error}return null}
+function validRoutes(){for(const r of data.routes){const pts=routePoints(r),error=geometryError(pts);if(error)return error;const maxOff=(Math.max(1,Math.min(24,r.frequency))-1)*data.settings.spacing/2;const layout=geometryLayout(pts,Math.max(data.settings.radius,maxOff+8),maxOff);if(layout.error)return layout.error}return null}
 function notice(message){$('status').textContent=message}
 function editIfValid(change){const before=clone(data);change();const error=validRoutes();if(error){data=before;notice('Edit rejected: '+error);render();return false}commitSnapshot(before);render();return true}
 function commitSnapshot(before){undo.push(before);if(undo.length>80)undo.shift();redo=[]}
@@ -80,9 +84,12 @@ function stationOnRoute(s,r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i
 function render(){save();$('gridValue').textContent=data.settings.grid;$('spacingValue').textContent=data.settings.spacing;$('radiusValue').textContent=data.settings.radius;['grid','spacing','radius','angles','snap','showGrid'].forEach(k=>{let e=$(k);if(e)e[e.type==='checkbox'?'checked':'value']=data.settings[k]});$('gridPattern').setAttribute('width',data.settings.grid);$('gridPattern').setAttribute('height',data.settings.grid);$('gridPath').setAttribute('d',`M ${data.settings.grid} 0 L 0 0 0 ${data.settings.grid}`);$('gridRect').style.display=data.settings.showGrid?'':'none';svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);
 ['routesLayer','stationsLayer','handlesLayer','previewLayer'].forEach(k=>$(k).replaceChildren());
 for(let r of data.routes){let pts=routePoints(r),n=Math.max(1,Math.min(24,r.frequency)),spacing=data.settings.spacing,maxOff=(n-1)*spacing/2;
-// Base radius is enlarged to accommodate the innermost offset at a 90-degree bend.
-let radius=Math.max(data.settings.radius,maxOff+18);for(let i=0;i<n;i++){let d=(i-(n-1)/2)*spacing;el('path',{d:offsetPath(pts,d,radius),fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,spacing*.72),'stroke-linejoin':'round','stroke-linecap':'round','pointer-events':'none'},$('routesLayer'))}
-let hit=el('path',{d:offsetPath(pts,0,radius),fill:'none',stroke:'transparent','stroke-width':Math.max(18,n*spacing+10),cursor:'pointer','data-route':r.id},$('routesLayer'));hit.addEventListener('pointerdown',e=>{if(tool==='select'||tool==='point'){e.stopPropagation();if(tool==='point'){insertBend(r,toWorld(e));return}selection={type:'route',id:r.id};render()}});hit.addEventListener('dblclick',e=>{e.stopPropagation();insertBend(r,toWorld(e))});if(selection?.type==='route'&&selection.id===r.id)el('path',{d:offsetPath(pts,0,radius),fill:'none',stroke:'#f5f5f5','stroke-width':1.3,'stroke-dasharray':'5 6','pointer-events':'none'},$('handlesLayer'))}
+// One validated centreline layout for ALL strands. Never use sharp fallbacks.
+let radius=Math.max(data.settings.radius,maxOff+8);
+let layout=geometryLayout(pts,radius,maxOff);
+if(layout.error){el('text',{x:pts[0]?.x||0,y:(pts[0]?.y||0)-30,fill:'#ff7087','font-size':13},$('routesLayer')).textContent=layout.error;continue;}
+for(let i=0;i<n;i++){let d=(i-(n-1)/2)*spacing;el('path',{d:strandPath(layout,d),fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,spacing*.72),'stroke-linejoin':'round','stroke-linecap':'round','pointer-events':'none'},$('routesLayer'))}
+let hit=el('path',{d:strandPath(layout,0),fill:'none',stroke:'transparent','stroke-width':Math.max(18,n*spacing+10),cursor:'pointer','data-route':r.id},$('routesLayer'));hit.addEventListener('pointerdown',e=>{if(tool==='select'||tool==='point'){e.stopPropagation();if(tool==='point'){insertBend(r,toWorld(e));return}selection={type:'route',id:r.id};render()}});hit.addEventListener('dblclick',e=>{e.stopPropagation();insertBend(r,toWorld(e))});if(selection?.type==='route'&&selection.id===r.id)el('path',{d:strandPath(layout,0),fill:'none',stroke:'#f5f5f5','stroke-width':1.3,'stroke-dasharray':'5 6','pointer-events':'none'},$('handlesLayer'))}
 for(let s of data.stations){
  let selected=selection?.type==='station'&&selection.id===s.id;
  let associated=data.routes.filter(r=>r.from===s.id||r.to===s.id||routePoints(r).slice(1,-1).some(p=>p.id===s.id)||stationOnRoute(s,r));

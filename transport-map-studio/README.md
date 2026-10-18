@@ -1,16 +1,17 @@
-# Transport Map Studio v0.2.2 — strict schematic geometry
+# Transport Map Studio v0.2.3
 
-Deploy `index.html`, `styles.css`, and `app.js` together.
+Deploy `index.html`, `styles.css`, and `app.js` to your existing GitHub Pages folder.
 
-## Changes
-- Corrected sample: Wynyard turns horizontal → southeast; Redfern turns southeast → horizontal, with no vertical intermediate segment.
-- Parallel strands use shared centreline tangent points and offset concentric arcs.
-- Segment bearings must be multiples of 45° (or 30° in that mode); a single corner may change heading by at most 45° (30° in that mode). Horizontal and vertical straight sections remain allowed.
-- Invalid station and bend drags are blocked; invalid route completion and bend insertion are rejected.
-- Existing browser projects remain available; click **Restore sample** to see the corrected demo. Export JSON before replacing or restoring anything.
+## Geometry overhaul
+- Straight segments constrained to selected bearings (45° increments by default).
+- Rounded 45°, 90° and 135° direction changes permitted. 180° reversals rejected.
+- One common fillet layout per corridor, offset by each strand's normal distance.
+- Exact concentric circular arcs, with no sharp-corner fallback.
+- Adjacent fillets shrink together when needed; too-tight bends display an error.
+- Existing JSON and browser projects retained. Export JSON backup before updating.
+- Click **Restore sample** to reload the sample geometry after deployment.
 
 ## Known limitations
-- No automatic re-routing when moving a station: the edit is rejected if it breaks the angle rules.
-- Very short segments may require a larger radius or manual repositioning; the renderer scales down the centreline fillet to fit, which can be visually tight.
-- Existing imported or saved invalid routes are not silently rewritten.
-- Multi-route merging and junctions are not yet supported.
+- Corridors are independent; service merging/splitting and crossing logic are future work.
+- Invalid loaded project geometry shows a warning instead of rendering invalid curves.
+- The sample is a geometric demonstration, not a faithful Sydney network topology.
