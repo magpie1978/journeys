@@ -24,3 +24,12 @@ A static GitHub Pages railway map using Mapbox GL JS, OpenRailwayMap tiles, and 
 ## Credits
 
 © OpenStreetMap contributors (ODbL). OpenRailwayMap railway tile rendering. Mapbox basemap. Preserve the on-map attribution when modifying this app.
+
+## v1.1 troubleshooting
+Deploy index.html and both css/ and js/ folders inside the same portugal/ directory.
+Check https://YOUR-DOMAIN/portugal/css/style.css returns CSS (not 404).
+Overpass queries use GET with multiple public endpoint fallbacks; all remain subject to public service CORS, capacity and availability.
+
+
+## v1.2 status filter fix
+The OpenRailwayMap raster overview cannot be filtered. It now hides when detailed OSM tracks are available and enabled, or when any status checkbox is unchecked. When the Overpass service fails, the UI explicitly states that filtered detail is unavailable. At low zoom, filters require zooming in to level 10 or higher.
