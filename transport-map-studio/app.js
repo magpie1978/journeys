@@ -30,7 +30,7 @@ let invalid=[];
 for(let r of data.routes){let g=routeGeometry(r),pts=routePoints(r);
  if(g.error){invalid.push({r,g});el('path',{d:pts.map((p,i)=>`${i?'L':'M'} ${pstr(p)}`).join(' '),fill:'none',stroke:'#ff5c76','stroke-width':3,'stroke-dasharray':'7 6','pointer-events':'none'},$('routesLayer'));continue}
  g.strands.forEach((strand,i)=>el('path',{d:strand.path,fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,data.settings.spacing*.72),'stroke-linecap':'round','pointer-events':'none'},$('routesLayer')));
- let hit=el('path',{d:g.strands[Math.floor(g.strands.length/2)].path,fill:'none',stroke:'transparent','stroke-width':Math.max(18,g.count*g.spacing+10),cursor:'pointer','data-route':r.id},$('routesLayer'));
+ let hit=el('path',{d:g.strands[Math.floor(g.strands.length/2)].path,fill:'none',stroke:'transparent','stroke-width':Math.max(18,g.count*g.spacing+10),cursor:'pointer','pointer-events':tool==='route'?'none':'stroke','data-route':r.id},$('routesLayer'));
  hit.addEventListener('pointerdown',e=>{if(tool==='select'||tool==='point'){e.stopPropagation();if(tool==='point'){insertBend(r,toWorld(e));return}selection={type:'route',id:r.id};render()}});
  hit.addEventListener('dblclick',e=>{e.stopPropagation();insertBend(r,toWorld(e))});
  if(selection?.type==='route'&&selection.id===r.id)el('path',{d:g.strands[Math.floor(g.strands.length/2)].path,fill:'none',stroke:'#f5f5f5','stroke-width':1.3,'stroke-dasharray':'5 6','pointer-events':'none'},$('handlesLayer'));
@@ -61,7 +61,12 @@ for(let s of data.stations){
    else {lx=s.x+8;ly=s.y+(mode==='above'?-clearance-fontSize*.25:clearance+fontSize);anchor='start'}
  }
  let rot=label.rotation??0;
- let txt=el('text',{x:lx,y:ly,transform:`rotate(${rot} ${lx} ${ly})`,class:'station-label','font-size':label.size||12,'text-anchor':anchor},$('stationsLayer'));txt.textContent=s.name;
+ let txt=el('text',{x:lx,y:ly,transform:`rotate(${rot} ${lx} ${ly})`,class:'station-label','font-size':label.size||12,'text-anchor':anchor},$('stationsLayer'));txt.textContent=s.name;txt.style.cursor='pointer';txt.style.pointerEvents='all';
+ txt.addEventListener('pointerdown',e=>{e.stopPropagation();if(tool==='route'){routeClick(s);return}if(tool==='select'){selection={type:'station',id:s.id};render()}});
+ // A generous hit target covers the entire station bar, not just its centre.
+ if(primary){let barHit=el('line',{x1:s.x-perp.x*(half+9),y1:s.y-perp.y*(half+9),x2:s.x+perp.x*(half+9),y2:s.y+perp.y*(half+9),stroke:'transparent','stroke-width':16,'pointer-events':'stroke',cursor:'pointer'},$('stationsLayer'));
+ barHit.addEventListener('pointerdown',e=>{e.stopPropagation();if(tool==='route'){routeClick(s);return}if(tool==='select'){selection={type:'station',id:s.id};render()}})}
+
  if(selected){el('circle',{cx:s.x,cy:s.y,r:3,fill:'#ff5068','pointer-events':'none'},$('handlesLayer'));let lh=el('circle',{cx:lx,cy:ly,r:5,fill:'#ffcb58',stroke:'#101827','stroke-width':2,class:'handle'},$('handlesLayer'));lh.addEventListener('pointerdown',e=>{e.stopPropagation();commit();drag={kind:'label',id:s.id};svg.setPointerCapture(e.pointerId)})}
 }
 if(selection?.type==='route'){let r=data.routes.find(r=>r.id===selection.id);if(r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i++){let mid=scale(add(pts[i],pts[i+1]),.5);let h=el('circle',{cx:mid.x,cy:mid.y,r:5,fill:'#6be0ff',stroke:'#0d1726','stroke-width':2,class:'handle'},$('handlesLayer'));h.addEventListener('pointerdown',e=>{e.stopPropagation();commit();r.via.splice(i,0,snapped(mid));if(!allValid()){r.via.splice(i,1);undo.pop();$('status').textContent='⚠ Cannot insert bend here.';render();return}selection={type:'route',id:r.id};drag={kind:'bend',id:r.id,index:i};svg.setPointerCapture(e.pointerId);render()})}}if(r)r.via.forEach((p,i)=>{let h=el('rect',{x:p.x-6,y:p.y-6,width:12,height:12,rx:2,fill:'#fff',stroke:'#e8495c','stroke-width':2,class:'handle'},$('handlesLayer'));h.addEventListener('pointerdown',e=>{e.stopPropagation();commit();drag={kind:'bend',id:r.id,index:i};svg.setPointerCapture(e.pointerId)})})}
@@ -78,13 +83,76 @@ function renderProperties(){let p=$('properties');p.replaceChildren();if(!select
  field('Label offset X',obj.label.dx??10,v=>{obj.label.dx=Number(v)},'number');field('Label offset Y',obj.label.dy??-12,v=>{obj.label.dy=Number(v)},'number');field('Label rotation (degrees)',obj.label.rotation??0,v=>{obj.label.rotation=Number(v)},'number');field('Label font size',obj.label.size??12,v=>{obj.label.size=Math.max(6,Math.min(40,Number(v)||12))},'number');
  let al=document.createElement('label');al.textContent='Label alignment';let sel=document.createElement('select');for(let [v,t] of [['start','Left'],['middle','Centre'],['end','Right']]){let op=document.createElement('option');op.value=v;op.textContent=t;sel.append(op)}sel.value=obj.label.align||'start';sel.onchange=()=>{commit();obj.label.align=sel.value;render()};al.append(sel);p.append(al);
  let note=document.createElement('p');note.className='hint';note.textContent='Drag the yellow handle to reposition the station label.';p.append(note)
- }else{field('Trains per direction / hour',obj.frequency,v=>{obj.frequency=Math.max(1,Math.min(24,Number(v)||1));while(obj.colors.length<obj.frequency)obj.colors.push(COLORS[obj.colors.length%COLORS.length])},'number');obj.colors.slice(0,obj.frequency).forEach((color,i)=>{let row=document.createElement('label');row.textContent=`Strand ${i+1}`;let input=document.createElement('input');input.type='color';input.value=/^#[0-9a-f]{6}$/i.test(color)?color:'#ffffff';input.addEventListener('input',()=>{obj.colors[i]=input.value;renderPathsOnly()});input.addEventListener('change',()=>{save()});row.appendChild(input);p.appendChild(row)});let tip=document.createElement('p');tip.className='hint';tip.textContent='Drag square bend handles to reshape this corridor. Double-click a corridor to insert a bend.';p.appendChild(tip)}let del=document.createElement('button');del.textContent='Delete selected';del.className='danger';del.onclick=deleteSelected;p.appendChild(del)}
+ }else{
+ let lineLabel=document.createElement('label');lineLabel.textContent='Line colour (all strands)';
+ let lineInput=document.createElement('input');lineInput.type='color';lineInput.value=obj.lineColor||obj.colors?.[0]||'#ff9f22';
+ lineInput.oninput=()=>{obj.lineColor=lineInput.value;obj.colors=Array(obj.frequency).fill(obj.lineColor);render()};
+ lineLabel.append(lineInput);p.append(lineLabel);
+ field('Trains per direction / hour',obj.frequency,v=>{obj.frequency=Math.max(1,Math.min(24,Number(v)||1));obj.colors=Array(obj.frequency).fill(obj.lineColor||obj.colors?.[0]||'#ff9f22')},'number');
+ let advanced=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Advanced: individual strand colours';advanced.append(summary);p.append(advanced);
+ obj.colors.slice(0,obj.frequency).forEach((color,i)=>{let row=document.createElement('label');row.textContent=`Strand ${i+1}`;let input=document.createElement('input');input.type='color';input.value=/^#[0-9a-f]{6}$/i.test(color)?color:'#ffffff';input.addEventListener('input',()=>{obj.colors[i]=input.value;renderPathsOnly()});input.addEventListener('change',()=>{save()});row.appendChild(input);advanced.appendChild(row)});let tip=document.createElement('p');tip.className='hint';tip.textContent='Drag square bend handles to reshape this corridor. Double-click a corridor to insert a bend.';p.appendChild(tip)}let del=document.createElement('button');del.textContent='Delete selected';del.className='danger';del.onclick=deleteSelected;p.appendChild(del)}
 function renderPathsOnly(){let old=selection;render();selection=old}
 function deleteSelected(){if(!selection)return;commit();if(selection.type==='station'){data.stations=data.stations.filter(s=>s.id!==selection.id);data.routes=data.routes.filter(r=>r.from!==selection.id&&r.to!==selection.id)}else data.routes=data.routes.filter(r=>r.id!==selection.id);selection=null;render()}
 function toWorld(e){let rect=svg.getBoundingClientRect();return{x:view.x+(e.clientX-rect.left)*view.w/rect.width,y:view.y+(e.clientY-rect.top)*view.h/rect.height}}
 function snapped(p){let g=data.settings.grid;if(data.settings.snap)return{x:Math.round(p.x/g)*g,y:Math.round(p.y/g)*g};return p}
 function constrain(p,anchor){if(!anchor||data.settings.angles==='free')return p;let dx=p.x-anchor.x,dy=p.y-anchor.y,r=Math.hypot(dx,dy);if(r<.01)return p;let step=data.settings.angles==='30'?Math.PI/6:Math.PI/4,a=Math.round(Math.atan2(dy,dx)/step)*step;return{x:anchor.x+Math.cos(a)*r,y:anchor.y+Math.sin(a)*r}}
-function routeClick(s){if(!draw){draw={from:s.id,via:[],cursor:{x:s.x,y:s.y}};$('status').textContent=`Route started at ${s.name}. Add bends, then click destination station.`;render();return}if(s.id===draw.from&&draw.via.length===0)return;commit();let r={id:'r'+Date.now(),from:draw.from,to:s.id,via:draw.via,frequency:3,colors:COLORS.slice(0,3)};data.routes.push(r);if(!allValid()){data.routes.pop();undo.pop();$('status').textContent='⚠ Corridor rejected: bend radius, straight length or angles invalid.';render();return}draw=null;selection={type:'route',id:r.id};$('status').textContent='Corridor created. Edit frequency and strand colours on the right.';render()}
+function autoRoute(from,to){
+ const a=station(from),b=station(to),dx=b.x-a.x,dy=b.y-a.y;
+ const unique=new Map(),addCandidate=(via)=>{let key=JSON.stringify(via);if(!unique.has(key))unique.set(key,via)};
+ addCandidate([]);
+ // Direct, single 45-degree elbow, orthogonal elbows, and two-elbow octilinear routes.
+ const ax=Math.abs(dx),ay=Math.abs(dy),sgx=Math.sign(dx)||1,sgy=Math.sign(dy)||1;
+ const q=Math.min(ax,ay);
+ const mids=[
+  {x:b.x,y:a.y},{x:a.x,y:b.y},
+  {x:a.x+sgx*q,y:b.y},{x:b.x,y:a.y+sgy*q},
+  {x:a.x+sgx*q,y:a.y+sgy*q},
+  {x:b.x-sgx*q,y:b.y-sgy*q}
+ ];
+ for(const m of mids)addCandidate([m]);
+ // Two elbows: choose long straight runs before/after diagonal.
+ for(const f of [.2,.35,.5,.65,.8]){
+  const x=a.x+dx*f,y=a.y+dy*f;
+  for(const m of [
+   [{x,y:a.y},{x,y:b.y}],
+   [{x:a.x,y},{x:b.x,y}],
+   [{x,y:a.y},{x:b.x,y}],
+   [{x:a.x,y},{x,y:b.y}]
+  ])addCandidate(m);
+ }
+ let best=null;
+ for(const via of unique.values()){
+  let points=[a,...via,b],clean=[points[0]];
+  for(let i=1;i<points.length;i++)if(dist(points[i],clean.at(-1))>.1)clean.push(points[i]);
+  const intermediate=clean.slice(1,-1);
+  const candidate={id:'preview',from,to,via:intermediate,frequency:1,colors:['#ff9f22']};
+  let g=routeGeometry(candidate);if(g.error)continue;
+  let lengthTotal=0;for(let i=1;i<clean.length;i++)lengthTotal+=dist(clean[i-1],clean[i]);
+  let score=lengthTotal+intermediate.length*24;
+  if(!best||score<best.score)best={via:intermediate,score};
+ }
+ return best?.via??null;
+}
+function finishConnection(s){
+ if(!draw)return;
+ if(s.id===draw.from){$('status').textContent='Choose a different destination station.';return}
+ const via=draw.via.length?draw.via:autoRoute(draw.from,s.id);
+ if(via===null){$('status').textContent='⚠ No valid automatic route at this radius and grid angles. Try a smaller corner radius, or add manual bend points.';return}
+ commit();
+ const color=draw.color||'#ff9f22',frequency=draw.frequency||1;
+ let r={id:'r'+Date.now(),from:draw.from,to:s.id,via,frequency,colors:Array(frequency).fill(color),lineColor:color};
+ data.routes.push(r);
+ const err=routeGeometry(r).error;
+ if(err){data.routes.pop();undo.pop();$('status').textContent='⚠ Cannot connect: '+err;return}
+ draw=null;selection={type:'route',id:r.id};tool='select';
+ document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool==='select'));
+ $('status').textContent='Connected! Select the corridor to change its colour and frequency.';
+ render();
+}
+function routeClick(s){
+ if(!draw){draw={from:s.id,via:[],cursor:{x:s.x,y:s.y}};$('status').textContent=`Starting at ${s.name}. Click the destination station — bends are automatic.`;render();return}
+ finishConnection(s);
+}
 function insertBend(r,p){commit();let pts=routePoints(r),best=0,min=Infinity;for(let i=0;i<pts.length-1;i++){let a=pts[i],b=pts[i+1],v=point(b,a),t=Math.max(0,Math.min(1,dot(point(p,a),v)/(dot(v,v)||1))),q=add(a,scale(v,t)),d=dist(q,p);if(d<min){min=d;best=i}}r.via.splice(best,0,snapped(p));if(!allValid()){r.via.splice(best,1);undo.pop();$('status').textContent='⚠ Bend rejected: insufficient space or invalid angle.';render();return}selection={type:'route',id:r.id};render()}
 function pointerDown(e){if(e.button!==0&&e.button!==1)return;svg.focus();let p=toWorld(e);if(tool==='station'&&e.target===svg||tool==='station'&&['background','gridRect'].includes(e.target.id)){commit();let q=snapped(p),s={id:'s'+Date.now(),name:'New station',...q};data.stations.push(s);selection={type:'station',id:s.id};render();return}if(tool==='route'&&draw&&['background','gridRect'].includes(e.target.id)){let a=draw.via.at(-1)||station(draw.from),q=snapped(constrain(p,a));draw.via.push(q);render();return}if(tool==='pan'||e.button===1||e.shiftKey||spaceHeld){drag={kind:'pan',clientX:e.clientX,clientY:e.clientY,view:{...view}};svg.setPointerCapture(e.pointerId);svg.classList.add('dragging');return}if(tool==='select'&&['background','gridRect'].includes(e.target.id)){selection=null;render()}}
 let spaceHeld=false;svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',e=>{let p=toWorld(e);if(drag){if(drag.kind==='pan'){let rect=svg.getBoundingClientRect();view.x=drag.view.x-(e.clientX-drag.clientX)*view.w/rect.width;view.y=drag.view.y-(e.clientY-drag.clientY)*view.h/rect.height;svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)}else if(drag.kind==='station'){let s=station(drag.id);let before={x:s.x,y:s.y};Object.assign(s,snapped(p));if(!allValid()){Object.assign(s,before);$('status').textContent='⚠ Movement blocked: invalid bend or segment.'}render()}else if(drag.kind==='label'){let st=station(drag.id);st.label ||= {};st.label.dx=p.x-st.x;st.label.dy=p.y-st.y;st.label.position='manual';render()}else if(drag.kind==='bend'){let r=data.routes.find(r=>r.id===drag.id);let before={...r.via[drag.index]};r.via[drag.index]=snapped(p);if(!allValid()){r.via[drag.index]=before;$('status').textContent='⚠ Movement blocked: invalid bend or segment.'}render()}return}if(draw){draw.cursor=snapped(constrain(p,draw.via.at(-1)||station(draw.from)));render()}});svg.addEventListener('pointerup',e=>{if(drag){drag=null;svg.classList.remove('dragging');render()}});svg.addEventListener('wheel',e=>{e.preventDefault();let p=toWorld(e),factor=e.deltaY>0?1.12:1/1.12;view.x=p.x-(p.x-view.x)*factor;view.y=p.y-(p.y-view.y)*factor;view.w*=factor;view.h*=factor;svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`)},{passive:false});document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.code==='Space'){spaceHeld=true;e.preventDefault()}if(e.key==='Escape'){draw=null;drag=null;render()}if(e.key==='Delete'||e.key==='Backspace')deleteSelected();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();historyMove(e.shiftKey?'redo':'undo')}});document.addEventListener('keyup',e=>{if(e.code==='Space')spaceHeld=false});
