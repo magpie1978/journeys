@@ -1,9 +1,11 @@
-# Transport Map Studio — Universal Bend Geometry Tester
+# Transport Map Studio — Multi-Bend Geometry Lab v0.2
 
-Open `index.html` in Chrome. No server or dependencies required.
+Open `index.html` in Chrome. No server or dependencies needed.
 
-Controls: incoming heading, turn angle (30, 45, 60, 90, 120, 135, 150 degrees), clockwise/anticlockwise, strand spacing, centreline radius and strand count. Export SVG.
+Try S-bends, consecutive same-direction bends, 90° reversals, mixed-angle sequences, and intentionally short segments. Adjust incoming heading, strand count, spacing, radius and leg length. Export SVG from the browser.
 
-The engine uses exact circular arcs tangent to both straight sections. Each strand uses radius `R - sign * offset` and a common centreline tangent distance `R * tan(turn / 2)`, so concentric arcs remain tangent and uniformly spaced. The test reports invalid inner radii and checks tangent continuity, arc centres and strand spacing.
+Automated verification: `node tests.js`. The test suite covers 112 single-turn orientations, 64 multi-bend orientations, 80 frequency/spacing/angle stress cases and 3 deliberate invalid configurations (259 checks).
 
-This is a standalone geometry tester, not a replacement for the main editor. Junctions and service splitting are not included.
+Geometry implementation: circular fillets share tangent points along the original centreline, with concentric signed normal offsets. Invalid inner radii, too-short legs and 180° reversals are rejected. No radius is silently adjusted.
+
+Limitations: This is an isolated geometric laboratory, not yet the production editor. It does not detect self-intersections between non-adjacent route portions, does not support automatic branch merging, and does not construct hairpin loops. Browser visual validation remains a separate acceptance step.
