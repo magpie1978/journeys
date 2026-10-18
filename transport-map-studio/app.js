@@ -1,28 +1,64 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),svg=$('map'),NS='http://www.w3.org/2000/svg';
 const COLORS=['#ff9f22','#f36a38','#eb4566','#19a5cb','#078f8c','#4274c9','#ad79da','#8acb65'];
-const sample=()=>({stations:[{id:'s1',name:'Central',x:100,y:140},{id:'s2',name:'Town Hall',x:280,y:140},{id:'s3',name:'Wynyard',x:440,y:140},{id:'s4',name:'Redfern',x:720,y:400},{id:'s5',name:'Green Square',x:940,y:400}],routes:[{id:'r1',from:'s1',to:'s4',via:[{x:500,y:140},{x:720,y:360}],frequency:6,colors:[...COLORS.slice(0,6)]},{id:'r2',from:'s4',to:'s5',via:[],frequency:3,colors:['#19a5cb','#078f8c','#4274c9']}],settings:{grid:20,spacing:8,radius:35,angles:'45',snap:true,showGrid:true}});
-let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v02')||localStorage.getItem('transport-map-studio-v01'))||sample()}catch{data=sample()}
+const sample=()=>({stations:[{id:'s1',name:'Central',x:100,y:140},{id:'s2',name:'Town Hall',x:280,y:140},{id:'s3',name:'Wynyard',x:440,y:140},{id:'s4',name:'Redfern',x:800,y:360},{id:'s5',name:'Green Square',x:1040,y:360}],routes:[{id:'r1',from:'s1',to:'s5',via:[{x:500,y:140},{x:720,y:360}],frequency:6,colors:[...COLORS.slice(0,6)]}],settings:{grid:20,spacing:8,radius:45,angles:'45',snap:true,showGrid:true}});
+let data;try{data=JSON.parse(localStorage.getItem('transport-map-studio-v021')||localStorage.getItem('transport-map-studio-v02')||localStorage.getItem('transport-map-studio-v01'))||sample()}catch{data=sample()}
 let tool='select',selection=null,draw=null,drag=null,view={x:-40,y:-50,w:1100,h:640},undo=[],redo=[];
-const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v02',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
+const clone=o=>JSON.parse(JSON.stringify(o)),save=()=>{localStorage.setItem('transport-map-studio-v021',JSON.stringify(data))},commit=()=>{undo.push(clone(data));if(undo.length>80)undo.shift();redo=[]},el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));if(parent)parent.appendChild(e);return e};
 const station=id=>data.stations.find(s=>s.id===id),point=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}),scale=(a,t)=>({x:a.x*t,y:a.y*t}),length=a=>Math.hypot(a.x,a.y),unit=a=>{let l=length(a)||1;return scale(a,1/l)},normal=a=>({x:-a.y,y:a.x}),cross=(a,b)=>a.x*b.y-a.y*b.x,dot=(a,b)=>a.x*b.x+a.y*b.y,dist=(a,b)=>length(point(a,b)),fmt=n=>Number(n.toFixed(3)),pstr=p=>`${fmt(p.x)} ${fmt(p.y)}`;
-// Construct rounded polyline with concentric circular fillets for every strand.
-// For an offset distance d, use radius R-d*turnSign at each bend.
-function offsetPath(points,d,R){if(points.length<2)return '';let clean=[points[0]];for(let i=1;i<points.length;i++)if(dist(points[i],clean.at(-1))>.01)clean.push(points[i]);if(clean.length<2)return '';const seg=clean.slice(1).map((p,i)=>unit(point(p,clean[i])));const norms=seg.map(normal);const corner=[];
-for(let i=1;i<clean.length-1;i++){let u=seg[i-1],v=seg[i],turn=cross(u,v),theta=Math.acos(Math.max(-1,Math.min(1,dot(u,v))));if(theta<.001){corner.push(null);continue}if(Math.abs(Math.PI-theta)<.001){corner.push(null);continue}let sign=Math.sign(turn),r=Math.max(.01,R-d*sign),t=r*Math.tan(theta/2);corner.push({t,r,sign,u,v})}
-// Shrink adjacent fillets uniformly if a segment is too short. The base corner radii are chosen
-// for the widest offset strand; this prevents the inside strand from folding into itself.
-for(let i=0;i<clean.length-1;i++){let left=i>0?corner[i-1]:null,right=i<corner.length?corner[i]:null;let need=(left?.t||0)+(right?.t||0),available=dist(clean[i],clean[i+1])*.95;if(need>available&&need>0){let f=available/need;if(left){left.t*=f;left.r*=f}if(right){right.t*=f;right.r*=f}}}
-let result=`M ${pstr(add(clean[0],scale(norms[0],d)))}`;
-for(let i=1;i<clean.length-1;i++){let c=corner[i-1],prev=norms[i-1],next=norms[i],p=clean[i];if(!c){let a=add(p,scale(prev,d)),b=add(p,scale(next,d));result+=` L ${pstr(a)} L ${pstr(b)}`;continue}let a=add(add(p,scale(c.u,-c.t)),scale(prev,d));let b=add(add(p,scale(c.v,c.t)),scale(next,d));result+=` L ${pstr(a)} A ${fmt(c.r)} ${fmt(c.r)} 0 0 ${c.sign>0?1:0} ${pstr(b)}`}
-result+=` L ${pstr(add(clean.at(-1),scale(norms.at(-1),d)))}`;return result}
+// Build one centreline fillet layout, then offset all strands from the SAME
+// tangent points. At a turn, offset radii differ but tangent locations do not.
+// This is essential: independently choosing a tangent length per strand causes
+// hooks and discontinuities (the v0.2 Wynyard/Redfern problem).
+function offsetPath(points,d,R){
+ if(points.length<2)return '';
+ let clean=[points[0]];
+ for(let i=1;i<points.length;i++)if(dist(points[i],clean.at(-1))>.01)clean.push(points[i]);
+ if(clean.length<2)return '';
+ const seg=clean.slice(1).map((p,i)=>unit(point(p,clean[i]))),norms=seg.map(normal);
+ const corners=[];
+ for(let i=1;i<clean.length-1;i++){
+  const u=seg[i-1],v=seg[i],turn=cross(u,v),theta=Math.acos(Math.max(-1,Math.min(1,dot(u,v))));
+  if(theta<.0001||Math.abs(Math.PI-theta)<.0001){corners.push(null);continue}
+  const sign=Math.sign(turn),tan=Math.tan(theta/2);
+  corners.push({u,v,sign,tan,t:Math.max(0,R)*tan});
+ }
+ // Centreline tangent distances must fit every segment. Use a common scale
+ // for ALL strands, not strand-specific shrinking.
+ for(let pass=0;pass<5;pass++)for(let i=0;i<clean.length-1;i++){
+  const left=i>0?corners[i-1]:null,right=i<corners.length?corners[i]:null;
+  const need=(left?.t||0)+(right?.t||0),available=dist(clean[i],clean[i+1])*.94;
+  if(need>available&&need>0){const f=available/need;if(left)left.t*=f;if(right)right.t*=f}
+ }
+ let result=`M ${pstr(add(clean[0],scale(norms[0],d)))}`;
+ for(let i=1;i<clean.length-1;i++){
+  const c=corners[i-1],p=clean[i],prev=norms[i-1],next=norms[i];
+  if(!c){result+=` L ${pstr(add(p,scale(prev,d)))}`;continue}
+  const r0=c.t/c.tan,offsetRadius=r0-c.sign*d;
+  // If the inner radius is not viable, use a sharp miter instead of
+  // generating a malformed circular arc. The caller chooses R large enough.
+  if(offsetRadius<=.01){
+   const a=add(p,scale(prev,d)),b=add(p,scale(next,d));
+   const denom=cross(c.u,c.v);
+   const t=Math.abs(denom)>1e-8?cross(point(b,a),c.v)/denom:0;
+   result+=` L ${pstr(add(a,scale(c.u,t)))}`;continue;
+  }
+  // Tangency for an offset circular fillet occurs at a different distance
+  // from the original vertex: t_offset = (R - sign*d)*tan(theta/2).
+  const t=offsetRadius*c.tan;
+  const a=add(add(p,scale(c.u,-t)),scale(prev,d));
+  const b=add(add(p,scale(c.v,t)),scale(next,d));
+  result+=` L ${pstr(a)} A ${fmt(offsetRadius)} ${fmt(offsetRadius)} 0 0 ${c.sign>0?1:0} ${pstr(b)}`;
+ }
+ return result+` L ${pstr(add(clean.at(-1),scale(norms.at(-1),d)))}`;
+}
 function routePoints(r){return [station(r.from),...r.via,station(r.to)].filter(Boolean)}
 function stationOnRoute(s,r){let pts=routePoints(r);for(let i=0;i<pts.length-1;i++){let a=pts[i],b=pts[i+1],v=point(b,a),l2=dot(v,v);if(!l2)continue;let t=dot(point(s,a),v)/l2;if(t>=-.001&&t<=1.001&&dist(s,add(a,scale(v,t)))<2)return true}return false}
 function render(){save();$('gridValue').textContent=data.settings.grid;$('spacingValue').textContent=data.settings.spacing;$('radiusValue').textContent=data.settings.radius;['grid','spacing','radius','angles','snap','showGrid'].forEach(k=>{let e=$(k);if(e)e[e.type==='checkbox'?'checked':'value']=data.settings[k]});$('gridPattern').setAttribute('width',data.settings.grid);$('gridPattern').setAttribute('height',data.settings.grid);$('gridPath').setAttribute('d',`M ${data.settings.grid} 0 L 0 0 0 ${data.settings.grid}`);$('gridRect').style.display=data.settings.showGrid?'':'none';svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);
 ['routesLayer','stationsLayer','handlesLayer','previewLayer'].forEach(k=>$(k).replaceChildren());
 for(let r of data.routes){let pts=routePoints(r),n=Math.max(1,Math.min(24,r.frequency)),spacing=data.settings.spacing,maxOff=(n-1)*spacing/2;
 // Base radius is enlarged to accommodate the innermost offset at a 90-degree bend.
-let radius=Math.max(data.settings.radius,maxOff+2);for(let i=0;i<n;i++){let d=(i-(n-1)/2)*spacing;el('path',{d:offsetPath(pts,d,radius),fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,spacing*.72),'stroke-linejoin':'round','stroke-linecap':'round','pointer-events':'none'},$('routesLayer'))}
+let radius=Math.max(data.settings.radius,maxOff+8);for(let i=0;i<n;i++){let d=(i-(n-1)/2)*spacing;el('path',{d:offsetPath(pts,d,radius),fill:'none',stroke:r.colors[i%r.colors.length]||COLORS[i%COLORS.length],'stroke-width':Math.min(5,spacing*.72),'stroke-linejoin':'round','stroke-linecap':'round','pointer-events':'none'},$('routesLayer'))}
 let hit=el('path',{d:offsetPath(pts,0,radius),fill:'none',stroke:'transparent','stroke-width':Math.max(18,n*spacing+10),cursor:'pointer','data-route':r.id},$('routesLayer'));hit.addEventListener('pointerdown',e=>{if(tool==='select'||tool==='point'){e.stopPropagation();if(tool==='point'){insertBend(r,toWorld(e));return}selection={type:'route',id:r.id};render()}});hit.addEventListener('dblclick',e=>{e.stopPropagation();insertBend(r,toWorld(e))});if(selection?.type==='route'&&selection.id===r.id)el('path',{d:offsetPath(pts,0,radius),fill:'none',stroke:'#f5f5f5','stroke-width':1.3,'stroke-dasharray':'5 6','pointer-events':'none'},$('handlesLayer'))}
 for(let s of data.stations){
  let selected=selection?.type==='station'&&selection.id===s.id;
