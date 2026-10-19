@@ -357,8 +357,11 @@ function countryLabelIndexAt(event, activeChart) {
   const scale = activeChart.scales.y;
   if (!scale || selectedCountry !== null) return -1;
   const x = event.x, y = event.y;
-  if (x == null || y == null || x < 0 || x >= scale.left ||
+  const labelBoundary = activeChart.chartArea.left;
+  if (x == null || y == null || x < 0 || x >= labelBoundary ||
       y < scale.top || y > scale.bottom) return -1;
+  // The category scale typically starts at x=0; its RIGHT edge
+  // (chartArea.left), not scale.left, bounds the label gutter.
   const ticks = scale.getTicks();
   if (!ticks.length) return -1;
   let closest = -1, distance = Infinity;
