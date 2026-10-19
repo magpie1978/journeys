@@ -435,8 +435,14 @@ function render({
       );
   
   
-    chartInner.style.height =
-      `${requiredHeight}px`;
+    // Keep the country overview scrollable, but fit the yearly chart
+    // entirely within the visible panel (including its year labels).
+    const chartViewport = chartInner.closest(".chart-container.scroll-y");
+    if (chartViewport) {
+      chartViewport.classList.toggle("country-detail-view", detail);
+      chartViewport.scrollTop = detail ? 0 : chartViewport.scrollTop;
+    }
+    chartInner.style.height = detail ? "560px" : `${requiredHeight}px`;
   
   
     /*
