@@ -70,6 +70,14 @@
     #backToCountries:hover { background: rgba(204,255,0,.12); }
     #backToCountries[hidden], #countryChartHint[hidden] { display: none; }
     #countryChartHint { color: #999; font-size: 12px; }
+    .journey-type-menu { position: relative; margin-left: auto; z-index: 20; }
+    #journeyTypeTrigger { color: #ddd; background: #1a1b20; border: 1px solid #383a43; border-radius: 7px; padding: 8px 12px; cursor: pointer; font: inherit; }
+    #journeyTypePanel { position: absolute; right: 0; top: calc(100% + 5px); min-width: 210px; padding: 12px; background: #202128; border: 1px solid #454750; border-radius: 8px; box-shadow: 0 8px 25px #0009; }
+    #journeyTypePanel[hidden] { display: none; }
+    .journey-type-choice { display: block; color: #ddd; padding: 5px 0; cursor: pointer; white-space: nowrap; }
+    .journey-type-choice input { accent-color: #ccff00; cursor: pointer; }
+    .journey-type-actions { display: flex; gap: 8px; margin-bottom: 7px; }
+    .journey-type-actions button { flex: 1; background: #30323a; border: 1px solid #51545e; border-radius: 5px; padding: 5px; color: #fff; cursor: pointer; }
     .stats-nav a {
       color: #ccc;
       text-decoration: none;
@@ -114,6 +122,16 @@
         <div class="country-chart-toolbar">
           <button type="button" id="backToCountries" hidden>← All Countries</button>
           <span id="countryChartHint">Click a country name or bar to view visits by year</span>
+          <div class="journey-type-menu" id="journeyTypeMenu">
+            <button id="journeyTypeTrigger" type="button" aria-expanded="false" aria-controls="journeyTypePanel">Journey Types ▾</button>
+            <div id="journeyTypePanel" hidden>
+              <div class="journey-type-actions">
+                <button type="button" id="journeyTypesAll">Select All</button>
+                <button type="button" id="journeyTypesNone">Clear All</button>
+              </div>
+              <div id="journeyTypeChoices"></div>
+            </div>
+          </div>
         </div>
 
         <!-- SCROLLABLE CHART -->
