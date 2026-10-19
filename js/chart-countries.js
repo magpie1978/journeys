@@ -352,6 +352,25 @@ function visitsPerCountry(data) {
 }
 
 
+// Identify clicks on actual country labels, including their left-side gutter.
+function countryLabelIndexAt(event, activeChart) {
+  const scale = activeChart.scales.y;
+  if (!scale || selectedCountry !== null) return -1;
+  const x = event.x, y = event.y;
+  if (x == null || y == null || x < 0 || x >= scale.left ||
+      y < scale.top || y > scale.bottom) return -1;
+  const ticks = scale.getTicks();
+  if (!ticks.length) return -1;
+  let closest = -1, distance = Infinity;
+  for (let i = 0; i < ticks.length; i++) {
+    const d = Math.abs(y - scale.getPixelForTick(i));
+    if (d < distance) { distance = d; closest = i; }
+  }
+  const spacing = ticks.length > 1 ?
+    Math.abs(scale.getPixelForTick(1) - scale.getPixelForTick(0)) : 34;
+  return distance <= Math.max(10, spacing * 0.45) ? closest : -1;
+}
+
 // =====================================================
 // RENDER CHART
 // =====================================================
@@ -503,24 +522,24 @@ function render({
     options: {
 
       indexAxis: detail ? "x" : "y",
+      // Chart.js places Y-axis label text to the LEFT of yScale.left.
+      // Use the full label gutter, not the plot area, for hit testing.
       onHover(event, elements, activeChart) {
-        const yScale = activeChart.scales.y;
-        const x = event.x;
-        const y = event.y;
-        const onLabel = !detail && x >= yScale.left && x <= yScale.right && y >= yScale.top && y <= yScale.bottom;
-        activeChart.canvas.style.cursor = !detail && (onLabel || elements.length) ? "pointer" : "default";
+        const labelIndex = countryLabelIndexAt(event, activeChart);
+        activeChart.canvas.style.cursor = !detail &&
+          (labelIndex !== -1 || elements.length > 0) ? "pointer" : "default";
       },
       onClick(event, elements, activeChart) {
         if (detail) return;
-        const yScale = activeChart.scales.y;
-        const onLabel = event.x >= yScale.left && event.x <= yScale.right && event.y >= yScale.top && event.y <= yScale.bottom;
-        if (!onLabel && !elements.length) return;
-        const index = onLabel ? Math.round(yScale.getValueForPixel(event.y)) : elements[0].index;
+        const labelIndex = countryLabelIndexAt(event, activeChart);
+        const index = labelIndex !== -1 ? labelIndex :
+          (elements.length ? elements[0].index : -1);
         if (index < 0 || index >= labels.length) return;
-        overviewScrollTop = document.querySelector(".chart-container.scroll-y").scrollTop;
+        const scroller = document.querySelector(".chart-container.scroll-y");
+        overviewScrollTop = scroller?.scrollTop || 0;
         selectedCountry = labels[index];
         render(countryStats);
-        document.querySelector(".chart-container.scroll-y").scrollTop = 0;
+        if (scroller) scroller.scrollTop = 0;
       },
 
       responsive: true,
