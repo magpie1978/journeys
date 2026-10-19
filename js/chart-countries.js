@@ -243,6 +243,13 @@ function visitsPerCountry(data) {
   const yearsSet = new Set();
 
 
+  // All calendar years represented in the database, even when a
+  // particular country has no visits in those years.
+  data.forEach(r => {
+    const dbYear = String(r.year ?? "").slice(0, 4);
+    if (/^\d{4}$/.test(dbYear)) yearsSet.add(dbYear);
+  });
+
   data.forEach(r => {
 
     const journeyType =
@@ -355,7 +362,12 @@ function render({
   byCountry
 }) {
   const detail = selectedCountry !== null;
-  const visibleYears = detail ? years.filter(y => (byCountry[selectedCountry]?.[y] || 0) > 0) : years;
+  // Display every year from the earliest to latest database year,
+  // including years with zero visits for the selected country.
+  const visibleYears = years.length
+    ? Array.from({ length: Number(years[years.length - 1]) - Number(years[0]) + 1 },
+        (_, i) => String(Number(years[0]) + i))
+    : [];
   const chartLabels = detail ? visibleYears : labels;
   const backButton = document.getElementById("backToCountries");
   const hint = document.getElementById("countryChartHint");
@@ -639,6 +651,7 @@ tooltip: {
         y: {
         
           stacked: !detail,
+          display: !detail,
           beginAtZero: detail,
           grace: detail ? "20%" : 0,
           ticks: detail ? { precision: 0, stepSize: 1 } : {},
