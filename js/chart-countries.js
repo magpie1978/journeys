@@ -1,6 +1,9 @@
 /* global Chart, sb */
 
 let chart;
+let countryStats = null;
+let selectedCountry = null;
+let overviewScrollTop = 0;
 
 const YELLOW = "rgba(204,255,0,0.70)";
 const YELLOW_BORDER = "rgba(204,255,0,0.90)";
@@ -351,6 +354,13 @@ function render({
   years,
   byCountry
 }) {
+  const detail = selectedCountry !== null;
+  const visibleYears = detail ? years.filter(y => (byCountry[selectedCountry]?.[y] || 0) > 0) : years;
+  const chartLabels = detail ? visibleYears : labels;
+  const backButton = document.getElementById("backToCountries");
+  const hint = document.getElementById("countryChartHint");
+  backButton.hidden = !detail;
+  hint.hidden = detail;
 
   /*
    * -----------------------------------------------------
@@ -421,7 +431,7 @@ function render({
     const requiredHeight =
       Math.max(
         MIN_HEIGHT,
-        labels.length * ROW_HEIGHT
+        chartLabels.length * ROW_HEIGHT
       );
   
   
@@ -437,34 +447,25 @@ function render({
       chart.destroy();
     }
   
-    const datasets =
-    years.map(year => ({
-  
-      label: year,
-  
-      data: labels.map(country =>
-        byCountry[country]?.[year] || 0
-      ),
-  
-      /*
-       * Deliberately use the SAME colour
-       * for every year.
-       */
+    const datasets = detail ? [{
+      label: "Visits",
+      data: visibleYears.map(year => byCountry[selectedCountry]?.[year] || 0),
       backgroundColor: YELLOW,
       borderColor: YELLOW_BORDER,
-  
       borderWidth: 1,
-  
-      /*
-       * All years belong to the same stack.
-       */
-      stack: "visits",
-  
       categoryPercentage: 0.82,
       barPercentage: 0.90
-  
+    }] : years.map(year => ({
+      label: year,
+      data: labels.map(country => byCountry[country]?.[year] || 0),
+      backgroundColor: YELLOW,
+      borderColor: YELLOW_BORDER,
+      borderWidth: 1,
+      stack: "visits",
+      categoryPercentage: 0.82,
+      barPercentage: 0.90
     }));
-      
+
     chart = new Chart(ctx, {
     
       type: "bar",
@@ -475,7 +476,7 @@ function render({
         
     data: {
     
-      labels,
+      labels: chartLabels,
     
       datasets
     
@@ -484,6 +485,25 @@ function render({
     options: {
 
       indexAxis: "y",
+      onHover(event, elements, activeChart) {
+        const yScale = activeChart.scales.y;
+        const x = event.x;
+        const y = event.y;
+        const onLabel = !detail && x >= yScale.left && x <= yScale.right && y >= yScale.top && y <= yScale.bottom;
+        activeChart.canvas.style.cursor = !detail && (onLabel || elements.length) ? "pointer" : "default";
+      },
+      onClick(event, elements, activeChart) {
+        if (detail) return;
+        const yScale = activeChart.scales.y;
+        const onLabel = event.x >= yScale.left && event.x <= yScale.right && event.y >= yScale.top && event.y <= yScale.bottom;
+        if (!onLabel && !elements.length) return;
+        const index = onLabel ? Math.round(yScale.getValueForPixel(event.y)) : elements[0].index;
+        if (index < 0 || index >= labels.length) return;
+        overviewScrollTop = document.querySelector(".chart-container.scroll-y").scrollTop;
+        selectedCountry = labels[index];
+        render(countryStats);
+        document.querySelector(".chart-container.scroll-y").scrollTop = 0;
+      },
 
       responsive: true,
       maintainAspectRatio: false,
@@ -493,7 +513,7 @@ function render({
 
       title: {
         display: true,
-        text: "Visits per Country",
+        text: detail ? `Visits per Year — ${selectedCountry}` : "Visits per Country",
       
         color: "#ffffff",
       
@@ -527,9 +547,7 @@ tooltip: {
         return "";
       }
 
-      return String(
-        items[0].dataset.label
-      );
+      return detail ? String(items[0].label) : String(items[0].dataset.label);
     },
 
 
@@ -656,6 +674,12 @@ document.addEventListener(
     );
 
 
+    countryStats = stats;
+    document.getElementById("backToCountries").addEventListener("click", () => {
+      selectedCountry = null;
+      render(countryStats);
+      document.querySelector(".chart-container.scroll-y").scrollTop = overviewScrollTop;
+    });
     render(stats);
 
   }
