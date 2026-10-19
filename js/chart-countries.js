@@ -359,8 +359,8 @@ function render({
   const chartLabels = detail ? visibleYears : labels;
   const backButton = document.getElementById("backToCountries");
   const hint = document.getElementById("countryChartHint");
-  backButton.hidden = !detail;
-  hint.hidden = detail;
+  if (backButton) backButton.hidden = !detail;
+  if (hint) hint.hidden = detail;
 
   /*
    * -----------------------------------------------------
@@ -675,7 +675,7 @@ document.addEventListener(
 
 
     countryStats = stats;
-    document.getElementById("backToCountries").addEventListener("click", () => {
+    document.getElementById("backToCountries")?.addEventListener("click", () => {
       selectedCountry = null;
       render(countryStats);
       document.querySelector(".chart-container.scroll-y").scrollTop = overviewScrollTop;
