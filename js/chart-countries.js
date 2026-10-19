@@ -4,6 +4,75 @@ let chart;
 let countryStats = null;
 let selectedCountry = null;
 let overviewScrollTop = 0;
+let allJourneys = [];
+let enabledTypes = new Set();
+const TYPE_NAMES = {flight:"Flight",drive:"Drive",train:"Train",bus:"Bus",boat:"Boat",walk:"Walk"};
+const typeKey = value => String(value || "").trim().toLowerCase();
+function refreshCountryStats() {
+  countryStats = visitsPerCountry(allJourneys);
+  render(countryStats);
+  if (selectedCountry === null) {
+    const scroller = document.querySelector(".chart-container.scroll-y");
+    if (scroller) scroller.scrollTop = overviewScrollTop;
+  }
+}
+function setupJourneyTypes(data) {
+  const counts = new Map();
+  data.forEach(r => {
+    const type = typeKey(r.journey_type);
+    if (type) counts.set(type, (counts.get(type) || 0) + 1);
+  });
+  const sorted = [...counts.keys()].sort((a,b) =>
+    (Object.keys(TYPE_NAMES).indexOf(a) < 0 ? 99 : Object.keys(TYPE_NAMES).indexOf(a)) -
+    (Object.keys(TYPE_NAMES).indexOf(b) < 0 ? 99 : Object.keys(TYPE_NAMES).indexOf(b)) || a.localeCompare(b));
+  enabledTypes = new Set(sorted);
+  const menu = document.getElementById("journeyTypeMenu");
+  const trigger = document.getElementById("journeyTypeTrigger");
+  const panel = document.getElementById("journeyTypePanel");
+  const choices = document.getElementById("journeyTypeChoices");
+  if (!menu || !trigger || !panel || !choices) return;
+  choices.replaceChildren();
+  sorted.forEach(type => {
+    const label = document.createElement("label");
+    label.className = "journey-type-choice";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = type;
+    input.checked = true;
+    input.addEventListener("change", () => {
+      if (input.checked) enabledTypes.add(type);
+      else enabledTypes.delete(type);
+      updateLabel(); refreshCountryStats();
+    });
+    label.append(input, document.createTextNode(" " + (TYPE_NAMES[type] || type) + " (" + counts.get(type) + ")"));
+    choices.append(label);
+  });
+  function updateLabel() {
+    trigger.textContent = `Journey Types (${enabledTypes.size}/${sorted.length}) ▾`;
+  }
+  updateLabel();
+  trigger.addEventListener("click", () => {
+    panel.hidden = !panel.hidden;
+    trigger.setAttribute("aria-expanded", String(!panel.hidden));
+  });
+  document.getElementById("journeyTypesAll")?.addEventListener("click", () => {
+    enabledTypes = new Set(sorted);
+    choices.querySelectorAll("input").forEach(el => el.checked = true);
+    updateLabel(); refreshCountryStats();
+  });
+  document.getElementById("journeyTypesNone")?.addEventListener("click", () => {
+    enabledTypes.clear();
+    choices.querySelectorAll("input").forEach(el => el.checked = false);
+    updateLabel(); refreshCountryStats();
+  });
+  document.addEventListener("click", e => {
+    if (!menu.contains(e.target)) {
+      panel.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
 
 const YELLOW = "rgba(204,255,0,0.70)";
 const YELLOW_BORDER = "rgba(204,255,0,0.90)";
@@ -179,57 +248,82 @@ async function loadData() {
   }
 
 
-  // Load location → country mapping
+  // Resolve codes and human-readable location names for every transport type.
   const { data: locations, error: locationsError } = await sb
     .from("journey_locations")
-    .select("airport_code, country");
+    .select("airport_code, airport, city, country, category");
 
   if (locationsError) {
-    console.error(
-      "[country stats] location load failed:",
-      locationsError
-    );
-
+    console.error("[country stats] location load failed:", locationsError);
     return [];
   }
 
+  const normalize = value => String(value ?? "")
+    .normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
 
-  // Build fast lookup:
-  // AMS → Netherlands
-  // ORK → Ireland
-  // etc.
-
-  const countryByLocation = {};
+  // Store candidates rather than overwriting duplicate codes or names.
+  const byCode = new Map();
+  const byName = new Map();
+  const add = (map, key, location) => {
+    const normalized = normalize(key);
+    if (!normalized) return;
+    if (!map.has(normalized)) map.set(normalized, []);
+    map.get(normalized).push(location);
+  };
 
   (locations || []).forEach(location => {
-
-    if (!location.airport_code) return;
     if (!location.country) return;
-
-    countryByLocation[
-      String(location.airport_code).trim()
-    ] = String(location.country).trim();
-
+    add(byCode, location.airport_code, location);
+    add(byName, location.airport, location);
+    add(byName, location.city, location);
   });
 
+  function resolveCountry(place, journeyType) {
+    const key = normalize(place);
+    if (!key) return null;
 
-  // Add country information to each journey
+    // Prefer exact codes; only try names if no code exists.
+    let matches = byCode.get(key) || byName.get(key) || [];
 
-  return (journeys || []).map(journey => ({
+    // e.g. "Geneva Airport" -> "Geneva" if the full name is absent.
+    // This is only accepted when all matching locations agree on country.
+    if (!matches.length && key.endsWith(" airport")) {
+      matches = byName.get(key.slice(0, -8).trim()) || [];
+    }
+    if (!matches.length) return null;
 
+    // When the same name exists in multiple categories, prefer the
+    // category corresponding to this journey's transport type.
+    const kind = normalize(journeyType);
+    const sameType = matches.filter(location => {
+      const category = normalize(location.category);
+      return category === kind ||
+        (kind === "flight" && category === "airport") ||
+        (kind === "train" && category === "train station") ||
+        (kind === "bus" && category === "bus station");
+    });
+    if (sameType.length) matches = sameType;
+
+    const countries = [...new Set(matches.map(x => normalize(x.country)))];
+    if (countries.length !== 1) {
+      console.warn("[country stats] ambiguous location:", place, matches);
+      return null;
+    }
+    return matches[0].country.trim();
+  }
+
+  const enriched = (journeys || []).map(journey => ({
     ...journey,
-
-    origin_country:
-      countryByLocation[
-        String(journey.origin || "").trim()
-      ] || null,
-
-    destination_country:
-      countryByLocation[
-        String(journey.destination || "").trim()
-      ] || null
-
+    origin_country: resolveCountry(journey.origin, journey.journey_type),
+    destination_country: resolveCountry(journey.destination, journey.journey_type)
   }));
+
+  const missing = enriched.filter(r => r.destination && !r.destination_country);
+  console.info(`[country stats] unresolved destinations: ${missing.length}`);
+  if (missing.length) console.table(missing.slice(0, 30).map(r => ({
+    type: r.journey_type, origin: r.origin, destination: r.destination
+  })));
+  return enriched;
 }
 
 
@@ -258,16 +352,8 @@ function visitsPerCountry(data) {
         .toLowerCase();
 
 
-    // Preserve existing behaviour:
-    // only Flights and Drives
-
-    if (
-      journeyType !== "flight" &&
-      journeyType !== "drive"
-    ) {
-      return;
-    }
-
+    // User-selectable transport modes (including non-flight journeys).
+    if (!enabledTypes.has(journeyType)) return;
 
     if (!r.destination_country) {
       return;
@@ -708,6 +794,8 @@ document.addEventListener(
     );
 
 
+    allJourneys = data;
+    setupJourneyTypes(data);
     const stats =
       visitsPerCountry(data);
 
