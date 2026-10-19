@@ -251,7 +251,7 @@ async function loadData() {
   // Resolve codes and human-readable location names for every transport type.
   const { data: locations, error: locationsError } = await sb
     .from("journey_locations")
-    .select("airport_code, airport, city, country, category");
+    .select("airport_code, airport, city, country, country_code, category");
 
   if (locationsError) {
     console.error("[country stats] location load failed:", locationsError);
@@ -264,6 +264,7 @@ async function loadData() {
   // Store candidates rather than overwriting duplicate codes or names.
   const byCode = new Map();
   const byName = new Map();
+  const byCity = new Map();
   const add = (map, key, location) => {
     const normalized = normalize(key);
     if (!normalized) return;
@@ -275,7 +276,7 @@ async function loadData() {
     if (!location.country) return;
     add(byCode, location.airport_code, location);
     add(byName, location.airport, location);
-    add(byName, location.city, location);
+    add(byCity, location.city, location);
   });
 
   function resolveCountry(place, journeyType) {
@@ -283,12 +284,13 @@ async function loadData() {
     if (!key) return null;
 
     // Prefer exact codes; only try names if no code exists.
-    let matches = byCode.get(key) || byName.get(key) || [];
+    let matches = byCode.get(key) || byName.get(key) || byCity.get(key) || [];
 
     // e.g. "Geneva Airport" -> "Geneva" if the full name is absent.
     // This is only accepted when all matching locations agree on country.
     if (!matches.length && key.endsWith(" airport")) {
-      matches = byName.get(key.slice(0, -8).trim()) || [];
+      const shortName = key.slice(0, -8).trim();
+      matches = byName.get(shortName) || byCity.get(shortName) || [];
     }
     if (!matches.length) return null;
 
@@ -304,12 +306,20 @@ async function loadData() {
     });
     if (sameType.length) matches = sameType;
 
-    const countries = [...new Set(matches.map(x => normalize(x.country)))];
-    if (countries.length !== 1) {
+    // A matching name is safe only if every candidate identifies the same
+    // country. Prefer ISO codes so spelling/capitalisation cannot split it.
+    const countryIds = [...new Set(matches.map(x =>
+      normalize(x.country_code) || normalize(x.country)
+    ))];
+    if (countryIds.length !== 1 || !countryIds[0]) {
       console.warn("[country stats] ambiguous location:", place, matches);
       return null;
     }
-    return matches[0].country.trim();
+    const canonical = matches.find(x => x.country && x.country.trim());
+    return canonical ? {
+      id: countryIds[0],
+      name: canonical.country.trim()
+    } : null;
   }
 
   const enriched = (journeys || []).map(journey => ({
@@ -318,10 +328,14 @@ async function loadData() {
     destination_country: resolveCountry(journey.destination, journey.journey_type)
   }));
 
-  const missing = enriched.filter(r => r.destination && !r.destination_country);
-  console.info(`[country stats] unresolved destinations: ${missing.length}`);
+  const missing = enriched.filter(r =>
+    !r.origin_country || !r.destination_country
+  );
+  console.info(`[country stats] journeys with unresolved endpoints: ${missing.length}`);
   if (missing.length) console.table(missing.slice(0, 30).map(r => ({
-    type: r.journey_type, origin: r.origin, destination: r.destination
+    type: r.journey_type, origin: r.origin, destination: r.destination,
+    originResolved: Boolean(r.origin_country),
+    destinationResolved: Boolean(r.destination_country)
   })));
   return enriched;
 }
@@ -355,31 +369,20 @@ function visitsPerCountry(data) {
     // User-selectable transport modes (including non-flight journeys).
     if (!enabledTypes.has(journeyType)) return;
 
-    if (!r.destination_country) {
-      return;
-    }
+    // An international arrival requires TWO verified endpoints.
+    // Unknown origins must never be mistaken for a border crossing.
+    if (!r.origin_country || !r.destination_country) return;
 
+    const originId = r.origin_country.id;
+    const destinationId = r.destination_country.id;
+    if (!originId || !destinationId) return;
 
-    // Exclude United Kingdom
+    // Domestic travel does not count as a country visit.
+    if (originId === destinationId) return;
 
-    if (
-      String(r.destination_country)
-        .trim()
-        .toLowerCase() === "united kingdom"
-    ) {
-      return;
-    }
-
-
-    // Don't count domestic journeys
-
-    if (
-      r.destination_country ===
-      r.origin_country
-    ) {
-      return;
-    }
-
+    // Preserve the existing exclusion of UK arrivals.
+    if (destinationId === "gb" || destinationId === "uk" ||
+        String(r.destination_country.name).trim().toLowerCase() === "united kingdom") return;
 
     const year =
       String(r.year || "").slice(0, 4);
@@ -391,7 +394,7 @@ function visitsPerCountry(data) {
 
 
     const country =
-      r.destination_country;
+      r.destination_country.name;
 
 
     yearsSet.add(year);
