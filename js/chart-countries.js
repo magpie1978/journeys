@@ -67,7 +67,7 @@ const barValueLabels = {
       "12px sans-serif";
 
     ctx.textAlign =
-      "left";
+      chart.options.indexAxis === "x" ? "center" : "left";
 
     ctx.textBaseline =
       "middle";
@@ -145,8 +145,8 @@ const barValueLabels = {
 
         ctx.fillText(
           total.toLocaleString(),
-          bar.x + 7,
-          bar.y
+          chart.options.indexAxis === "x" ? bar.x : bar.x + 7,
+          chart.options.indexAxis === "x" ? bar.y - 9 : bar.y
         );
 
       }
@@ -431,7 +431,7 @@ function render({
     const requiredHeight =
       Math.max(
         MIN_HEIGHT,
-        chartLabels.length * ROW_HEIGHT
+        (detail ? 0 : chartLabels.length * ROW_HEIGHT)
       );
   
   
@@ -484,7 +484,7 @@ function render({
 
     options: {
 
-      indexAxis: "y",
+      indexAxis: detail ? "x" : "y",
       onHover(event, elements, activeChart) {
         const yScale = activeChart.scales.y;
         const x = event.x;
@@ -570,6 +570,7 @@ tooltip: {
      * Country's total visits across all years.
      */
     footer(items) {
+      if (detail) return "";
 
       if (!items.length) {
         return "";
@@ -608,19 +609,17 @@ tooltip: {
                 
         x: {
         
-          stacked: true,
+          stacked: !detail,
         
-          beginAtZero: true,
+          beginAtZero: !detail,
         
-          grace: "8%",
+          grace: detail ? 0 : "8%",
         
           ticks: {
         
             precision: 0,
-        
             callback(value) {
-              return Number(value)
-                .toLocaleString();
+              return detail ? String(chartLabels[value] ?? "") : Number(value).toLocaleString();
             }
         
           },
@@ -633,7 +632,10 @@ tooltip: {
         
         y: {
         
-          stacked: true,
+          stacked: !detail,
+          beginAtZero: detail,
+          grace: detail ? "20%" : 0,
+          ticks: detail ? { precision: 0, stepSize: 1 } : {},
         
           grid: {
             display: false
