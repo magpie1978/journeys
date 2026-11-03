@@ -345,7 +345,24 @@ async function loadData() {
     return candidates.length === 1 ? candidates[0] : [null, null];
   }
 
-  const classificationByUid = new Map((classifications || []).map(row => [row.uid, row.arrival_classification]));
+  // Normalise join keys to avoid whitespace mismatches between the view and details.
+  const uidKey = value => String(value ?? "").trim();
+  const classificationByUid = new Map((classifications || []).map(row => [
+    uidKey(row.uid), String(row.arrival_classification ?? "visit").trim().toLowerCase()
+  ]));
+  const matchedUids = new Set((journeys || []).map(j => uidKey(j.uid)));
+  const dbCounts = { visit: 0, transit: 0, layover: 0, other: 0 };
+  (classifications || []).forEach(row => {
+    const c = String(row.arrival_classification ?? "visit").trim().toLowerCase();
+    dbCounts[c in dbCounts ? c : "other"]++;
+  });
+  const unmatchedSpecial = (classifications || []).filter(row =>
+    ["transit", "layover"].includes(String(row.arrival_classification ?? "").trim().toLowerCase()) &&
+    !matchedUids.has(uidKey(row.uid))
+  );
+  console.info("[country stats] journey_details classifications visible to website:", dbCounts);
+  console.info(`[country stats] ${unmatchedSpecial.length} transit/layover details rows do not match a routes-core journey UID`);
+  if (unmatchedSpecial.length) console.table(unmatchedSpecial.slice(0, 30));
   const enriched = (journeys || []).map(journey => {
     const [originCode, destinationCode] = resolveCallsignEndpoints(journey.callsign);
     // Route identifiers are authoritative for location-coded callsigns.
@@ -357,11 +374,17 @@ async function loadData() {
     const codedDestination = destinationCode ? resolveCountry(destinationCode, journey.journey_type) : null;
     return {
       ...journey,
-      arrival_classification: classificationByUid.get(journey.uid) || "visit",
+      arrival_classification: classificationByUid.get(uidKey(journey.uid)) || "visit",
       origin_country: codedOrigin || resolveCountry(journey.origin, journey.journey_type),
       destination_country: codedDestination || resolveCountry(journey.destination, journey.journey_type)
     };
   });
+
+  const joinedCounts = { visit: 0, transit: 0, layover: 0 };
+  enriched.forEach(row => {
+    if (row.arrival_classification in joinedCounts) joinedCounts[row.arrival_classification]++;
+  });
+  console.info("[country stats] classifications matched to chart journeys:", joinedCounts);
 
   const missing = enriched.filter(r =>
     !r.origin_country || !r.destination_country
