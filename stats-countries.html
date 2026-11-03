@@ -122,7 +122,15 @@
         <div class="country-chart-toolbar">
           <button type="button" id="backToCountries" hidden>← All Countries</button>
           <span id="countryChartHint">Click a country name or bar to view visits by year</span>
-          <div class="journey-type-menu" id="journeyTypeMenu">
+          <label for="arrivalClassificationFilter" style="color:#ccc;font-size:13px;margin-left:auto">Arrivals</label>
+          <select id="arrivalClassificationFilter" aria-label="Arrival classification" style="background:#1a1b20;color:#ddd;border:1px solid #383a43;border-radius:7px;padding:8px">
+            <option value="counted">Visits + Transit</option>
+            <option value="visit">Visits only</option>
+            <option value="transit">Transit only</option>
+            <option value="layover">Layovers only</option>
+            <option value="all">All arrivals</option>
+          </select>
+          <div class="journey-type-menu" id="journeyTypeMenu" style="margin-left:0">
             <button id="journeyTypeTrigger" type="button" aria-expanded="false" aria-controls="journeyTypePanel">Journey Types ▾</button>
             <div id="journeyTypePanel" hidden>
               <div class="journey-type-actions">
