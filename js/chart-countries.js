@@ -6,6 +6,7 @@ let selectedCountry = null;
 let overviewScrollTop = 0;
 let allJourneys = [];
 let enabledTypes = new Set();
+let arrivalFilter = "counted"; // counted (visit + transit), visit, transit, layover, all
 const TYPE_NAMES = {flight:"Flight",drive:"Drive",train:"Train",bus:"Bus",boat:"Boat",walk:"Walk"};
 const typeKey = value => String(value || "").trim().toLowerCase();
 function refreshCountryStats() {
@@ -249,13 +250,14 @@ async function loadData() {
     return rows;
   }
 
-  let journeys, locations;
+  let journeys, locations, classifications;
   try {
-    [journeys, locations] = await Promise.all([
+    [journeys, locations, classifications] = await Promise.all([
       fetchAll("journeys_routes_core_3_mv",
         "uid, year, journey_type, origin, destination, callsign"),
       fetchAll("journey_locations",
-        "airport_code, airport, city, country, country_code, category")
+        "airport_code, airport, city, country, country_code, category"),
+      fetchAll("journey_details", "uid, arrival_classification")
     ]);
   } catch (error) {
     console.error("[country stats] data load failed:", error);
@@ -343,6 +345,7 @@ async function loadData() {
     return candidates.length === 1 ? candidates[0] : [null, null];
   }
 
+  const classificationByUid = new Map((classifications || []).map(row => [row.uid, row.arrival_classification]));
   const enriched = (journeys || []).map(journey => {
     const [originCode, destinationCode] = resolveCallsignEndpoints(journey.callsign);
     // Route identifiers are authoritative for location-coded callsigns.
@@ -354,6 +357,7 @@ async function loadData() {
     const codedDestination = destinationCode ? resolveCountry(destinationCode, journey.journey_type) : null;
     return {
       ...journey,
+      arrival_classification: classificationByUid.get(journey.uid) || "visit",
       origin_country: codedOrigin || resolveCountry(journey.origin, journey.journey_type),
       destination_country: codedDestination || resolveCountry(journey.destination, journey.journey_type)
     };
@@ -399,6 +403,11 @@ function visitsPerCountry(data) {
 
     // User-selectable transport modes (including non-flight journeys).
     if (!enabledTypes.has(journeyType)) return;
+
+    const classification = ["visit", "transit", "layover"].includes(r.arrival_classification)
+      ? r.arrival_classification : "visit";
+    if (arrivalFilter === "counted" && classification === "layover") return;
+    if (arrivalFilter !== "counted" && arrivalFilter !== "all" && classification !== arrivalFilter) return;
 
     // An international arrival requires TWO verified endpoints.
     // Unknown origins must never be mistaken for a border crossing.
@@ -837,6 +846,14 @@ document.addEventListener(
 
     allJourneys = data;
     setupJourneyTypes(data);
+    const arrivalSelect = document.getElementById("arrivalClassificationFilter");
+    if (arrivalSelect) {
+      arrivalSelect.value = arrivalFilter;
+      arrivalSelect.addEventListener("change", () => {
+        arrivalFilter = arrivalSelect.value;
+        refreshCountryStats();
+      });
+    }
     const stats =
       visitsPerCountry(data);
 
