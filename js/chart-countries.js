@@ -390,11 +390,28 @@ async function loadData() {
     !r.origin_country || !r.destination_country
   );
   console.info(`[country stats] journeys with unresolved endpoints: ${missing.length}`);
-  if (missing.length) console.table(missing.slice(0, 30).map(r => ({
-    type: r.journey_type, origin: r.origin, destination: r.destination,
-    originResolved: Boolean(r.origin_country),
-    destinationResolved: Boolean(r.destination_country)
-  })));
+  if (missing.length) {
+    const unresolvedDetails = missing.map(r => {
+      const [originCode, destinationCode] = resolveCallsignEndpoints(r.callsign);
+      return {
+        uid: r.uid,
+        callsign: r.callsign,
+        journey_type: r.journey_type,
+        origin: r.origin,
+        destination: r.destination,
+        origin_code: originCode,
+        destination_code: destinationCode,
+        origin_country: r.origin_country?.name ?? null,
+        destination_country: r.destination_country?.name ?? null,
+        classification: r.arrival_classification,
+        issue: !r.origin_country && !r.destination_country
+          ? "Both endpoints unresolved"
+          : !r.origin_country ? "Origin unresolved" : "Destination unresolved"
+      };
+    });
+    console.table(unresolvedDetails);
+    console.info("[country stats] unresolved journey details (copyable JSON):", JSON.stringify(unresolvedDetails, null, 2));
+  }
   return enriched;
 }
 
