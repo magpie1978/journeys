@@ -121,6 +121,10 @@ csvFileInput.addEventListener("change", async (e) => {
       uidInput.readOnly = true;
     }
 
+    // Each newly uploaded journey defaults to a Visit.
+    const arrivalClassification = journeyDetailsForm.elements.namedItem("arrival_classification");
+    if (arrivalClassification) arrivalClassification.value = "visit";
+
     openModal(journeyDetailsModal);
 
   } catch (err) {
@@ -146,6 +150,11 @@ journeyDetailsForm.addEventListener("submit", async (e) => {
     [...new FormData(journeyDetailsForm).entries()]
       .map(([k, v]) => [k, v === "" ? null : v])
   );
+
+  // Ensure the new classification is always sent with journey details.
+  payload.arrival_classification = ["visit", "transit", "layover"].includes(
+    payload.arrival_classification
+  ) ? payload.arrival_classification : "visit";
 
   try {
     const { error } = await sb
