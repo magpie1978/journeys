@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settlement Review | MyJourneys</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/settlement-review.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="review-header">
+    <a class="brand" href="index.html"><span class="brand-mark">M</span><span>MyJourneys</span></a>
+    <div class="header-actions">
+      <a class="header-link" href="index.html">Journey map</a>
+      <span id="account-label" class="account-label"></span>
+      <button id="sign-out" class="button button-quiet hidden">Sign out</button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="page-intro">
+      <div>
+        <div class="eyebrow">PERSONAL JOURNEY RECORDS</div>
+        <h1>Settlement review</h1>
+        <p>Review the places in your journey history and decide whether you visited, passed through, or never visited each settlement.</p>
+      </div>
+      <div class="intro-count"><strong id="total-count">—</strong><span>settlements</span></div>
+    </section>
+
+    <section id="login-panel" class="login-panel">
+      <div class="login-copy">
+        <div class="eyebrow">PRIVATE AREA</div>
+        <h2>Sign in to review your settlements</h2>
+        <p>The journey map remains public. Personal settlement decisions and notes are only available to your account.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label>Email address<input id="login-email" type="email" autocomplete="username" required></label>
+        <label>Password<input id="login-password" type="password" autocomplete="current-password" required></label>
+        <button class="button button-primary" type="submit">Sign in</button>
+        <div id="login-message" class="message" role="status"></div>
+      </form>
+    </section>
+
+    <section id="review-app" class="hidden">
+      <div class="stats-grid">
+        <div class="stat-card"><span>Visited</span><strong id="count-visited">0</strong><small>Confirmed visits</small></div>
+        <div class="stat-card"><span>Transit only</span><strong id="count-transit">0</strong><small>Passed through</small></div>
+        <div class="stat-card"><span>Not visited</span><strong id="count-not-visited">0</strong><small>Confirmed exclusions</small></div>
+        <div class="stat-card"><span>To review</span><strong id="count-pending">0</strong><small>Still undecided</small></div>
+      </div>
+
+      <div class="progress-card">
+        <div class="progress-heading"><div><strong>Review progress</strong><span id="progress-caption">0 of 268 decisions completed</span></div><strong id="progress-percent">0%</strong></div>
+        <div class="progress-track"><div id="progress-fill"></div></div>
+      </div>
+
+      <div class="workspace">
+        <aside class="settlement-browser">
+          <div class="browser-heading"><div><h2>Settlements</h2><span id="visible-count">Loading…</span></div><button id="refresh-button" class="icon-button" title="Refresh data" aria-label="Refresh data">↻</button></div>
+          <input id="search-input" class="search-input" type="search" placeholder="Search settlements or countries…">
+          <div class="filter-row">
+            <select id="status-filter" aria-label="Filter by review status">
+              <option value="all">All statuses</option>
+              <option value="review_later">Review later</option>
+              <option value="visited">Visited</option>
+              <option value="transit_only">Transit only</option>
+              <option value="not_visited">Not visited</option>
+            </select>
+            <select id="evidence-filter" aria-label="Filter by evidence">
+              <option value="all">All evidence</option>
+              <option value="high">High confidence</option>
+              <option value="medium">Medium confidence</option>
+              <option value="none">No evidence</option>
+            </select>
+          </div>
+          <select id="sort-filter" class="sort-select" aria-label="Sort settlements">
+            <option value="priority">Evidence priority</option>
+            <option value="name">Name A–Z</option>
+            <option value="country">Country A–Z</option>
+            <option value="journeys">Most journey evidence</option>
+          </select>
+          <div id="settlement-list" class="settlement-list" aria-live="polite"></div>
+        </aside>
+
+        <section class="detail-panel" aria-live="polite">
+          <div id="empty-detail" class="empty-detail"><div class="empty-icon">◎</div><h2>Select a settlement</h2><p>Choose a place from the list to inspect its journey evidence and record your decision.</p></div>
+          <div id="settlement-detail" class="hidden">
+            <div class="detail-topline"><span id="detail-country-code" class="country-code"></span><span id="detail-evidence-badge" class="evidence-badge">No evidence</span></div>
+            <h2 id="detail-name"></h2>
+            <div id="detail-meta" class="detail-meta"></div>
+            <div class="detail-section">
+              <div class="section-heading"><h3>Journey evidence</h3><span id="evidence-count"></span></div>
+              <div id="evidence-list" class="evidence-list"></div>
+            </div>
+            <div class="detail-section decision-section">
+              <h3>Your decision</h3>
+              <p class="section-help">Choose the description that best reflects your experience of this settlement.</p>
+              <div class="decision-grid">
+                <button class="decision-option" data-status="visited"><span class="decision-symbol visited-symbol">✓</span><span><strong>Visited</strong><small>I spent time here / visited the place</small></span></button>
+                <button class="decision-option" data-status="transit_only"><span class="decision-symbol transit-symbol">↗</span><span><strong>Transit only</strong><small>I passed through without visiting</small></span></button>
+                <button class="decision-option" data-status="not_visited"><span class="decision-symbol no-symbol">×</span><span><strong>Not visited</strong><small>This settlement was not visited</small></span></button>
+                <button class="decision-option" data-status="review_later"><span class="decision-symbol later-symbol">◷</span><span><strong>Review later</strong><small>I'm not ready to decide</small></span></button>
+              </div>
+              <label class="notes-label" for="review-notes">Personal notes <span>Optional</span></label>
+              <textarea id="review-notes" rows="3" placeholder="Add a reminder or context for this decision…"></textarea>
+              <div class="save-row"><span id="save-message" class="message" role="status"></span><button id="save-button" class="button button-primary" disabled>Save decision</button></div>
+            </div>
+            <div class="detail-navigation"><button id="previous-button" class="button button-quiet">← Previous</button><button id="next-button" class="button button-quiet">Next →</button></div>
+          </div>
+        </section>
+      </div>
+    </section>
+    <div id="global-message" class="global-message" role="status"></div>
+  </main>
+
+  <script src="js/settlement-review.js"></script>
+</body>
+</html>
